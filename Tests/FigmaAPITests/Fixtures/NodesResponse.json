@@ -1,0 +1,80 @@
+{
+  "nodes": {
+    "1:2": {
+      "document": {
+        "id": "1:2",
+        "name": "primary/background",
+        "fills": [
+          {
+            "type": "SOLID",
+            "opacity": 1.0,
+            "color": { "r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0 }
+          }
+        ],
+        "style": null
+      }
+    },
+    "1:3": {
+      "document": {
+        "id": "1:3",
+        "name": "primary/text",
+        "fills": [
+          {
+            "type": "SOLID",
+            "opacity": 1.0,
+            "color": { "r": 0.0, "g": 0.0, "b": 0.0, "a": 1.0 }
+          }
+        ],
+        "style": null
+      }
+    },
+    "1:4": {
+      "document": {
+        "id": "1:4",
+        "name": "secondary/background_dark",
+        "fills": [
+          {
+            "type": "SOLID",
+            "opacity": 0.8,
+            "color": { "r": 0.2, "g": 0.2, "b": 0.2, "a": 1.0 }
+          }
+        ],
+        "style": null
+      }
+    },
+    "2:1": {
+      "document": {
+        "id": "2:1",
+        "name": "heading/large",
+        "fills": [],
+        "style": {
+          "font_family": "Inter",
+          "font_post_script_name": "Inter-Bold",
+          "font_weight": 700,
+          "font_size": 32.0,
+          "line_height_px": 40.0,
+          "letter_spacing": -0.5,
+          "line_height_unit": "PIXELS",
+          "text_case": "ORIGINAL"
+        }
+      }
+    },
+    "2:2": {
+      "document": {
+        "id": "2:2",
+        "name": "body/regular",
+        "fills": [],
+        "style": {
+          "font_family": "Inter",
+          "font_post_script_name": "Inter-Regular",
+          "font_weight": 400,
+          "font_size": 16.0,
+          "line_height_px": 24.0,
+          "letter_spacing": 0.0,
+          "line_height_unit": "PIXELS",
+          "text_case": "ORIGINAL"
+        }
+      }
+    }
+  }
+}

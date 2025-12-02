@@ -1,0 +1,38 @@
+---
+figma:
+  lightFileId: G85iqgmYDrE5WrjDmiAZ6G
+  darkFileId: 3xUDq03vQwF1tAFBK6A9Tf
+
+# [optional] Common export parameters
+common:
+  icons:
+    # Name of the Figma's frame where icons components are located
+    figmaFrameName: Icons
+  images:
+    # Name of the Figma's frame where image components are located
+    figmaFrameName: Illustrations
+
+# [optional] Android export parameters
+android:
+  # Relative or absolute path to the `main/res` folder including it. The colors/icons/imags will be exported to this folder
+  mainRes: ./app/src/main/res
+  # Parameters for exporting icons
+  icons:
+    # Where to place icons relative to `mainRes`? ExFig clears this directory every time your execute `exfig icons` command
+    output: "exfig-icons"
+  # Parameters for exporting images
+  images:
+    # Where to place images relative to `mainRes`? ExFig clears this directory every time your execute `exfig images` command
+    output: "exfig-images"
+    # Image file format: svg, png or webp
+    format: webp
+    # Format options for webp format only
+    webpOptions:
+      # Encoding type: lossy or lossless
+      encoding: lossy
+      # Encoding quality in percents. Only for lossy encoding.
+      quality: 85
+  # Parameters for exporting typography
+  typography:
+    # Typography name style: camelCase or snake_case
+    nameStyle: camelCase

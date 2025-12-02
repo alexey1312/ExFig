@@ -1,0 +1,95 @@
+import ExFigCore
+import Foundation
+import Logging
+#if os(Linux)
+    import FoundationNetworking
+#endif
+
+/// Progress callback type for download operations
+typealias DownloadProgressCallback = @Sendable (Int, Int) async -> Void
+
+final class FileDownloader: Sendable {
+    private let logger = Logger(label: "com.alexey1312.exfig.file-downloader")
+    private let session: URLSession
+
+    init(session: URLSession = URLSession(configuration: .ephemeral)) {
+        self.session = session
+    }
+
+    /// Fetch files with optional progress callback
+    /// - Parameters:
+    ///   - files: Files to download
+    ///   - onProgress: Optional callback called with (current, total) after each download
+    /// - Returns: Downloaded files with local URLs
+    func fetch(
+        files: [FileContents],
+        onProgress: DownloadProgressCallback? = nil
+    ) async throws -> [FileContents] {
+        let remoteFiles = files.filter { $0.sourceURL != nil }
+        let localFiles = files.filter { $0.sourceURL == nil }
+        let remoteFileCount = remoteFiles.count
+
+        if remoteFiles.isEmpty {
+            return localFiles
+        }
+
+        let maxConcurrentDownloads = session.configuration.httpMaximumConnectionsPerHost
+
+        return try await withThrowingTaskGroup(of: FileContents.self) { group in
+            var results = localFiles
+            var downloadedCount = 0
+            var iterator = remoteFiles.makeIterator()
+            var activeTaskCount = 0
+
+            // Start initial batch of concurrent downloads
+            for _ in 0 ..< min(maxConcurrentDownloads, remoteFiles.count) {
+                if let file = iterator.next() {
+                    group.addTask {
+                        try await self.downloadFile(file)
+                    }
+                    activeTaskCount += 1
+                }
+            }
+
+            // Process completed downloads and start new ones
+            for try await downloadedFile in group {
+                results.append(downloadedFile)
+                downloadedCount += 1
+                activeTaskCount -= 1
+
+                // Report progress via callback or logger
+                if let onProgress {
+                    await onProgress(downloadedCount, remoteFileCount)
+                } else {
+                    logger.info("Downloaded \(downloadedCount)/\(remoteFileCount)")
+                }
+
+                // Start next download if there are more files
+                if let file = iterator.next() {
+                    group.addTask {
+                        try await self.downloadFile(file)
+                    }
+                    activeTaskCount += 1
+                }
+            }
+
+            return results
+        }
+    }
+
+    private func downloadFile(_ file: FileContents) async throws -> FileContents {
+        guard let remoteURL = file.sourceURL else {
+            return file
+        }
+
+        let (localURL, _) = try await session.download(from: remoteURL)
+
+        return FileContents(
+            destination: file.destination,
+            dataFile: localURL,
+            scale: file.scale,
+            dark: file.dark,
+            isRTL: file.isRTL
+        )
+    }
+}

@@ -1,0 +1,73 @@
+---
+figma:
+  lightFileId: G85iqgmYDrE5WrjDmiAZ6G
+  darkFileId: 3xUDq03vQwF1tAFBK6A9Tf
+
+# [optional] Common export parameters
+common:
+  # [optional]
+  colors:
+    # [optional] RegExp pattern for color name validation before exporting. Use to validate color name in Figma file
+    nameValidateRegexp: '^([a-zA-Z_]+)$' # RegExp pattern for: background, background_primary, widget_primary_background
+  # [optional]
+  icons:
+    # [optional] RegExp pattern for icon name validation before exporting. Use to validate icon name in Figma file
+    nameValidateRegexp: '^(ic)_(\d\d)_([a-z0-9_~]+)$' # RegExp pattern for: ic_24_icon_name, ic_24_icon
+  # [optional]
+  images:
+    # [optional] RegExp pattern for image name validation before exporting. Use to validate image name in Figma file
+    nameValidateRegexp: '^(img)_([a-z0-9_~]+)$' # RegExp pattern for: img_zero_empty, img_widget_large
+
+# [optional] iOS export parameters
+ios:
+  # Path to xcodeproj
+  xcodeprojPath: "./Example.xcodeproj"
+  # Xcode Target containing resources and corresponding swift code
+  target: "UIComponents"
+  # Path to the Assets.xcassets directory
+  xcassetsPath: "./UIComponents/Resource/Assets.xcassets"
+  # Is Assets.xcassets located in the main bundle?
+  xcassetsInMainBundle: false
+
+  # Parameters for exporting colors
+  colors:
+    # Should be generate color assets instead of pure swift code
+    useColorAssets: true
+    # Name of the folder inside Assets.xcassets where to place colors (.colorset directories)
+    assetsFolder: Colors
+    # Color name style: camelCase or snake_case
+    nameStyle: camelCase
+    # [optional] Absolute or relative path to swift file where to export UIKit colors (UIColor) for accessing from the code (e.g. UIColor.backgroundPrimary)
+    colorSwift: "./UIComponents/Source/UIColor+extension.swift"
+    
+  # Parameters for exporting icons
+  icons:
+    format: pdf
+    # Name of the folder inside Assets.xcassets where to place icons (.imageset directories)
+    assetsFolder: Icons
+    # Icon name style: camelCase or snake_case
+    nameStyle: camelCase
+    # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing icons from the code (e.g. UIImage.ic24ArrowRight)
+    imageSwift: "./UIComponents/Source/UIImage+extension_icons.swift"
+
+  # Parameters for exporting images
+  images:
+    # Name of the folder inside Assets.xcassets where to place images (.imageset directories)
+    assetsFolder: Illustrations
+    # Image name style: camelCase or snake_case
+    nameStyle: camelCase
+    # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing illustrations from the code (e.g. UIImage.illZeroNoInternet)
+    imageSwift: "./UIComponents/Source/UIImage+extension_illustrations.swift"
+
+  # Parameters for exporting typography
+  typography:
+    # Path to directory where to place UIFont+extension.swift file
+    fontSwift: "./UIComponents/Source/Typography/UIFont+extension.swift"
+    # [optional] Absolute or relative path to swift file where to generate LabelStyle extensions for each style (LabelStyle extension).
+    labelStyleSwift: "./UIComponents/Source/Typography/LabelStyle+extension.swift"
+    # Will ExFig generate UILabel for each text style (font) e.g. HeaderLabel, BodyLabel, CaptionLabel.
+    generateLabels: true
+    # Path to directory where to place UILabel for each text style (font) (Required if generateLabels = true)
+    labelsDirectory: "./UIComponents/Source/Typography"
+    # Typography name style: camelCase or snake_case
+    nameStyle: camelCase

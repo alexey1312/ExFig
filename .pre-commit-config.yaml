@@ -1,0 +1,22 @@
+repos:
+  - repo: local
+    hooks:
+      - id: swiftformat
+        name: SwiftFormat
+        entry: bin/mise exec -- swiftformat
+        language: system
+        types: [swift]
+        args: []
+
+      - id: swiftlint
+        name: SwiftLint
+        entry: bin/mise exec -- swiftlint lint --strict
+        language: system
+        types: [swift]
+
+      - id: mdformat
+        name: Markdown Format
+        entry: bin/mise exec -- mdformat
+        language: system
+        types: [markdown]
+        args: [--wrap, "120", --number]

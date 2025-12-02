@@ -1,0 +1,29 @@
+default_platform(:ios)
+
+desc "Export colors from Figma"
+lane :export_colors do
+  Dir.chdir("../") do
+    sh "Pods/ExFig/Release/exfig colors"
+  end
+end
+
+desc "Export icons from Figma"
+lane :export_icons do
+  Dir.chdir("../") do
+    sh "Pods/ExFig/Release/exfig icons"
+  end
+end
+
+desc "Export images from Figma"
+lane :export_images do
+  Dir.chdir("../") do
+    sh "Pods/ExFig/Release/exfig images"
+  end
+end
+
+desc "Export typography from Figma"
+lane :export_typography do
+  Dir.chdir("../") do
+    sh "Pods/ExFig/Release/exfig typography"
+  end
+end
