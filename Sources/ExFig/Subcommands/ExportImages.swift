@@ -1,7 +1,9 @@
+// swiftlint:disable file_length cyclomatic_complexity
 import AndroidExport
 import ArgumentParser
 import ExFigCore
 import FigmaAPI
+import FlutterExport
 import Foundation
 import XcodeExport
 
@@ -41,6 +43,11 @@ extension ExFigCommand {
             if options.params.android != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export images to Android Studio project.")
                 try await exportAndroidImages(client: client, params: options.params, ui: ui)
+            }
+
+            if options.params.flutter != nil {
+                ui.info("Using ExFig \(ExFigCommand.version) to export images to Flutter project.")
+                try await exportFlutterImages(client: client, params: options.params, ui: ui)
             }
         }
 
@@ -374,6 +381,113 @@ extension ExFigCommand {
                 )
                 return FileContents(destination: dest, sourceURL: image.url, scale: scale, dark: dark)
             }
+        }
+
+        // swiftlint:disable:next function_body_length
+        private func exportFlutterImages(client: Client, params: Params, ui: TerminalUI) async throws {
+            guard let flutter = params.flutter, let flutterImages = flutter.images else {
+                ui.warning("Nothing to do. You haven't specified flutter.images parameter in the config file.")
+                return
+            }
+
+            // Determine format
+            let formatString = switch flutterImages.format {
+            case .png, .none:
+                "png"
+            case .svg:
+                "svg"
+            case .webp:
+                "webp"
+            }
+
+            // 1. Get Images info
+            let imagesTuple = try await ui.withSpinner("Fetching images from Figma...") {
+                let loader = ImagesLoader(client: client, params: params, platform: .android, logger: logger)
+                return try await loader.load(filter: filter)
+            }
+
+            // 2. Process images
+            let images = try await ui.withSpinner("Processing images...") {
+                let processor = ImagesProcessor(
+                    platform: .android, // Flutter uses similar naming to Android
+                    nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                    nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                    nameStyle: .snakeCase
+                )
+
+                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                if let warning = result.warning?.errorDescription {
+                    ui.warning(warning)
+                }
+                return try result.get()
+            }
+
+            // 3. Export images
+            let assetsDirectory = URL(fileURLWithPath: flutterImages.output)
+            let output = FlutterOutput(
+                outputDirectory: flutter.output,
+                imagesAssetsDirectory: assetsDirectory,
+                templatesPath: flutter.templatesPath,
+                imagesClassName: flutterImages.className
+            )
+
+            let exporter = FlutterImagesExporter(
+                output: output,
+                outputFileName: flutterImages.dartFile,
+                scales: flutterImages.scales,
+                format: formatString
+            )
+            let (dartFile, assetFiles) = try exporter.export(images: images)
+
+            // 4. Download image files
+            let remoteFiles = assetFiles.filter { $0.sourceURL != nil }
+
+            var localFiles: [FileContents] = if !remoteFiles.isEmpty {
+                try await ui.withProgress("Downloading images", total: remoteFiles.count) { progress in
+                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                        await progress.update(current: current)
+                    }
+                }
+            } else {
+                []
+            }
+
+            // Convert to WebP if needed
+            if flutterImages.format == .webp, let options = flutterImages.webpOptions {
+                let converter: WebpConverter
+                switch (options.encoding, options.quality) {
+                case (.lossless, _):
+                    converter = WebpConverter(encoding: .lossless)
+                case let (.lossy, quality?):
+                    converter = WebpConverter(encoding: .lossy(quality: quality))
+                case (.lossy, .none):
+                    fatalError("Encoding quality not specified. Set flutter.images.webpOptions.quality in YAML file.")
+                }
+                let filesToConvert = localFiles.map(\.destination.url)
+                try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
+                    try await converter.convertBatch(files: filesToConvert) { current, _ in
+                        await progress.update(current: current)
+                    }
+                }
+                localFiles = localFiles.map { $0.changingExtension(newExtension: "webp") }
+            }
+
+            // Clear output directory if not filtering
+            if filter == nil {
+                try? FileManager.default.removeItem(atPath: assetsDirectory.path)
+            }
+
+            // 5. Write files
+            localFiles.append(dartFile)
+
+            let filesToWrite = localFiles
+            try await ui.withSpinner("Writing files to Flutter project...") {
+                try fileWriter.write(files: filesToWrite)
+            }
+
+            await checkForUpdate(logger: logger)
+
+            ui.success("Done! Exported \(images.count) images to Flutter project.")
         }
     }
 }

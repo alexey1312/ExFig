@@ -1,0 +1,9 @@
+// {% include "header.stencil" %}
+
+class {{ className }} {
+  {{ className }}._();
+{% for icon in icons %}{% if icon.hasDark %}  static const String {{ icon.name }}Light = '{{ icon.lightPath }}';
+  static const String {{ icon.name }}Dark = '{{ icon.darkPath }}';
+{% else %}  static const String {{ icon.name }} = '{{ icon.lightPath }}';
+{% endif %}{% endfor %}}
+

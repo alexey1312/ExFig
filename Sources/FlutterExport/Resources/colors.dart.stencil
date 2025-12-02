@@ -1,0 +1,13 @@
+// {% include "header.stencil" %}
+
+import 'package:flutter/material.dart';
+
+class {{ className }} {
+  {{ className }}._();
+{% for color in colors %}  static const Color {{ color.name }} = Color({{ color.hex }});
+{% endfor %}}
+{% if hasDarkColors %}class {{ className }}Dark {
+  {{ className }}Dark._();
+{% for color in darkColors %}  static const Color {{ color.name }} = Color({{ color.hex }});
+{% endfor %}}
+{% endif %}

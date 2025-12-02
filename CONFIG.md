@@ -222,6 +222,48 @@ android:
   typography:
     # Typography name style: camelCase or snake_case
     nameStyle: camelCase
-    # [optional] The package to export the Jetpack Compose typography code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
+    # [optional] The package to export the Jetpack Compose typography code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"
+
+# [optional] Flutter export parameters
+flutter:
+  # Relative or absolute path to the Flutter `lib/generated/` folder for Dart files
+  output: "./lib/generated"
+  # [optional] Path to the Stencil templates used to generate code
+  templatesPath: "./templates"
+
+  # Parameters for exporting colors
+  colors:
+    # [optional] Output file name for colors. Defaults to "colors.dart"
+    output: "app_colors.dart"
+    # [optional] Class name for generated colors. Defaults to "AppColors"
+    className: "AppColors"
+
+  # Parameters for exporting icons
+  icons:
+    # Where to place SVG icon assets (relative path from project root)
+    output: "assets/icons"
+    # [optional] Output file name for icon constants. Defaults to "icons.dart"
+    dartFile: "app_icons.dart"
+    # [optional] Class name for generated icon constants. Defaults to "AppIcons"
+    className: "AppIcons"
+
+  # Parameters for exporting images
+  images:
+    # Where to place image assets (relative path from project root)
+    output: "assets/images"
+    # [optional] Output file name for image constants. Defaults to "images.dart"
+    dartFile: "app_images.dart"
+    # [optional] Class name for generated image constants. Defaults to "AppImages"
+    className: "AppImages"
+    # [optional] Image format: svg, png, or webp. Defaults to "png"
+    format: png
+    # [optional] An array of asset scales that should be downloaded. Defaults to [1, 2, 3]
+    scales: [1, 2, 3]
+    # [optional] Format options for webp format only
+    webpOptions:
+      # Encoding type: lossy or lossless
+      encoding: lossy
+      # Encoding quality in percents. Only for lossy encoding.
+      quality: 90
 ```

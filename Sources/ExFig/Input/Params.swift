@@ -187,8 +187,43 @@ struct Params: Decodable {
         let templatesPath: URL?
     }
 
+    struct Flutter: Decodable {
+        enum ImageFormat: String, Decodable {
+            case svg
+            case png
+            case webp
+        }
+
+        struct Colors: Decodable {
+            let output: String?
+            let className: String?
+        }
+
+        struct Icons: Decodable {
+            let output: String
+            let dartFile: String?
+            let className: String?
+        }
+
+        struct Images: Decodable {
+            let output: String
+            let dartFile: String?
+            let className: String?
+            let scales: [Double]?
+            let format: ImageFormat?
+            let webpOptions: Android.Images.FormatOptions?
+        }
+
+        let output: URL
+        let colors: Colors?
+        let icons: Icons?
+        let images: Images?
+        let templatesPath: URL?
+    }
+
     let figma: Figma
     let common: Common?
     let ios: iOS?
     let android: Android?
+    let flutter: Flutter?
 }

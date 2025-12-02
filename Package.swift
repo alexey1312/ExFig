@@ -30,6 +30,7 @@ let package = Package(
                 "ExFigCore",
                 "XcodeExport",
                 "AndroidExport",
+                "FlutterExport",
                 "SVGKit",
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
@@ -78,6 +79,15 @@ let package = Package(
             ]
         ),
 
+        // Exports resources to Flutter project
+        .target(
+            name: "FlutterExport",
+            dependencies: ["ExFigCore", "Stencil", "StencilSwiftKit"],
+            resources: [
+                .copy("Resources/"),
+            ]
+        ),
+
         // MARK: - Tests
 
         .testTarget(
@@ -115,6 +125,10 @@ let package = Package(
         .testTarget(
             name: "AndroidExportTests",
             dependencies: ["AndroidExport", .product(name: "CustomDump", package: "swift-custom-dump")]
+        ),
+        .testTarget(
+            name: "FlutterExportTests",
+            dependencies: ["FlutterExport", .product(name: "CustomDump", package: "swift-custom-dump")]
         ),
         .testTarget(
             name: "SVGKitTests",

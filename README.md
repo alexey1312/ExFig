@@ -8,10 +8,11 @@
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
-Command-line utility to export colors, typography, icons, and images from Figma to Xcode and Android Studio projects.
+Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
+projects.
 
-Automatically sync your design system from Figma to code with support for Dark Mode, SwiftUI, UIKit, and Jetpack
-Compose.
+Automatically sync your design system from Figma to code with support for Dark Mode, SwiftUI, UIKit, Jetpack Compose,
+and Flutter.
 
 ## Why ExFig?
 
@@ -27,6 +28,7 @@ Compose.
 - 📝 Typography with Dynamic Type support (iOS)
 - 📱 SwiftUI and UIKit support
 - 🤖 Jetpack Compose support
+- 🦋 Flutter / Dart support
 - 🔄 RTL (Right-to-Left) layout support
 - 🎯 Figma Variables support
 - 📊 Rich progress indicators with ETA
@@ -68,6 +70,9 @@ exfig init -p ios
 
 # For Android projects
 exfig init -p android
+
+# For Flutter projects
+exfig init -p flutter
 ```
 
 ### 4. Configure File IDs
@@ -128,6 +133,7 @@ exfig colors -q
 - **[Usage Guide](.github/docs/usage.md)** - CLI commands and workflows
 - **[iOS Export](.github/docs/ios/index.md)** - Xcode, SwiftUI, and UIKit
 - **[Android Export](.github/docs/android/index.md)** - Android Studio and Jetpack Compose
+- **[Flutter Export](.github/docs/flutter/index.md)** - Flutter and Dart
 - **[Design Requirements](.github/docs/design-requirements.md)** - How to structure Figma files
 - **[Configuration Reference](CONFIG.md)** - All available options
 - **[Custom Templates](.github/docs/custom-templates.md)** - Customize generated code
@@ -178,6 +184,25 @@ app/src/main/
     ├── Colors.kt                    # Compose colors
     ├── Icons.kt                     # Compose icons
     └── Typography.kt                # Compose text styles
+```
+
+### Flutter
+
+```
+flutter_project/
+├── assets/
+│   ├── icons/
+│   │   ├── ic_add.svg               # Light icons
+│   │   └── ic_add_dark.svg          # Dark icons
+│   └── images/
+│       ├── logo.png                 # 1x scale
+│       ├── 2.0x/logo.png            # 2x scale
+│       └── 3.0x/logo.png            # 3x scale
+└── lib/
+    └── generated/
+        ├── colors.dart              # Color constants
+        ├── icons.dart               # Icon path constants
+        └── images.dart              # Image path constants
 ```
 
 ## Requirements

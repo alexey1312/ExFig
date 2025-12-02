@@ -28,6 +28,10 @@ from Figma to Xcode and Android Studio projects.
 - [Exporting Images](android/images.md)
 - [Exporting Typography](android/typography.md)
 
+#### Flutter / Dart Export
+
+- [Flutter Overview](flutter/index.md)
+
 ### Advanced Topics
 
 - [Design Requirements](design-requirements.md) - How to structure your Figma files
@@ -45,6 +49,7 @@ from Figma to Xcode and Android Studio projects.
 - **High Contrast**: Support for high contrast color variants
 - **SwiftUI & UIKit**: Generate code for both SwiftUI and UIKit
 - **Jetpack Compose**: Generate Kotlin code for Jetpack Compose
+- **Flutter / Dart**: Generate Dart code for Flutter
 - **RTL Support**: Right-to-left layout support for both platforms
 - **Multiple Formats**: PDF, SVG, PNG, WebP
 - **Dynamic Type**: iOS Dynamic Type support for typography

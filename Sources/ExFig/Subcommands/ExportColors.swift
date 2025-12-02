@@ -2,6 +2,7 @@ import AndroidExport
 import ArgumentParser
 import ExFigCore
 import FigmaAPI
+import FlutterExport
 import Foundation
 import XcodeExport
 
@@ -136,6 +137,32 @@ extension ExFigCommand {
 
                 ui.success("Done! Exported \(colorPairs.count) colors to Android project.")
             }
+
+            if let flutter = options.params.flutter, flutter.colors != nil {
+                let validateRegexpFlutter = nameValidateRegexp
+                let replaceRegexpFlutter = nameReplaceRegexp
+                let colorPairs = try await ui.withSpinner("Processing colors for Flutter...") {
+                    let processor = ColorsProcessor(
+                        platform: .android, // Flutter uses similar naming to Android
+                        nameValidateRegexp: validateRegexpFlutter,
+                        nameReplaceRegexp: replaceRegexpFlutter,
+                        nameStyle: NameStyle.camelCase
+                    )
+                    let result = processor.process(light: colors.light, dark: colors.dark)
+                    if let warning = result.warning?.errorDescription {
+                        ui.warning(warning)
+                    }
+                    return try result.get()
+                }
+
+                try await ui.withSpinner("Exporting colors to Flutter project...") {
+                    try exportFlutterColors(colorPairs: colorPairs, flutterParams: flutter)
+                }
+
+                await checkForUpdate(logger: logger)
+
+                ui.success("Done! Exported \(colorPairs.count) colors to Flutter project.")
+            }
         }
 
         private func exportXcodeColors(
@@ -219,6 +246,26 @@ extension ExFigCommand {
 
             try? FileManager.default.removeItem(atPath: lightColorsFileURL.path)
             try? FileManager.default.removeItem(atPath: darkColorsFileURL.path)
+
+            try fileWriter.write(files: files)
+        }
+
+        private func exportFlutterColors(colorPairs: [AssetPair<Color>], flutterParams: Params.Flutter) throws {
+            let output = FlutterOutput(
+                outputDirectory: flutterParams.output,
+                templatesPath: flutterParams.templatesPath,
+                colorsClassName: flutterParams.colors?.className
+            )
+            let exporter = FlutterColorExporter(
+                output: output,
+                outputFileName: flutterParams.colors?.output
+            )
+            let files = try exporter.export(colorPairs: colorPairs)
+
+            let fileName = flutterParams.colors?.output ?? "colors.dart"
+            let colorsFileURL = flutterParams.output.appendingPathComponent(fileName)
+
+            try? FileManager.default.removeItem(atPath: colorsFileURL.path)
 
             try fileWriter.write(files: files)
         }

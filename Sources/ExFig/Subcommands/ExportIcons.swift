@@ -1,7 +1,9 @@
+// swiftlint:disable file_length type_body_length
 import AndroidExport
 import ArgumentParser
 import ExFigCore
 import FigmaAPI
+import FlutterExport
 import Foundation
 import SVGKit
 import XcodeExport
@@ -41,6 +43,11 @@ extension ExFigCommand {
             if options.params.android != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export icons to Android Studio project.")
                 try await exportAndroidIcons(client: client, params: options.params, ui: ui)
+            }
+
+            if options.params.flutter != nil {
+                ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
+                try await exportFlutterIcons(client: client, params: options.params, ui: ui)
             }
         }
 
@@ -383,6 +390,77 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Generated \(kotlinFiles.count) ImageVector files.")
+        }
+
+        private func exportFlutterIcons(client: Client, params: Params, ui: TerminalUI) async throws {
+            guard let flutter = params.flutter, let flutterIcons = flutter.icons else {
+                ui.warning("Nothing to do. You haven't specified flutter.icons parameter in the config file.")
+                return
+            }
+
+            // 1. Get Icons info
+            let imagesTuple = try await ui.withSpinner("Fetching icons from Figma...") {
+                let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
+                return try await loader.load(filter: filter)
+            }
+
+            // 2. Process images
+            let icons = try await ui.withSpinner("Processing icons...") {
+                let processor = ImagesProcessor(
+                    platform: .android, // Flutter uses similar naming to Android
+                    nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                    nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                    nameStyle: .snakeCase
+                )
+
+                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                if let warning = result.warning?.errorDescription {
+                    ui.warning(warning)
+                }
+                return try result.get()
+            }
+
+            // 3. Export icons
+            let assetsDirectory = URL(fileURLWithPath: flutterIcons.output)
+            let output = FlutterOutput(
+                outputDirectory: flutter.output,
+                iconsAssetsDirectory: assetsDirectory,
+                templatesPath: flutter.templatesPath,
+                iconsClassName: flutterIcons.className
+            )
+
+            let exporter = FlutterIconsExporter(output: output, outputFileName: flutterIcons.dartFile)
+            let (dartFile, assetFiles) = try exporter.export(icons: icons)
+
+            // 4. Download SVG files
+            let remoteFiles = assetFiles.filter { $0.sourceURL != nil }
+
+            var localFiles: [FileContents] = if !remoteFiles.isEmpty {
+                try await ui.withProgress("Downloading SVG files", total: remoteFiles.count) { progress in
+                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                        await progress.update(current: current)
+                    }
+                }
+            } else {
+                []
+            }
+
+            // Clear output directory if not filtering
+            if filter == nil {
+                try? FileManager.default.removeItem(atPath: assetsDirectory.path)
+            }
+
+            // 5. Write files
+            localFiles.append(dartFile)
+
+            let filesToWrite = localFiles
+            try await ui.withSpinner("Writing files to Flutter project...") {
+                try fileWriter.write(files: filesToWrite)
+            }
+
+            await checkForUpdate(logger: logger)
+
+            ui.success("Done! Exported \(icons.count) icons to Flutter project.")
         }
     }
 }

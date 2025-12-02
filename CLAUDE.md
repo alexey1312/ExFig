@@ -26,8 +26,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ExFig is a command-line utility that exports colors, typography, icons, and images from Figma to Xcode and Android
-Studio projects. It supports Dark Mode, SwiftUI, UIKit, Jetpack Compose, high contrast colors, and Figma Variables.
+ExFig is a command-line utility that exports colors, typography, icons, and images from Figma to Xcode, Android Studio,
+and Flutter projects. It supports Dark Mode, SwiftUI, UIKit, Jetpack Compose, Flutter/Dart, high contrast colors, and
+Figma Variables.
 
 ### Key Features
 
@@ -37,6 +38,7 @@ Studio projects. It supports Dark Mode, SwiftUI, UIKit, Jetpack Compose, high co
 - Typography with Dynamic Type support (iOS)
 - SwiftUI and UIKit support
 - Jetpack Compose support
+- Flutter / Dart support
 - RTL (Right-to-Left) layout support
 - Figma Variables support
 
@@ -65,6 +67,7 @@ mise run test:filter XcodeExportTests
 mise run test:filter AndroidExportTests
 mise run test:filter FigmaAPITests
 mise run test:filter SVGKitTests
+mise run test:filter FlutterExportTests
 
 # Lint code
 mise run lint
@@ -108,7 +111,7 @@ mise run build:release
 
 ## Architecture
 
-The codebase is organized as a Swift Package with six main modules:
+The codebase is organized as a Swift Package with seven main modules:
 
 ### Modules
 
@@ -248,13 +251,29 @@ Export to Android projects.
 - Model types:
   - `AndroidOutput.swift` - Export output model
 
+#### FlutterExport (`Sources/FlutterExport/`)
+
+Export to Flutter projects.
+
+- Generates Dart code for colors, icons, and images
+- Generates SVG icon assets
+- Generates multi-scale PNG/WebP image assets (1x, 2x, 3x)
+- Uses Stencil templates in `Resources/` directory
+- Exporters:
+  - `FlutterColorExporter.swift` - Color export (Color class with hex format)
+  - `FlutterIconsExporter.swift` - Icons export (SVG assets + Dart constants)
+  - `FlutterImagesExporter.swift` - Images export (multi-scale + Dart constants)
+  - `FlutterExporter.swift` - Base exporter class
+- Model types:
+  - `FlutterOutput.swift` - Export output configuration
+
 ### Data Flow
 
 1. CLI command parses `exfig.yaml` configuration (YAML format via Yams)
 2. Command validates configuration and checks for required Figma token
 3. FigmaAPI fetches design data from Figma REST API (requires `FIGMA_PERSONAL_TOKEN` env var)
 4. ExFigCore processes Figma data into platform-agnostic models
-5. XcodeExport or AndroidExport generates platform-specific assets and code using Stencil templates
+5. XcodeExport, AndroidExport, or FlutterExport generates platform-specific assets and code using Stencil templates
 6. FileWriter writes generated files to disk
 7. XcodeProjectWriter updates Xcode project files (if configured)
 
@@ -347,6 +366,7 @@ Tests are organized by module:
 - `Tests/ExFigCoreTests/` - Core model and processor tests
 - `Tests/XcodeExportTests/` - Xcode export tests
 - `Tests/AndroidExportTests/` - Android export tests
+- `Tests/FlutterExportTests/` - Flutter export tests
 - `Tests/SVGKitTests/` - SVG parsing and generation tests
 
 Run tests with `mise run test` or target specific test suites with `swift test --filter <TargetName>`.
@@ -382,7 +402,7 @@ Run tests with `mise run test` or target specific test suites with `swift test -
 
 ### Modifying Generated Code
 
-1. Locate Stencil template in `XcodeExport/Resources/` or `AndroidExport/Resources/`
+1. Locate Stencil template in `XcodeExport/Resources/`, `AndroidExport/Resources/`, or `FlutterExport/Resources/`
 2. Modify template using Stencil syntax
 3. Update corresponding output model if needed
 4. Update tests with expected output
