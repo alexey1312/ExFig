@@ -33,6 +33,7 @@ swiftformat = "0.58.7"
 swiftlint = "0.62.2"
 xcsift = "1.0.14"
 "pipx:mdformat" = "0.7.22"
+git-cliff = "2.10.1"
 
 # =============================================================================
 # Tasks
@@ -72,8 +73,9 @@ run = """
 # Install mdformat plugins via uv tool install
 uv tool install --force mdformat==0.7.22 --with mdformat-gfm --with mdformat-tables --with mdformat-frontmatter --with mdformat-footnote 2>&1
 
-# Install pre-commit hooks
+# Install pre-commit hooks (both pre-commit and commit-msg stages)
 pre-commit install
+pre-commit install --hook-type commit-msg
 """
 
 [tasks.pre-commit]
@@ -84,11 +86,12 @@ run = "pre-commit run --all-files"
 description = "Format markdown files"
 run = """
 echo "🔍 Finding markdown files..."
-MD_FILES=$(find . -name '*.md' -not -path '*/.build/*' -not -path '*/.git/*' | wc -l | tr -d ' ')
+MD_FILES=$(find . -name '*.md' -not -path '*/.build/*' -not -path '*/.git/*' -not -path '*/.github/ISSUE_TEMPLATE/*' | wc -l | tr -d ' ')
 echo "📝 Formatting $MD_FILES markdown file(s)..."
 find . -name '*.md' \
   -not -path '*/.build/*' \
   -not -path '*/.git/*' \
+  -not -path '*/.github/ISSUE_TEMPLATE/*' \
   -exec mdformat --wrap 120 --number {} + && \
   echo "✅ Successfully formatted $MD_FILES markdown file(s)" || \
   echo "⚠️  Some markdown files could not be formatted"
@@ -98,12 +101,20 @@ find . -name '*.md' \
 description = "Check markdown formatting (CI)"
 run = """
 echo "🔍 Checking markdown formatting..."
-MD_FILES=$(find . -name '*.md' -not -path '*/.build/*' -not -path '*/.git/*' | wc -l | tr -d ' ')
+MD_FILES=$(find . -name '*.md' -not -path '*/.build/*' -not -path '*/.git/*' -not -path '*/.github/ISSUE_TEMPLATE/*' | wc -l | tr -d ' ')
 echo "📝 Checking $MD_FILES markdown file(s)..."
-if find . -name '*.md' -not -path '*/.build/*' -not -path '*/.git/*' -exec mdformat --check --wrap 120 --number {} +; then
+if find . -name '*.md' -not -path '*/.build/*' -not -path '*/.git/*' -not -path '*/.github/ISSUE_TEMPLATE/*' -exec mdformat --check --wrap 120 --number {} +; then
   echo "✅ All markdown files are properly formatted"
 else
   echo "❌ Some markdown files need formatting. Run: mise run format-md"
   exit 1
 fi
 """
+
+[tasks.changelog]
+description = "Generate CHANGELOG.md from git history"
+run = "git-cliff -o CHANGELOG.md"
+
+[tasks."changelog:unreleased"]
+description = "Preview unreleased changes"
+run = "git-cliff --unreleased"

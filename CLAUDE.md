@@ -303,6 +303,29 @@ exfig init -p android
 - **FIGMA_PERSONAL_TOKEN** (required): Figma personal access token for API access
   - Get your token from [Figma developer settings](https://www.figma.com/developers/api#access-tokens)
 
+## Commit Message Format
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for automatic changelog generation.
+
+**Format:** `<type>(<scope>): <description>`
+
+**Types:**
+
+| Type | Description | |------|-------------| | `feat` | New feature | | `fix` | Bug fix | | `docs` | Documentation only
+| | `refactor` | Code refactoring | | `perf` | Performance improvement | | `test` | Adding or updating tests | | `chore`
+| Maintenance tasks | | `ci` | CI/CD changes |
+
+**Examples:**
+
+```bash
+feat: add WebP image export support
+fix(icons): handle SVG with missing viewBox
+docs: update installation instructions
+refactor(api): simplify Figma client error handling
+```
+
+**Common scopes:** `colors`, `icons`, `images`, `typography`, `api`, `cli`, `ios`, `android`
+
 ## Pre-Commit Requirements
 
 Before creating any commit, the following must pass without errors:
