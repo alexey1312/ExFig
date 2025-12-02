@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'generated/colors.dart';
-import 'generated/icons.dart';
-import 'generated/images.dart';
 import 'ui/colors_page.dart';
 import 'ui/icons_page.dart';
 import 'ui/images_page.dart';
