@@ -10,6 +10,7 @@ enum ExFigError: LocalizedError {
     case componentsNotFound
     case accessTokenNotFound
     case colorsAssetsFolderNotSpecified
+    case configurationError(String)
     case custom(errorString: String)
 
     var errorDescription: String? {
@@ -24,6 +25,8 @@ enum ExFigError: LocalizedError {
             "Environment variable FIGMA_PERSONAL_TOKEN not specified."
         case .colorsAssetsFolderNotSpecified:
             "Option ios.colors.assetsFolder not specified in configuration file."
+        case let .configurationError(message):
+            "Configuration error: \(message)"
         case let .custom(errorString):
             errorString
         }

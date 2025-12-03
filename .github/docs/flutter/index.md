@@ -246,6 +246,40 @@ Available template files for Flutter:
 - `icons.dart.stencil` - Icons class template
 - `images.dart.stencil` - Images class template
 
+## Troubleshooting
+
+### "cwebp tool not found" (WebP format only)
+
+The `cwebp` tool is required when using `format: webp`. Install it:
+
+```bash
+# macOS
+brew install webp
+
+# Linux (Debian/Ubuntu)
+sudo apt install webp
+
+# Linux (Fedora/RHEL)
+sudo dnf install libwebp-tools
+```
+
+Or specify a custom path: `export CWEBP_PATH=/path/to/cwebp`
+
+### "WebP encoding quality not specified"
+
+When using `format: webp` with `encoding: lossy`, you must specify a quality value:
+
+```yaml
+flutter:
+  images:
+    format: webp
+    webpOptions:
+      encoding: lossy
+      quality: 90  # Required for lossy encoding
+```
+
+For lossless encoding, quality is not required.
+
 ## Related Documentation
 
 - [Configuration Reference](../../CONFIG.md)
