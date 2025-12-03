@@ -1,12 +1,6 @@
 import ExFigCore
 import Foundation
 
-/// Options for image optimization via image_optim
-struct OptimizeOptions: Decodable {
-    /// Allow lossy compression (pngquant, mozjpeg). Default: false (lossless only).
-    let allowLossy: Bool?
-}
-
 // swiftlint:disable:this nesting type_name
 struct Params: Decodable {
     struct Figma: Decodable {
@@ -122,11 +116,6 @@ struct Params: Decodable {
 
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
-
-            /// Enable image optimization via image_optim
-            let optimize: Bool?
-            /// Options for image optimization
-            let optimizeOptions: OptimizeOptions?
         }
 
         struct Typography: Decodable {
@@ -195,11 +184,6 @@ struct Params: Decodable {
             let output: String
             let format: Format
             let webpOptions: FormatOptions?
-
-            /// Enable image optimization via image_optim
-            let optimize: Bool?
-            /// Options for image optimization
-            let optimizeOptions: OptimizeOptions?
         }
 
         struct Typography: Decodable {
@@ -242,11 +226,6 @@ struct Params: Decodable {
             let scales: [Double]?
             let format: ImageFormat?
             let webpOptions: Android.Images.FormatOptions?
-
-            /// Enable image optimization via image_optim
-            let optimize: Bool?
-            /// Options for image optimization
-            let optimizeOptions: OptimizeOptions?
         }
 
         let output: URL

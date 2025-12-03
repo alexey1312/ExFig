@@ -333,9 +333,6 @@ exfig init -p android
 
 - **FIGMA_PERSONAL_TOKEN** (required): Figma personal access token for API access
   - Get your token from [Figma developer settings](https://www.figma.com/developers/api#access-tokens)
-- **IMAGE_OPTIM_PATH** (optional): Custom path to `image_optim` executable for image optimization
-  - Only needed if `image_optim` is not in PATH or standard locations
-  - Example: `export IMAGE_OPTIM_PATH=/path/to/image_optim`
 
 ## Commit Message Format
 

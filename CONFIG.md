@@ -177,14 +177,6 @@ ios:
     swiftUIImageSwift: "./Source/Image+extension_illustrations.swift"
     # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing illustrations from the code (e.g. UIImage.illZeroNoInternet)
     imageSwift: "./Example/Source/UIImage+extension_illustrations.swift"
-    # [optional] Enable image optimization using image_optim. Requires image_optim gem to be installed.
-    # Install via: mise use -g gem:image_optim gem:image_optim_pack
-    # Or: gem install image_optim image_optim_pack
-    optimize: true
-    # [optional] Image optimization options
-    optimizeOptions:
-      # [optional] Allow lossy compression (pngquant, mozjpeg). Defaults to false (lossless only).
-      allowLossy: false
 
   # [optional] Parameters for exporting typography
   typography:
@@ -236,14 +228,6 @@ android:
       encoding: lossy
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
-    # [optional] Enable image optimization using image_optim (PNG format only, WebP is already optimized).
-    # Install via: mise use -g gem:image_optim gem:image_optim_pack
-    # Or: gem install image_optim image_optim_pack
-    optimize: true
-    # [optional] Image optimization options
-    optimizeOptions:
-      # [optional] Allow lossy compression (pngquant, mozjpeg). Defaults to false (lossless only).
-      allowLossy: true
   # Parameters for exporting typography
   typography:
     # Typography name style: camelCase or snake_case
@@ -292,14 +276,6 @@ flutter:
       encoding: lossy
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
-    # [optional] Enable image optimization using image_optim (PNG format only, WebP/SVG not optimized by image_optim).
-    # Install via: mise use -g gem:image_optim gem:image_optim_pack
-    # Or: gem install image_optim image_optim_pack
-    optimize: true
-    # [optional] Image optimization options
-    optimizeOptions:
-      # [optional] Allow lossy compression (pngquant, mozjpeg). Defaults to false (lossless only).
-      allowLossy: false
 ```
 
 ## CLI Options for Version Tracking
