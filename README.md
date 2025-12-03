@@ -187,18 +187,18 @@ exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 
 ### Download Command Options
 
-| Option               | Short | Description                               | Default     |
-| -------------------- | ----- | ----------------------------------------- | ----------- |
-| `--file-id`          | `-f`  | Figma file ID (required)                  | -           |
-| `--frame`            | `-r`  | Figma frame name (required)               | -           |
-| `--output`           | `-o`  | Output directory (required)               | -           |
-| `--format`           |       | Image format: png, svg, jpg, pdf, webp    | png         |
-| `--scale`            |       | Scale factor (0.01-4.0)                   | 3 (for PNG) |
-| `--filter`           |       | Filter pattern (e.g., "icon/\*")          | -           |
-| `--name-style`       |       | Name style: camelCase, snake_case         | -           |
-| `--dark-mode-suffix` |       | Suffix for dark variants (e.g., "\_dark") | -           |
-| `--webp-encoding`    |       | WebP encoding: lossy, lossless            | lossy       |
-| `--webp-quality`     |       | WebP quality (0-100)                      | 80          |
+| Option               | Short | Description                                                                     | Default     |
+| -------------------- | ----- | ------------------------------------------------------------------------------- | ----------- |
+| `--file-id`          | `-f`  | Figma file ID (required)                                                        | -           |
+| `--frame`            | `-r`  | Figma frame name (required)                                                     | -           |
+| `--output`           | `-o`  | Output directory (required)                                                     | -           |
+| `--format`           |       | Image format: png, svg, jpg, pdf, webp                                          | png         |
+| `--scale`            |       | Scale factor (0.01-4.0)                                                         | 3 (for PNG) |
+| `--filter`           |       | Filter pattern (e.g., "icon/\*")                                                | -           |
+| `--name-style`       |       | Name style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE | -           |
+| `--dark-mode-suffix` |       | Suffix for dark variants (e.g., "\_dark")                                       | -           |
+| `--webp-encoding`    |       | WebP encoding: lossy, lossless                                                  | lossy       |
+| `--webp-quality`     |       | WebP quality (0-100)                                                            | 80          |
 
 ## Documentation
 

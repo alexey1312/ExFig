@@ -29,13 +29,19 @@ extension NameStyle: ExpressibleByArgument {
             self = .camelCase
         case "snake_case", "snakeCase":
             self = .snakeCase
+        case "PascalCase", "pascalCase":
+            self = .pascalCase
+        case "kebab-case", "kebabCase":
+            self = .kebabCase
+        case "SCREAMING_SNAKE_CASE", "screamingSnakeCase":
+            self = .screamingSnakeCase
         default:
             return nil
         }
     }
 
     public static var allValueStrings: [String] {
-        ["camelCase", "snake_case"]
+        ["camelCase", "snake_case", "PascalCase", "kebab-case", "SCREAMING_SNAKE_CASE"]
     }
 }
 
@@ -86,7 +92,7 @@ struct DownloadOptions: ParsableArguments {
 
     @Option(
         name: [.customLong("name-style")],
-        help: "Name style: camelCase or snake_case"
+        help: "Name style: \(NameStyle.allValueStrings.joined(separator: ", "))"
     )
     var nameStyle: NameStyle?
 

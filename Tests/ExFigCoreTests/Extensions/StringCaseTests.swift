@@ -32,4 +32,30 @@ final class StringCaseTests: XCTestCase {
         XCTAssertEqual("Lower Camel cased".lowerCamelCased(), "lowerCamelCased")
         XCTAssertEqual("_this is*  not-Very%difficult".lowerCamelCased(), "thisIsNotVeryDifficult")
     }
+
+    func testPascalCase() throws {
+        XCTAssertEqual("pascal".camelCased(), "Pascal")
+        XCTAssertEqual("PascalCase".camelCased(), "PascalCase")
+        XCTAssertEqual("pascal_case".camelCased(), "PascalCase")
+        XCTAssertEqual("Pascal Case".camelCased(), "PascalCase")
+        XCTAssertEqual("_this is*  not-Very%difficult".camelCased(), "ThisIsNotVeryDifficult")
+    }
+
+    func testKebabCase() throws {
+        XCTAssertEqual("kebab".kebabCased(), "kebab")
+        XCTAssertEqual("kebab-case".kebabCased(), "kebab-case")
+        XCTAssertEqual("kebabCase".kebabCased(), "kebab-case")
+        XCTAssertEqual("Kebab Case".kebabCased(), "kebab-case")
+        XCTAssertEqual("kebab_case".kebabCased(), "kebab-case")
+        XCTAssertEqual("_this is*  not-Very%difficult".kebabCased(), "this-is-not-very-difficult")
+    }
+
+    func testScreamingSnakeCase() throws {
+        XCTAssertEqual("screaming".screamingSnakeCased(), "SCREAMING")
+        XCTAssertEqual("SCREAMING_SNAKE".screamingSnakeCased(), "SCREAMING_SNAKE")
+        XCTAssertEqual("screamingSnake".screamingSnakeCased(), "SCREAMING_SNAKE")
+        XCTAssertEqual("Screaming Snake".screamingSnakeCased(), "SCREAMING_SNAKE")
+        XCTAssertEqual("screaming_snake".screamingSnakeCased(), "SCREAMING_SNAKE")
+        XCTAssertEqual("_this is*  not-Very%difficult".screamingSnakeCased(), "THIS_IS_NOT_VERY_DIFFICULT")
+    }
 }

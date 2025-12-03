@@ -175,6 +175,12 @@ extension ExFigCommand {
                         processed.name = processed.name.lowerCamelCased()
                     case .snakeCase:
                         processed.name = processed.name.snakeCased()
+                    case .pascalCase:
+                        processed.name = processed.name.camelCased()
+                    case .kebabCase:
+                        processed.name = processed.name.kebabCased()
+                    case .screamingSnakeCase:
+                        processed.name = processed.name.screamingSnakeCased()
                     }
                 }
 

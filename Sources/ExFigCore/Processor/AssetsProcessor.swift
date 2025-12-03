@@ -24,6 +24,12 @@ public extension AssetNameProcessable {
             name.lowerCamelCased()
         case .snakeCase:
             name.snakeCased()
+        case .pascalCase:
+            name.camelCased()
+        case .kebabCase:
+            name.kebabCased()
+        case .screamingSnakeCase:
+            name.screamingSnakeCased()
         }
     }
 }

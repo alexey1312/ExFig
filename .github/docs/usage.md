@@ -348,6 +348,15 @@ exfig download -f abc123 -r "Images" -o ./images --name-style camelCase
 # Convert names to snake_case
 exfig download -f abc123 -r "Images" -o ./images --name-style snake_case
 
+# Convert names to PascalCase
+exfig download -f abc123 -r "Images" -o ./images --name-style PascalCase
+
+# Convert names to kebab-case
+exfig download -f abc123 -r "Images" -o ./images --name-style kebab-case
+
+# Convert names to SCREAMING_SNAKE_CASE
+exfig download -f abc123 -r "Images" -o ./images --name-style SCREAMING_SNAKE_CASE
+
 # Custom regex replacement
 exfig download -f abc123 -r "Images" -o ./images \
   --name-validate-regexp "^icon/(.*)$" \
@@ -363,23 +372,23 @@ exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 
 ### All Download Options
 
-| Option                   | Short | Description                            | Default      |
-| ------------------------ | ----- | -------------------------------------- | ------------ |
-| `--file-id`              | `-f`  | Figma file ID (required)               | -            |
-| `--frame`                | `-r`  | Figma frame name (required)            | -            |
-| `--output`               | `-o`  | Output directory (required)            | -            |
-| `--format`               |       | Image format: png, svg, jpg, pdf, webp | png          |
-| `--scale`                |       | Scale factor (0.01-4.0)                | 3 (PNG only) |
-| `--filter`               |       | Filter pattern (e.g., "icon/\*")       | -            |
-| `--name-style`           |       | Name style: camelCase, snake_case      | -            |
-| `--name-validate-regexp` |       | Regex pattern for validation           | -            |
-| `--name-replace-regexp`  |       | Regex replacement pattern              | -            |
-| `--dark-mode-suffix`     |       | Suffix for dark variants               | -            |
-| `--webp-encoding`        |       | WebP encoding: lossy, lossless         | lossy        |
-| `--webp-quality`         |       | WebP quality (0-100)                   | 80           |
-| `--timeout`              |       | API request timeout in seconds         | 30           |
-| `--verbose`              | `-v`  | Show detailed output                   | false        |
-| `--quiet`                | `-q`  | Show only errors                       | false        |
+| Option                   | Short | Description                                                                     | Default      |
+| ------------------------ | ----- | ------------------------------------------------------------------------------- | ------------ |
+| `--file-id`              | `-f`  | Figma file ID (required)                                                        | -            |
+| `--frame`                | `-r`  | Figma frame name (required)                                                     | -            |
+| `--output`               | `-o`  | Output directory (required)                                                     | -            |
+| `--format`               |       | Image format: png, svg, jpg, pdf, webp                                          | png          |
+| `--scale`                |       | Scale factor (0.01-4.0)                                                         | 3 (PNG only) |
+| `--filter`               |       | Filter pattern (e.g., "icon/\*")                                                | -            |
+| `--name-style`           |       | Name style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE | -            |
+| `--name-validate-regexp` |       | Regex pattern for validation                                                    | -            |
+| `--name-replace-regexp`  |       | Regex replacement pattern                                                       | -            |
+| `--dark-mode-suffix`     |       | Suffix for dark variants                                                        | -            |
+| `--webp-encoding`        |       | WebP encoding: lossy, lossless                                                  | lossy        |
+| `--webp-quality`         |       | WebP quality (0-100)                                                            | 80           |
+| `--timeout`              |       | API request timeout in seconds                                                  | 30           |
+| `--verbose`              | `-v`  | Show detailed output                                                            | false        |
+| `--quiet`                | `-q`  | Show only errors                                                                | false        |
 
 ## Help and Version Info
 

@@ -127,7 +127,7 @@ ios:
     useColorAssets: true
     # [required if useColorAssets: True] Name of the folder inside Assets.xcassets where to place colors (.colorset directories)
     assetsFolder: Colors
-    # Color name style: camelCase or snake_case
+    # Color name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
     # [optional] Absolute or relative path to swift file where to export UIKit colors (UIColor) for accessing from the code (e.g. UIColor.backgroundPrimary)
     colorSwift: "./Sources/UIColor+extension.swift"
@@ -142,7 +142,7 @@ ios:
     format: pdf
     # Name of the folder inside Assets.xcassets where to place icons (.imageset directories)
     assetsFolder: Icons
-    # Icon name style: camelCase or snake_case
+    # Icon name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
     # [optional] An array of icon names that will supports Preseve Vecotor Data. Use `- "*"` to enable this option for all icons.
     preservesVectorRepresentation:
@@ -169,7 +169,7 @@ ios:
   images:
     # Name of the folder inside Assets.xcassets where to place images (.imageset directories)
     assetsFolder: Illustrations
-    # Image name style: camelCase or snake_case
+    # Image name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
     # [optional] An array of asset scales that should be downloaded. The valid values are 1, 2, 3. The deafault value is [1, 2, 3].
     scales: [1, 2, 3]
@@ -190,7 +190,7 @@ ios:
     generateLabels: true
     # Relative or absolute path to directory where to place UILabel for each text style (font) (Requred if generateLabels = true)
     labelsDirectory: "./Source/UIComponents/"
-    # Typography name style: camelCase or snake_case
+    # Typography name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
 
 # [optional] Android export parameters
@@ -230,7 +230,7 @@ android:
       quality: 90
   # Parameters for exporting typography
   typography:
-    # Typography name style: camelCase or snake_case
+    # Typography name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
     # [optional] The package to export the Jetpack Compose typography code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"

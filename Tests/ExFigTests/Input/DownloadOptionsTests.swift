@@ -149,6 +149,24 @@ final class DownloadOptionsTests: XCTestCase {
             "--name-style", "snake_case",
         ])
         XCTAssertEqual(snakeOptions.nameStyle, .snakeCase)
+
+        let pascalOptions = try DownloadOptions.parse([
+            "-f", "abc", "-r", "Frame", "-o", "./out",
+            "--name-style", "PascalCase",
+        ])
+        XCTAssertEqual(pascalOptions.nameStyle, .pascalCase)
+
+        let kebabOptions = try DownloadOptions.parse([
+            "-f", "abc", "-r", "Frame", "-o", "./out",
+            "--name-style", "kebab-case",
+        ])
+        XCTAssertEqual(kebabOptions.nameStyle, .kebabCase)
+
+        let screamingOptions = try DownloadOptions.parse([
+            "-f", "abc", "-r", "Frame", "-o", "./out",
+            "--name-style", "SCREAMING_SNAKE_CASE",
+        ])
+        XCTAssertEqual(screamingOptions.nameStyle, .screamingSnakeCase)
     }
 
     func testParsesNameRegexOptions() throws {
