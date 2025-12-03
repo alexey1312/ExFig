@@ -41,6 +41,7 @@ Figma Variables.
 - Flutter / Dart support
 - RTL (Right-to-Left) layout support
 - Figma Variables support
+- File version tracking (skip exports when unchanged)
 
 ## Requirements
 
@@ -143,6 +144,10 @@ Main executable target with CLI commands.
   - `ExFigOptions.swift` - YAML configuration model (via Yams)
   - `Params.swift` - Command parameters
   - `GlobalOptions.swift` - Global CLI flags (`--verbose`, `--quiet`)
+  - `CacheOptions.swift` - CLI flags for version tracking (`--cache`, `--no-cache`, `--force`)
+- `Cache/` - Version tracking for incremental exports:
+  - `ImageTrackingCache.swift` - Cache model for storing file versions
+  - `ImageTrackingManager.swift` - Manages version checking and cache updates
 - `TerminalUI/` - Terminal output and progress indicators:
   - `TerminalUI.swift` - Main facade for terminal output
   - `Spinner.swift` - Animated spinner actor
@@ -200,6 +205,7 @@ Figma REST API client.
   - `StylesEndpoint.swift` - Styles API
   - `ImageEndpoint.swift` - Image export API
   - `VariablesEndpoint.swift` - Variables API
+  - `FileMetadataEndpoint.swift` - File metadata API (version tracking)
   - `LatestReleaseEndpoint.swift` - GitHub releases API
 - `Model/` - API response models:
   - `Node.swift` - Figma node models
