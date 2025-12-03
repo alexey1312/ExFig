@@ -130,6 +130,88 @@ private struct ParsedTransformValues {
     }
 }
 
+// MARK: - Gradient Types
+
+/// Gradient color stop
+public struct SVGGradientStop: Sendable, Equatable {
+    public let offset: Double
+    public let color: SVGColor
+    public let opacity: Double
+
+    public init(offset: Double, color: SVGColor, opacity: Double = 1.0) {
+        self.offset = offset
+        self.color = color
+        self.opacity = opacity
+    }
+}
+
+/// Linear gradient definition
+public struct SVGLinearGradient: Sendable, Equatable {
+    public let id: String
+    public let x1, y1, x2, y2: Double
+    public let stops: [SVGGradientStop]
+    public let spreadMethod: SpreadMethod
+
+    public enum SpreadMethod: String, Sendable {
+        case pad
+        case reflect
+        case repeating = "repeat"
+    }
+
+    public init(
+        id: String,
+        x1: Double, y1: Double,
+        x2: Double, y2: Double,
+        stops: [SVGGradientStop],
+        spreadMethod: SpreadMethod = .pad
+    ) {
+        self.id = id
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.stops = stops
+        self.spreadMethod = spreadMethod
+    }
+}
+
+/// Radial gradient definition
+public struct SVGRadialGradient: Sendable, Equatable {
+    public let id: String
+    public let cx, cy, r: Double
+    public let fx, fy: Double?
+    public let stops: [SVGGradientStop]
+    public let spreadMethod: SVGLinearGradient.SpreadMethod
+
+    public init(
+        id: String,
+        cx: Double, cy: Double,
+        r: Double,
+        fx: Double? = nil, fy: Double? = nil,
+        stops: [SVGGradientStop],
+        spreadMethod: SVGLinearGradient.SpreadMethod = .pad
+    ) {
+        self.id = id
+        self.cx = cx
+        self.cy = cy
+        self.r = r
+        self.fx = fx
+        self.fy = fy
+        self.stops = stops
+        self.spreadMethod = spreadMethod
+    }
+}
+
+/// Fill type - solid color, gradient, or none
+public enum SVGFill: Sendable, Equatable {
+    case none
+    case solid(SVGColor)
+    case linearGradient(SVGLinearGradient)
+    case radialGradient(SVGRadialGradient)
+}
+
+// MARK: - Group Types
+
 /// Represents a group element in SVG with optional transform, clip-path, and nested children
 public struct SVGGroup: Equatable, Sendable {
     public let transform: SVGTransform?

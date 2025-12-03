@@ -12,6 +12,8 @@ public struct ParsedSVG: Equatable, Sendable {
     public let viewportHeight: Double
     public let paths: [SVGPath]
     public let groups: [SVGGroup]?
+    public let linearGradients: [String: SVGLinearGradient]
+    public let radialGradients: [String: SVGRadialGradient]
 
     public init(
         width: Double,
@@ -19,7 +21,9 @@ public struct ParsedSVG: Equatable, Sendable {
         viewportWidth: Double,
         viewportHeight: Double,
         paths: [SVGPath],
-        groups: [SVGGroup]? = nil
+        groups: [SVGGroup]? = nil,
+        linearGradients: [String: SVGLinearGradient] = [:],
+        radialGradients: [String: SVGRadialGradient] = [:]
     ) {
         self.width = width
         self.height = height
@@ -27,6 +31,8 @@ public struct ParsedSVG: Equatable, Sendable {
         self.viewportHeight = viewportHeight
         self.paths = paths
         self.groups = groups
+        self.linearGradients = linearGradients
+        self.radialGradients = radialGradients
     }
 }
 
@@ -35,6 +41,7 @@ public struct SVGPath: Equatable, Sendable {
     public let pathData: String
     public let commands: [SVGPathCommand]
     public let fill: SVGColor?
+    public let fillType: SVGFill
     public let stroke: SVGColor?
     public let strokeWidth: Double?
     public let strokeLineCap: StrokeCap?
@@ -46,6 +53,7 @@ public struct SVGPath: Equatable, Sendable {
         pathData: String,
         commands: [SVGPathCommand],
         fill: SVGColor?,
+        fillType: SVGFill = .none,
         stroke: SVGColor?,
         strokeWidth: Double?,
         strokeLineCap: StrokeCap?,
@@ -56,6 +64,7 @@ public struct SVGPath: Equatable, Sendable {
         self.pathData = pathData
         self.commands = commands
         self.fill = fill
+        self.fillType = fillType
         self.stroke = stroke
         self.strokeWidth = strokeWidth
         self.strokeLineCap = strokeLineCap
@@ -226,6 +235,15 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     /// Storage for clip-path definitions
     private var clipPathDefs: [String: String] = [:]
 
+    /// Storage for linear gradient definitions
+    private var linearGradientDefs: [String: SVGLinearGradient] = [:]
+
+    /// Storage for radial gradient definitions
+    private var radialGradientDefs: [String: SVGRadialGradient] = [:]
+
+    /// Current viewBox for coordinate resolution
+    private var currentViewBox: (minX: Double, minY: Double, width: Double, height: Double)?
+
     public init() {}
 
     // MARK: - Cross-Platform XML Helpers
@@ -278,15 +296,22 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             throw SVGParserError.invalidSVGRoot
         }
 
-        // Reset clip-path definitions for this parse
+        // Reset definitions for this parse
         clipPathDefs = [:]
+        linearGradientDefs = [:]
+        radialGradientDefs = [:]
 
         // Parse dimensions
         let (width, height) = try parseDimensions(from: root)
-        let (viewportWidth, viewportHeight) = parseViewBox(from: root) ?? (width, height)
+        let viewBoxValues = parseViewBoxValues(from: root)
+        let (viewportWidth, viewportHeight) = viewBoxValues.map { _, _, w, h in (w, h) } ?? (width, height)
 
-        // Parse defs for clip-paths
+        // Store viewBox for gradient coordinate resolution
+        currentViewBox = viewBoxValues
+
+        // Parse defs for clip-paths and gradients
         try parseDefsForClipPaths(from: root)
+        parseDefsForGradients(from: root)
 
         // Parse all path elements (flattened for backward compatibility)
         var paths: [SVGPath] = []
@@ -302,7 +327,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             viewportWidth: viewportWidth,
             viewportHeight: viewportHeight,
             paths: paths,
-            groups: groups.isEmpty ? nil : groups
+            groups: groups.isEmpty ? nil : groups,
+            linearGradients: linearGradientDefs,
+            radialGradients: radialGradientDefs
         )
     }
 
@@ -417,7 +444,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     private func createSVGPath(pathData: String, attributes: [String: String]) throws -> SVGPath {
         let commands = try pathParser.parse(pathData)
 
-        let fill = attributes["fill"].flatMap { SVGColor.parse($0) }
+        let fillValue = attributes["fill"]
+        let fill = fillValue.flatMap { SVGColor.parse($0) }
+        let fillType = resolveFill(fillValue)
         let stroke = attributes["stroke"].flatMap { SVGColor.parse($0) }
         let strokeWidth = attributes["stroke-width"].flatMap { Double($0) }
 
@@ -440,6 +469,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             pathData: pathData,
             commands: commands,
             fill: fill,
+            fillType: fillType,
             stroke: stroke,
             strokeWidth: strokeWidth,
             strokeLineCap: strokeLineCap,
@@ -732,6 +762,175 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             return nil
         }
         return String(reference[idRange])
+    }
+
+    // MARK: - Gradient Parsing
+
+    private func parseDefsForGradients(from root: XMLElement) {
+        // Find defs element
+        guard let defs = childElements(of: root, named: "defs").first else {
+            return
+        }
+
+        // Parse linear gradients
+        for gradientElement in childElements(of: defs, named: "linearGradient") {
+            if let gradient = parseLinearGradient(gradientElement) {
+                linearGradientDefs[gradient.id] = gradient
+            }
+        }
+
+        // Parse radial gradients
+        for gradientElement in childElements(of: defs, named: "radialGradient") {
+            if let gradient = parseRadialGradient(gradientElement) {
+                radialGradientDefs[gradient.id] = gradient
+            }
+        }
+    }
+
+    private func parseLinearGradient(_ element: XMLElement) -> SVGLinearGradient? {
+        guard let id = attributeValue(element, forName: "id") else {
+            return nil
+        }
+
+        let x1 = parseGradientCoordinate(attributeValue(element, forName: "x1"), defaultValue: 0)
+        let y1 = parseGradientCoordinate(attributeValue(element, forName: "y1"), defaultValue: 0)
+        let x2 = parseGradientCoordinate(attributeValue(element, forName: "x2"), defaultValue: 1)
+        let y2 = parseGradientCoordinate(attributeValue(element, forName: "y2"), defaultValue: 0)
+        let spreadMethod = parseSpreadMethod(attributeValue(element, forName: "spreadMethod"))
+        let stops = parseGradientStops(element)
+
+        return SVGLinearGradient(
+            id: id,
+            x1: x1, y1: y1,
+            x2: x2, y2: y2,
+            stops: stops,
+            spreadMethod: spreadMethod
+        )
+    }
+
+    private func parseRadialGradient(_ element: XMLElement) -> SVGRadialGradient? {
+        guard let id = attributeValue(element, forName: "id") else {
+            return nil
+        }
+
+        let cx = parseGradientCoordinate(attributeValue(element, forName: "cx"), defaultValue: 0.5)
+        let cy = parseGradientCoordinate(attributeValue(element, forName: "cy"), defaultValue: 0.5)
+        let r = parseGradientCoordinate(attributeValue(element, forName: "r"), defaultValue: 0.5)
+        let fx = attributeValue(element, forName: "fx").flatMap { parseGradientCoordinate($0, defaultValue: cx) }
+        let fy = attributeValue(element, forName: "fy").flatMap { parseGradientCoordinate($0, defaultValue: cy) }
+        let spreadMethod = parseSpreadMethod(attributeValue(element, forName: "spreadMethod"))
+        let stops = parseGradientStops(element)
+
+        return SVGRadialGradient(
+            id: id,
+            cx: cx, cy: cy, r: r,
+            fx: fx, fy: fy,
+            stops: stops,
+            spreadMethod: spreadMethod
+        )
+    }
+
+    private func parseGradientStops(_ element: XMLElement) -> [SVGGradientStop] {
+        var stops: [SVGGradientStop] = []
+
+        for stopElement in childElements(of: element, named: "stop") {
+            let offset = parseGradientOffset(attributeValue(stopElement, forName: "offset"))
+
+            // Parse color from stop-color attribute or style
+            var colorStr: String?
+            var opacityStr: String?
+
+            if let style = attributeValue(stopElement, forName: "style") {
+                let styleAttrs = parseStyleAttribute(style)
+                colorStr = styleAttrs["stop-color"]
+                opacityStr = styleAttrs["stop-opacity"]
+            }
+
+            if colorStr == nil {
+                colorStr = attributeValue(stopElement, forName: "stop-color")
+            }
+            if opacityStr == nil {
+                opacityStr = attributeValue(stopElement, forName: "stop-opacity")
+            }
+
+            let color = colorStr.flatMap { SVGColor.parse($0) } ?? SVGColor(red: 0, green: 0, blue: 0)
+            let opacity = opacityStr.flatMap { Double($0) } ?? 1.0
+
+            stops.append(SVGGradientStop(offset: offset, color: color, opacity: opacity))
+        }
+
+        // Sort stops by offset for consistent rendering
+        return stops.sorted { $0.offset < $1.offset }
+    }
+
+    private func parseGradientOffset(_ string: String?) -> Double {
+        guard let str = string else { return 0 }
+
+        if str.hasSuffix("%") {
+            let numStr = String(str.dropLast())
+            return (Double(numStr) ?? 0) / 100.0
+        }
+
+        return Double(str) ?? 0
+    }
+
+    private func parseGradientCoordinate(_ string: String?, defaultValue: Double) -> Double {
+        guard let str = string else { return defaultValue }
+
+        // Handle percentage values
+        if str.hasSuffix("%") {
+            let numStr = String(str.dropLast())
+            let percentage = Double(numStr) ?? (defaultValue * 100)
+            // Convert percentage to viewport coordinates
+            if let viewBox = currentViewBox {
+                return (percentage / 100.0) * viewBox.width
+            }
+            return percentage / 100.0
+        }
+
+        return Double(str) ?? defaultValue
+    }
+
+    private func parseSpreadMethod(_ string: String?) -> SVGLinearGradient.SpreadMethod {
+        guard let str = string else { return .pad }
+        return SVGLinearGradient.SpreadMethod(rawValue: str) ?? .pad
+    }
+
+    /// Resolves fill value to SVGFill type
+    /// Handles url(#id) references to gradients and solid colors
+    private func resolveFill(_ fillValue: String?) -> SVGFill {
+        guard let fill = fillValue else { return .none }
+
+        // Check for gradient reference
+        if fill.hasPrefix("url(#") {
+            let pattern = #"url\(#([^)]+)\)"#
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+               let match = regex.firstMatch(in: fill, options: [], range: NSRange(fill.startIndex..., in: fill)),
+               let idRange = Range(match.range(at: 1), in: fill)
+            {
+                let id = String(fill[idRange])
+
+                if let linearGradient = linearGradientDefs[id] {
+                    return .linearGradient(linearGradient)
+                }
+                if let radialGradient = radialGradientDefs[id] {
+                    return .radialGradient(radialGradient)
+                }
+            }
+            return .none
+        }
+
+        // Check for "none"
+        if fill == "none" {
+            return .none
+        }
+
+        // Try to parse as solid color
+        if let color = SVGColor.parse(fill) {
+            return .solid(color)
+        }
+
+        return .none
     }
 }
 

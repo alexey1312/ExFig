@@ -83,7 +83,7 @@ public struct ImageVectorGenerator: Sendable {
         imports.insert("androidx.compose.ui.graphics.vector.path")
         imports.insert("androidx.compose.ui.unit.dp")
 
-        // Check for stroke properties
+        // Check for stroke properties and gradients
         for path in svg.paths {
             if path.stroke != nil {
                 imports.insert("androidx.compose.ui.graphics.StrokeCap")
@@ -91,6 +91,14 @@ public struct ImageVectorGenerator: Sendable {
             }
             if path.fillRule == .evenOdd {
                 imports.insert("androidx.compose.ui.graphics.PathFillType")
+            }
+            // Check for gradient fills
+            switch path.fillType {
+            case .linearGradient, .radialGradient:
+                imports.insert("androidx.compose.ui.graphics.Brush")
+                imports.insert("androidx.compose.ui.geometry.Offset")
+            default:
+                break
             }
         }
 
@@ -161,10 +169,21 @@ public struct ImageVectorGenerator: Sendable {
     private func generatePath(_ path: SVGPath) -> String {
         var params: [String] = []
 
-        // Fill
-        if let fill = path.fill {
-            let colorCode = mapColor(fill)
+        // Fill - check fillType first, fall back to legacy fill
+        switch path.fillType {
+        case let .linearGradient(gradient):
+            params.append(generateLinearGradientFill(gradient))
+        case let .radialGradient(gradient):
+            params.append(generateRadialGradientFill(gradient))
+        case let .solid(color):
+            let colorCode = mapColor(color)
             params.append("fill = SolidColor(\(colorCode))")
+        case .none:
+            // Check legacy fill property for backward compatibility
+            if let fill = path.fill {
+                let colorCode = mapColor(fill)
+                params.append("fill = SolidColor(\(colorCode))")
+            }
         }
 
         // Stroke
@@ -400,6 +419,47 @@ public struct ImageVectorGenerator: Sendable {
             }
             return result
         }
+    }
+
+    // MARK: - Gradient Generation
+
+    private func generateLinearGradientFill(_ gradient: SVGLinearGradient) -> String {
+        var code = "fill = Brush.linearGradient(\n"
+        code += "                    colorStops = arrayOf(\n"
+
+        for stop in gradient.stops {
+            let colorHex = colorToComposeHex(stop.color, opacity: stop.opacity)
+            code += "                        \(formatDouble(stop.offset))f to Color(\(colorHex)),\n"
+        }
+
+        code += "                    ),\n"
+        code += "                    start = Offset(\(formatDouble(gradient.x1))f, \(formatDouble(gradient.y1))f),\n"
+        code += "                    end = Offset(\(formatDouble(gradient.x2))f, \(formatDouble(gradient.y2))f),\n"
+        code += "                )"
+
+        return code
+    }
+
+    private func generateRadialGradientFill(_ gradient: SVGRadialGradient) -> String {
+        var code = "fill = Brush.radialGradient(\n"
+        code += "                    colorStops = arrayOf(\n"
+
+        for stop in gradient.stops {
+            let colorHex = colorToComposeHex(stop.color, opacity: stop.opacity)
+            code += "                        \(formatDouble(stop.offset))f to Color(\(colorHex)),\n"
+        }
+
+        code += "                    ),\n"
+        code += "                    center = Offset(\(formatDouble(gradient.cx))f, \(formatDouble(gradient.cy))f),\n"
+        code += "                    radius = \(formatDouble(gradient.r))f,\n"
+        code += "                )"
+
+        return code
+    }
+
+    private func colorToComposeHex(_ color: SVGColor, opacity: Double) -> String {
+        let alpha = Int((opacity * 255).rounded())
+        return String(format: "0x%02X%02X%02X%02X", alpha, color.red, color.green, color.blue)
     }
 }
 
