@@ -14,13 +14,18 @@ repos:
         language: system
         types: [swift]
 
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.22
+    hooks:
       - id: mdformat
         name: Markdown Format
-        entry: bin/mise exec -- mdformat
-        language: system
         types: [markdown]
-        args: [--wrap, "120", --number]
         exclude: ^\.github/ISSUE_TEMPLATE/
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-tables
+          - mdformat-frontmatter
+          - mdformat-footnote
 
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.6.0

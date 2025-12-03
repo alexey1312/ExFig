@@ -1,0 +1,54 @@
+---
+figma:
+  lightFileId: G85iqgmYDrE5WrjDmiAZ6G
+  darkFileId: 3xUDq03vQwF1tAFBK6A9Tf
+
+# [optional] Common export parameters
+common:
+  colors:
+    # RegExp pattern for color name validation before exporting
+    nameValidateRegexp: '^[a-zA-Z_]+$' # RegExp pattern for: background, background_primary
+  icons:
+    # Name of the Figma's frame where icons components are located
+    figmaFrameName: Icons
+    # RegExp pattern for icon name validation before exporting
+    nameValidateRegexp: '^(ic)_(\d\d)_([a-z0-9_]+)$' # RegExp pattern for: ic_24_icon_name
+  images:
+    # Name of the Figma's frame where image components are located
+    figmaFrameName: Illustrations
+    # RegExp pattern for image name validation before exporting
+    nameValidateRegexp: '^(img)_([a-z0-9_]+)$' # RegExp pattern for: img_image_name
+
+# Flutter export parameters
+flutter:
+  # Relative path to the Flutter lib/ folder for generated Dart files
+  output: "./lib/generated"
+
+  # Parameters for exporting colors
+  colors:
+    # [optional] Output file name for colors. Defaults to "colors.dart"
+    output: "colors.dart"
+    # [optional] Class name for generated colors. Defaults to "AppColors"
+    className: "AppColors"
+
+  # Parameters for exporting icons
+  icons:
+    # Where to place SVG icon assets (relative path from project root)
+    output: "assets/icons"
+    # [optional] Output file name for icon constants. Defaults to "icons.dart"
+    dartFile: "icons.dart"
+    # [optional] Class name for generated icon constants. Defaults to "AppIcons"
+    className: "AppIcons"
+
+  # Parameters for exporting images
+  images:
+    # Where to place image assets (relative path from project root)
+    output: "assets/images"
+    # [optional] Output file name for image constants. Defaults to "images.dart"
+    dartFile: "images.dart"
+    # [optional] Class name for generated image constants. Defaults to "AppImages"
+    className: "AppImages"
+    # Image format: png or webp. Defaults to "png"
+    format: png
+    # An array of asset scales. Defaults to [1, 2, 3]
+    scales: [1, 2, 3]

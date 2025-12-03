@@ -309,6 +309,7 @@ configs are in `Examples/` directory:
 - `Examples/ExampleSwiftUI/` - iOS SwiftUI project
 - `Examples/AndroidExample/` - Android XML views
 - `Examples/AndroidComposeExample/` - Android Jetpack Compose
+- `Examples/FlutterExample/` - Flutter/Dart project
 
 Generate a starter config:
 
