@@ -177,14 +177,6 @@ ios:
     swiftUIImageSwift: "./Source/Image+extension_illustrations.swift"
     # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing illustrations from the code (e.g. UIImage.illZeroNoInternet)
     imageSwift: "./Example/Source/UIImage+extension_illustrations.swift"
-    # [optional] Enable image optimization using image_optim. Requires image_optim gem to be installed.
-    # Install via: mise use -g gem:image_optim gem:image_optim_pack
-    # Or: gem install image_optim image_optim_pack
-    optimize: true
-    # [optional] Image optimization options
-    optimizeOptions:
-      # [optional] Allow lossy compression (pngquant, mozjpeg). Defaults to false (lossless only).
-      allowLossy: false
 
   # [optional] Parameters for exporting typography
   typography:
@@ -236,14 +228,6 @@ android:
       encoding: lossy
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
-    # [optional] Enable image optimization using image_optim (PNG format only, WebP is already optimized).
-    # Install via: mise use -g gem:image_optim gem:image_optim_pack
-    # Or: gem install image_optim image_optim_pack
-    optimize: true
-    # [optional] Image optimization options
-    optimizeOptions:
-      # [optional] Allow lossy compression (pngquant, mozjpeg). Defaults to false (lossless only).
-      allowLossy: true
   # Parameters for exporting typography
   typography:
     # Typography name style: camelCase or snake_case
@@ -292,14 +276,6 @@ flutter:
       encoding: lossy
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
-    # [optional] Enable image optimization using image_optim (PNG format only, WebP/SVG not optimized by image_optim).
-    # Install via: mise use -g gem:image_optim gem:image_optim_pack
-    # Or: gem install image_optim image_optim_pack
-    optimize: true
-    # [optional] Image optimization options
-    optimizeOptions:
-      # [optional] Allow lossy compression (pngquant, mozjpeg). Defaults to false (lossless only).
-      allowLossy: false
 ```
 
 ## CLI Options for Version Tracking
@@ -350,3 +326,44 @@ The cache file (`.exfig-cache.json`) stores the Figma file versions:
 
 **Note:** The version changes when a Figma library is published, not on every auto-save. This makes it ideal for
 tracking intentional design changes.
+
+## Recommended: Post-Export Image Optimization
+
+For optimal file sizes, consider using [image_optim](https://github.com/toy/image_optim) to compress exported PNG, JPEG,
+GIF, and SVG files after export. This is an optional post-processing step that can significantly reduce image file sizes
+without quality loss.
+
+### Installation
+
+```bash
+# Via Ruby gem (recommended)
+gem install image_optim image_optim_pack
+
+# Or via mise
+mise use -g gem:image_optim gem:image_optim_pack
+```
+
+### Usage Examples
+
+```bash
+# Optimize all PNG files in iOS assets (lossless)
+image_optim ./Resources/Assets.xcassets/**/*.png
+
+# Optimize Android drawable images
+image_optim ./main/res/figma-import-images/**/*.png
+
+# Optimize Flutter image assets
+image_optim ./assets/images/**/*.png
+
+# Enable lossy compression for even smaller files
+image_optim --allow-lossy ./path/to/images/**/*.png
+```
+
+### Supported Formats
+
+- **PNG**: Uses oxipng, pngquant (lossy), pngcrush
+- **JPEG**: Uses jpegoptim, mozjpeg (lossy)
+- **GIF**: Uses gifsicle
+- **SVG**: Uses svgo
+
+For more options and configuration, see the [image_optim documentation](https://github.com/toy/image_optim).

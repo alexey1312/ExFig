@@ -333,9 +333,27 @@ exfig init -p android
 
 - **FIGMA_PERSONAL_TOKEN** (required): Figma personal access token for API access
   - Get your token from [Figma developer settings](https://www.figma.com/developers/api#access-tokens)
-- **IMAGE_OPTIM_PATH** (optional): Custom path to `image_optim` executable for image optimization
-  - Only needed if `image_optim` is not in PATH or standard locations
-  - Example: `export IMAGE_OPTIM_PATH=/path/to/image_optim`
+
+## Recommended: Post-Export Image Optimization
+
+For optimal file sizes, consider using [image_optim](https://github.com/toy/image_optim) to compress exported PNG, JPEG,
+GIF, and SVG files after export:
+
+```bash
+# Install image_optim (Ruby gem)
+gem install image_optim image_optim_pack
+
+# Or via mise
+mise use -g gem:image_optim gem:image_optim_pack
+
+# Optimize exported images (lossless by default)
+image_optim path/to/exported/images/**/*.png
+
+# Enable lossy compression for smaller files
+image_optim --allow-lossy path/to/exported/images/**/*.png
+```
+
+This is an optional post-processing step that can significantly reduce image file sizes without quality loss.
 
 ## Commit Message Format
 
