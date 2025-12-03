@@ -94,7 +94,11 @@ final class FileWriter: Sendable {
         if let data = file.data {
             try data.write(to: fileURL, options: .atomic)
         } else if let localFileURL = file.dataFile {
-            _ = try FileManager.default.replaceItemAt(fileURL, withItemAt: localFileURL)
+            // Remove existing file if present (copyItem fails if destination exists)
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                try FileManager.default.removeItem(at: fileURL)
+            }
+            try FileManager.default.copyItem(at: localFileURL, to: fileURL)
         } else {
             fatalError("FileContents.data is nil. Use FileDownloader to download contents of the file.")
         }
