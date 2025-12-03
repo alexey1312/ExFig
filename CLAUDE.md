@@ -617,3 +617,69 @@ These work on both macOS and Linux:
 - `isatty(STDOUT_FILENO)` - TTY detection
 - `STDOUT_FILENO`, `STDERR_FILENO` - File descriptors
 - `ProcessInfo.processInfo.environment` - Environment variables
+
+### Running Tests on Linux
+
+On Linux, run tests with parallelization disabled to avoid memory corruption issues:
+
+```bash
+# Recommended: run tests with single worker
+swift test --parallel --num-workers 1
+
+# Alternative: run tests without parallelization
+swift test
+```
+
+**Why single worker?** Some tests involving libpng or concurrent Swift actors can cause memory corruption when running
+in parallel on Linux. Using `--num-workers 1` ensures sequential execution within the parallel test framework.
+
+### Installing Swift on Linux
+
+To install Swift 6.0 on Ubuntu 24.04:
+
+```bash
+# Download Swift
+wget -q https://download.swift.org/swift-6.0.3-release/ubuntu2404/swift-6.0.3-RELEASE/swift-6.0.3-RELEASE-ubuntu24.04.tar.gz -O /tmp/swift.tar.gz
+
+# Extract and install
+tar -xzf /tmp/swift.tar.gz -C /tmp
+mv /tmp/swift-6.0.3-RELEASE-ubuntu24.04 ~/.local/swift
+
+# Add to PATH (add to ~/.bashrc for persistence)
+export PATH="$HOME/.local/swift/usr/bin:$PATH"
+
+# Verify installation
+swift --version
+```
+
+### libpng Limitations on Linux
+
+The libpng simplified API has memory corruption issues on Linux when used in rapid succession. Tests that create PNG
+files using libpng are skipped on Linux with `XCTSkip`:
+
+```swift
+func testSomePngOperation() throws {
+    #if os(Linux)
+        throw XCTSkip("Skipped on Linux due to libpng memory corruption issues")
+    #endif
+    // ... test code
+}
+```
+
+**Affected tests:** WebpConverterTests that use `createTestPNG()` or `createCheckerboardPNG()` helpers.
+
+### FileManager API Differences
+
+- **`FileManager.replaceItemAt(_:withItemAt:)`** - Behaves differently on Linux (requires destination to exist). Use
+  `copyItem(at:to:)` with explicit file removal instead:
+
+  ```swift
+  // Instead of:
+  // try FileManager.default.replaceItemAt(destURL, withItemAt: sourceURL)
+
+  // Use:
+  if FileManager.default.fileExists(atPath: destURL.path) {
+      try FileManager.default.removeItem(at: destURL)
+  }
+  try FileManager.default.copyItem(at: sourceURL, to: destURL)
+  ```
