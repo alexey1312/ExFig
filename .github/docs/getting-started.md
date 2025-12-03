@@ -162,17 +162,50 @@ For detailed configuration options, see:
 - Check that color styles, components, or frames are named correctly
 - Verify the `figmaFrameName` in your configuration matches your Figma file
 
-### "WebP conversion failed" (Android only)
+### "cwebp tool not found" (Android/Flutter WebP)
 
-ExFig requires `cwebp` for WebP image conversion:
+ExFig requires the `cwebp` command-line tool for WebP image conversion. Install it using one of these methods:
 
 ```bash
-# macOS
+# macOS (Homebrew)
 brew install webp
 
-# Linux
-sudo apt-get install webp
+# macOS (MacPorts)
+port install webp
+
+# Linux (Debian/Ubuntu)
+sudo apt install webp
+
+# Linux (Fedora/RHEL)
+sudo dnf install libwebp-tools
+
+# Linux (Arch)
+sudo pacman -S libwebp
 ```
+
+**Custom path**: If cwebp is installed in a non-standard location, set the environment variable:
+
+```bash
+export CWEBP_PATH=/path/to/cwebp
+```
+
+**Search paths**: ExFig searches for cwebp in the following locations:
+
+| Platform | Paths |
+|----------|-------|
+| macOS | `/opt/homebrew/bin/cwebp`, `/usr/local/bin/cwebp`, `/opt/local/bin/cwebp` |
+| Linux | `/usr/bin/cwebp`, `/usr/local/bin/cwebp`, `/home/linuxbrew/.linuxbrew/bin/cwebp` |
+| Both | `~/.local/share/mise/shims/cwebp`, `~/.local/bin/cwebp`, `$PATH` |
+
+### "WebP conversion failed for file"
+
+This error indicates cwebp encountered a problem converting a specific file:
+
+- **Corrupted PNG**: The source PNG file may be corrupted
+- **Disk space**: Insufficient disk space for output
+- **Permissions**: Cannot write to output directory
+
+Check the error message for the specific exit code and stderr output.
 
 ## Next Steps
 

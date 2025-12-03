@@ -314,11 +314,13 @@ extension ExFigCommand {
                 let converter: WebpConverter
                 switch (options.encoding, options.quality) {
                 case (.lossless, _):
-                    converter = WebpConverter(encoding: .lossless)
+                    converter = try WebpConverter(encoding: .lossless)
                 case let (.lossy, quality?):
-                    converter = WebpConverter(encoding: .lossy(quality: quality))
+                    converter = try WebpConverter(encoding: .lossy(quality: quality))
                 case (.lossy, .none):
-                    fatalError("Encoding quality not specified. Set android.images.webpOptions.quality in YAML file.")
+                    throw ExFigError.configurationError(
+                        "WebP encoding quality not specified. Set android.images.webpOptions.quality in YAML file."
+                    )
                 }
                 let filesToConvert = localFiles.map(\.destination.url)
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
@@ -457,11 +459,13 @@ extension ExFigCommand {
                 let converter: WebpConverter
                 switch (options.encoding, options.quality) {
                 case (.lossless, _):
-                    converter = WebpConverter(encoding: .lossless)
+                    converter = try WebpConverter(encoding: .lossless)
                 case let (.lossy, quality?):
-                    converter = WebpConverter(encoding: .lossy(quality: quality))
+                    converter = try WebpConverter(encoding: .lossy(quality: quality))
                 case (.lossy, .none):
-                    fatalError("Encoding quality not specified. Set flutter.images.webpOptions.quality in YAML file.")
+                    throw ExFigError.configurationError(
+                        "WebP encoding quality not specified. Set flutter.images.webpOptions.quality in YAML file."
+                    )
                 }
                 let filesToConvert = localFiles.map(\.destination.url)
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in

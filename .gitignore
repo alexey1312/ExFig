@@ -87,3 +87,6 @@ iOSInjectionProject/
 
 # direnv
 .envrc
+
+# Dart/Flutter
+.dart_tool/

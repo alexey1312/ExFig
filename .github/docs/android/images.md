@@ -245,11 +245,29 @@ For SVG exports, ExFig converts to VectorDrawable XML:
 
 ## Troubleshooting
 
-### WebP conversion failed
+### "cwebp tool not found"
 
-- Install `cwebp`: `brew install webp` (macOS)
-- Verify webp tools are in PATH
-- Try PNG format as fallback
+The `cwebp` tool is required for WebP conversion. Install it:
+
+```bash
+# macOS
+brew install webp
+
+# Linux (Debian/Ubuntu)
+sudo apt install webp
+
+# Linux (Fedora/RHEL)
+sudo dnf install libwebp-tools
+```
+
+Or specify a custom path: `export CWEBP_PATH=/path/to/cwebp`
+
+### "WebP conversion failed for file"
+
+- Check if the source PNG is corrupted
+- Verify sufficient disk space
+- Check file permissions
+- Try PNG format as fallback: `format: png`
 
 ### Images are low quality
 
