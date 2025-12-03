@@ -252,6 +252,41 @@ exfig typography
 # - ExFigTypography.body
 ```
 
+## Version Tracking
+
+ExFig can track Figma file versions to skip unnecessary exports. This is useful for CI/CD pipelines where you want to
+avoid re-exporting unchanged assets.
+
+### Enable via Configuration
+
+```yaml
+common:
+  cache:
+    enabled: true
+    path: ".exfig-cache.json" # optional
+```
+
+### Enable via CLI
+
+```bash
+# Enable version tracking
+exfig colors --cache
+exfig icons --cache
+
+# Disable version tracking (always export)
+exfig icons --no-cache
+
+# Force export and update cache
+exfig icons --force
+
+# Custom cache file path
+exfig icons --cache-path ./custom-cache.json
+```
+
+**Note:** The version changes when a Figma library is **published**, not on every auto-save.
+
+See [Configuration Reference](../../CONFIG.md) for more details.
+
 ## Help and Version Info
 
 ```bash

@@ -54,6 +54,7 @@ from Figma to Xcode and Android Studio projects.
 - **Multiple Formats**: PDF, SVG, PNG, WebP
 - **Dynamic Type**: iOS Dynamic Type support for typography
 - **Figma Variables**: Support for Figma's new variables feature
+- **Version Tracking**: Skip exports when Figma files haven't changed (ideal for CI/CD)
 
 ## Quick Links
 

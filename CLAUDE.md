@@ -148,6 +148,7 @@ Main executable target with CLI commands.
 - `Cache/` - Version tracking for incremental exports:
   - `ImageTrackingCache.swift` - Cache model for storing file versions
   - `ImageTrackingManager.swift` - Manages version checking and cache updates
+  - `VersionTrackingHelper.swift` - Shared helper for version tracking in export commands
 - `TerminalUI/` - Terminal output and progress indicators:
   - `TerminalUI.swift` - Main facade for terminal output
   - `Spinner.swift` - Animated spinner actor
