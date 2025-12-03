@@ -67,20 +67,20 @@ final class WebpConverter: Sendable {
 
         // 2. Common installation paths
         #if os(macOS)
-        paths += [
-            "/opt/homebrew/bin/cwebp", // Homebrew on Apple Silicon
-            "/usr/local/bin/cwebp", // Homebrew on Intel / manual install
-            "/opt/local/bin/cwebp", // MacPorts
-        ]
+            paths += [
+                "/opt/homebrew/bin/cwebp", // Homebrew on Apple Silicon
+                "/usr/local/bin/cwebp", // Homebrew on Intel / manual install
+                "/opt/local/bin/cwebp", // MacPorts
+            ]
         #endif
 
         // 3. Linux paths
         #if os(Linux)
-        paths += [
-            "/usr/bin/cwebp", // apt/dnf/pacman
-            "/usr/local/bin/cwebp", // manual install
-            "/home/linuxbrew/.linuxbrew/bin/cwebp", // Linuxbrew
-        ]
+            paths += [
+                "/usr/bin/cwebp", // apt/dnf/pacman
+                "/usr/local/bin/cwebp", // manual install
+                "/home/linuxbrew/.linuxbrew/bin/cwebp", // Linuxbrew
+            ]
         #endif
 
         // 4. Cross-platform paths
@@ -105,7 +105,7 @@ final class WebpConverter: Sendable {
     init(encoding: Encoding, maxConcurrent: Int = 4) throws {
         self.encoding = encoding
         self.maxConcurrent = maxConcurrent
-        self.executableURL = try Self.findCwebp()
+        executableURL = try Self.findCwebp()
     }
 
     /// Finds cwebp executable in standard paths
@@ -245,7 +245,8 @@ final class WebpConverter: Sendable {
         // Check exit code
         guard task.terminationStatus == 0 else {
             let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-            let stderr = String(data: stderrData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let stderr = String(data: stderrData, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
             throw WebpConverterError.conversionFailed(
                 file: url.lastPathComponent,
