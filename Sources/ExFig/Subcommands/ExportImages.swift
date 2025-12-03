@@ -139,6 +139,15 @@ extension ExFigCommand {
                 try fileWriter.write(files: localFiles)
             }
 
+            // Optimize images if enabled
+            if imagesParams.optimize == true {
+                try await optimizeImages(
+                    files: localFiles,
+                    options: imagesParams.optimizeOptions,
+                    ui: ui
+                )
+            }
+
             guard params.ios?.xcassetsInSwiftPackage == false else {
                 await checkForUpdate(logger: logger)
                 ui.success("Done! Exported \(images.count) images.")
@@ -383,6 +392,15 @@ extension ExFigCommand {
                 try fileWriter.write(files: filesToWriteRaster)
             }
 
+            // Optimize PNG images if enabled (skip WebP - already optimized)
+            if androidImages.format == .png, androidImages.optimize == true {
+                try await optimizeImages(
+                    files: localFiles,
+                    options: androidImages.optimizeOptions,
+                    ui: ui
+                )
+            }
+
             try? FileManager.default.removeItem(at: tempDirectoryURL)
         }
 
@@ -513,9 +531,65 @@ extension ExFigCommand {
                 try fileWriter.write(files: filesToWrite)
             }
 
+            // Optimize PNG images if enabled (skip WebP/SVG - already optimized or vector)
+            let format = flutterImages.format ?? .png
+            if format == .png, flutterImages.optimize == true {
+                // Filter to only optimize image files (not dart file)
+                let imageFiles = localFiles.filter { $0.destination.file.pathExtension == "png" }
+                try await optimizeImages(
+                    files: imageFiles,
+                    options: flutterImages.optimizeOptions,
+                    ui: ui
+                )
+            }
+
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(images.count) images to Flutter project.")
+        }
+
+        // MARK: - Image Optimization
+
+        /// Optimizes image files using image_optim if available
+        /// - Parameters:
+        ///   - files: Files to optimize (filters to supported formats)
+        ///   - options: Optimization options
+        ///   - ui: Terminal UI for progress reporting
+        private func optimizeImages(
+            files: [FileContents],
+            options: OptimizeOptions?,
+            ui: TerminalUI
+        ) async throws {
+            // Check if image_optim is available
+            guard ImageOptimizer.isAvailable() else {
+                ui.warning("""
+                Image optimization skipped: 'image_optim' not found.
+                Install via: mise use -g gem:image_optim gem:image_optim_pack
+                Or: gem install image_optim image_optim_pack
+                """)
+                return
+            }
+
+            // Supported formats for optimization
+            let supportedExtensions = Set(["png", "jpg", "jpeg", "gif", "svg"])
+
+            // Filter to only optimizable files
+            let filesToOptimize = files.compactMap { file -> URL? in
+                let ext = file.destination.file.pathExtension.lowercased()
+                guard supportedExtensions.contains(ext) else { return nil }
+                return file.destination.url
+            }
+
+            guard !filesToOptimize.isEmpty else { return }
+
+            let allowLossy = options?.allowLossy ?? false
+            let optimizer = try ImageOptimizer(allowLossy: allowLossy)
+
+            try await ui.withProgress("Optimizing images", total: filesToOptimize.count) { progress in
+                try await optimizer.optimizeBatch(files: filesToOptimize) { current, _ in
+                    await progress.update(current: current)
+                }
+            }
         }
     }
 }

@@ -4,7 +4,7 @@
 [![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
-![Coverage](https://img.shields.io/badge/coverage-60.15%25-green)
+![Coverage](https://img.shields.io/badge/coverage-62.74%25-green)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
@@ -19,19 +19,6 @@ and Flutter.
 - **Keep design and code in sync**: Automate updates to your component library
 - **Save time**: No more manual color palette management or icon exports
 
-## ExFig vs figma-export
-
-ExFig is a fork of [figma-export](https://github.com/RedMadRobot/figma-export) with significant improvements:
-
-| Feature                      | ExFig | figma-export |
-| ---------------------------- | ----- | ------------ |
-| Flutter / Dart               | ✅    | ❌           |
-| Parallel Downloads & Writes  | ✅    | ❌           |
-| Progress Bars with ETA       | ✅    | ❌           |
-| Verbose/Quiet Modes          | ✅    | ❌           |
-| Swift 6 / Strict Concurrency | ✅    | ❌           |
-| Active Development           | ✅    | ⚠️ Limited   |
-
 ## Features
 
 - ✨ Export light & dark color palettes
@@ -43,9 +30,12 @@ ExFig is a fork of [figma-export](https://github.com/RedMadRobot/figma-export) w
 - 🦋 Flutter / Dart support
 - 🔄 RTL (Right-to-Left) layout support
 - 🎯 Figma Variables support
+- ⚡ Parallel downloads & writes
 - 📊 Rich progress indicators with ETA
 - 🔇 Verbose and quiet output modes
-- ⚡ Version tracking (skip exports when Figma files haven't changed)
+- 🚀 Swift 6 / Strict Concurrency
+- 🕐 Version tracking (skip exports when Figma files haven't changed)
+- 🗜️ Image optimization via image_optim (PNG, JPEG, GIF, SVG)
 
 > **Note:** Exporting icons and images requires a Figma Professional/Organization plan (uses Shareable Team Libraries).
 
