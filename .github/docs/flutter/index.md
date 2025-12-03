@@ -251,7 +251,8 @@ Available template files for Flutter:
 1. Use WebP format for smaller image sizes
 2. Only include necessary scales (e.g., `[2, 3]` for most modern devices)
 3. Use SVG for icons to reduce bundle size
-4. **Post-export optimization**: For PNG format, use [image_optim](https://github.com/toy/image_optim) to further compress:
+4. **Post-export optimization**: For PNG format, use [image_optim](https://github.com/toy/image_optim) to further
+   compress:
    ```bash
    gem install image_optim image_optim_pack
    image_optim ./assets/images/**/*.png

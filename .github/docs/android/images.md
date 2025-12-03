@@ -232,7 +232,8 @@ For SVG exports, ExFig converts to VectorDrawable XML:
 4. Compress images in Figma before export
 5. Provide dark mode variants for better UX
 6. Use `drawable-nodpi` for images that shouldn't scale
-7. **Post-export optimization**: For PNG format, use [image_optim](https://github.com/toy/image_optim) to further compress:
+7. **Post-export optimization**: For PNG format, use [image_optim](https://github.com/toy/image_optim) to further
+   compress:
    ```bash
    gem install image_optim image_optim_pack
    image_optim ./app/src/main/res/exfig-images/**/*.png
