@@ -39,59 +39,21 @@ extension ExFigCommand {
             let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
 
             // Check for version changes if cache is enabled
-            let configCacheEnabled = options.params.common?.cache?.isEnabled ?? false
-            let cacheEnabled = cacheOptions.isEnabled(configEnabled: configCacheEnabled)
-            let cachePath = cacheOptions.resolvePath(configPath: options.params.common?.cache?.path)
-
-            var trackingManager: ImageTrackingManager?
-            var fileVersions: [FileVersionInfo] = []
-
-            if cacheEnabled {
-                trackingManager = ImageTrackingManager(
+            let versionCheck = try await VersionTrackingHelper.checkForChanges(
+                config: VersionTrackingConfig(
                     client: client,
-                    cachePath: cachePath,
+                    params: options.params,
+                    cacheOptions: cacheOptions,
+                    configCacheEnabled: options.params.common?.cache?.isEnabled ?? false,
+                    configCachePath: options.params.common?.cache?.path,
+                    assetType: "Icons",
+                    ui: ui,
                     logger: logger
                 )
+            )
 
-                let result = try await ui.withSpinner("Checking for changes...") {
-                    try await trackingManager!.checkForChanges(
-                        lightFileId: options.params.figma.lightFileId,
-                        darkFileId: options.params.figma.darkFileId,
-                        force: cacheOptions.force
-                    )
-                }
-
-                switch result {
-                case let .noChanges(files):
-                    ui.success("No changes detected. Icons are up to date.")
-                    for file in files {
-                        ui.info("  - \(file.fileName): version \(file.currentVersion) (unchanged)")
-                    }
-                    return
-                case let .exportNeeded(files):
-                    fileVersions = files
-                    if cacheOptions.force {
-                        ui.info("Force export requested.")
-                    } else {
-                        ui.info("Changes detected, exporting...")
-                    }
-                    for file in files {
-                        if let cached = file.cachedVersion {
-                            ui.info("  - \(file.fileName): \(cached) -> \(file.currentVersion)")
-                        } else {
-                            ui.info("  - \(file.fileName): version \(file.currentVersion) (new)")
-                        }
-                    }
-                case let .partialChanges(changed, unchanged):
-                    fileVersions = changed + unchanged
-                    ui.info("Partial changes detected:")
-                    for file in changed {
-                        ui.info("  - \(file.fileName): \(file.cachedVersion ?? "new") -> \(file.currentVersion)")
-                    }
-                    for file in unchanged {
-                        ui.info("  - \(file.fileName): unchanged")
-                    }
-                }
+            guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
+                return
             }
 
             if options.params.ios != nil {
@@ -110,9 +72,7 @@ extension ExFigCommand {
             }
 
             // Update cache after successful export
-            if let trackingManager, !fileVersions.isEmpty {
-                try trackingManager.updateCache(with: fileVersions)
-            }
+            try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
         }
 
         // swiftlint:disable:next function_body_length

@@ -280,8 +280,8 @@ flutter:
 
 ## CLI Options for Version Tracking
 
-In addition to the YAML configuration, you can control version tracking via CLI flags.
-Version tracking works for all export commands: `colors`, `icons`, `images`, and `typography`.
+In addition to the YAML configuration, you can control version tracking via CLI flags. Version tracking works for all
+export commands: `colors`, `icons`, `images`, and `typography`.
 
 ```bash
 # Enable version tracking (overrides config)
@@ -324,5 +324,5 @@ The cache file (`.exfig-cache.json`) stores the Figma file versions:
 }
 ```
 
-**Note:** The version changes when a Figma library is published, not on every auto-save.
-This makes it ideal for tracking intentional design changes.
+**Note:** The version changes when a Figma library is published, not on every auto-save. This makes it ideal for
+tracking intentional design changes.
