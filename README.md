@@ -35,7 +35,6 @@ and Flutter.
 - 🔇 Verbose and quiet output modes
 - 🚀 Swift 6 / Strict Concurrency
 - 🕐 Version tracking (skip exports when Figma files haven't changed)
-- 🗜️ Image optimization via image_optim (PNG, JPEG, GIF, SVG)
 
 > **Note:** Exporting icons and images requires a Figma Professional/Organization plan (uses Shareable Team Libraries).
 
