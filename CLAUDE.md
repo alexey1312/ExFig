@@ -112,6 +112,11 @@ mise run build:release
 
 # Run with quiet output (errors only)
 .build/release/exfig icons --quiet
+
+# Download images without config file
+.build/release/exfig download --file-id abc123 --frame "Illustrations" --output ./images
+.build/release/exfig download -f abc123 -r "Icons" -o ./icons --format svg
+.build/release/exfig download -f abc123 -r "Images" -o ./images --format webp --scale 2
 ```
 
 ## Architecture
@@ -131,6 +136,7 @@ Main executable target with CLI commands.
   - `ExportImages.swift` - Export images
   - `ExportTypography.swift` - Export text styles
   - `GenerateConfigFile.swift` - Generate starter config (`exfig init`)
+  - `DownloadImages.swift` - Download images without config file (`exfig download`)
   - `checkForUpdate.swift` - Version checking
 - `Loaders/` - Load data from Figma API:
   - `Colors/ColorsLoader.swift` - Load color styles
@@ -142,6 +148,7 @@ Main executable target with CLI commands.
   - `Params.swift` - Command parameters
   - `GlobalOptions.swift` - Global CLI flags (`--verbose`, `--quiet`)
   - `CacheOptions.swift` - CLI flags for version tracking (`--cache`, `--no-cache`, `--force`)
+  - `DownloadOptions.swift` - CLI options for download command (config-free)
 - `Cache/` - Version tracking for incremental exports:
   - `ImageTrackingCache.swift` - Cache model for storing file versions
   - `ImageTrackingManager.swift` - Manages version checking and cache updates
@@ -455,6 +462,24 @@ Full documentation is available in `.github/docs/`:
 ## Contributing
 
 See `.github/docs/development.md` for complete contribution guidelines.
+
+## Development Best Practices
+
+### Test-Driven Development (TDD)
+
+When planning and implementing new features, use **Test-Driven Development (TDD)** approach:
+
+1. Write tests first that describe the expected behavior
+2. Run tests to verify they fail (red)
+3. Write minimal code to make tests pass (green)
+4. Refactor code while keeping tests passing (refactor)
+
+This ensures:
+
+- Clear requirements before implementation
+- High test coverage from the start
+- Better API design through usage-first thinking
+- Easier debugging since tests pinpoint failures
 
 ## SwiftLint Rules
 

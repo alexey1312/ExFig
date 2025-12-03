@@ -287,6 +287,100 @@ exfig icons --cache-path ./custom-cache.json
 
 See [Configuration Reference](../../CONFIG.md) for more details.
 
+## Quick Download (No Config File)
+
+For quick, one-off downloads without creating a configuration file, use the `download` command. This is useful when you
+need to quickly grab images from Figma without setting up a full export pipeline.
+
+### Basic Usage
+
+```bash
+# Download PNG images at 3x scale (default)
+exfig download --file-id YOUR_FILE_ID --frame "Illustrations" --output ./images
+
+# Using short options
+exfig download -f YOUR_FILE_ID -r "Icons" -o ./icons
+```
+
+### Format Options
+
+```bash
+# Download as SVG (vector format)
+exfig download -f abc123 -r "Icons" -o ./icons --format svg
+
+# Download as PDF (vector format)
+exfig download -f abc123 -r "Icons" -o ./icons --format pdf
+
+# Download as JPG
+exfig download -f abc123 -r "Photos" -o ./photos --format jpg
+
+# Download as WebP with quality settings
+exfig download -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
+
+# Download WebP lossless
+exfig download -f abc123 -r "Images" -o ./images --format webp --webp-encoding lossless
+```
+
+### Scale Options
+
+```bash
+# Download PNG at 2x scale
+exfig download -f abc123 -r "Images" -o ./images --scale 2
+
+# Download PNG at 1x scale
+exfig download -f abc123 -r "Images" -o ./images --scale 1
+
+# Note: Scale is ignored for vector formats (SVG, PDF)
+```
+
+### Filtering and Naming
+
+```bash
+# Filter specific images
+exfig download -f abc123 -r "Images" -o ./images --filter "logo/*"
+
+# Filter multiple patterns
+exfig download -f abc123 -r "Images" -o ./images --filter "logo/*, banner/*"
+
+# Convert names to camelCase
+exfig download -f abc123 -r "Images" -o ./images --name-style camelCase
+
+# Convert names to snake_case
+exfig download -f abc123 -r "Images" -o ./images --name-style snake_case
+
+# Custom regex replacement
+exfig download -f abc123 -r "Images" -o ./images \
+  --name-validate-regexp "^icon/(.*)$" \
+  --name-replace-regexp "ic_$1"
+```
+
+### Dark Mode Support
+
+```bash
+# Extract dark mode variants (images ending with "_dark" suffix)
+exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
+```
+
+### All Download Options
+
+| Option                   | Short | Description                            | Default      |
+| ------------------------ | ----- | -------------------------------------- | ------------ |
+| `--file-id`              | `-f`  | Figma file ID (required)               | -            |
+| `--frame`                | `-r`  | Figma frame name (required)            | -            |
+| `--output`               | `-o`  | Output directory (required)            | -            |
+| `--format`               |       | Image format: png, svg, jpg, pdf, webp | png          |
+| `--scale`                |       | Scale factor (0.01-4.0)                | 3 (PNG only) |
+| `--filter`               |       | Filter pattern (e.g., "icon/\*")       | -            |
+| `--name-style`           |       | Name style: camelCase, snake_case      | -            |
+| `--name-validate-regexp` |       | Regex pattern for validation           | -            |
+| `--name-replace-regexp`  |       | Regex replacement pattern              | -            |
+| `--dark-mode-suffix`     |       | Suffix for dark variants               | -            |
+| `--webp-encoding`        |       | WebP encoding: lossy, lossless         | lossy        |
+| `--webp-quality`         |       | WebP quality (0-100)                   | 80           |
+| `--timeout`              |       | API request timeout in seconds         | 30           |
+| `--verbose`              | `-v`  | Show detailed output                   | false        |
+| `--quiet`                | `-q`  | Show only errors                       | false        |
+
 ## Help and Version Info
 
 ```bash
