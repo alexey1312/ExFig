@@ -22,6 +22,9 @@ extension ExFigCommand {
         @OptionGroup
         var options: ExFigOptions
 
+        @OptionGroup
+        var cacheOptions: CacheOptions
+
         @Argument(help: """
         [Optional] Name of the icons to export. For example \"ic/24/edit\" \
         to export single icon, \"ic/24/edit, ic/16/notification\" to export several icons and \
@@ -34,6 +37,62 @@ extension ExFigCommand {
             let ui = ExFigCommand.terminalUI!
 
             let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+
+            // Check for version changes if cache is enabled
+            let configCacheEnabled = options.params.common?.cache?.isEnabled ?? false
+            let cacheEnabled = cacheOptions.isEnabled(configEnabled: configCacheEnabled)
+            let cachePath = cacheOptions.resolvePath(configPath: options.params.common?.cache?.path)
+
+            var trackingManager: ImageTrackingManager?
+            var fileVersions: [FileVersionInfo] = []
+
+            if cacheEnabled {
+                trackingManager = ImageTrackingManager(
+                    client: client,
+                    cachePath: cachePath,
+                    logger: logger
+                )
+
+                let result = try await ui.withSpinner("Checking for changes...") {
+                    try await trackingManager!.checkForChanges(
+                        lightFileId: options.params.figma.lightFileId,
+                        darkFileId: options.params.figma.darkFileId,
+                        force: cacheOptions.force
+                    )
+                }
+
+                switch result {
+                case let .noChanges(files):
+                    ui.success("No changes detected. Icons are up to date.")
+                    for file in files {
+                        ui.info("  - \(file.fileName): version \(file.currentVersion) (unchanged)")
+                    }
+                    return
+                case let .exportNeeded(files):
+                    fileVersions = files
+                    if cacheOptions.force {
+                        ui.info("Force export requested.")
+                    } else {
+                        ui.info("Changes detected, exporting...")
+                    }
+                    for file in files {
+                        if let cached = file.cachedVersion {
+                            ui.info("  - \(file.fileName): \(cached) -> \(file.currentVersion)")
+                        } else {
+                            ui.info("  - \(file.fileName): version \(file.currentVersion) (new)")
+                        }
+                    }
+                case let .partialChanges(changed, unchanged):
+                    fileVersions = changed + unchanged
+                    ui.info("Partial changes detected:")
+                    for file in changed {
+                        ui.info("  - \(file.fileName): \(file.cachedVersion ?? "new") -> \(file.currentVersion)")
+                    }
+                    for file in unchanged {
+                        ui.info("  - \(file.fileName): unchanged")
+                    }
+                }
+            }
 
             if options.params.ios != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export icons to Xcode project.")
@@ -48,6 +107,11 @@ extension ExFigCommand {
             if options.params.flutter != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
                 try await exportFlutterIcons(client: client, params: options.params, ui: ui)
+            }
+
+            // Update cache after successful export
+            if let trackingManager, !fileVersions.isEmpty {
+                try trackingManager.updateCache(with: fileVersions)
             }
         }
 

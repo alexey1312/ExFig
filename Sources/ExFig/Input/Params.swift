@@ -12,6 +12,19 @@ struct Params: Decodable {
     }
 
     struct Common: Decodable {
+        /// Cache configuration for tracking Figma file versions.
+        /// When enabled, exports are skipped if the file version hasn't changed.
+        struct Cache: Decodable {
+            /// Enable version tracking cache. Default: false.
+            let enabled: Bool?
+
+            /// Custom path to cache file. Default: .exfig-cache.json
+            let path: String?
+
+            /// Whether cache is enabled (with default value).
+            var isEnabled: Bool { enabled ?? false }
+        }
+
         struct Colors: Decodable {
             let nameValidateRegexp: String?
             let nameReplaceRegexp: String?
@@ -57,6 +70,7 @@ struct Params: Decodable {
             let nameReplaceRegexp: String?
         }
 
+        let cache: Cache?
         let colors: Colors?
         let variablesColors: VariablesColors?
         let icons: Icons?

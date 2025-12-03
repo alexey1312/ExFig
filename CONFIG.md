@@ -27,6 +27,16 @@ figma:
 
 # [optional] Common export parameters
 common:
+  # [optional] Version tracking cache configuration
+  # When enabled, ExFig checks the Figma file version before exporting.
+  # If the file version hasn't changed since the last export, the export is skipped.
+  # This is useful for CI/CD pipelines to avoid unnecessary exports.
+  cache:
+    # [optional] Enable version tracking. Default: false
+    enabled: true
+    # [optional] Custom path to cache file. Default: .exfig-cache.json
+    path: ".exfig-cache.json"
+
   # [optional]
   colors:
     # [optional] RegExp pattern for color name validation before exporting. If a name contains "/" symbol it will be replaced by "_" before executing the RegExp
@@ -267,3 +277,51 @@ flutter:
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
 ```
+
+## CLI Options for Version Tracking
+
+In addition to the YAML configuration, you can control version tracking via CLI flags:
+
+```bash
+# Enable version tracking (overrides config)
+exfig icons --cache
+exfig images --cache
+
+# Disable version tracking (ignore cache, always export)
+exfig icons --no-cache
+exfig images --no-cache
+
+# Force export and update cache (ignore cached version)
+exfig icons --force
+exfig images --force
+
+# Use custom cache file path
+exfig icons --cache-path ./custom-cache.json
+```
+
+### Priority Order
+
+1. `--no-cache` flag (highest priority - always disables cache)
+2. `--cache` or `--force` flags (enable cache)
+3. YAML `common.cache.enabled` configuration
+4. Default: disabled
+
+### Cache File Format
+
+The cache file (`.exfig-cache.json`) stores the Figma file versions:
+
+```json
+{
+  "schemaVersion": 1,
+  "files": {
+    "abc123LightFileId": {
+      "version": "1234567890",
+      "lastExport": "2024-01-15T10:30:00Z",
+      "fileName": "Design System"
+    }
+  }
+}
+```
+
+**Note:** The version changes when a Figma library is published, not on every auto-save.
+This makes it ideal for tracking intentional design changes.
