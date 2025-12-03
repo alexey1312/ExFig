@@ -398,7 +398,8 @@ final class WebpConverterTests: XCTestCase {
             image.version = UInt32(PNG_IMAGE_VERSION)
             image.width = UInt32(width)
             image.height = UInt32(height)
-            image.format = UInt32(PNG_FORMAT_RGBA)
+            // PNG_FORMAT_RGBA = 6 (PNG_FORMAT_FLAG_COLOR | PNG_FORMAT_FLAG_ALPHA)
+            image.format = 6
 
             let writeSuccess = rgba.withUnsafeBytes { rgbaPtr -> Int32 in
                 tempURL.path.withCString { pathPtr in
@@ -411,7 +412,8 @@ final class WebpConverterTests: XCTestCase {
                 throw WebpConverterError.encodingFailed(file: "test", reason: "Failed to write PNG with libpng")
             }
 
-            png_image_free(&image)
+            // Note: png_image_write_to_file frees the image on success
+            // Do NOT call png_image_free here to avoid double-free
 
             let data = try Data(contentsOf: tempURL)
             try? FileManager.default.removeItem(at: tempURL)

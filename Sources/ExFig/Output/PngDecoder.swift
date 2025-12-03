@@ -141,6 +141,11 @@ struct PngDecoder: Sendable {
             }
         }
     #else
+        // libpng format constants (not available as Swift constants due to macro limitations)
+        // PNG_FORMAT_FLAG_COLOR = 2, PNG_FORMAT_FLAG_ALPHA = 4
+        // PNG_FORMAT_RGBA = PNG_FORMAT_FLAG_COLOR | PNG_FORMAT_FLAG_ALPHA = 6
+        private static let pngFormatRGBA: UInt32 = 6
+
         /// Decodes PNG using libpng (Linux)
         private func decodeWithLibpng(data: Data) throws -> DecodedPng {
             // Write data to temporary file (libpng simplified API reads from file)
@@ -166,11 +171,12 @@ struct PngDecoder: Sendable {
             }
 
             // Set format to RGBA
-            image.format = UInt32(PNG_FORMAT_RGBA)
+            image.format = Self.pngFormatRGBA
 
             let width = Int(image.width)
             let height = Int(image.height)
-            let bufferSize = Int(PNG_IMAGE_SIZE(image))
+            // PNG_IMAGE_SIZE for RGBA = width * height * 4 (4 bytes per pixel)
+            let bufferSize = width * height * 4
 
             var buffer = [UInt8](repeating: 0, count: bufferSize)
 
@@ -184,7 +190,8 @@ struct PngDecoder: Sendable {
                 throw PngDecoderError.decodingFailed(reason: "Failed to decode PNG pixels")
             }
 
-            png_image_free(&image)
+            // Note: png_image_finish_read already frees the image on success
+            // Do NOT call png_image_free here to avoid double-free
 
             return DecodedPng(width: width, height: height, rgba: buffer)
         }
