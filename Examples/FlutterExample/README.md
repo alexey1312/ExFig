@@ -5,11 +5,13 @@ This is a sample Flutter project demonstrating how to use ExFig to export design
 ## Getting Started
 
 1. Set up your Figma personal access token:
+
    ```bash
    export FIGMA_PERSONAL_TOKEN="your-token-here"
    ```
 
 2. Run ExFig to export assets:
+
    ```bash
    exfig colors    # Export colors to lib/generated/colors.dart
    exfig icons     # Export icons to assets/icons/
@@ -17,6 +19,7 @@ This is a sample Flutter project demonstrating how to use ExFig to export design
    ```
 
 3. Run the Flutter app:
+
    ```bash
    flutter pub get
    flutter run
