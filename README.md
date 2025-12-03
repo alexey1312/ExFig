@@ -47,6 +47,7 @@ ExFig is a fork of [figma-export](https://github.com/RedMadRobot/figma-export) w
 - 🎯 Figma Variables support
 - 📊 Rich progress indicators with ETA
 - 🔇 Verbose and quiet output modes
+- ⚡ Version tracking (skip exports when Figma files haven't changed)
 
 > **Note:** Exporting icons and images requires a Figma Professional/Organization plan (uses Shareable Team Libraries).
 
@@ -136,6 +137,39 @@ exfig icons -v
 # Silent mode for CI/scripts
 exfig colors -q
 ```
+
+## Version Tracking
+
+ExFig can track Figma file versions to skip unnecessary exports. This is useful for CI/CD pipelines where you want to
+avoid re-exporting unchanged assets. Works for all commands: `colors`, `icons`, `images`, and `typography`.
+
+### Enable via Configuration
+
+```yaml
+common:
+  cache:
+    enabled: true
+    path: ".exfig-cache.json" # optional, defaults to .exfig-cache.json
+```
+
+### Enable via CLI
+
+```bash
+# Enable version tracking (works for all commands)
+exfig colors --cache
+exfig icons --cache
+exfig images --cache
+exfig typography --cache
+
+# Disable version tracking (always export)
+exfig icons --no-cache
+
+# Force export and update cache
+exfig icons --force
+```
+
+**Note:** The version changes when a Figma library is **published**, not on every auto-save. This means exports are
+skipped only when designers intentionally publish their changes.
 
 ## Documentation
 

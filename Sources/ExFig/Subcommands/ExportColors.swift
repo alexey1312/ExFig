@@ -20,6 +20,9 @@ extension ExFigCommand {
         @OptionGroup
         var options: ExFigOptions
 
+        @OptionGroup
+        var cacheOptions: CacheOptions
+
         @Argument(help: """
         [Optional] Name of the colors to export. For example \"background/default\" \
         to export single color, \"background/default, background/secondary\" to export several colors and \
@@ -27,14 +30,32 @@ extension ExFigCommand {
         """)
         var filter: String?
 
-        // swiftlint:disable:next function_body_length
+        // swiftlint:disable:next function_body_length cyclomatic_complexity
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            ui.info("Using ExFig \(ExFigCommand.version) to export colors.")
-
             let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+
+            // Check for version changes if cache is enabled
+            let versionCheck = try await VersionTrackingHelper.checkForChanges(
+                config: VersionTrackingConfig(
+                    client: client,
+                    params: options.params,
+                    cacheOptions: cacheOptions,
+                    configCacheEnabled: options.params.common?.cache?.isEnabled ?? false,
+                    configCachePath: options.params.common?.cache?.path,
+                    assetType: "Colors",
+                    ui: ui,
+                    logger: logger
+                )
+            )
+
+            guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
+                return
+            }
+
+            ui.info("Using ExFig \(ExFigCommand.version) to export colors.")
             let commonParams = options.params.common
 
             if commonParams?.colors != nil, commonParams?.variablesColors != nil {
@@ -163,6 +184,9 @@ extension ExFigCommand {
 
                 ui.success("Done! Exported \(colorPairs.count) colors to Flutter project.")
             }
+
+            // Update cache after successful export
+            try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
         }
 
         private func exportXcodeColors(

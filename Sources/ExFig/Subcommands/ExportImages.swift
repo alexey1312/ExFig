@@ -22,6 +22,9 @@ extension ExFigCommand {
         @OptionGroup
         var options: ExFigOptions
 
+        @OptionGroup
+        var cacheOptions: CacheOptions
+
         @Argument(help: """
         [Optional] Name of the images to export. For example \"img/login\" to export \
         single image, \"img/onboarding/1, img/onboarding/2\" to export several images \
@@ -34,6 +37,24 @@ extension ExFigCommand {
             let ui = ExFigCommand.terminalUI!
 
             let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+
+            // Check for version changes if cache is enabled
+            let versionCheck = try await VersionTrackingHelper.checkForChanges(
+                config: VersionTrackingConfig(
+                    client: client,
+                    params: options.params,
+                    cacheOptions: cacheOptions,
+                    configCacheEnabled: options.params.common?.cache?.isEnabled ?? false,
+                    configCachePath: options.params.common?.cache?.path,
+                    assetType: "Images",
+                    ui: ui,
+                    logger: logger
+                )
+            )
+
+            guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
+                return
+            }
 
             if options.params.ios != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export images to Xcode project.")
@@ -49,6 +70,9 @@ extension ExFigCommand {
                 ui.info("Using ExFig \(ExFigCommand.version) to export images to Flutter project.")
                 try await exportFlutterImages(client: client, params: options.params, ui: ui)
             }
+
+            // Update cache after successful export
+            try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
         }
 
         // swiftlint:disable:next function_body_length

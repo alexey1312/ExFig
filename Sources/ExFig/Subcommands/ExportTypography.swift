@@ -20,13 +20,34 @@ extension ExFigCommand {
         @OptionGroup
         var options: ExFigOptions
 
+        @OptionGroup
+        var cacheOptions: CacheOptions
+
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            ui.info("Using ExFig \(ExFigCommand.version) to export typography.")
-
             let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+
+            // Check for version changes if cache is enabled
+            let versionCheck = try await VersionTrackingHelper.checkForChanges(
+                config: VersionTrackingConfig(
+                    client: client,
+                    params: options.params,
+                    cacheOptions: cacheOptions,
+                    configCacheEnabled: options.params.common?.cache?.isEnabled ?? false,
+                    configCachePath: options.params.common?.cache?.path,
+                    assetType: "Typography",
+                    ui: ui,
+                    logger: logger
+                )
+            )
+
+            guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
+                return
+            }
+
+            ui.info("Using ExFig \(ExFigCommand.version) to export typography.")
 
             let textStyles = try await ui.withSpinner("Fetching text styles from Figma...") {
                 let loader = TextStylesLoader(client: client, params: options.params.figma)
@@ -74,6 +95,9 @@ extension ExFigCommand {
 
                 ui.success("Done! Exported \(processedTextStyles.count) text styles to Android project.")
             }
+
+            // Update cache after successful export
+            try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
         }
 
         private func createXcodeOutput(from iosParams: Params.iOS) -> XcodeTypographyOutput {

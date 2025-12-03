@@ -191,11 +191,11 @@ export CWEBP_PATH=/path/to/cwebp
 
 **Search paths**: ExFig searches for cwebp in the following locations:
 
-| Platform | Paths |
-|----------|-------|
-| macOS | `/opt/homebrew/bin/cwebp`, `/usr/local/bin/cwebp`, `/opt/local/bin/cwebp` |
-| Linux | `/usr/bin/cwebp`, `/usr/local/bin/cwebp`, `/home/linuxbrew/.linuxbrew/bin/cwebp` |
-| Both | `~/.local/share/mise/shims/cwebp`, `~/.local/bin/cwebp`, `$PATH` |
+| Platform | Paths                                                                            |
+| -------- | -------------------------------------------------------------------------------- |
+| macOS    | `/opt/homebrew/bin/cwebp`, `/usr/local/bin/cwebp`, `/opt/local/bin/cwebp`        |
+| Linux    | `/usr/bin/cwebp`, `/usr/local/bin/cwebp`, `/home/linuxbrew/.linuxbrew/bin/cwebp` |
+| Both     | `~/.local/share/mise/shims/cwebp`, `~/.local/bin/cwebp`, `$PATH`                 |
 
 ### "WebP conversion failed for file"
 
