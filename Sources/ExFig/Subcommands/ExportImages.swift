@@ -338,9 +338,9 @@ extension ExFigCommand {
                 let converter: WebpConverter
                 switch (options.encoding, options.quality) {
                 case (.lossless, _):
-                    converter = try WebpConverter(encoding: .lossless)
+                    converter = WebpConverter(encoding: .lossless)
                 case let (.lossy, quality?):
-                    converter = try WebpConverter(encoding: .lossy(quality: quality))
+                    converter = WebpConverter(encoding: .lossy(quality: quality))
                 case (.lossy, .none):
                     throw ExFigError.configurationError(
                         "WebP encoding quality not specified. Set android.images.webpOptions.quality in YAML file."
@@ -483,9 +483,9 @@ extension ExFigCommand {
                 let converter: WebpConverter
                 switch (options.encoding, options.quality) {
                 case (.lossless, _):
-                    converter = try WebpConverter(encoding: .lossless)
+                    converter = WebpConverter(encoding: .lossless)
                 case let (.lossy, quality?):
-                    converter = try WebpConverter(encoding: .lossy(quality: quality))
+                    converter = WebpConverter(encoding: .lossy(quality: quality))
                 case (.lossy, .none):
                     throw ExFigError.configurationError(
                         "WebP encoding quality not specified. Set flutter.images.webpOptions.quality in YAML file."

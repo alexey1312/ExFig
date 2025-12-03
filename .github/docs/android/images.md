@@ -46,17 +46,7 @@ android {
 
 ## Export Process
 
-### 1. Install WebP Tools (for WebP format)
-
-```bash
-# macOS
-brew install webp
-
-# Linux
-sudo apt-get install webp
-```
-
-### 2. Run Export
+Run the export command:
 
 ```bash
 exfig images
@@ -244,23 +234,6 @@ For SVG exports, ExFig converts to VectorDrawable XML:
 6. Use `drawable-nodpi` for images that shouldn't scale
 
 ## Troubleshooting
-
-### "cwebp tool not found"
-
-The `cwebp` tool is required for WebP conversion. Install it:
-
-```bash
-# macOS
-brew install webp
-
-# Linux (Debian/Ubuntu)
-sudo apt install webp
-
-# Linux (Fedora/RHEL)
-sudo dnf install libwebp-tools
-```
-
-Or specify a custom path: `export CWEBP_PATH=/path/to/cwebp`
 
 ### "WebP conversion failed for file"
 

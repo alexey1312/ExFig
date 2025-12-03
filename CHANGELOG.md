@@ -2,18 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **webp**: Replace external cwebp binary with native libwebp library
+  - WebP conversion now works out of the box with no external tools required
+  - `CWEBP_PATH` environment variable is deprecated and no longer used
+  - Improved cross-platform support (macOS, Linux)
+
 ## [1.1.0] - 2025-12-03
 
 ### Features
 
 - Add Flutter/Dart export support by @alexey1312
 
-- **examples**: Update examples and add Flutter example  by @alexey1312
-
+- **examples**: Update examples and add Flutter example by @alexey1312
 
 ### Other
 
-- Improves error handling and documentation for WebP image 
+- Improves error handling and documentation for WebP image
 
 * fix(webp): improve cwebp error handling and Linux support
 
@@ -29,20 +37,19 @@ All notable changes to this project will be documented in this file.
 
 * chore: add Flutter lockfile and fix code formatting
 
-Add pubspec.lock for Flutter example project and update .gitignore
-to exclude .dart_tool directory. Fix SwiftFormat indentation in
-WebpConverter.swift conditional compilation blocks.
+Add pubspec.lock for Flutter example project and update .gitignore to exclude .dart_tool directory. Fix SwiftFormat
+indentation in WebpConverter.swift conditional compilation blocks.
 
----------
+______________________________________________________________________
 
 Co-authored-by: Claude <noreply@anthropic.com> by @alexey1312
 
-- Claude/figma api image tracking 01 jh l wf vm uf sb hp ea pq ua kc f 
+- Claude/figma api image tracking 01 jh l wf vm uf sb hp ea pq ua kc f
 
 * feat: add Figma file version tracking for icons and images
 
-Add version tracking to skip exports when Figma files haven't changed.
-Uses the file version that updates when library is published.
+Add version tracking to skip exports when Figma files haven't changed. Uses the file version that updates when library
+is published.
 
 - Add FileMetadataEndpoint for fetching file version
 - Add ImageTrackingCache model for storing versions in .exfig-cache.json
@@ -60,30 +67,31 @@ Uses the file version that updates when library is published.
 * feat: add version tracking to colors and typography commands
 
 Extend version tracking support to all export commands:
+
 - Add --cache, --no-cache, --force flags to ExportColors
 - Add --cache, --no-cache, --force flags to ExportTypography
 - Update documentation to reflect all commands support
 
 * refactor: extract version tracking logic to VersionTrackingHelper
 
-Reduce code duplication across export commands by consolidating
-the version check and cache update logic into a reusable helper.
+Reduce code duplication across export commands by consolidating the version check and cache update logic into a reusable
+helper.
 
-* docs: add version tracking to documentation
+- docs: add version tracking to documentation
 
-Update index.md with version tracking feature highlight.
-Add usage documentation with configuration and CLI examples.
+Update index.md with version tracking feature highlight. Add usage documentation with configuration and CLI examples.
 Document VersionTrackingHelper in CLAUDE.md architecture.
 
----------
+______________________________________________________________________
 
 Co-authored-by: Claude <noreply@anthropic.com> by @alexey1312
 
-- Introduces comprehensive code coverage support  
+- Introduces comprehensive code coverage support
 
 * feat(ci): add code coverage reporting and badge
 
 Add code coverage infrastructure with:
+
 - Scripts/coverage.sh for generating coverage reports
 - mise tasks for running coverage and updating badge
 - CI workflow step to display coverage on Swift 6.1
@@ -92,13 +100,13 @@ Add code coverage infrastructure with:
 
 * test(cache): refactor CacheOptionsTests to use argument parsing
 
-Update tests to use CacheOptions.parse() instead of directly mutating
-properties. This better reflects real-world CLI usage and improves
-test accuracy for the argument parser integration.
+Update tests to use CacheOptions.parse() instead of directly mutating properties. This better reflects real-world CLI
+usage and improves test accuracy for the argument parser integration.
 
-* test: add comprehensive unit tests across all modules
+- test: add comprehensive unit tests across all modules
 
 Significantly improves test coverage from 52% to 60%:
+
 - ExFigCore: TextStyle, Image, FileContents, ErrorGroup, validators
 - ExFig: GlobalOptions, FileWriter, TerminalUI components
 - FigmaAPI: FigmaClientError, Node, Variables
@@ -114,19 +122,14 @@ Significantly improves test coverage from 52% to 60%:
 - Remove verbose flags from build/test commands
 - Update release workflow to use Xcode 16.3 by @alexey1312
 
-
 ## [1.0.1] - 2025-12-02
 
 ### Miscellaneous Tasks
 
 - Add community files and automated changelog by @alexey1312
 
-
 ## [1.0.0] - 2025-12-02
 
 ### Other
 
 - Initial implementation by @alexey1312
-
-
-

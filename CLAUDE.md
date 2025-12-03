@@ -49,13 +49,6 @@ Figma Variables.
 - macOS 12.0+
 - Figma Personal Access Token (set as `FIGMA_PERSONAL_TOKEN` environment variable)
 
-### Optional External Tools
-
-- **cwebp** (for WebP image conversion): Required when using `format: webp` in Android/Flutter image export
-  - macOS: `brew install webp`
-  - Linux: `sudo apt install webp` or `sudo dnf install libwebp-tools`
-  - Custom path: Set `CWEBP_PATH` environment variable
-
 ## Build and Test Commands
 
 The project uses a self-contained `./bin/mise` bootstrap binary. No global mise installation required. You can use

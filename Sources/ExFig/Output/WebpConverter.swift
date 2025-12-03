@@ -6,168 +6,59 @@ typealias ConversionProgressCallback = @Sendable (Int, Int) async -> Void
 
 /// Errors that can occur during WebP conversion
 enum WebpConverterError: LocalizedError, Equatable {
-    case cwebpNotFound(searchedPaths: [String])
-    case conversionFailed(file: String, exitCode: Int32, stderr: String)
     case fileNotFound(path: String)
+    case invalidInputFormat(path: String)
+    case encodingFailed(file: String, reason: String)
 
     var errorDescription: String? {
         switch self {
-        case let .cwebpNotFound(searchedPaths):
-            return """
-            'cwebp' tool not found.
-
-            WebP conversion requires the 'cwebp' command-line tool.
-
-            Install using one of these methods:
-              • macOS (Homebrew):  brew install webp
-              • macOS (MacPorts):  port install webp
-              • Linux (apt):       sudo apt install webp
-              • Linux (dnf):       sudo dnf install libwebp-tools
-              • Linux (pacman):    sudo pacman -S libwebp
-
-            Or specify a custom path via environment variable:
-              export CWEBP_PATH=/path/to/cwebp
-
-            Searched locations:
-            \(searchedPaths.map { "  ✗ \($0)" }.joined(separator: "\n"))
-            """
-        case let .conversionFailed(file, exitCode, stderr):
-            let stderrInfo = stderr.isEmpty ? "" : "\nOutput: \(stderr)"
-            return """
-            WebP conversion failed for '\(file)'.
-
-            Exit code: \(exitCode)\(stderrInfo)
-
-            This may indicate:
-              • Corrupted or invalid PNG file
-              • Insufficient disk space
-              • Incompatible cwebp version
-            """
         case let .fileNotFound(path):
-            return "Input file not found: \(path)"
+            "Input file not found: \(path)"
+        case let .invalidInputFormat(path):
+            "Invalid input format: '\(path)' is not a valid PNG file"
+        case let .encodingFailed(file, reason):
+            "WebP encoding failed for '\(file)': \(reason)"
         }
     }
 }
 
-/// PNG to WebP converter with parallel batch processing support
+/// PNG to WebP converter using native libwebp
+///
+/// Converts PNG images to WebP format using the native libwebp library.
+/// No external binaries (like cwebp) are required.
 final class WebpConverter: Sendable {
+    /// WebP encoding mode
     enum Encoding: Sendable {
         case lossy(quality: Int)
         case lossless
     }
 
-    /// Standard paths where cwebp might be installed
-    static let standardSearchPaths: [String] = {
-        var paths = [String]()
-
-        // 1. Environment variable (highest priority)
-        if let customPath = ProcessInfo.processInfo.environment["CWEBP_PATH"] {
-            paths.append(customPath)
-        }
-
-        // 2. Common installation paths
-        #if os(macOS)
-            paths += [
-                "/opt/homebrew/bin/cwebp", // Homebrew on Apple Silicon
-                "/usr/local/bin/cwebp", // Homebrew on Intel / manual install
-                "/opt/local/bin/cwebp", // MacPorts
-            ]
-        #endif
-
-        // 3. Linux paths
-        #if os(Linux)
-            paths += [
-                "/usr/bin/cwebp", // apt/dnf/pacman
-                "/usr/local/bin/cwebp", // manual install
-                "/home/linuxbrew/.linuxbrew/bin/cwebp", // Linuxbrew
-            ]
-        #endif
-
-        // 4. Cross-platform paths
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        paths += [
-            "\(home)/.local/share/mise/shims/cwebp", // mise
-            "\(home)/.local/bin/cwebp", // user local bin
-        ]
-
-        return paths
-    }()
-
     private let encoding: Encoding
     private let maxConcurrent: Int
-    private let executableURL: URL
 
     /// Creates a WebP converter
     /// - Parameters:
     ///   - encoding: WebP encoding type (lossy or lossless)
     ///   - maxConcurrent: Maximum number of parallel conversions (default: 4)
-    /// - Throws: `WebpConverterError.cwebpNotFound` if cwebp is not installed
-    init(encoding: Encoding, maxConcurrent: Int = 4) throws {
+    init(encoding: Encoding, maxConcurrent: Int = 4) {
         self.encoding = encoding
         self.maxConcurrent = maxConcurrent
-        executableURL = try Self.findCwebp()
     }
 
-    /// Finds cwebp executable in standard paths
-    /// - Returns: URL to cwebp executable
-    /// - Throws: `WebpConverterError.cwebpNotFound` if not found
-    static func findCwebp() throws -> URL {
-        // First, try to find in PATH using `which`
-        if let pathResult = try? findInPath("cwebp") {
-            return pathResult
-        }
-
-        // Then check standard paths
-        let fileManager = FileManager.default
-        for path in standardSearchPaths {
-            let expandedPath = NSString(string: path).expandingTildeInPath
-            if fileManager.isExecutableFile(atPath: expandedPath) {
-                return URL(fileURLWithPath: expandedPath)
-            }
-        }
-
-        throw WebpConverterError.cwebpNotFound(searchedPaths: standardSearchPaths)
-    }
-
-    /// Checks if cwebp is available without throwing
-    /// - Returns: true if cwebp is found
+    /// Native WebP conversion is always available (no external dependencies)
+    /// - Returns: Always returns true
     static func isAvailable() -> Bool {
-        (try? findCwebp()) != nil
+        true
     }
 
-    /// Finds an executable in PATH using `which` command
-    private static func findInPath(_ executable: String) throws -> URL? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/which")
-        task.arguments = [executable]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = FileHandle.nullDevice
-
-        try task.run()
-        task.waitUntilExit()
-
-        guard task.terminationStatus == 0 else { return nil }
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        guard let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !path.isEmpty
-        else {
-            return nil
-        }
-
-        return URL(fileURLWithPath: path)
-    }
-
-    /// Converts a single PNG file to WebP (blocking)
+    /// Converts a single PNG file to WebP
     /// - Parameter url: Path to PNG file
     /// - Throws: `WebpConverterError` on failure
     func convert(file url: URL) throws {
         try convertSync(file: url)
     }
 
-    /// Converts multiple PNG files to WebP in parallel (async, ~4x speedup)
+    /// Converts multiple PNG files to WebP in parallel
     /// - Parameters:
     ///   - files: PNG files to convert
     ///   - onProgress: Optional callback called with (current, total) after each conversion
@@ -215,43 +106,48 @@ final class WebpConverter: Sendable {
         }
     }
 
-    /// Synchronous conversion (internal)
+    /// Synchronous conversion using native libwebp
     private func convertSync(file url: URL) throws {
         // Verify input file exists
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw WebpConverterError.fileNotFound(path: url.path)
         }
 
-        let outputURL = url.deletingPathExtension().appendingPathExtension("webp")
-
-        let task = Process()
-        task.executableURL = executableURL
-
-        switch encoding {
-        case .lossless:
-            task.arguments = ["-lossless", url.path, "-o", outputURL.path, "-short"]
-        case let .lossy(quality):
-            task.arguments = ["-q", String(quality), url.path, "-o", outputURL.path, "-short"]
+        // Decode PNG to RGBA
+        let pngDecoder = PngDecoder()
+        let decodedPng: DecodedPng
+        do {
+            decodedPng = try pngDecoder.decode(file: url)
+        } catch let error as PngDecoderError {
+            switch error {
+            case .invalidFormat, .decodingFailed:
+                throw WebpConverterError.invalidInputFormat(path: url.path)
+            case let .fileNotFound(path):
+                throw WebpConverterError.fileNotFound(path: path)
+            }
         }
 
-        // Capture stderr for error reporting
-        let stderrPipe = Pipe()
-        task.standardError = stderrPipe
-        task.standardOutput = FileHandle.nullDevice
+        // Create WebP encoder based on encoding mode
+        let encoder = switch encoding {
+        case let .lossy(quality):
+            NativeWebpEncoder(quality: quality, lossless: false)
+        case .lossless:
+            NativeWebpEncoder(lossless: true)
+        }
 
-        try task.run()
-        task.waitUntilExit()
-
-        // Check exit code
-        guard task.terminationStatus == 0 else {
-            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-            let stderr = String(data: stderrData, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-            throw WebpConverterError.conversionFailed(
+        // Encode to WebP
+        let outputURL = url.deletingPathExtension().appendingPathExtension("webp")
+        do {
+            try encoder.encode(
+                rgba: decodedPng.rgba,
+                width: decodedPng.width,
+                height: decodedPng.height,
+                to: outputURL
+            )
+        } catch let error as NativeWebpEncoderError {
+            throw WebpConverterError.encodingFailed(
                 file: url.lastPathComponent,
-                exitCode: task.terminationStatus,
-                stderr: stderr
+                reason: error.localizedDescription
             )
         }
     }

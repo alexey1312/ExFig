@@ -248,23 +248,6 @@ Available template files for Flutter:
 
 ## Troubleshooting
 
-### "cwebp tool not found" (WebP format only)
-
-The `cwebp` tool is required when using `format: webp`. Install it:
-
-```bash
-# macOS
-brew install webp
-
-# Linux (Debian/Ubuntu)
-sudo apt install webp
-
-# Linux (Fedora/RHEL)
-sudo dnf install libwebp-tools
-```
-
-Or specify a custom path: `export CWEBP_PATH=/path/to/cwebp`
-
 ### "WebP encoding quality not specified"
 
 When using `format: webp` with `encoding: lossy`, you must specify a quality value:

@@ -20,6 +20,8 @@ let package = Package(
         .package(url: "https://github.com/tuist/XcodeProj.git", from: "8.27.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.0"),
         .package(url: "https://github.com/onevcat/Rainbow", from: "4.2.0"),
+        .package(url: "https://github.com/the-swift-collective/libwebp.git", from: "1.4.1"),
+        .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
     ],
     targets: [
         // Main target
@@ -37,6 +39,8 @@ let package = Package(
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Rainbow", package: "Rainbow"),
+                .product(name: "WebP", package: "libwebp"),
+                .product(name: "LibPNG", package: "libpng"),
             ]
         ),
 
@@ -106,6 +110,7 @@ let package = Package(
                 "ExFig",
                 "FigmaAPI",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
+                .product(name: "LibPNG", package: "libpng"),
             ]
         ),
         .testTarget(
@@ -124,11 +129,15 @@ let package = Package(
         ),
         .testTarget(
             name: "AndroidExportTests",
-            dependencies: ["AndroidExport", .product(name: "CustomDump", package: "swift-custom-dump")]
+            dependencies: [
+                "AndroidExport", .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
         ),
         .testTarget(
             name: "FlutterExportTests",
-            dependencies: ["FlutterExport", .product(name: "CustomDump", package: "swift-custom-dump")]
+            dependencies: [
+                "FlutterExport", .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
         ),
         .testTarget(
             name: "SVGKitTests",
