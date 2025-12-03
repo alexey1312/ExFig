@@ -4,57 +4,52 @@ import XCTest
 final class CacheOptionsTests: XCTestCase {
     // MARK: - isEnabled
 
-    func testIsEnabledReturnsFalseByDefault() {
-        let options = CacheOptions()
+    func testIsEnabledReturnsFalseByDefault() throws {
+        let options = try CacheOptions.parse([])
 
         XCTAssertFalse(options.isEnabled(configEnabled: false))
     }
 
-    func testIsEnabledReturnsTrueWhenCacheFlagIsSet() {
-        var options = CacheOptions()
-        options.cache = true
+    func testIsEnabledReturnsTrueWhenCacheFlagIsSet() throws {
+        let options = try CacheOptions.parse(["--cache"])
 
         XCTAssertTrue(options.isEnabled(configEnabled: false))
     }
 
-    func testIsEnabledReturnsTrueWhenConfigEnabled() {
-        let options = CacheOptions()
+    func testIsEnabledReturnsTrueWhenConfigEnabled() throws {
+        let options = try CacheOptions.parse([])
 
         XCTAssertTrue(options.isEnabled(configEnabled: true))
     }
 
-    func testNoCacheFlagOverridesConfig() {
-        var options = CacheOptions()
-        options.noCache = true
+    func testNoCacheFlagOverridesConfig() throws {
+        let options = try CacheOptions.parse(["--no-cache"])
 
         XCTAssertFalse(options.isEnabled(configEnabled: true))
     }
 
-    func testForceFlagEnablesCache() {
-        var options = CacheOptions()
-        options.force = true
+    func testForceFlagEnablesCache() throws {
+        let options = try CacheOptions.parse(["--force"])
 
         XCTAssertTrue(options.isEnabled(configEnabled: false))
     }
 
-    func testNoCacheTakesPriorityOverCacheFlag() {
-        var options = CacheOptions()
-        options.cache = true
-        options.noCache = true
+    func testNoCacheTakesPriorityOverCacheFlag() throws {
+        let options = try CacheOptions.parse(["--cache", "--no-cache"])
 
         XCTAssertFalse(options.isEnabled(configEnabled: true))
     }
 
     // MARK: - resolvePath
 
-    func testResolvePathReturnsNilByDefault() {
-        let options = CacheOptions()
+    func testResolvePathReturnsNilByDefault() throws {
+        let options = try CacheOptions.parse([])
 
         XCTAssertNil(options.resolvePath(configPath: nil))
     }
 
-    func testResolvePathReturnsConfigPath() {
-        let options = CacheOptions()
+    func testResolvePathReturnsConfigPath() throws {
+        let options = try CacheOptions.parse([])
 
         XCTAssertEqual(
             options.resolvePath(configPath: "/custom/path.json"),
@@ -62,9 +57,8 @@ final class CacheOptionsTests: XCTestCase {
         )
     }
 
-    func testResolvePathCLIOverridesConfig() {
-        var options = CacheOptions()
-        options.cachePath = "/cli/path.json"
+    func testResolvePathCLIOverridesConfig() throws {
+        let options = try CacheOptions.parse(["--cache-path", "/cli/path.json"])
 
         XCTAssertEqual(
             options.resolvePath(configPath: "/config/path.json"),

@@ -30,24 +30,22 @@ jobs:
         run: bin/mise run lint
 
   build-macos:
-    name: Swift ${{ matrix.swift }} on Xcode ${{ matrix.xcode }}
-    runs-on: ${{ matrix.runs-on }}
+    name: Build & Test (macOS)
+    runs-on: macos-15
     needs: lint
     env:
-      DEVELOPER_DIR: "/Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - swift: "6.0"
-            xcode: "16.0"
-            runs-on: macos-15
-          - swift: "6.1"
-            xcode: "16.3"
-            runs-on: macos-15
+      DEVELOPER_DIR: "/Applications/Xcode_16.3.app/Contents/Developer"
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Cache SPM dependencies
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
 
       - name: Setup mise environment
         run: source Scripts/environment.sh
@@ -57,10 +55,15 @@ jobs:
         run: swift --version
 
       - name: Build
-        run: swift build -v 2>&1 | xcsift
+        run: swift build 2>&1 | xcsift
 
       - name: Test
-        run: swift test -v --enable-code-coverage 2>&1 | xcsift
+        run: swift test --enable-code-coverage 2>&1 | xcsift
+
+      - name: Generate coverage report
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: ./Scripts/coverage.sh
 
   build-linux:
     name: Build & Test (Linux)

@@ -121,6 +121,19 @@ swift test --filter ExFigCoreTests.ColorTests
 swift test --filter XcodeExportTests.XcodeColorExporterTests/testColorExport
 ```
 
+### Code Coverage
+
+```bash
+# Show coverage report
+mise run coverage
+
+# Update coverage badge in README.md
+mise run coverage:badge
+```
+
+The coverage badge in README.md is updated manually using `mise run coverage:badge`. CI only displays the coverage
+report but does not auto-update the badge.
+
 ## Code Quality
 
 ### Linting

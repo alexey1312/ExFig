@@ -93,6 +93,7 @@ public struct TextStyle: Asset, Sendable {
         textCase: TextCase = .original
     ) {
         self.name = name
+        self.platform = platform
         self.fontName = fontName
         self.fontSize = fontSize
         self.fontStyle = fontStyle
