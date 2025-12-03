@@ -27,6 +27,17 @@ Ensure all checks pass:
 ./bin/mise run test        # Run tests
 ```
 
+## Code Coverage
+
+Check current test coverage:
+
+```bash
+./bin/mise run coverage        # Show coverage report
+./bin/mise run coverage:badge  # Update badge in README.md
+```
+
+Note: The coverage badge is updated manually, not automatically by CI.
+
 ## Commit Message Format
 
 We use [Conventional Commits](https://www.conventionalcommits.org/) to generate changelogs automatically.

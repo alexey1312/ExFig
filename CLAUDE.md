@@ -77,6 +77,10 @@ mise run test:filter FigmaAPITests
 mise run test:filter SVGKitTests
 mise run test:filter FlutterExportTests
 
+# Code coverage
+mise run coverage           # Run tests and show coverage report
+mise run coverage:badge     # Update coverage badge in README.md
+
 # Lint code
 mise run lint
 
@@ -385,6 +389,17 @@ Tests are organized by module:
 - `Tests/SVGKitTests/` - SVG parsing and generation tests
 
 Run tests with `mise run test` or target specific test suites with `swift test --filter <TargetName>`.
+
+### Code Coverage
+
+Use `mise run coverage` to view the current test coverage report. The coverage badge in README.md is updated manually
+(not by CI). When test coverage changes significantly, update the badge locally:
+
+```bash
+mise run coverage:badge   # Updates README.md with current coverage percentage
+```
+
+**Important**: CI only displays coverage reports. Badge updates are done locally and committed with your changes.
 
 ## Code Style
 

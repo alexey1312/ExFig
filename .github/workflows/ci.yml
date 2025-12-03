@@ -62,6 +62,10 @@ jobs:
       - name: Test
         run: swift test -v --enable-code-coverage 2>&1 | xcsift
 
+      - name: Generate coverage report
+        if: matrix.swift == '6.1'
+        run: ./Scripts/coverage.sh
+
   build-linux:
     name: Build & Test (Linux)
     runs-on: ubuntu-latest
