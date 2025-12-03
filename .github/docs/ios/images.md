@@ -319,6 +319,11 @@ common:
 5. **Avoid huge images**: Large images increase app size and memory usage
 6. **Consider vectors**: For simple graphics, use [Icons](icons.md) (PDF/SVG) instead
 7. **Name by purpose**: Use semantic names (e.g., `imgEmptyState` not `imgPicture1`)
+8. **Post-export optimization**: Use [image_optim](https://github.com/toy/image_optim) to further compress exported PNGs:
+   ```bash
+   gem install image_optim image_optim_pack
+   image_optim ./Resources/Assets.xcassets/**/*.png
+   ```
 
 ## When to Use Images vs Icons
 

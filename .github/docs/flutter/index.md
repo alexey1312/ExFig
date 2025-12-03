@@ -246,6 +246,17 @@ Available template files for Flutter:
 - `icons.dart.stencil` - Icons class template
 - `images.dart.stencil` - Images class template
 
+## Tips
+
+1. Use WebP format for smaller image sizes
+2. Only include necessary scales (e.g., `[2, 3]` for most modern devices)
+3. Use SVG for icons to reduce bundle size
+4. **Post-export optimization**: For PNG format, use [image_optim](https://github.com/toy/image_optim) to further compress:
+   ```bash
+   gem install image_optim image_optim_pack
+   image_optim ./assets/images/**/*.png
+   ```
+
 ## Troubleshooting
 
 ### "WebP encoding quality not specified"
