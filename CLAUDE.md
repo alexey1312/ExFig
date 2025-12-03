@@ -666,14 +666,8 @@ mv /tmp/swift-6.0.3-RELEASE-ubuntu24.04 ~/.local/swift
 # Add to PATH (add to ~/.bashrc for persistence)
 export PATH="$HOME/.local/swift/usr/bin:$PATH"
 
-# Set SourceKit library path for SwiftLint
-export LINUX_SOURCEKIT_LIB_PATH="$HOME/.local/swift/usr/lib"
-
 # Verify installation
 swift --version
-
-# Configure mise environment (installs swiftformat, swiftlint, pre-commit, xcsift)
-source Scripts/environment.sh
 ```
 
 ### libpng Limitations on Linux
