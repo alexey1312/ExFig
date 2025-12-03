@@ -24,15 +24,15 @@ and Flutter.
 
 ExFig is a fork of [figma-export](https://github.com/RedMadRobot/figma-export) with significant improvements:
 
-| Feature | ExFig | figma-export |
-|---------|-------|--------------|
-| Flutter / Dart | ✅ | ❌ |
-| Parallel Downloads & Writes | ✅ | ❌ |
-| Progress Bars with ETA | ✅ | ❌ |
-| Verbose/Quiet Modes | ✅ | ❌ |
-| Swift 6 / Strict Concurrency | ✅ | ❌ |
-| Test Coverage | ~80% | ~50% |
-| Active Development | ✅ | ⚠️ Limited |
+| Feature                      | ExFig | figma-export |
+| ---------------------------- | ----- | ------------ |
+| Flutter / Dart               | ✅    | ❌           |
+| Parallel Downloads & Writes  | ✅    | ❌           |
+| Progress Bars with ETA       | ✅    | ❌           |
+| Verbose/Quiet Modes          | ✅    | ❌           |
+| Swift 6 / Strict Concurrency | ✅    | ❌           |
+| Test Coverage                | ~80%  | ~50%         |
+| Active Development           | ✅    | ⚠️ Limited   |
 
 ## Features
 
