@@ -141,7 +141,7 @@ exfig colors -q
 ## Version Tracking
 
 ExFig can track Figma file versions to skip unnecessary exports. This is useful for CI/CD pipelines where you want to
-avoid re-exporting unchanged assets.
+avoid re-exporting unchanged assets. Works for all commands: `colors`, `icons`, `images`, and `typography`.
 
 ### Enable via Configuration
 
@@ -155,8 +155,11 @@ common:
 ### Enable via CLI
 
 ```bash
-# Enable version tracking
+# Enable version tracking (works for all commands)
+exfig colors --cache
 exfig icons --cache
+exfig images --cache
+exfig typography --cache
 
 # Disable version tracking (always export)
 exfig icons --no-cache

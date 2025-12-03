@@ -280,20 +280,21 @@ flutter:
 
 ## CLI Options for Version Tracking
 
-In addition to the YAML configuration, you can control version tracking via CLI flags:
+In addition to the YAML configuration, you can control version tracking via CLI flags.
+Version tracking works for all export commands: `colors`, `icons`, `images`, and `typography`.
 
 ```bash
 # Enable version tracking (overrides config)
+exfig colors --cache
 exfig icons --cache
 exfig images --cache
+exfig typography --cache
 
 # Disable version tracking (ignore cache, always export)
 exfig icons --no-cache
-exfig images --no-cache
 
 # Force export and update cache (ignore cached version)
 exfig icons --force
-exfig images --force
 
 # Use custom cache file path
 exfig icons --cache-path ./custom-cache.json
