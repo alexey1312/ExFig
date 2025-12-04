@@ -27,7 +27,7 @@ ios:
     # Folder name in Assets.xcassets
     assetsFolder: Colors
 
-    # Naming style: camelCase or snake_case
+    # Naming style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
 
     # Swift file paths (optional)

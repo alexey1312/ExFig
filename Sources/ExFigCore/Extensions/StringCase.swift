@@ -108,4 +108,30 @@ public extension String {
         guard !result.isSnakeCase else { return result }
         return result.lowercasedStrings().map { $0.lowercased() }.joined(separator: "_")
     }
+
+    /// Returns kebab case version of the string.
+    ///
+    /// Here's an example of transforming a string to kebab case.
+    ///
+    ///     let event = "Keynote Event"
+    ///     print(event.kebabCased())
+    ///     // Prints "keynote-event"
+    ///
+    /// - Returns: A kebab case copy of the string.
+    func kebabCased() -> String {
+        lowercasedStrings().map { $0.lowercased() }.joined(separator: "-")
+    }
+
+    /// Returns screaming snake case version of the string.
+    ///
+    /// Here's an example of transforming a string to screaming snake case.
+    ///
+    ///     let event = "Keynote Event"
+    ///     print(event.screamingSnakeCased())
+    ///     // Prints "KEYNOTE_EVENT"
+    ///
+    /// - Returns: A screaming snake case copy of the string.
+    func screamingSnakeCased() -> String {
+        lowercasedStrings().map { $0.uppercased() }.joined(separator: "_")
+    }
 }

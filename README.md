@@ -4,7 +4,7 @@
 [![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
-![Coverage](https://img.shields.io/badge/coverage-62.74%25-green)
+![Coverage](https://img.shields.io/badge/coverage-64.34%25-green)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
@@ -160,6 +160,45 @@ exfig icons --force
 
 **Note:** The version changes when a Figma library is **published**, not on every auto-save. This means exports are
 skipped only when designers intentionally publish their changes.
+
+## Quick Download (No Config File)
+
+For quick, one-off downloads without creating a configuration file, use the `download` command:
+
+```bash
+# Download PNG images at 3x scale (default)
+exfig download --file-id abc123 --frame "Illustrations" --output ./images
+
+# Download SVG icons
+exfig download -f abc123 -r "Icons" -o ./icons --format svg
+
+# Download with filtering and name conversion
+exfig download -f abc123 -r "Images" -o ./images --filter "logo/*" --name-style camelCase
+
+# Download at specific scale
+exfig download -f abc123 -r "Images" -o ./images --scale 2
+
+# Download as WebP with quality settings
+exfig download -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
+
+# Download with dark mode variants
+exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
+```
+
+### Download Command Options
+
+| Option               | Short | Description                                                                     | Default     |
+| -------------------- | ----- | ------------------------------------------------------------------------------- | ----------- |
+| `--file-id`          | `-f`  | Figma file ID (required)                                                        | -           |
+| `--frame`            | `-r`  | Figma frame name (required)                                                     | -           |
+| `--output`           | `-o`  | Output directory (required)                                                     | -           |
+| `--format`           |       | Image format: png, svg, jpg, pdf, webp                                          | png         |
+| `--scale`            |       | Scale factor (0.01-4.0)                                                         | 3 (for PNG) |
+| `--filter`           |       | Filter pattern (e.g., "icon/\*")                                                | -           |
+| `--name-style`       |       | Name style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE | -           |
+| `--dark-mode-suffix` |       | Suffix for dark variants (e.g., "\_dark")                                       | -           |
+| `--webp-encoding`    |       | WebP encoding: lossy, lossless                                                  | lossy       |
+| `--webp-quality`     |       | WebP quality (0-100)                                                            | 80          |
 
 ## Documentation
 

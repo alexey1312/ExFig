@@ -1,0 +1,193 @@
+import ArgumentParser
+import ExFigCore
+import FigmaAPI
+import Foundation
+import Logging
+
+extension ExFigCommand {
+    struct DownloadImages: AsyncParsableCommand {
+        static let configuration = CommandConfiguration(
+            commandName: "download",
+            abstract: "Downloads images from Figma without config file",
+            discussion: """
+            Downloads images from a specific Figma frame to a local directory.
+            All parameters are passed via command-line arguments.
+
+            Examples:
+              # Download PNGs at 3x scale (default)
+              exfig download --file-id abc123 --frame "Illustrations" --output ./images
+
+              # Download SVGs
+              exfig download -f abc123 -r "Icons" -o ./icons --format svg
+
+              # Download with filtering
+              exfig download -f abc123 -r "Images" -o ./images --filter "logo/*"
+
+              # Download PNG at 2x scale with camelCase naming
+              exfig download -f abc123 -r "Images" -o ./images --scale 2 --name-style camelCase
+
+              # Download with dark mode variants
+              exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
+
+              # Download as WebP with quality settings
+              exfig download -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
+            """
+        )
+
+        @OptionGroup
+        var globalOptions: GlobalOptions
+
+        @OptionGroup
+        var downloadOptions: DownloadOptions
+
+        // swiftlint:disable:next function_body_length
+        func run() async throws {
+            // Initialize terminal UI
+            ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
+            let ui = ExFigCommand.terminalUI!
+
+            // Validate access token
+            guard let accessToken = downloadOptions.accessToken else {
+                throw ExFigError.accessTokenNotFound
+            }
+
+            // Create output directory if needed
+            let outputURL = downloadOptions.outputURL
+            try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
+
+            ui.info("Downloading images from Figma...")
+            ui.debug("File ID: \(downloadOptions.fileId)")
+            ui.debug("Frame: \(downloadOptions.frameName)")
+            ui.debug("Output: \(outputURL.path)")
+            ui.debug("Format: \(downloadOptions.format.rawValue)")
+            if !downloadOptions.isVectorFormat {
+                ui.debug("Scale: \(downloadOptions.effectiveScale)x")
+            }
+
+            // Create Figma client
+            let client = FigmaClient(accessToken: accessToken, timeout: TimeInterval(downloadOptions.timeout))
+
+            // Create loader
+            let loader = DownloadImageLoader(
+                client: client,
+                logger: ExFigCommand.logger
+            )
+
+            // Load images from Figma
+            let imagePacks = try await ui.withSpinner("Fetching images from Figma...") {
+                try await loadImages(using: loader)
+            }
+
+            guard !imagePacks.isEmpty else {
+                ui.warning("No images found in frame '\(downloadOptions.frameName)'")
+                return
+            }
+
+            ui.info("Found \(imagePacks.count) images")
+
+            // Process names using extracted processor
+            let processedPacks = DownloadImageProcessor.processNames(
+                imagePacks,
+                validateRegexp: downloadOptions.nameValidateRegexp,
+                replaceRegexp: downloadOptions.nameReplaceRegexp,
+                nameStyle: downloadOptions.nameStyle
+            )
+
+            // Handle dark mode if suffix is specified
+            let (lightPacks, darkPacks) = DownloadImageProcessor.splitByDarkMode(
+                processedPacks,
+                darkSuffix: downloadOptions.darkModeSuffix
+            )
+
+            // Create file contents for download
+            var allFiles = DownloadImageProcessor.createFileContents(
+                from: lightPacks,
+                outputURL: outputURL,
+                format: downloadOptions.format,
+                dark: false,
+                darkModeSuffix: downloadOptions.darkModeSuffix
+            )
+            if let darkPacks {
+                allFiles += DownloadImageProcessor.createFileContents(
+                    from: darkPacks,
+                    outputURL: outputURL,
+                    format: downloadOptions.format,
+                    dark: true,
+                    darkModeSuffix: downloadOptions.darkModeSuffix
+                )
+            }
+            let filesToDownload = allFiles
+
+            // Download files with progress
+            ui.info("Downloading \(filesToDownload.count) files...")
+            let downloadedFiles = try await ui.withProgress("Downloading", total: filesToDownload.count) { progress in
+                try await ExFigCommand.fileDownloader.fetch(files: filesToDownload) { current, _ in
+                    await progress.update(current: current)
+                }
+            }
+
+            // Convert to WebP if needed
+            let finalFiles: [FileContents] = if downloadOptions.format == .webp {
+                try await convertToWebP(downloadedFiles, ui: ui)
+            } else {
+                downloadedFiles
+            }
+
+            // Write files to disk
+            try await ui.withSpinner("Writing files...") {
+                try await ExFigCommand.fileWriter.writeParallel(files: finalFiles)
+            }
+
+            ui.success("Downloaded \(finalFiles.count) images to \(outputURL.path)")
+        }
+
+        // MARK: - Private Methods
+
+        private func loadImages(using loader: DownloadImageLoader) async throws -> [ImagePack] {
+            if downloadOptions.isVectorFormat {
+                let params: FormatParams = downloadOptions.format == .svg ? SVGParams() : PDFParams()
+                return try await loader.loadVectorImages(
+                    fileId: downloadOptions.fileId,
+                    frameName: downloadOptions.frameName,
+                    params: params,
+                    filter: downloadOptions.filter
+                )
+            } else {
+                return try await loader.loadRasterImages(
+                    fileId: downloadOptions.fileId,
+                    frameName: downloadOptions.frameName,
+                    scale: downloadOptions.effectiveScale,
+                    format: downloadOptions.format.rawValue,
+                    filter: downloadOptions.filter
+                )
+            }
+        }
+
+        private func convertToWebP(_ files: [FileContents], ui: TerminalUI) async throws -> [FileContents] {
+            let encoding: WebpConverter.Encoding = switch downloadOptions.webpEncoding {
+            case .lossy:
+                .lossy(quality: downloadOptions.webpQuality)
+            case .lossless:
+                .lossless
+            }
+
+            let converter = WebpConverter(encoding: encoding)
+
+            // Get list of downloaded PNG files to convert
+            let pngFiles = files.compactMap(\.dataFile)
+
+            guard !pngFiles.isEmpty else {
+                return files
+            }
+
+            try await ui.withSpinner("Converting to WebP...") {
+                try await converter.convertBatch(files: pngFiles)
+            }
+
+            // Update file contents with WebP extension
+            return files.map { file in
+                file.changingExtension(newExtension: "webp")
+            }
+        }
+    }
+}

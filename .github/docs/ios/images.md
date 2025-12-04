@@ -19,7 +19,7 @@ ios:
     # Folder name in Assets.xcassets
     assetsFolder: Illustrations
 
-    # Naming style: camelCase or snake_case
+    # Naming style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
 
     # Image scales to export (optional, defaults to [1, 2, 3])

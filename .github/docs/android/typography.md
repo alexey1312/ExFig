@@ -18,7 +18,7 @@ android:
   mainSrc: "./app/src/main/java"
 
   typography:
-    # Naming style: camelCase or snake_case
+    # Naming style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
     nameStyle: camelCase
 
     # Package for Compose code (optional)
