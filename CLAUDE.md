@@ -369,3 +369,16 @@ exfig init -p android
 | Formatting fails   | Run `mise run setup` to install tools          |
 | Template errors    | Check Stencil syntax and context variables     |
 | Linux test crashes | Use `--num-workers 1` for test parallelization |
+
+## Project Knowledge File
+
+The `.claude/EXFIG.toon` file contains a compact machine-readable summary of the project.
+
+**Maintenance rule:** Keep this file updated when:
+
+- Adding new CLI commands or options
+- Adding new modules or significant types
+- Changing default values for fault tolerance
+- Adding new Stencil templates
+
+To validate: `npx @toon-format/cli .claude/EXFIG.toon --decode`

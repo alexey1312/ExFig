@@ -1,0 +1,195 @@
+meta:
+  name: ExFig
+  version: current
+  description: CLI tool for exporting Figma assets to iOS, Android, Flutter
+  swift: 6.0
+  platforms: macOS 12.0+, Linux
+  license: MIT
+  repo: github.com/alexey1312/ExFig
+
+commands:
+  colors:
+    purpose: Export colors from Figma styles or variables
+    args: [FILTER]
+    options:
+      input: -i/--input PATH
+      cache: --cache/--no-cache
+      force: --force
+      cachePath: --cache-path PATH
+      maxRetries: --max-retries N (default 4)
+      rateLimit: --rate-limit N (default 10)
+      verbose: -v/--verbose
+      quiet: -q/--quiet
+
+  icons:
+    purpose: Export icons from Figma components
+    args: [FILTER]
+    options:
+      input: -i/--input PATH
+      cache: --cache/--no-cache
+      force: --force
+      maxRetries: --max-retries N
+      rateLimit: --rate-limit N
+      failFast: --fail-fast
+      resume: --resume
+      verbose: -v/--verbose
+      quiet: -q/--quiet
+
+  images:
+    purpose: Export images from Figma components
+    args: [FILTER]
+    options: (same as icons)
+
+  typography:
+    purpose: Export text styles from Figma
+    options:
+      input: -i/--input PATH
+      cache: --cache/--no-cache
+      maxRetries: --max-retries N
+      rateLimit: --rate-limit N
+      verbose: -v/--verbose
+      quiet: -q/--quiet
+
+  init:
+    purpose: Generate starter config file
+    options:
+      platform: -p/--platform ios|android (required)
+
+  batch:
+    purpose: Process multiple configs in parallel
+    args: PATHS...
+    options:
+      parallel: --parallel N (default 3)
+      failFast: --fail-fast
+      rateLimit: --rate-limit N (default 10)
+      maxRetries: --max-retries N (default 4)
+      resume: --resume
+      report: --report PATH
+
+  download:
+    purpose: Export Figma data as JSON
+    subcommands:
+      colors: Export colors as JSON
+      icons: Export icons metadata with URLs
+      images: Export images metadata with URLs
+      typography: Export text styles as JSON
+      all: Export all types to directory
+    options:
+      output: -o/--output PATH
+      format: -f/--format w3c|raw (default w3c)
+      compact: --compact
+      assetFormat: --asset-format svg|png|pdf|jpg
+      scale: --scale N (default 3)
+
+  fetch:
+    purpose: Quick download without config file
+    options:
+      fileId: -f/--file-id ID (required)
+      frame: -r/--frame NAME (required)
+      output: -o/--output PATH (required)
+      format: --format png|svg|jpg|pdf|webp (default png)
+      scale: --scale N (0.01-4.0, default 3)
+      filter: --filter PATTERN
+      nameStyle: --name-style camelCase|snake_case|PascalCase|kebab-case|SCREAMING_SNAKE_CASE
+      darkModeSuffix: --dark-mode-suffix SUFFIX
+      webpEncoding: --webp-encoding lossy|lossless (default lossy)
+      webpQuality: --webp-quality N (0-100, default 80)
+      timeout: --timeout SECONDS (default 30)
+      maxRetries: --max-retries N
+      rateLimit: --rate-limit N
+      failFast: --fail-fast
+      resume: --resume
+
+modules[7]{name,path,purpose}:
+  ExFig,Sources/ExFig,CLI commands and orchestration
+  ExFigCore,Sources/ExFigCore,Domain models and processors
+  FigmaAPI,Sources/FigmaAPI,HTTP client with rate limiting
+  XcodeExport,Sources/XcodeExport,iOS xcassets and Swift extensions
+  AndroidExport,Sources/AndroidExport,Android XML and Compose code
+  FlutterExport,Sources/FlutterExport,Flutter Dart code
+  SVGKit,Sources/SVGKit,SVG parsing and vector generation
+
+keyDirectories:
+  subcommands: Sources/ExFig/Subcommands/
+  loaders: Sources/ExFig/Loaders/
+  input: Sources/ExFig/Input/
+  output: Sources/ExFig/Output/
+  cache: Sources/ExFig/Cache/
+  terminalUI: Sources/ExFig/TerminalUI/
+  templates: Sources/*/Resources/
+  tests: Tests/
+
+keyFiles:
+  cli: Sources/ExFig/ExFigCommand.swift
+  config: Sources/ExFig/Input/Params.swift
+  faultTolerance: Sources/ExFig/Input/FaultToleranceOptions.swift
+  rateLimiter: Sources/FigmaAPI/Client/RateLimitedClient.swift
+  retryPolicy: Sources/FigmaAPI/Client/RetryPolicy.swift
+  checkpoint: Sources/ExFig/Cache/CheckpointTracker.swift
+  figmaClient: Sources/FigmaAPI/Client/FigmaClient.swift
+
+faultTolerance:
+  defaults:
+    maxRetries: 4
+    rateLimit: 10
+    failFast: false
+    resume: false
+    checkpointExpiry: 24h
+  features:
+    exponentialBackoff: 2s -> 4s -> 8s -> 16s with jitter
+    rateLimitHandling: respects Retry-After header
+    checkpointSystem: saves progress for resumption
+
+templates:
+  ios[10]: UIColor+extension, Color+extension, UIFont+extension, Font+extension, UIImage+extension, Image+extension, Label, LabelStyle, LabelStyle+extension, header
+  android[6]: colors.xml, Colors.kt, typography.xml, Typography.kt, Icons.kt, header
+  flutter[4]: colors.dart, icons.dart, images.dart, header
+
+config:
+  files: exfig.yaml, figma-export.yaml
+  envVar: FIGMA_PERSONAL_TOKEN
+  sections: figma, common, ios, android, flutter
+  reference: CONFIG.md
+
+buildCommands:
+  build: mise run build
+  test: mise run test
+  testFilter: mise run test:filter NAME
+  lint: mise run lint
+  format: mise run format
+  formatMd: mise run format-md
+  run: .build/debug/exfig
+
+dependencies[10]{name,version,purpose}:
+  swift-argument-parser,1.5.0+,CLI framework
+  Yams,5.3.0+,YAML parsing
+  Stencil,0.15.1+,Template engine
+  StencilSwiftKit,2.10.1+,Swift Stencil extensions
+  XcodeProj,8.27.0+,Xcode project manipulation
+  swift-log,1.6.0+,Logging
+  Rainbow,4.2.0+,Terminal colors
+  libwebp,1.4.1+,WebP encoding
+  libpng,1.6.45+,PNG decoding
+  swift-custom-dump,1.3.0+,Test assertions
+
+figmaAPI:
+  endpoints:
+    files: GET /v1/files/:key
+    images: GET /v1/images/:key
+    components: GET /v1/files/:key/components
+    styles: GET /v1/files/:key/styles
+    variables: GET /v1/files/:key/variables
+  rateLimits:
+    tier1: 10-20 req/min (files, images)
+    tier2: 25-100 req/min
+    tier3: 50-150 req/min
+  docs: https://www.figma.com/developers/api
+
+testTargets[7]{name,tests}:
+  ExFigTests,CLI commands and loaders
+  ExFigCoreTests,Domain models and processors
+  XcodeExportTests,iOS export output
+  AndroidExportTests,Android export output
+  FlutterExportTests,Flutter export output
+  FigmaAPITests,API client and endpoints
+  SVGKitTests,SVG parsing and code generation

@@ -55,6 +55,10 @@ from Figma to Xcode and Android Studio projects.
 - **Dynamic Type**: iOS Dynamic Type support for typography
 - **Figma Variables**: Support for Figma's new variables feature
 - **Version Tracking**: Skip exports when Figma files haven't changed (ideal for CI/CD)
+- **Batch Processing**: Process multiple configs in parallel with shared rate limiting
+- **JSON Export**: Export as W3C Design Tokens for design system tools
+- **Fault Tolerance**: Automatic retries with exponential backoff
+- **Checkpoint/Resume**: Continue interrupted exports from last checkpoint
 
 ## Quick Links
 

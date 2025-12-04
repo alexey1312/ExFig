@@ -287,6 +287,130 @@ exfig icons --cache-path ./custom-cache.json
 
 See [Configuration Reference](../../CONFIG.md) for more details.
 
+## Fault Tolerance
+
+All commands support fault tolerance options for reliable exports:
+
+### Basic Options (All Commands)
+
+```bash
+# Custom retry count (default: 4)
+exfig colors --max-retries 6
+
+# Custom rate limit (default: 10 req/min)
+exfig icons --rate-limit 20
+```
+
+### Extended Options (Heavy Commands)
+
+Commands that download many files (`icons`, `images`, `fetch`) support additional options:
+
+```bash
+# Stop on first error (disable retries)
+exfig icons --fail-fast
+
+# Resume from checkpoint after interruption
+exfig images --resume
+```
+
+| Option          | Description                           | Commands             |
+| --------------- | ------------------------------------- | -------------------- |
+| `--max-retries` | Maximum retry attempts (default: 4)   | All                  |
+| `--rate-limit`  | API requests per minute (default: 10) | All                  |
+| `--fail-fast`   | Stop immediately on error             | icons, images, fetch |
+| `--resume`      | Continue from checkpoint              | icons, images, fetch |
+
+### Checkpoint System
+
+Long-running exports create checkpoints so you can resume after interruption:
+
+```bash
+# Resume interrupted export
+exfig icons --resume
+
+# Checkpoints are stored in: .exfig-checkpoint.json
+# Checkpoints expire after 24 hours
+# Successful completion automatically deletes the checkpoint
+```
+
+## Batch Processing
+
+Process multiple configuration files in parallel with shared rate limiting:
+
+```bash
+# Process all configs in a directory
+exfig batch ./configs/
+
+# Process specific config files
+exfig batch ios-app.yaml android-app.yaml flutter-app.yaml
+
+# With custom parallelism (default: 3)
+exfig batch ./configs/ --parallel 5
+
+# Stop on first error
+exfig batch ./configs/ --fail-fast
+
+# Generate JSON report
+exfig batch ./configs/ --report batch-results.json
+
+# Resume from checkpoint
+exfig batch ./configs/ --resume
+```
+
+### Batch Options
+
+| Option          | Description                                | Default |
+| --------------- | ------------------------------------------ | ------- |
+| `--parallel`    | Maximum concurrent configs                 | 3       |
+| `--fail-fast`   | Stop processing on first error             | false   |
+| `--rate-limit`  | Figma API requests per minute              | 10      |
+| `--max-retries` | Maximum retry attempts for failed requests | 4       |
+| `--resume`      | Resume from previous checkpoint            | false   |
+| `--report`      | Path to write JSON report                  |         |
+
+## JSON Export (Design Tokens)
+
+Export Figma design data as JSON for integration with design token tools and pipelines:
+
+```bash
+# Export colors as W3C Design Tokens (default format)
+exfig download colors -o tokens/colors.json
+
+# Export raw Figma API response for debugging
+exfig download colors -o debug/colors.json --format raw
+
+# Export icons with SVG URLs
+exfig download icons -o tokens/icons.json --asset-format svg
+
+# Export typography
+exfig download typography -o tokens/typography.json
+
+# Export all token types to a directory
+exfig download all -o ./tokens/
+```
+
+### Download Subcommands
+
+| Subcommand   | Description                     |
+| ------------ | ------------------------------- |
+| `colors`     | Export colors as JSON           |
+| `icons`      | Export icon metadata with URLs  |
+| `images`     | Export image metadata with URLs |
+| `typography` | Export text styles as JSON      |
+| `all`        | Export all types to a directory |
+
+### Download Options
+
+| Option           | Short | Description                      | Default |
+| ---------------- | ----- | -------------------------------- | ------- |
+| `--output`       | `-o`  | Output file path (required)      | -       |
+| `--format`       | `-f`  | Output format: w3c, raw          | w3c     |
+| `--compact`      |       | Output minified JSON             | false   |
+| `--asset-format` |       | Image format: svg, png, pdf, jpg | svg     |
+| `--scale`        |       | Scale for raster formats         | 3       |
+
+The W3C format follows the [W3C Design Tokens](https://design-tokens.github.io/community-group/format/) specification.
+
 ## Quick Fetch (No Config File)
 
 For quick, one-off downloads without creating a configuration file, use the `fetch` command. This is useful when you
@@ -387,6 +511,10 @@ exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 | `--webp-encoding`        |       | WebP encoding: lossy, lossless                                                  | lossy        |
 | `--webp-quality`         |       | WebP quality (0-100)                                                            | 80           |
 | `--timeout`              |       | API request timeout in seconds                                                  | 30           |
+| `--max-retries`          |       | Maximum retry attempts                                                          | 4            |
+| `--rate-limit`           |       | API requests per minute                                                         | 10           |
+| `--fail-fast`            |       | Stop on first error                                                             | false        |
+| `--resume`               |       | Resume from checkpoint                                                          | false        |
 | `--verbose`              | `-v`  | Show detailed output                                                            | false        |
 | `--quiet`                | `-q`  | Show only errors                                                                | false        |
 
