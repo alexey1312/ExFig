@@ -9,14 +9,14 @@
 - [x] 1.5 Define retryable vs non-retryable error types (FigmaAPIError.swift, RetryPolicy.isRetryable)
 - [x] 1.6 Add retry attempt logging with user-visible progress (RetryLogger.swift, BatchExecutor.onRetryEvent)
 
-## 2. Rate Limiting (core complete, CLI options deferred)
+## 2. Rate Limiting ✅
 
 - [x] 2.1 ~~Create `RateLimiter` actor in FigmaAPI~~ (SharedRateLimiter exists)
 - [x] 2.2 ~~Implement token bucket algorithm~~ (done in SharedRateLimiter)
 - [x] 2.3 ~~Integrate rate limiter with FigmaClient~~ (RateLimitedClient wraps Client)
 - [x] 2.4 ~~Add adaptive slowdown on 429 responses~~ (done in RateLimitedClient:32-44)
-- [ ] 2.5 Add `--rate-limit` CLI option to override default (deferred to future iteration)
-- [ ] 2.6 Display rate limit status in verbose mode (deferred to future iteration)
+- [x] 2.5 Add `--rate-limit` CLI option to override default (Batch.swift:30-31)
+- [x] 2.6 Display rate limit status in verbose mode (Batch.swift:147-152, displayRateLimitStatus)
 
 ## 3. Atomic File Operations (core complete, temp cleanup deferred)
 
@@ -27,18 +27,15 @@
 - [ ] 3.5 Handle disk space checks before write (deferred to future iteration)
 - [x] 3.6 ~~Migrate FileWriter to use AtomicFileWriter~~ (already uses .atomic)
 
-## 4. Checkpoint System (deferred)
+## 4. Checkpoint System ✅
 
-> Checkpoint system is deferred to a future iteration. Current implementation provides robust retry logic that handles
-> most failure scenarios without checkpointing.
-
-- [ ] 4.1 Create `ExportCheckpoint` model
-- [ ] 4.2 Implement checkpoint serialization/deserialization
-- [ ] 4.3 Add checkpoint save after each batch completion
-- [ ] 4.4 Add `--resume` flag to export commands
-- [ ] 4.5 Implement checkpoint validation (config hash)
-- [ ] 4.6 Add checkpoint expiration (24h default)
-- [ ] 4.7 Delete checkpoint on successful completion
+- [x] 4.1 Create `ExportCheckpoint` model (ExportCheckpoint.swift - for item-level checkpointing)
+- [x] 4.2 Implement checkpoint serialization/deserialization (ExportCheckpoint.save/load)
+- [x] 4.3 Add checkpoint save after each batch completion (BatchCheckpoint.swift, CheckpointManager actor)
+- [x] 4.4 Add `--resume` flag to batch command (Batch.swift:36-37)
+- [x] 4.5 Implement checkpoint validation (config hash in ExportCheckpoint, path matching in BatchCheckpoint)
+- [x] 4.6 Add checkpoint expiration (24h default - isExpired method)
+- [x] 4.7 Delete checkpoint on successful completion (Batch.swift:159-165)
 
 ## 5. User-Friendly Error Handling ✅
 
@@ -50,7 +47,7 @@
   - Auth: "Invalid token. Check FIGMA_PERSONAL_TOKEN"
 - [x] 5.3 Show retry progress: "Retrying in 2s... (attempt 2/4)" (RetryLogger.formatRetryMessage)
 - [x] 5.4 Add recovery suggestions on final failure (FigmaAPIError.recoverySuggestion)
-- [ ] 5.5 Add `--fail-fast` flag to disable retries (deferred to future iteration)
+- [x] 5.5 Add `--fail-fast` flag to disable retries (Batch.swift:27-28)
 
 ## 6. Testing ✅
 
@@ -58,7 +55,8 @@
 - [x] 6.2 ~~Unit tests for RateLimiter token bucket~~ (SharedRateLimiterTests.swift)
 - [x] 6.3 Integration tests with mock 429/500 responses (RateLimitedClientRetryTests - 11 tests)
 - [x] 6.4 FigmaAPIError tests (FigmaAPIErrorTests.swift - 22 tests)
-- [ ] 6.5 Tests for checkpoint save/resume flow (deferred with checkpoint system)
+- [x] 6.5 Tests for checkpoint save/resume flow (ExportCheckpointTests.swift - 21 tests, BatchCheckpointTests.swift - 15
+  tests)
 
 ## 7. Documentation (deferred)
 
