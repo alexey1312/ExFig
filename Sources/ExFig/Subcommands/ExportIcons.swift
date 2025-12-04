@@ -25,6 +25,9 @@ extension ExFigCommand {
         @OptionGroup
         var cacheOptions: CacheOptions
 
+        @OptionGroup
+        var faultToleranceOptions: HeavyFaultToleranceOptions
+
         @Argument(help: """
         [Optional] Name of the icons to export. For example \"ic/24/edit\" \
         to export single icon, \"ic/24/edit, ic/16/notification\" to export several icons and \
@@ -36,7 +39,15 @@ extension ExFigCommand {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let client = faultToleranceOptions.createRateLimitedClient(
+                wrapping: baseClient,
+                rateLimiter: rateLimiter,
+                onRetry: { attempt, error in
+                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                }
+            )
 
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(

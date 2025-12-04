@@ -43,6 +43,9 @@ extension ExFigCommand {
         @OptionGroup
         var downloadOptions: DownloadOptions
 
+        @OptionGroup
+        var faultToleranceOptions: HeavyFaultToleranceOptions
+
         // swiftlint:disable:next function_body_length
         func run() async throws {
             // Initialize terminal UI
@@ -67,8 +70,16 @@ extension ExFigCommand {
                 ui.debug("Scale: \(downloadOptions.effectiveScale)x")
             }
 
-            // Create Figma client
-            let client = FigmaClient(accessToken: accessToken, timeout: TimeInterval(downloadOptions.timeout))
+            // Create Figma client with fault tolerance
+            let baseClient = FigmaClient(accessToken: accessToken, timeout: TimeInterval(downloadOptions.timeout))
+            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let client = faultToleranceOptions.createRateLimitedClient(
+                wrapping: baseClient,
+                rateLimiter: rateLimiter,
+                onRetry: { attempt, error in
+                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                }
+            )
 
             // Create loader
             let loader = DownloadImageLoader(

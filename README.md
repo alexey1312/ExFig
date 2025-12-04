@@ -4,7 +4,7 @@
 [![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
-![Coverage](https://img.shields.io/badge/coverage-58.71%25-yellow)
+![Coverage](https://img.shields.io/badge/coverage-58.82%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
@@ -164,6 +164,39 @@ exfig icons --force
 **Note:** The version changes when a Figma library is **published**, not on every auto-save. This means exports are
 skipped only when designers intentionally publish their changes.
 
+## Fault Tolerance
+
+All commands support fault tolerance options for reliable exports:
+
+### Basic Options (All Commands)
+
+```bash
+# Custom retry count (default: 4)
+exfig colors --max-retries 6
+
+# Custom rate limit (default: 10 req/min)
+exfig icons --rate-limit 20
+```
+
+### Extended Options (Heavy Commands)
+
+Commands that download many files (`icons`, `images`, `fetch`) support additional options:
+
+```bash
+# Stop on first error (disable retries)
+exfig icons --fail-fast
+
+# Resume from checkpoint after interruption
+exfig images --resume
+```
+
+| Option          | Description                           | Commands             |
+| --------------- | ------------------------------------- | -------------------- |
+| `--max-retries` | Maximum retry attempts (default: 4)   | All                  |
+| `--rate-limit`  | API requests per minute (default: 10) | All                  |
+| `--fail-fast`   | Stop immediately on error             | icons, images, fetch |
+| `--resume`      | Continue from checkpoint              | icons, images, fetch |
+
 ## Quick Fetch (No Config File)
 
 For quick, one-off downloads without creating a configuration file, use the `fetch` command:
@@ -205,6 +238,10 @@ exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 | `--dark-mode-suffix` |       | Suffix for dark variants (e.g., "\_dark")                                       | -           |
 | `--webp-encoding`    |       | WebP encoding: lossy, lossless                                                  | lossy       |
 | `--webp-quality`     |       | WebP quality (0-100)                                                            | 80          |
+| `--max-retries`      |       | Maximum retry attempts                                                          | 4           |
+| `--rate-limit`       |       | API requests per minute                                                         | 10          |
+| `--fail-fast`        |       | Stop on first error                                                             | false       |
+| `--resume`           |       | Resume from checkpoint                                                          | false       |
 
 ## JSON Export (Design Tokens)
 

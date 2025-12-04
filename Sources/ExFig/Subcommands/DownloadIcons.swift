@@ -46,17 +46,29 @@ extension ExFigCommand.Download {
         @OptionGroup
         var assetOptions: AssetExportOptions
 
+        @OptionGroup
+        var faultToleranceOptions: FaultToleranceOptions
+
         @Option(name: .long, help: "Figma frame name containing icons (default: from config or 'Icons')")
         var frameName: String?
 
         @Argument(help: "Filter icons by name pattern (e.g., 'navigation/*')")
         var filter: String?
 
+        // swiftlint:disable:next function_body_length
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let client = faultToleranceOptions.createRateLimitedClient(
+                wrapping: baseClient,
+                rateLimiter: rateLimiter,
+                onRetry: { attempt, error in
+                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                }
+            )
 
             ui.info("Downloading icons from Figma...")
 

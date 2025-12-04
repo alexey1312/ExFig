@@ -80,7 +80,7 @@ enum AssetExportHelper {
 
     /// Fetches components from a frame and optionally filters them.
     static func fetchComponents(
-        client: FigmaClient,
+        client: Client,
         fileId: String,
         frameName: String,
         filter: String?
@@ -99,7 +99,7 @@ enum AssetExportHelper {
 
     /// Gets export URLs for components.
     static func getExportUrls(
-        client: FigmaClient,
+        client: Client,
         fileId: String,
         nodeIds: [NodeId],
         format: String,

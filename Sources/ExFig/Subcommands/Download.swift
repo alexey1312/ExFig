@@ -82,6 +82,9 @@ extension ExFigCommand.Download {
         @OptionGroup
         var jsonOptions: JSONExportOptions
 
+        @OptionGroup
+        var faultToleranceOptions: FaultToleranceOptions
+
         @Argument(help: "Filter colors by name pattern (e.g., 'background/*')")
         var filter: String?
 
@@ -89,7 +92,15 @@ extension ExFigCommand.Download {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let client = faultToleranceOptions.createRateLimitedClient(
+                wrapping: baseClient,
+                rateLimiter: rateLimiter,
+                onRetry: { attempt, error in
+                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                }
+            )
 
             ui.info("Downloading colors from Figma...")
 
@@ -132,7 +143,7 @@ extension ExFigCommand.Download {
         // MARK: - W3C Export
 
         private func exportW3C(
-            client: FigmaClient,
+            client: Client,
             figmaParams: Params.Figma,
             commonParams: Params.Common?,
             outputURL: URL,
@@ -170,7 +181,7 @@ extension ExFigCommand.Download {
         // MARK: - Raw Export
 
         private func exportRaw(
-            client: FigmaClient,
+            client: Client,
             figmaParams: Params.Figma,
             commonParams: Params.Common?,
             outputURL: URL,
@@ -194,7 +205,7 @@ extension ExFigCommand.Download {
         }
 
         private func exportRawVariables(
-            client: FigmaClient,
+            client: Client,
             variableParams: Params.Common.VariablesColors,
             outputURL: URL
         ) async throws {
@@ -216,7 +227,7 @@ extension ExFigCommand.Download {
         }
 
         private func exportRawStyles(
-            client: FigmaClient,
+            client: Client,
             figmaParams: Params.Figma,
             commonParams: Params.Common?,
             outputURL: URL,

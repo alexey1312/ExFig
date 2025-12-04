@@ -23,11 +23,23 @@ extension ExFigCommand {
         @OptionGroup
         var cacheOptions: CacheOptions
 
+        @OptionGroup
+        var faultToleranceOptions: FaultToleranceOptions
+
+        // swiftlint:disable:next function_body_length
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let client = faultToleranceOptions.createRateLimitedClient(
+                wrapping: baseClient,
+                rateLimiter: rateLimiter,
+                onRetry: { attempt, error in
+                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                }
+            )
 
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(

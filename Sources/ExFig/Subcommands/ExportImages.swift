@@ -25,6 +25,9 @@ extension ExFigCommand {
         @OptionGroup
         var cacheOptions: CacheOptions
 
+        @OptionGroup
+        var faultToleranceOptions: HeavyFaultToleranceOptions
+
         @Argument(help: """
         [Optional] Name of the images to export. For example \"img/login\" to export \
         single image, \"img/onboarding/1, img/onboarding/2\" to export several images \
@@ -36,7 +39,15 @@ extension ExFigCommand {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let client = faultToleranceOptions.createRateLimitedClient(
+                wrapping: baseClient,
+                rateLimiter: rateLimiter,
+                onRetry: { attempt, error in
+                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                }
+            )
 
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(

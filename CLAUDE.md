@@ -125,6 +125,51 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 }
 ```
 
+### Fault Tolerance for API Commands
+
+All commands support configurable retry and rate limiting via CLI flags:
+
+```bash
+# Light commands (colors, typography, download subcommands)
+exfig colors --max-retries 6 --rate-limit 15
+
+# Heavy commands (icons, images, fetch) also support fail-fast
+exfig icons --max-retries 4 --rate-limit 10 --fail-fast
+exfig fetch -f FILE_ID -r "Frame" -o ./out --fail-fast
+```
+
+When implementing new commands that make API calls:
+
+```swift
+// 1. Add appropriate options group
+@OptionGroup
+var faultToleranceOptions: FaultToleranceOptions  // For light commands
+
+@OptionGroup
+var faultToleranceOptions: HeavyFaultToleranceOptions  // For heavy download commands
+
+// 2. Create rate-limited client in run()
+let baseClient = FigmaClient(accessToken: token, timeout: timeout)
+let rateLimiter = faultToleranceOptions.createRateLimiter()
+let client = faultToleranceOptions.createRateLimitedClient(
+    wrapping: baseClient,
+    rateLimiter: rateLimiter,
+    onRetry: { attempt, error in
+        ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+    }
+)
+
+// 3. Use the wrapped client for all API calls
+let data = try await client.request(endpoint)
+```
+
+**Key files:**
+
+- `Sources/ExFig/Input/FaultToleranceOptions.swift` - CLI options for retry/rate limit
+- `Sources/FigmaAPI/Client/RateLimitedClient.swift` - Rate-limiting wrapper
+- `Sources/FigmaAPI/Client/RetryPolicy.swift` - Retry with exponential backoff
+- `Sources/ExFig/Cache/CheckpointTracker.swift` - Checkpoint management for resumable exports
+
 ## Figma API Reference
 
 **Official Documentation:** <https://www.figma.com/developers/api>
