@@ -41,7 +41,7 @@ mise run lint               # SwiftLint
 # Run CLI
 .build/debug/exfig --help
 .build/debug/exfig colors -i config.yaml
-.build/debug/exfig download -f FILE_ID -r "Frame" -o ./output
+.build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
 ```
 
 ## Project Context

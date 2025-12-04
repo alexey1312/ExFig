@@ -40,12 +40,12 @@ platform-specific issues:
 
 **Options considered**:
 
-| Option | Pros | Cons |
-|--------|------|------|
-| XMLCoder | Pure Swift, well-maintained, Codable-based | Different API, requires rewrite |
-| SwiftyXMLParser | Lightweight, easy migration | Less maintained |
-| Custom SAX parser | Full control, minimal dependencies | Significant effort |
-| Wait for Swift fix | No code changes | Unknown timeline, blocks Windows |
+| Option             | Pros                                       | Cons                             |
+| ------------------ | ------------------------------------------ | -------------------------------- |
+| XMLCoder           | Pure Swift, well-maintained, Codable-based | Different API, requires rewrite  |
+| SwiftyXMLParser    | Lightweight, easy migration                | Less maintained                  |
+| Custom SAX parser  | Full control, minimal dependencies         | Significant effort               |
+| Wait for Swift fix | No code changes                            | Unknown timeline, blocks Windows |
 
 **Decision**: Use **XMLCoder** for SVG parsing.
 
@@ -118,12 +118,12 @@ enum TTYDetector {
 
 ## Risks / Trade-offs
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| XMLCoder API differences | Medium - SVGParser rewrite | Create adapter layer |
-| libwebp Windows issues | Low - optional feature | Graceful fallback |
-| Swift Windows toolchain bugs | Medium - could block | Pin to stable Swift version |
-| CI cost increase | Low | Use GitHub Actions Windows runners |
+| Risk                         | Impact                     | Mitigation                         |
+| ---------------------------- | -------------------------- | ---------------------------------- |
+| XMLCoder API differences     | Medium - SVGParser rewrite | Create adapter layer               |
+| libwebp Windows issues       | Low - optional feature     | Graceful fallback                  |
+| Swift Windows toolchain bugs | Medium - could block       | Pin to stable Swift version        |
+| CI cost increase             | Low                        | Use GitHub Actions Windows runners |
 
 ## Migration Plan
 

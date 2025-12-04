@@ -287,48 +287,48 @@ exfig icons --cache-path ./custom-cache.json
 
 See [Configuration Reference](../../CONFIG.md) for more details.
 
-## Quick Download (No Config File)
+## Quick Fetch (No Config File)
 
-For quick, one-off downloads without creating a configuration file, use the `download` command. This is useful when you
+For quick, one-off downloads without creating a configuration file, use the `fetch` command. This is useful when you
 need to quickly grab images from Figma without setting up a full export pipeline.
 
 ### Basic Usage
 
 ```bash
 # Download PNG images at 3x scale (default)
-exfig download --file-id YOUR_FILE_ID --frame "Illustrations" --output ./images
+exfig fetch --file-id YOUR_FILE_ID --frame "Illustrations" --output ./images
 
 # Using short options
-exfig download -f YOUR_FILE_ID -r "Icons" -o ./icons
+exfig fetch -f YOUR_FILE_ID -r "Icons" -o ./icons
 ```
 
 ### Format Options
 
 ```bash
 # Download as SVG (vector format)
-exfig download -f abc123 -r "Icons" -o ./icons --format svg
+exfig fetch -f abc123 -r "Icons" -o ./icons --format svg
 
 # Download as PDF (vector format)
-exfig download -f abc123 -r "Icons" -o ./icons --format pdf
+exfig fetch -f abc123 -r "Icons" -o ./icons --format pdf
 
 # Download as JPG
-exfig download -f abc123 -r "Photos" -o ./photos --format jpg
+exfig fetch -f abc123 -r "Photos" -o ./photos --format jpg
 
 # Download as WebP with quality settings
-exfig download -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
+exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
 
 # Download WebP lossless
-exfig download -f abc123 -r "Images" -o ./images --format webp --webp-encoding lossless
+exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-encoding lossless
 ```
 
 ### Scale Options
 
 ```bash
 # Download PNG at 2x scale
-exfig download -f abc123 -r "Images" -o ./images --scale 2
+exfig fetch -f abc123 -r "Images" -o ./images --scale 2
 
 # Download PNG at 1x scale
-exfig download -f abc123 -r "Images" -o ./images --scale 1
+exfig fetch -f abc123 -r "Images" -o ./images --scale 1
 
 # Note: Scale is ignored for vector formats (SVG, PDF)
 ```
@@ -337,28 +337,28 @@ exfig download -f abc123 -r "Images" -o ./images --scale 1
 
 ```bash
 # Filter specific images
-exfig download -f abc123 -r "Images" -o ./images --filter "logo/*"
+exfig fetch -f abc123 -r "Images" -o ./images --filter "logo/*"
 
 # Filter multiple patterns
-exfig download -f abc123 -r "Images" -o ./images --filter "logo/*, banner/*"
+exfig fetch -f abc123 -r "Images" -o ./images --filter "logo/*, banner/*"
 
 # Convert names to camelCase
-exfig download -f abc123 -r "Images" -o ./images --name-style camelCase
+exfig fetch -f abc123 -r "Images" -o ./images --name-style camelCase
 
 # Convert names to snake_case
-exfig download -f abc123 -r "Images" -o ./images --name-style snake_case
+exfig fetch -f abc123 -r "Images" -o ./images --name-style snake_case
 
 # Convert names to PascalCase
-exfig download -f abc123 -r "Images" -o ./images --name-style PascalCase
+exfig fetch -f abc123 -r "Images" -o ./images --name-style PascalCase
 
 # Convert names to kebab-case
-exfig download -f abc123 -r "Images" -o ./images --name-style kebab-case
+exfig fetch -f abc123 -r "Images" -o ./images --name-style kebab-case
 
 # Convert names to SCREAMING_SNAKE_CASE
-exfig download -f abc123 -r "Images" -o ./images --name-style SCREAMING_SNAKE_CASE
+exfig fetch -f abc123 -r "Images" -o ./images --name-style SCREAMING_SNAKE_CASE
 
 # Custom regex replacement
-exfig download -f abc123 -r "Images" -o ./images \
+exfig fetch -f abc123 -r "Images" -o ./images \
   --name-validate-regexp "^icon/(.*)$" \
   --name-replace-regexp "ic_$1"
 ```
@@ -367,7 +367,7 @@ exfig download -f abc123 -r "Images" -o ./images \
 
 ```bash
 # Extract dark mode variants (images ending with "_dark" suffix)
-exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
+exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 ```
 
 ### All Download Options

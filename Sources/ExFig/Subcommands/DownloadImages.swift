@@ -5,9 +5,9 @@ import Foundation
 import Logging
 
 extension ExFigCommand {
-    struct DownloadImages: AsyncParsableCommand {
+    struct FetchImages: AsyncParsableCommand {
         static let configuration = CommandConfiguration(
-            commandName: "download",
+            commandName: "fetch",
             abstract: "Downloads images from Figma without config file",
             discussion: """
             Downloads images from a specific Figma frame to a local directory.
@@ -15,22 +15,25 @@ extension ExFigCommand {
 
             Examples:
               # Download PNGs at 3x scale (default)
-              exfig download --file-id abc123 --frame "Illustrations" --output ./images
+              exfig fetch --file-id abc123 --frame "Illustrations" --output ./images
 
               # Download SVGs
-              exfig download -f abc123 -r "Icons" -o ./icons --format svg
+              exfig fetch -f abc123 -r "Icons" -o ./icons --format svg
+
+              # Download PDFs
+              exfig fetch -f abc123 -r "Icons" -o ./icons --format pdf
 
               # Download with filtering
-              exfig download -f abc123 -r "Images" -o ./images --filter "logo/*"
+              exfig fetch -f abc123 -r "Images" -o ./images --filter "logo/*"
 
               # Download PNG at 2x scale with camelCase naming
-              exfig download -f abc123 -r "Images" -o ./images --scale 2 --name-style camelCase
+              exfig fetch -f abc123 -r "Images" -o ./images --scale 2 --name-style camelCase
 
               # Download with dark mode variants
-              exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
+              exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 
               # Download as WebP with quality settings
-              exfig download -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
+              exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
             """
         )
 

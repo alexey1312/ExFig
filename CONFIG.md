@@ -326,3 +326,162 @@ The cache file (`.exfig-cache.json`) stores the Figma file versions:
 
 **Note:** The version changes when a Figma library is published, not on every auto-save. This makes it ideal for
 tracking intentional design changes.
+
+## JSON Export (download command)
+
+The `download` command exports Figma data as JSON for use with design token tools, custom pipelines, or debugging.
+
+### Command Structure
+
+```bash
+exfig download <subcommand> [options]
+```
+
+Subcommands:
+
+- `colors` - Export color variables/styles
+- `typography` - Export text styles
+- `icons` - Export icon components with URLs
+- `images` - Export image components with URLs
+- `all` - Export all types to a directory
+
+### Output Format Options
+
+| Option            | Values       | Default | Description                         |
+| ----------------- | ------------ | ------- | ----------------------------------- |
+| `--format` / `-f` | `w3c`, `raw` | `w3c`   | Output format                       |
+| `--output` / `-o` | path         | varies  | Output file path                    |
+| `--compact`       | flag         | false   | Minified JSON output                |
+| `--asset-format`  | see below    | `png`   | Format for icons/images             |
+| `--scale`         | 1-4          | 3       | Scale for raster formats (PNG, JPG) |
+
+Asset formats: `svg`, `png`, `pdf`, `jpg`
+
+### W3C Design Tokens Format
+
+The default `--format w3c` outputs JSON following the
+[W3C Design Tokens](https://design-tokens.github.io/community-group/format/) specification:
+
+```json
+{
+  "Background": {
+    "Primary": {
+      "$type": "color",
+      "$value": {
+        "Light": "#ffffff",
+        "Dark": "#1a1a1a"
+      },
+      "$description": "Primary background color"
+    }
+  }
+}
+```
+
+#### Token Type Mapping
+
+| Data Type  | W3C `$type`  | `$value` Format                              |
+| ---------- | ------------ | -------------------------------------------- |
+| Colors     | `color`      | Mode → hex string (`#RRGGBB` or `#RRGGBBAA`) |
+| Typography | `typography` | Object with fontFamily, fontSize, etc.       |
+| Icons      | `asset`      | Figma export URL string                      |
+| Images     | `asset`      | Figma export URL string                      |
+
+#### Color Token Structure
+
+Colors support multiple modes (Light, Dark, etc.) in the `$value` object:
+
+```json
+{
+  "Statement": {
+    "Background": {
+      "PrimaryPressed": {
+        "$type": "color",
+        "$value": {
+          "Light": "#022c8c",
+          "Dark": "#99bbff",
+          "Contrast Light": "#001c59",
+          "Contrast Dark": "#ccdeff"
+        }
+      }
+    }
+  }
+}
+```
+
+#### Typography Token Structure
+
+```json
+{
+  "Heading": {
+    "H1": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter-Bold",
+        "fontSize": 32,
+        "lineHeight": 40,
+        "letterSpacing": -0.5
+      }
+    }
+  }
+}
+```
+
+#### Asset Token Structure
+
+```json
+{
+  "Icons": {
+    "Navigation": {
+      "ArrowLeft": {
+        "$type": "asset",
+        "$value": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/...",
+        "$description": "Left arrow navigation icon"
+      }
+    }
+  }
+}
+```
+
+### Raw Format
+
+The `--format raw` option outputs the Figma API response wrapped with metadata:
+
+```json
+{
+  "source": {
+    "name": "Design System",
+    "fileId": "abc123",
+    "exportedAt": "2024-01-15T10:30:00Z",
+    "exfigVersion": "1.0.0"
+  },
+  "data": {
+    "variableCollections": { ... },
+    "variables": { ... }
+  }
+}
+```
+
+This format is useful for:
+
+- Debugging Figma API responses
+- Building custom processing pipelines
+- Understanding the raw data structure
+
+### Examples
+
+```bash
+# Export colors as W3C tokens (default)
+exfig download colors -o tokens/colors.json
+
+# Export raw Figma API response
+exfig download colors -o debug/colors-raw.json --format raw
+
+# Export icons as SVG with W3C format
+exfig download icons -o tokens/icons.json --asset-format svg
+
+# Export all types to a directory
+exfig download all -o ./tokens/
+
+# Export with compact (minified) output
+exfig download colors -o tokens.json --compact
+```

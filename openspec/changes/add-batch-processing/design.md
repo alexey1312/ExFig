@@ -39,11 +39,11 @@ Each requires a separate `exfig.yaml` config. Running exports sequentially is sl
 
 **Options considered**:
 
-| Option | Pros | Cons |
-|--------|------|------|
-| `--config-dir` on existing commands | Minimal new API | Complex flag combinations |
-| Separate `batch` command | Clear intent, focused | Another command |
-| Auto-detect directory | Zero config | Implicit behavior |
+| Option                              | Pros                  | Cons                      |
+| ----------------------------------- | --------------------- | ------------------------- |
+| `--config-dir` on existing commands | Minimal new API       | Complex flag combinations |
+| Separate `batch` command            | Clear intent, focused | Another command           |
+| Auto-detect directory               | Zero config           | Implicit behavior         |
 
 **Decision**: Add **`exfig batch`** command.
 
@@ -144,6 +144,7 @@ exfig batch ./configs/ --fail-fast
 ```
 
 Result summary:
+
 ```
 Batch complete: 4 succeeded, 1 failed
 
@@ -158,12 +159,12 @@ See ./batch-report.json for details
 
 ## Risks / Trade-offs
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Rate limit exhaustion | High | Shared limiter, adaptive backoff |
-| Memory usage with many configs | Medium | Stream processing, limit parallelism |
-| Complex error states | Medium | Clear per-config status, detailed report |
-| Config conflicts | Low | Warn on overlapping output paths |
+| Risk                           | Impact | Mitigation                               |
+| ------------------------------ | ------ | ---------------------------------------- |
+| Rate limit exhaustion          | High   | Shared limiter, adaptive backoff         |
+| Memory usage with many configs | Medium | Stream processing, limit parallelism     |
+| Complex error states           | Medium | Clear per-config status, detailed report |
+| Config conflicts               | Low    | Warn on overlapping output paths         |
 
 ## Open Questions
 

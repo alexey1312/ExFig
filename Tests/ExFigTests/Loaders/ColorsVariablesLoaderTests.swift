@@ -1,3 +1,5 @@
+// swiftlint:disable file_length type_body_length
+
 import CustomDump
 @testable import ExFig
 import ExFigCore
@@ -264,6 +266,256 @@ final class ColorsVariablesLoaderTests: XCTestCase {
         } catch {
             XCTAssertTrue(error is ExFigError)
         }
+    }
+
+    // MARK: - Variable Alias Resolution
+
+    func testResolvesVariableAliasToColor() async throws {
+        // Given: A token variable that references a primitive color via alias
+        let variablesMeta = VariablesMeta.makeWithAliases(
+            collectionName: "Tokens",
+            modes: [("1:0", "Light")],
+            variables: [
+                // Token that aliases a primitive
+                (
+                    id: "token:1",
+                    name: "background/primary",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .alias("prim:red")]
+                ),
+                // Primitive color
+                (
+                    id: "prim:red",
+                    name: "red/500",
+                    collectionId: "VariableCollectionId:primitives",
+                    valuesByMode: ["2:0": .color(r: 1.0, g: 0.0, b: 0.0, a: 1.0)]
+                ),
+            ],
+            primitiveCollections: [
+                (
+                    id: "VariableCollectionId:primitives",
+                    name: "Primitives",
+                    defaultModeId: "2:0",
+                    modes: [("2:0", "Value")],
+                    variableIds: ["prim:red"]
+                ),
+            ]
+        )
+
+        mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
+
+        let variablesParams = Params.Common.VariablesColors.make(
+            tokensFileId: "test-file",
+            tokensCollectionName: "Tokens",
+            lightModeName: "Light"
+        )
+
+        let loader = ColorsVariablesLoader(
+            client: mockClient,
+            figmaParams: .make(lightFileId: "test-file"),
+            variableParams: variablesParams,
+            filter: nil
+        )
+
+        // When: Loading colors
+        let result = try await loader.load()
+
+        // Then: Alias should be resolved to the primitive color value
+        XCTAssertEqual(result.light.count, 1)
+        XCTAssertEqual(result.light.first?.name, "background/primary")
+        XCTAssertEqual(result.light.first?.red, 1.0)
+        XCTAssertEqual(result.light.first?.green, 0.0)
+        XCTAssertEqual(result.light.first?.blue, 0.0)
+    }
+
+    func testResolvesNestedVariableAliases() async throws {
+        // Given: A chain of aliases: token -> alias -> primitive
+        let variablesMeta = VariablesMeta.makeWithAliases(
+            collectionName: "Tokens",
+            modes: [("1:0", "Light")],
+            variables: [
+                // Token aliases another alias
+                (
+                    id: "token:1",
+                    name: "button/primary",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .alias("semantic:brand")]
+                ),
+                // Semantic color that aliases primitive
+                (
+                    id: "semantic:brand",
+                    name: "brand/primary",
+                    collectionId: "VariableCollectionId:semantic",
+                    valuesByMode: ["2:0": .alias("prim:blue")]
+                ),
+                // Primitive color
+                (
+                    id: "prim:blue",
+                    name: "blue/600",
+                    collectionId: "VariableCollectionId:primitives",
+                    valuesByMode: ["3:0": .color(r: 0.0, g: 0.0, b: 1.0, a: 1.0)]
+                ),
+            ],
+            primitiveCollections: [
+                (
+                    id: "VariableCollectionId:semantic",
+                    name: "Semantic",
+                    defaultModeId: "2:0",
+                    modes: [("2:0", "Value")],
+                    variableIds: ["semantic:brand"]
+                ),
+                (
+                    id: "VariableCollectionId:primitives",
+                    name: "Primitives",
+                    defaultModeId: "3:0",
+                    modes: [("3:0", "Value")],
+                    variableIds: ["prim:blue"]
+                ),
+            ]
+        )
+
+        mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
+
+        let variablesParams = Params.Common.VariablesColors.make(
+            tokensFileId: "test-file",
+            tokensCollectionName: "Tokens",
+            lightModeName: "Light"
+        )
+
+        let loader = ColorsVariablesLoader(
+            client: mockClient,
+            figmaParams: .make(lightFileId: "test-file"),
+            variableParams: variablesParams,
+            filter: nil
+        )
+
+        // When: Loading colors
+        let result = try await loader.load()
+
+        // Then: Nested aliases should be fully resolved
+        XCTAssertEqual(result.light.count, 1)
+        XCTAssertEqual(result.light.first?.name, "button/primary")
+        XCTAssertEqual(result.light.first?.blue, 1.0)
+    }
+
+    func testResolvesAliasWithCustomPrimitivesModeName() async throws {
+        // Given: A primitive collection with a custom mode name
+        let variablesMeta = VariablesMeta.makeWithAliases(
+            collectionName: "Tokens",
+            modes: [("1:0", "Light")],
+            variables: [
+                (
+                    id: "token:1",
+                    name: "accent",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .alias("prim:green")]
+                ),
+                (
+                    id: "prim:green",
+                    name: "green/500",
+                    collectionId: "VariableCollectionId:primitives",
+                    valuesByMode: [
+                        "2:0": .color(r: 0.0, g: 0.8, b: 0.0, a: 1.0),
+                        "2:1": .color(r: 0.0, g: 1.0, b: 0.0, a: 1.0),
+                    ]
+                ),
+            ],
+            primitiveCollections: [
+                (
+                    id: "VariableCollectionId:primitives",
+                    name: "Primitives",
+                    defaultModeId: "2:0",
+                    modes: [("2:0", "Default"), ("2:1", "Brand")],
+                    variableIds: ["prim:green"]
+                ),
+            ]
+        )
+
+        mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
+
+        let variablesParams = Params.Common.VariablesColors.make(
+            tokensFileId: "test-file",
+            tokensCollectionName: "Tokens",
+            lightModeName: "Light",
+            primitivesModeName: "Brand" // Use Brand mode instead of default
+        )
+
+        let loader = ColorsVariablesLoader(
+            client: mockClient,
+            figmaParams: .make(lightFileId: "test-file"),
+            variableParams: variablesParams,
+            filter: nil
+        )
+
+        // When: Loading colors
+        let result = try await loader.load()
+
+        // Then: Should use the specified primitives mode
+        XCTAssertEqual(result.light.count, 1)
+        XCTAssertEqual(result.light.first?.green, 1.0) // Brand mode has green=1.0
+    }
+
+    func testResolvesAliasesAcrossMultipleModes() async throws {
+        // Given: A token with aliases for both Light and Dark modes
+        let variablesMeta = VariablesMeta.makeWithAliases(
+            collectionName: "Tokens",
+            modes: [("1:0", "Light"), ("1:1", "Dark")],
+            variables: [
+                (
+                    id: "token:1",
+                    name: "surface",
+                    collectionId: nil,
+                    valuesByMode: [
+                        "1:0": .alias("prim:white"),
+                        "1:1": .alias("prim:black"),
+                    ]
+                ),
+                (
+                    id: "prim:white",
+                    name: "white",
+                    collectionId: "VariableCollectionId:primitives",
+                    valuesByMode: ["2:0": .color(r: 1.0, g: 1.0, b: 1.0, a: 1.0)]
+                ),
+                (
+                    id: "prim:black",
+                    name: "black",
+                    collectionId: "VariableCollectionId:primitives",
+                    valuesByMode: ["2:0": .color(r: 0.0, g: 0.0, b: 0.0, a: 1.0)]
+                ),
+            ],
+            primitiveCollections: [
+                (
+                    id: "VariableCollectionId:primitives",
+                    name: "Primitives",
+                    defaultModeId: "2:0",
+                    modes: [("2:0", "Value")],
+                    variableIds: ["prim:white", "prim:black"]
+                ),
+            ]
+        )
+
+        mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
+
+        let variablesParams = Params.Common.VariablesColors.make(
+            tokensFileId: "test-file",
+            tokensCollectionName: "Tokens",
+            lightModeName: "Light",
+            darkModeName: "Dark"
+        )
+
+        let loader = ColorsVariablesLoader(
+            client: mockClient,
+            figmaParams: .make(lightFileId: "test-file"),
+            variableParams: variablesParams,
+            filter: nil
+        )
+
+        // When: Loading colors
+        let result = try await loader.load()
+
+        // Then: Each mode should resolve to correct primitive
+        XCTAssertEqual(result.light.first?.red, 1.0) // White
+        XCTAssertEqual(result.dark?.first?.red, 0.0) // Black
     }
 
     // MARK: - Single API Call Verification

@@ -82,7 +82,7 @@ public struct SolidPaint: Decodable, Sendable {
     }
 }
 
-public struct PaintColor: Decodable, Sendable {
+public struct PaintColor: Codable, Sendable {
     // swiftlint:disable:next identifier_name
     /// Channel value, between 0 and 1
     public let r, g, b, a: Double

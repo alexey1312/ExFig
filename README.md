@@ -4,7 +4,7 @@
 [![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
-![Coverage](https://img.shields.io/badge/coverage-64.34%25-green)
+![Coverage](https://img.shields.io/badge/coverage-60.18%25-green)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
@@ -161,31 +161,34 @@ exfig icons --force
 **Note:** The version changes when a Figma library is **published**, not on every auto-save. This means exports are
 skipped only when designers intentionally publish their changes.
 
-## Quick Download (No Config File)
+## Quick Fetch (No Config File)
 
-For quick, one-off downloads without creating a configuration file, use the `download` command:
+For quick, one-off downloads without creating a configuration file, use the `fetch` command:
 
 ```bash
 # Download PNG images at 3x scale (default)
-exfig download --file-id abc123 --frame "Illustrations" --output ./images
+exfig fetch --file-id abc123 --frame "Illustrations" --output ./images
 
 # Download SVG icons
-exfig download -f abc123 -r "Icons" -o ./icons --format svg
+exfig fetch -f abc123 -r "Icons" -o ./icons --format svg
+
+# Download PDF icons
+exfig fetch -f abc123 -r "Icons" -o ./icons --format pdf
 
 # Download with filtering and name conversion
-exfig download -f abc123 -r "Images" -o ./images --filter "logo/*" --name-style camelCase
+exfig fetch -f abc123 -r "Images" -o ./images --filter "logo/*" --name-style camelCase
 
 # Download at specific scale
-exfig download -f abc123 -r "Images" -o ./images --scale 2
+exfig fetch -f abc123 -r "Images" -o ./images --scale 2
 
 # Download as WebP with quality settings
-exfig download -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
+exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
 
 # Download with dark mode variants
-exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
+exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 ```
 
-### Download Command Options
+### Fetch Options
 
 | Option               | Short | Description                                                                     | Default     |
 | -------------------- | ----- | ------------------------------------------------------------------------------- | ----------- |
@@ -199,6 +202,30 @@ exfig download -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 | `--dark-mode-suffix` |       | Suffix for dark variants (e.g., "\_dark")                                       | -           |
 | `--webp-encoding`    |       | WebP encoding: lossy, lossless                                                  | lossy       |
 | `--webp-quality`     |       | WebP quality (0-100)                                                            | 80          |
+
+## JSON Export (Design Tokens)
+
+Export Figma design data as JSON for integration with design token tools and pipelines:
+
+```bash
+# Export colors as W3C Design Tokens (default format)
+exfig download colors -o tokens/colors.json
+
+# Export raw Figma API response for debugging
+exfig download colors -o debug/colors.json --format raw
+
+# Export icons with SVG URLs
+exfig download icons -o tokens/icons.json --asset-format svg
+
+# Export typography
+exfig download typography -o tokens/typography.json
+
+# Export all token types to a directory
+exfig download all -o ./tokens/
+```
+
+The W3C format follows the [W3C Design Tokens](https://design-tokens.github.io/community-group/format/) specification.
+See [CONFIG.md](CONFIG.md#json-export-download-command) for full documentation.
 
 ## Documentation
 

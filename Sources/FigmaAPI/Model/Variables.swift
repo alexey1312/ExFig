@@ -1,9 +1,9 @@
-public struct Mode: Decodable, Sendable {
+public struct Mode: Codable, Sendable {
     public var modeId: String
     public var name: String
 }
 
-public struct VariableCollectionValue: Decodable, Sendable {
+public struct VariableCollectionValue: Codable, Sendable {
     public var defaultModeId: String
     public var id: String
     public var name: String
@@ -16,20 +16,12 @@ public struct VariableAlias: Codable, Sendable {
     public var type: String
 }
 
-public enum ValuesByMode: Decodable, Sendable {
+public enum ValuesByMode: Codable, Sendable {
     case variableAlias(VariableAlias)
     case color(PaintColor)
     case string(String)
     case number(Double)
     case boolean(Bool)
-
-    public enum CodingKeys: CodingKey {
-        case variableAlias
-        case color
-        case string
-        case number
-        case boolean
-    }
 
     public init(from decoder: Decoder) throws {
         if let variableAlias = try? VariableAlias(from: decoder) {
@@ -49,9 +41,25 @@ public enum ValuesByMode: Decodable, Sendable {
             ))
         }
     }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case let .variableAlias(alias):
+            try container.encode(alias)
+        case let .color(color):
+            try container.encode(color)
+        case let .string(str):
+            try container.encode(str)
+        case let .number(num):
+            try container.encode(num)
+        case let .boolean(bool):
+            try container.encode(bool)
+        }
+    }
 }
 
-public struct VariableValue: Decodable, Sendable {
+public struct VariableValue: Codable, Sendable {
     public var id: String
     public var name: String
     public var variableCollectionId: String
@@ -62,11 +70,11 @@ public struct VariableValue: Decodable, Sendable {
 public typealias VariableId = String
 public typealias VariableCollectionId = String
 
-public struct VariablesMeta: Decodable, Sendable {
+public struct VariablesMeta: Codable, Sendable {
     public var variableCollections: [VariableCollectionId: VariableCollectionValue]
     public var variables: [VariableId: VariableValue]
 }
 
-public struct VariablesResponse: Decodable, Sendable {
+public struct VariablesResponse: Codable, Sendable {
     public let meta: VariablesMeta
 }

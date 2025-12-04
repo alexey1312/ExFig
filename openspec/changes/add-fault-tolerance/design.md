@@ -57,12 +57,14 @@ struct RetryPolicy: Sendable {
 ```
 
 **Retryable conditions**:
+
 - HTTP 429 (Rate Limited) - use `Retry-After` header if present
 - HTTP 500, 502, 503, 504 (Server errors)
 - Network timeout
 - Connection reset
 
 **Non-retryable**:
+
 - HTTP 400, 401, 403, 404 (Client errors)
 - Invalid JSON response
 - Authentication failures
@@ -140,6 +142,7 @@ func writeAtomically(content: Data, to destination: URL) throws {
 ```
 
 **Resume behavior**:
+
 - `--resume` flag checks for checkpoint file
 - Validates config hasn't changed (hash match)
 - Skips completed items, continues with pending
@@ -147,12 +150,12 @@ func writeAtomically(content: Data, to destination: URL) throws {
 
 ## Risks / Trade-offs
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Retry storms | Medium | Jitter + global rate limiter |
-| Stale checkpoints | Low | Include timestamp, auto-expire after 24h |
-| Temp file accumulation | Low | Cleanup on startup |
-| Disk full during atomic write | Medium | Check space before write |
+| Risk                          | Impact | Mitigation                               |
+| ----------------------------- | ------ | ---------------------------------------- |
+| Retry storms                  | Medium | Jitter + global rate limiter             |
+| Stale checkpoints             | Low    | Include timestamp, auto-expire after 24h |
+| Temp file accumulation        | Low    | Cleanup on startup                       |
+| Disk full during atomic write | Medium | Check space before write                 |
 
 ## Migration Plan
 
