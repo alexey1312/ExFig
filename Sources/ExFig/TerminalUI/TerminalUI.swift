@@ -175,6 +175,32 @@ final class TerminalUI: Sendable {
         MultiProgressManager(useColors: useColors, useAnimations: useAnimations)
     }
 
+    /// Create a batch progress view for batch processing
+    func createBatchProgress() -> BatchProgressView {
+        BatchProgressView(useColors: useColors, useAnimations: useAnimations)
+    }
+
+    /// Create a dispatch source for terminal resize events (SIGWINCH).
+    /// - Parameter handler: Closure to call when terminal is resized.
+    /// - Returns: The dispatch source that must be retained while monitoring.
+    func createResizeSource(_ handler: @escaping @Sendable () -> Void) -> DispatchSourceSignal? {
+        guard useAnimations else { return nil }
+
+        #if os(macOS) || os(Linux)
+            // Ignore the default SIGWINCH handler
+            signal(SIGWINCH, SIG_IGN)
+
+            let source = DispatchSource.makeSignalSource(signal: SIGWINCH, queue: .main)
+            source.setEventHandler {
+                handler()
+            }
+            source.resume()
+            return source
+        #else
+            return nil
+        #endif
+    }
+
     // MARK: - Cursor Control
 
     /// Hide the terminal cursor

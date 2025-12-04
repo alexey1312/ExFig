@@ -62,6 +62,7 @@ struct ExFigCommand: AsyncParsableCommand {
             GenerateConfigFile.self,
             FetchImages.self,
             Download.self,
+            Batch.self,
         ],
         defaultSubcommand: ExportColors.self
     )

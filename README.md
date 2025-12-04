@@ -4,7 +4,7 @@
 [![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
-![Coverage](https://img.shields.io/badge/coverage-60.18%25-green)
+![Coverage](https://img.shields.io/badge/coverage-58.71%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
@@ -31,6 +31,7 @@ and Flutter.
 - 🔄 RTL (Right-to-Left) layout support
 - 🎯 Figma Variables support
 - ⚡ Parallel downloads & writes
+- 📦 Batch processing of multiple configs with shared rate limiting
 - 📊 Rich progress indicators with ETA
 - 🔇 Verbose and quiet output modes
 - 🚀 Swift 6 / Strict Concurrency
@@ -226,6 +227,69 @@ exfig download all -o ./tokens/
 
 The W3C format follows the [W3C Design Tokens](https://design-tokens.github.io/community-group/format/) specification.
 See [CONFIG.md](CONFIG.md#json-export-download-command) for full documentation.
+
+## Batch Processing
+
+Process multiple configuration files in parallel with shared rate limiting:
+
+```bash
+# Process all configs in a directory
+exfig batch ./configs/
+
+# Process specific config files
+exfig batch ios-app.yaml android-app.yaml flutter-app.yaml
+
+# With custom parallelism (default: 3)
+exfig batch ./configs/ --parallel 5
+
+# Stop on first error
+exfig batch ./configs/ --fail-fast
+
+# Generate JSON report
+exfig batch ./configs/ --report batch-results.json
+```
+
+### Batch Options
+
+| Option        | Description                    | Default |
+| ------------- | ------------------------------ | ------- |
+| `--parallel`  | Maximum concurrent configs     | 3       |
+| `--fail-fast` | Stop processing on first error | false   |
+| `--report`    | Path to write JSON report      |         |
+
+### Batch Report Format
+
+The JSON report includes timing, success/failure counts, and per-config results:
+
+```json
+{
+  "startTime": "2025-01-15T10:30:00Z",
+  "endTime": "2025-01-15T10:32:15Z",
+  "duration": 135.5,
+  "totalConfigs": 5,
+  "successCount": 4,
+  "failureCount": 1,
+  "results": [
+    {
+      "name": "ios-app.yaml",
+      "path": "/configs/ios-app.yaml",
+      "success": true,
+      "stats": { "colors": 45, "icons": 120, "images": 30, "typography": 12 }
+    },
+    {
+      "name": "android-app.yaml",
+      "path": "/configs/android-app.yaml",
+      "success": false,
+      "error": "Invalid Figma file ID"
+    }
+  ]
+}
+```
+
+### Rate Limiting
+
+Batch processing shares a single rate limit budget across all configs to respect Figma API limits. The rate limiter uses
+fair round-robin scheduling to ensure all configs get equal access.
 
 ## Documentation
 

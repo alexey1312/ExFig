@@ -7,6 +7,17 @@ enum TTYDetector {
         isatty(STDOUT_FILENO) == 1
     }
 
+    /// Returns the current terminal width in columns, or default value if unavailable.
+    static var terminalWidth: Int {
+        #if os(macOS) || os(Linux)
+            var size = winsize()
+            if ioctl(STDOUT_FILENO, UInt(TIOCGWINSZ), &size) == 0, size.ws_col > 0 {
+                return Int(size.ws_col)
+            }
+        #endif
+        return 80 // Default fallback
+    }
+
     /// Returns true if FORCE_COLOR environment variable is set
     static var forceColor: Bool {
         ProcessInfo.processInfo.environment["FORCE_COLOR"] != nil
