@@ -58,11 +58,9 @@
 - [x] 6.5 Tests for checkpoint save/resume flow (ExportCheckpointTests.swift - 21 tests, BatchCheckpointTests.swift - 15
   tests)
 
-## 7. Documentation (deferred)
+## 7. Documentation ✅
 
-> Documentation will be added after the feature is stabilized and CLI options are implemented.
-
-- [ ] 7.1 Document retry behavior in README
-- [ ] 7.2 Add troubleshooting section for rate limits
-- [ ] 7.3 Document checkpoint file location and format
-- [ ] 7.4 Add --resume usage examples
+- [x] 7.1 Document retry behavior in README (Fault Tolerance section)
+- [x] 7.2 Add troubleshooting section for rate limits (Troubleshooting section)
+- [x] 7.3 Document checkpoint file location and format (.exfig-batch-checkpoint.json)
+- [x] 7.4 Add --resume usage examples (Checkpoint System section)

@@ -32,6 +32,8 @@ and Flutter.
 - 🎯 Figma Variables support
 - ⚡ Parallel downloads & writes
 - 📦 Batch processing of multiple configs with shared rate limiting
+- 🔄 Automatic retries with exponential backoff
+- 💾 Checkpoint/resume for interrupted exports
 - 📊 Rich progress indicators with ETA
 - 🔇 Verbose and quiet output modes
 - 🚀 Swift 6 / Strict Concurrency
@@ -251,11 +253,14 @@ exfig batch ./configs/ --report batch-results.json
 
 ### Batch Options
 
-| Option        | Description                    | Default |
-| ------------- | ------------------------------ | ------- |
-| `--parallel`  | Maximum concurrent configs     | 3       |
-| `--fail-fast` | Stop processing on first error | false   |
-| `--report`    | Path to write JSON report      |         |
+| Option          | Description                                | Default |
+| --------------- | ------------------------------------------ | ------- |
+| `--parallel`    | Maximum concurrent configs                 | 3       |
+| `--fail-fast`   | Stop processing on first error             | false   |
+| `--rate-limit`  | Figma API requests per minute              | 10      |
+| `--max-retries` | Maximum retry attempts for failed requests | 4       |
+| `--resume`      | Resume from previous checkpoint            | false   |
+| `--report`      | Path to write JSON report                  |         |
 
 ### Batch Report Format
 
@@ -290,6 +295,84 @@ The JSON report includes timing, success/failure counts, and per-config results:
 
 Batch processing shares a single rate limit budget across all configs to respect Figma API limits. The rate limiter uses
 fair round-robin scheduling to ensure all configs get equal access.
+
+```bash
+# Increase rate limit for paid Figma plans
+exfig batch ./configs/ --rate-limit 20
+
+# Reduce rate limit if hitting 429 errors
+exfig batch ./configs/ --rate-limit 5
+```
+
+### Fault Tolerance
+
+ExFig automatically handles transient failures to ensure reliable exports:
+
+**Automatic Retries**
+
+- Server errors (500, 502, 503, 504) and timeouts are retried automatically
+- Uses exponential backoff with jitter (2s → 4s → 8s → 16s)
+- Rate limit errors (429) respect the `Retry-After` header
+- Maximum 4 retry attempts by default (configurable with `--max-retries`)
+
+```bash
+# Disable retries for faster failure
+exfig batch ./configs/ --fail-fast
+
+# Increase retries for unreliable connections
+exfig batch ./configs/ --max-retries 6
+```
+
+**Checkpoint System**
+
+Long-running batch exports create checkpoints so you can resume after interruption:
+
+```bash
+# Resume interrupted batch export
+exfig batch ./configs/ --resume
+
+# Checkpoints are stored in: .exfig-batch-checkpoint.json
+# Checkpoints expire after 24 hours
+# Successful completion automatically deletes the checkpoint
+```
+
+**User-Friendly Error Messages**
+
+ExFig provides clear error messages with recovery suggestions:
+
+```
+⚠️ Figma API returned error 429 (Rate Limited)
+   Retrying in 30s... (attempt 2/4)
+
+❌ Export failed after 4 retries
+   Suggestion: Check https://status.figma.com or try again later
+```
+
+### Troubleshooting
+
+**Rate Limit Errors (429)**
+
+If you're seeing frequent rate limit errors:
+
+1. Reduce the rate limit: `--rate-limit 5`
+2. Reduce parallelism: `--parallel 2`
+3. Check your Figma plan limits at [Figma API Rate Limits](https://developers.figma.com/docs/rest-api/rate-limits/)
+
+**Server Errors (500-504)**
+
+These are typically transient Figma issues:
+
+1. ExFig retries automatically with exponential backoff
+2. Check [Figma Status](https://status.figma.com) for outages
+3. If persistent, try again later
+
+**Interrupted Exports**
+
+If an export is interrupted (Ctrl+C, crash, etc.):
+
+1. Run with `--resume` to continue from the last checkpoint
+2. Checkpoint validates config hashes — if configs changed, export restarts
+3. Delete `.exfig-batch-checkpoint.json` to force a fresh start
 
 ## Documentation
 
