@@ -1,11 +1,15 @@
 import FigmaAPI
 import Foundation
+import Rainbow
 
 /// Type alias for config processing handler.
 typealias ConfigHandler = @Sendable (ConfigFile) async -> ConfigResult
 
 /// Type alias for config processing handler with rate-limited client.
 typealias RateLimitedConfigHandler = @Sendable (ConfigFile, RateLimitedClient) async -> ConfigResult
+
+/// Type alias for retry event handler.
+typealias RetryEventHandler = @Sendable (String, Int, Error, TimeInterval) -> Void
 
 /// Executes batch processing of multiple configs with controlled parallelism.
 actor BatchExecutor {
@@ -17,6 +21,10 @@ actor BatchExecutor {
     private let rateLimiter: SharedRateLimiter?
     /// Base Figma client (shared across all configs).
     private let baseClient: Client?
+    /// Retry policy for API requests.
+    private let retryPolicy: RetryPolicy
+    /// Handler for retry events (for logging).
+    private let onRetryEvent: RetryEventHandler?
     /// Cancellation flag.
     private var isCancelled = false
 
@@ -26,16 +34,22 @@ actor BatchExecutor {
     ///   - failFast: Stop on first error (default: false).
     ///   - rateLimiter: Optional shared rate limiter.
     ///   - baseClient: Optional base client for rate-limited wrapping.
+    ///   - retryPolicy: Retry policy for API requests (default: standard policy).
+    ///   - onRetryEvent: Optional handler for retry events (for logging).
     init(
         maxParallel: Int = 3,
         failFast: Bool = false,
         rateLimiter: SharedRateLimiter? = nil,
-        baseClient: Client? = nil
+        baseClient: Client? = nil,
+        retryPolicy: RetryPolicy = RetryPolicy(),
+        onRetryEvent: RetryEventHandler? = nil
     ) {
         self.maxParallel = max(1, maxParallel)
         self.failFast = failFast
         self.rateLimiter = rateLimiter
         self.baseClient = baseClient
+        self.retryPolicy = retryPolicy
+        self.onRetryEvent = onRetryEvent
     }
 
     /// Execute batch processing of configs.
@@ -191,11 +205,10 @@ actor BatchExecutor {
         for config in configs {
             if isCancelled { break }
 
-            let configID = ConfigID(config.name)
-            let rateLimitedClient = RateLimitedClient(
-                client: baseClient,
+            let rateLimitedClient = createRateLimitedClient(
+                for: config,
                 rateLimiter: rateLimiter,
-                configID: configID
+                baseClient: baseClient
             )
 
             let result = await handler(config, rateLimitedClient)
@@ -215,18 +228,23 @@ actor BatchExecutor {
         baseClient: Client,
         handler: @escaping RateLimitedConfigHandler
     ) async -> [ConfigResult] {
-        await withTaskGroup(of: ConfigResult.self) { [maxParallel] group in
+        // Capture self properties for use in task group
+        let retryPolicy = retryPolicy
+        let onRetryEvent = onRetryEvent
+
+        return await withTaskGroup(of: ConfigResult.self) { [maxParallel] group in
             var results: [ConfigResult] = []
             var running = 0
             var configIterator = configs.makeIterator()
 
             // Helper to create rate-limited client and process config
             func processConfig(_ config: ConfigFile) async -> ConfigResult {
-                let configID = ConfigID(config.name)
-                let rateLimitedClient = RateLimitedClient(
-                    client: baseClient,
+                let rateLimitedClient = Self.makeRateLimitedClient(
+                    for: config,
                     rateLimiter: rateLimiter,
-                    configID: configID
+                    baseClient: baseClient,
+                    retryPolicy: retryPolicy,
+                    onRetryEvent: onRetryEvent
                 )
                 return await handler(config, rateLimitedClient)
             }
@@ -255,6 +273,50 @@ actor BatchExecutor {
 
             return results
         }
+    }
+
+    // MARK: - Helpers
+
+    private func createRateLimitedClient(
+        for config: ConfigFile,
+        rateLimiter: SharedRateLimiter,
+        baseClient: Client
+    ) -> RateLimitedClient {
+        Self.makeRateLimitedClient(
+            for: config,
+            rateLimiter: rateLimiter,
+            baseClient: baseClient,
+            retryPolicy: retryPolicy,
+            onRetryEvent: onRetryEvent
+        )
+    }
+
+    private static func makeRateLimitedClient(
+        for config: ConfigFile,
+        rateLimiter: SharedRateLimiter,
+        baseClient: Client,
+        retryPolicy: RetryPolicy,
+        onRetryEvent: RetryEventHandler?
+    ) -> RateLimitedClient {
+        let configID = ConfigID(config.name)
+        let configName = config.name
+
+        let onRetry: RetryCallback? = if let handler = onRetryEvent {
+            { @Sendable attempt, error in
+                let delay = retryPolicy.delay(for: attempt - 1, error: error)
+                handler(configName, attempt, error, delay)
+            }
+        } else {
+            nil
+        }
+
+        return RateLimitedClient(
+            client: baseClient,
+            rateLimiter: rateLimiter,
+            configID: configID,
+            retryPolicy: retryPolicy,
+            onRetry: onRetry
+        )
     }
 }
 

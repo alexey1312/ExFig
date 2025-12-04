@@ -2,6 +2,18 @@
 
 Fault tolerance and resilience requirements for ExFig operations.
 
+## Implementation Status
+
+| Requirement                             | Status      | Files                                            |
+| --------------------------------------- | ----------- | ------------------------------------------------ |
+| Automatic Retry                         | ✅ Complete | RetryPolicy.swift, RateLimitedClient.swift       |
+| Rate Limit Handling                     | ✅ Complete | SharedRateLimiter.swift, RateLimitedClient.swift |
+| User-Friendly Errors                    | ✅ Complete | FigmaAPIError.swift, RetryLogger.swift           |
+| Atomic File Writes                      | ✅ Complete | FileWriter.swift (uses .atomic option)           |
+| Export Checkpointing                    | ⏳ Deferred | Deferred to future iteration                     |
+| Graceful Degradation                    | ✅ Partial  | BatchExecutor.swift (failFast mode supported)    |
+| CLI Options (--rate-limit, --fail-fast) | ⏳ Deferred | Deferred to future iteration                     |
+
 ## ADDED Requirements
 
 ### Requirement: Automatic Retry
@@ -24,7 +36,7 @@ The system SHALL automatically retry failed API requests with exponential backof
 
 - **WHEN** Figma API returns HTTP 400, 401, 403, or 404
 - **THEN** the system does not retry
-- **AND** reports the error immediately
+- **AND** reports the error immediately with a user-friendly message
 
 #### Scenario: Retry exhaustion
 
@@ -36,26 +48,69 @@ The system SHALL automatically retry failed API requests with exponential backof
 
 The system SHALL respect Figma API rate limits and adapt request frequency.
 
+> **Note**: Basic rate limiting is already implemented via `SharedRateLimiter` and `RateLimitedClient`.
+
 #### Scenario: Rate limit response
 
 - **WHEN** Figma API returns HTTP 429
 - **THEN** the system pauses requests for the duration specified in `Retry-After` header
 - **AND** resumes automatically after the wait period
+- **AND** displays wait time to the user
 
 #### Scenario: Adaptive throttling
 
 - **WHEN** multiple requests are queued
 - **THEN** the system uses token bucket rate limiting
-- **AND** prevents exceeding 10 requests per second by default
+- **AND** prevents exceeding 10 requests per minute by default
 
 #### Scenario: Rate limit override
 
 - **WHEN** `--rate-limit` option is specified
-- **THEN** the system uses the specified requests-per-second limit
+- **THEN** the system uses the specified requests-per-minute limit
+
+### Requirement: User-Friendly Error Messages
+
+The system SHALL display clear, actionable error messages to users.
+
+#### Scenario: Authentication error
+
+- **WHEN** Figma API returns HTTP 401
+- **THEN** the system displays "Authentication failed. Check FIGMA_PERSONAL_TOKEN environment variable."
+- **AND** suggests "Run: export FIGMA_PERSONAL_TOKEN=your_token"
+
+#### Scenario: Access denied error
+
+- **WHEN** Figma API returns HTTP 403
+- **THEN** the system displays "Access denied. Verify you have access to this Figma file."
+
+#### Scenario: Not found error
+
+- **WHEN** Figma API returns HTTP 404
+- **THEN** the system displays "File not found. Check the file ID in your configuration."
+
+#### Scenario: Rate limit error with progress
+
+- **WHEN** Figma API returns HTTP 429
+- **THEN** the system displays "Rate limited by Figma API. Waiting {N}s..."
+- **AND** shows countdown or progress indicator
+
+#### Scenario: Server error with retry progress
+
+- **WHEN** Figma API returns HTTP 500-504
+- **AND** retry is in progress
+- **THEN** the system displays "Figma server error ({code}). Retrying in {N}s... (attempt {X}/{Y})"
+
+#### Scenario: Final failure with suggestion
+
+- **WHEN** all retries are exhausted
+- **THEN** the system displays the error with a recovery suggestion
+- **AND** suggests "Check https://status.figma.com or retry in a few minutes"
 
 ### Requirement: Atomic File Writes
 
 The system SHALL perform atomic file writes to prevent corruption.
+
+> **Note**: Already implemented using `.atomic` write option.
 
 #### Scenario: Successful atomic write
 
