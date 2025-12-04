@@ -182,8 +182,13 @@ try await withThrowingTaskGroup(of: (Key, Value).self) { [self] group in
 
 ### Figma API Rate Limits
 
+**Official docs:** <https://developers.figma.com/docs/rest-api/rate-limits/>
+
 - Use `maxConcurrentBatches = 3` for parallel requests
-- Tier 1 endpoints: 10-20 requests/minute depending on plan
+- Tier 1 endpoints (files, images): 10-20 req/min depending on plan (Starter→Enterprise)
+- Tier 2 endpoints: 25-100 req/min
+- Tier 3 endpoints: 50-150 req/min
+- On 429 error: respect `Retry-After` header
 
 ### Test Helpers for Codable Types
 

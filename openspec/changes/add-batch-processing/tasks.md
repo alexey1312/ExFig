@@ -4,11 +4,10 @@
 
 - [ ] 1.1 Create `Sources/ExFig/Subcommands/Batch.swift`
 - [ ] 1.2 Add `--parallel` option (default: 3)
-- [ ] 1.3 Add `--continue-on-error` flag (default: true)
-- [ ] 1.4 Add `--fail-fast` flag
-- [ ] 1.5 Add `--report` option for JSON output
-- [ ] 1.6 Register batch command in `ExFigCommand.swift`
-- [ ] 1.7 Support both directory and file list inputs
+- [ ] 1.3 Add `--fail-fast` flag (default: false, continue on error)
+- [ ] 1.4 Add `--report` option for JSON output
+- [ ] 1.5 Register batch command in `ExFigCommand.swift`
+- [ ] 1.6 Support both directory and file list inputs
 
 ## 2. Config Discovery
 
@@ -28,10 +27,12 @@
 
 ## 4. Shared Rate Limiting
 
-- [ ] 4.1 Modify `RateLimiter` to support multi-client mode
-- [ ] 4.2 Implement fair request queuing
-- [ ] 4.3 Add per-config request tracking
-- [ ] 4.4 Display aggregate rate limit status
+- [ ] 4.1 Create `SharedRateLimiter` actor in `Sources/FigmaAPI/`
+- [ ] 4.2 Implement token bucket algorithm (~0.167 req/s for Tier 1)
+- [ ] 4.3 Implement fair request queuing across configs
+- [ ] 4.4 Add per-config request tracking
+- [ ] 4.5 Handle 429 responses with `Retry-After` header
+- [ ] 4.6 Display aggregate rate limit status
 
 ## 5. Progress UI
 

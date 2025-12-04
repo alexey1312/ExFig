@@ -55,7 +55,7 @@ exfig batch ./configs/
 exfig batch config1.yaml config2.yaml config3.yaml
 
 # With options
-exfig batch ./configs/ --parallel 3 --continue-on-error
+exfig batch ./configs/ --parallel 5
 ```
 
 ### Decision 2: Parallelism Model
@@ -106,7 +106,10 @@ actor BatchExecutor {
 
 ```swift
 actor SharedRateLimiter {
-    private let globalLimit: Double = 10.0  // requests/second
+    // Tier 1 limit: 10-20 req/min depending on plan
+    // Use conservative 10 req/min = 0.167 req/s for safety
+    // See: https://developers.figma.com/docs/rest-api/rate-limits/
+    private let globalLimit: Double = 10.0 / 60.0  // ~0.167 requests/second
     private var queues: [ConfigID: RequestQueue] = [:]
 
     func acquire(for config: ConfigID) async {
@@ -166,8 +169,8 @@ See ./batch-report.json for details
 | Complex error states           | Medium | Clear per-config status, detailed report |
 | Config conflicts               | Low    | Warn on overlapping output paths         |
 
-## Open Questions
+## Resolved Questions
 
-1. Should batch support mixing export types (colors from one, icons from another)?
-2. Should we support glob patterns (`exfig batch "./configs/*.yaml"`)?
-3. Should batch results be saved to a report file by default?
+1. **Mixing export types** — No. Each config defines its own exports. v1 processes configs as-is.
+2. **Glob patterns** — No. Shell expands globs automatically (`exfig batch ./configs/*.yaml` works).
+3. **Default report file** — No. Use `--report` explicitly when needed. Keeps default output clean.
