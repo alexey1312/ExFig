@@ -69,7 +69,7 @@ final class ProgressBar: @unchecked Sendable {
             TerminalOutputManager.shared.hasActiveAnimation = true
 
             if useAnimations {
-                printDirect("\(ANSICodes.hideCursor)")
+                TerminalOutputManager.shared.writeDirect(ANSICodes.hideCursor)
 
                 // Use timer-based rendering like Spinner for consistent frame rate
                 let timer = DispatchSource.makeTimerSource(queue: Self.renderQueue)
@@ -127,6 +127,7 @@ final class ProgressBar: @unchecked Sendable {
             guard isRunning else { return }
             isRunning = false
             TerminalOutputManager.shared.hasActiveAnimation = false
+            TerminalOutputManager.shared.clearAnimationState()
             timer?.cancel()
             timer = nil
 
@@ -138,10 +139,12 @@ final class ProgressBar: @unchecked Sendable {
             }
 
             if useAnimations {
-                printDirect("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n")
-                printDirect("\(ANSICodes.showCursor)")
+                TerminalOutputManager.shared.writeDirect(
+                    "\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n"
+                )
+                TerminalOutputManager.shared.writeDirect(ANSICodes.showCursor)
             } else {
-                printDirect("\(icon) \(finalMessage)\n")
+                TerminalOutputManager.shared.writeDirect("\(icon) \(finalMessage)\n")
             }
         }
     }
@@ -175,7 +178,7 @@ final class ProgressBar: @unchecked Sendable {
 
         let line = "\(bar) \(percentStr) \(countStr) \(eta) \(message)"
 
-        printDirect("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(line)")
+        TerminalOutputManager.shared.writeAnimationFrame(line)
     }
 
     /// Render in plain mode (no animations)
@@ -183,7 +186,7 @@ final class ProgressBar: @unchecked Sendable {
         let currentValue = current
         // Plain mode: print on new line only for significant progress
         if currentValue == 1 || currentValue == total || currentValue % max(total / 10, 1) == 0 {
-            printDirect("\(message): \(currentValue)/\(total)\n")
+            TerminalOutputManager.shared.writeDirect("\(message): \(currentValue)/\(total)\n")
         }
     }
 
@@ -215,10 +218,5 @@ final class ProgressBar: @unchecked Sendable {
             let minutes = Int((seconds.truncatingRemainder(dividingBy: 3600)) / 60)
             return "\(hours)h \(minutes)m"
         }
-    }
-
-    /// Direct write to stdout, bypassing Swift's print buffering
-    private func printDirect(_ string: String) {
-        FileHandle.standardOutput.write(Data(string.utf8))
     }
 }

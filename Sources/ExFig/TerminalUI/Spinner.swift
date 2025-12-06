@@ -49,7 +49,7 @@ final class Spinner: @unchecked Sendable {
             TerminalOutputManager.shared.hasActiveAnimation = true
 
             if useAnimations {
-                printDirect("\(ANSICodes.hideCursor)")
+                TerminalOutputManager.shared.writeDirect(ANSICodes.hideCursor)
 
                 let timer = DispatchSource.makeTimerSource(queue: Self.renderQueue)
                 timer.schedule(
@@ -62,7 +62,7 @@ final class Spinner: @unchecked Sendable {
                 self.timer = timer
                 timer.resume()
             } else {
-                printDirect("\(message)\n")
+                TerminalOutputManager.shared.writeDirect("\(message)\n")
             }
         }
     }
@@ -72,7 +72,7 @@ final class Spinner: @unchecked Sendable {
         self.message = message
         if !useAnimations {
             Self.renderQueue.async {
-                self.printDirect("\(message)\n")
+                TerminalOutputManager.shared.writeDirect("\(message)\n")
             }
         }
     }
@@ -93,6 +93,7 @@ final class Spinner: @unchecked Sendable {
             guard isRunning else { return }
             isRunning = false
             TerminalOutputManager.shared.hasActiveAnimation = false
+            TerminalOutputManager.shared.clearAnimationState()
             timer?.cancel()
             timer = nil
 
@@ -104,10 +105,12 @@ final class Spinner: @unchecked Sendable {
             }
 
             if useAnimations {
-                printDirect("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n")
-                printDirect("\(ANSICodes.showCursor)")
+                TerminalOutputManager.shared.writeDirect(
+                    "\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n"
+                )
+                TerminalOutputManager.shared.writeDirect(ANSICodes.showCursor)
             } else {
-                printDirect("\(icon) \(finalMessage)\n")
+                TerminalOutputManager.shared.writeDirect("\(icon) \(finalMessage)\n")
             }
         }
     }
@@ -118,12 +121,7 @@ final class Spinner: @unchecked Sendable {
         let currentMessage = message
         let frame = Self.frames[frameIndex % Self.frames.count]
         let coloredFrame = useColors ? frame.cyan : frame
-        printDirect("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(coloredFrame) \(currentMessage)")
+        TerminalOutputManager.shared.writeAnimationFrame("\(coloredFrame) \(currentMessage)")
         frameIndex += 1
-    }
-
-    /// Direct write to stdout, bypassing Swift's print buffering
-    private func printDirect(_ string: String) {
-        FileHandle.standardOutput.write(Data(string.utf8))
     }
 }
