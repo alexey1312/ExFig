@@ -19,7 +19,8 @@ final class DownloadImageLoader: @unchecked Sendable {
         fileId: String,
         frameName: String,
         params: FormatParams,
-        filter: String?
+        filter: String?,
+        onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
         var imagesDict = try await fetchImageComponents(fileId: fileId, frameName: frameName, filter: filter)
 
@@ -33,7 +34,12 @@ final class DownloadImageLoader: @unchecked Sendable {
         }
 
         logger.info("Fetching vector images...")
-        let imageIdToImagePath = try await loadImages(fileId: fileId, imagesDict: imagesDict, params: params)
+        let imageIdToImagePath = try await loadImages(
+            fileId: fileId,
+            imagesDict: imagesDict,
+            params: params,
+            onBatchProgress: onBatchProgress
+        )
 
         // Remove components for which image file could not be fetched
         let badNodeIds = Set(imagesDict.keys).symmetricDifference(Set(imageIdToImagePath.keys))
@@ -64,7 +70,8 @@ final class DownloadImageLoader: @unchecked Sendable {
         frameName: String,
         scale: Double,
         format: String,
-        filter: String?
+        filter: String?,
+        onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
         let imagesDict = try await fetchImageComponents(fileId: fileId, frameName: frameName, filter: filter)
 
@@ -74,7 +81,12 @@ final class DownloadImageLoader: @unchecked Sendable {
 
         logger.info("Fetching raster images at \(scale)x...")
         let params = FormatParams(scale: scale, format: format)
-        let imageIdToImagePath = try await loadImages(fileId: fileId, imagesDict: imagesDict, params: params)
+        let imageIdToImagePath = try await loadImages(
+            fileId: fileId,
+            imagesDict: imagesDict,
+            params: params,
+            onBatchProgress: onBatchProgress
+        )
 
         // Create image packs
         return imagesDict.compactMap { nodeId, component -> ImagePack? in
@@ -122,16 +134,21 @@ final class DownloadImageLoader: @unchecked Sendable {
     private func loadImages(
         fileId: String,
         imagesDict: [NodeId: Component],
-        params: FormatParams
+        params: FormatParams,
+        onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [NodeId: ImagePath] {
         let batchSize = 100
         let maxConcurrentBatches = 3
 
         let nodeIds: [NodeId] = imagesDict.keys.map { $0 }
         let batches = nodeIds.chunked(into: batchSize)
+        let totalBatches = batches.count
 
         let format = params.format
         let scale = params.scale
+
+        // Thread-safe counter for completed batches
+        let completedCounter = CompletedBatchCounter()
 
         let allResults = try await withThrowingTaskGroup(
             of: [(NodeId, ImagePath)].self
@@ -144,6 +161,8 @@ final class DownloadImageLoader: @unchecked Sendable {
                     if let batchResult = try await group.next() {
                         results.append(batchResult)
                         activeTasks -= 1
+                        let completed = completedCounter.increment()
+                        onBatchProgress(completed, totalBatches)
                     }
                 }
 
@@ -161,6 +180,8 @@ final class DownloadImageLoader: @unchecked Sendable {
 
             for try await batchResult in group {
                 results.append(batchResult)
+                let completed = completedCounter.increment()
+                onBatchProgress(completed, totalBatches)
             }
 
             return results.flatMap { $0 }

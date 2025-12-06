@@ -48,7 +48,7 @@ struct ExFigLogHandler: LogHandler {
             formattedMessage = formatMessage(level: level, message: message)
         }
 
-        print(formattedMessage)
+        TerminalOutputManager.shared.print(formattedMessage)
     }
 
     // swiftlint:disable:next cyclomatic_complexity

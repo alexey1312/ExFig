@@ -95,23 +95,24 @@ extension ExFigCommand {
                 return
             }
 
-            let imagesTuple = try await ui.withSpinner("Fetching images from Figma...") {
+            let imagesTuple = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
                 let loader = ImagesLoader(client: client, params: params, platform: .ios, logger: logger)
-                return try await loader.load(filter: filter)
+                return try await loader.load(filter: filter, onBatchProgress: onProgress)
             }
 
-            let images = try await ui.withSpinner("Processing images...") {
-                let processor = ImagesProcessor(
-                    platform: .ios,
-                    nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-                    nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-                    nameStyle: imagesParams.nameStyle
-                )
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
+            let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing images...") {
+                    let processor = ImagesProcessor(
+                        platform: .ios,
+                        nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                        nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                        nameStyle: imagesParams.nameStyle
+                    )
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
                 }
-                return try result.get()
+            if let imagesWarning {
+                ui.warning(imagesWarning)
             }
 
             let assetsURL = ios.xcassetsPath.appendingPathComponent(imagesParams.assetsFolder)
@@ -180,23 +181,24 @@ extension ExFigCommand {
                 return
             }
 
-            let imagesTuple = try await ui.withSpinner("Fetching images from Figma...") {
+            let imagesTuple = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
                 let loader = ImagesLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter)
+                return try await loader.load(filter: filter, onBatchProgress: onProgress)
             }
 
-            let images = try await ui.withSpinner("Processing images...") {
-                let processor = ImagesProcessor(
-                    platform: .android,
-                    nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-                    nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-                    nameStyle: .snakeCase
-                )
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
+            let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing images...") {
+                    let processor = ImagesProcessor(
+                        platform: .android,
+                        nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                        nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                        nameStyle: .snakeCase
+                    )
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
                 }
-                return try result.get()
+            if let imagesWarning {
+                ui.warning(imagesWarning)
             }
 
             switch androidImages.format {
@@ -438,25 +440,25 @@ extension ExFigCommand {
             }
 
             // 1. Get Images info
-            let imagesTuple = try await ui.withSpinner("Fetching images from Figma...") {
+            let imagesTuple = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
                 let loader = ImagesLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter)
+                return try await loader.load(filter: filter, onBatchProgress: onProgress)
             }
 
             // 2. Process images
-            let images = try await ui.withSpinner("Processing images...") {
-                let processor = ImagesProcessor(
-                    platform: .android, // Flutter uses similar naming to Android
-                    nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-                    nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-                    nameStyle: .snakeCase
-                )
-
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
+            let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing images...") {
+                    let processor = ImagesProcessor(
+                        platform: .android, // Flutter uses similar naming to Android
+                        nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                        nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                        nameStyle: .snakeCase
+                    )
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
                 }
-                return try result.get()
+            if let imagesWarning {
+                ui.warning(imagesWarning)
             }
 
             // 3. Export images

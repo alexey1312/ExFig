@@ -13,24 +13,31 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
     }
 
     /// Loads icons from Figma, supporting both single-file and separate light/dark file modes.
-    func load(filter: String? = nil) async throws -> IconsLoaderOutput {
+    func load(
+        filter: String? = nil,
+        onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
+    ) async throws -> IconsLoaderOutput {
         if let useSingleFile = params.common?.icons?.useSingleFile, useSingleFile {
-            try await loadFromSingleFile(filter: filter)
+            try await loadFromSingleFile(filter: filter, onBatchProgress: onBatchProgress)
         } else {
-            try await loadFromLightAndDarkFile(filter: filter)
+            try await loadFromLightAndDarkFile(filter: filter, onBatchProgress: onBatchProgress)
         }
     }
 
     // MARK: - Private Loading Methods
 
-    private func loadFromSingleFile(filter: String? = nil) async throws -> IconsLoaderOutput {
+    private func loadFromSingleFile(
+        filter: String? = nil,
+        onBatchProgress: @escaping BatchProgressCallback
+    ) async throws -> IconsLoaderOutput {
         let formatParams = makeFormatParams()
 
         let icons = try await loadVectorImages(
             fileId: params.figma.lightFileId,
             frameName: frameName,
             params: formatParams,
-            filter: filter
+            filter: filter,
+            onBatchProgress: onBatchProgress
         )
 
         let darkSuffix = params.common?.icons?.darkModeSuffix ?? "_dark"
@@ -42,7 +49,10 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         )
     }
 
-    private func loadFromLightAndDarkFile(filter: String? = nil) async throws -> IconsLoaderOutput {
+    private func loadFromLightAndDarkFile(
+        filter: String? = nil,
+        onBatchProgress: @escaping BatchProgressCallback
+    ) async throws -> IconsLoaderOutput {
         // Build list of files to load
         var filesToLoad: [(key: String, fileId: String)] = [
             ("light", params.figma.lightFileId),
@@ -56,7 +66,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
             of: (String, [ImagePack]).self
         ) { [self] group in
             for (key, fileId) in filesToLoad {
-                group.addTask { [key, fileId, filter] in
+                group.addTask { [key, fileId, filter, onBatchProgress] in
                     // Create format params inside task to avoid Sendable issues
                     let formatParams = self.makeFormatParams()
 
@@ -64,7 +74,8 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
                         fileId: fileId,
                         frameName: self.frameName,
                         params: formatParams,
-                        filter: filter
+                        filter: filter,
+                        onBatchProgress: onBatchProgress
                     ).map { self.updateRenderMode($0) }
                     return (key, icons)
                 }

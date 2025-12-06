@@ -82,7 +82,7 @@ Sources/ExFig/
 ├── Loaders/         # Figma data loaders (ColorsLoader, ImagesLoader, etc.)
 ├── Input/           # Config & CLI options (ExFigOptions, DownloadOptions, etc.)
 ├── Output/          # File writers (FileWriter, WebpConverter, etc.)
-├── TerminalUI/      # Progress bars, spinners, logging
+├── TerminalUI/      # Progress bars, spinners, logging, output coordination
 └── Cache/           # Version tracking for incremental exports
 
 Sources/*/Resources/ # Stencil templates for code generation
@@ -116,6 +116,11 @@ try await ui.withSpinner("Loading data...") {
     try await fetchData()
 }
 
+// Spinner with batch progress (shows "Loading... (3/15)")
+try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+    try await loader.load(onBatchProgress: onProgress)
+}
+
 // Progress bar for counted items
 try await ui.withProgress("Downloading", total: files.count) { progress in
     for file in files {
@@ -124,6 +129,19 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
     }
 }
 ```
+
+**Key TerminalUI classes:**
+
+| Class                   | Purpose                                               |
+| ----------------------- | ----------------------------------------------------- |
+| `TerminalUI`            | Main facade for all terminal operations               |
+| `TerminalOutputManager` | Singleton coordinating output between animations/logs |
+| `Spinner`               | Animated spinner with message updates                 |
+| `ProgressBar`           | Progress bar with percentage and ETA                  |
+| `BatchProgressCallback` | `@Sendable (Int, Int) -> Void` for batch progress     |
+
+**Important:** `Spinner` and `ProgressBar` use `DispatchQueue` (not Swift actors) for smooth 12 FPS rendering without
+blocking.
 
 ### Fault Tolerance for API Commands
 
@@ -216,6 +234,13 @@ try await withThrowingTaskGroup(of: (Key, Value).self) { [self] group in
         }
     }
     // ...
+}
+
+// Callbacks passed to task groups must be @escaping
+func loadImages(
+    onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
+) async throws -> [ImagePack] {
+    // onBatchProgress is captured in task group closures
 }
 ```
 

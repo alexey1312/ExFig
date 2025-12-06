@@ -1,7 +1,11 @@
+// swiftlint:disable file_length
 import ExFigCore
 import FigmaAPI
 import Foundation
 import Logging
+
+/// Callback for reporting batch progress (completed, total)
+typealias BatchProgressCallback = @Sendable (Int, Int) -> Void
 
 /// Base class for loading images from Figma.
 /// Provides shared functionality for IconsLoader and ImagesLoader.
@@ -46,9 +50,12 @@ class ImageLoaderBase: @unchecked Sendable {
         fileId: String,
         frameName: String,
         params: FormatParams,
-        filter: String? = nil
+        filter: String? = nil,
+        onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
-        var imagesDict = try await fetchImageComponents(fileId: fileId, frameName: frameName, filter: filter)
+        var imagesDict = try await fetchImageComponents(
+            fileId: fileId, frameName: frameName, filter: filter
+        )
 
         guard !imagesDict.isEmpty else {
             throw ExFigError.componentsNotFound
@@ -57,20 +64,26 @@ class ImageLoaderBase: @unchecked Sendable {
         // Component name must not be empty
         imagesDict = imagesDict.filter { (_: NodeId, component: Component) in
             if component.name.trimmingCharacters(in: .whitespaces).isEmpty {
-                logger.warning("""
-                Found a component with empty name.
-                Page name: \(component.containingFrame.pageName)
-                Frame: \(component.containingFrame.name ?? "nil")
-                Description: \(component.description ?? "nil")
-                The component wont be exported. Fix component name in the Figma file and try again.
-                """)
+                logger.warning(
+                    """
+                    Found a component with empty name.
+                    Page name: \(component.containingFrame.pageName)
+                    Frame: \(component.containingFrame.name ?? "nil")
+                    Description: \(component.description ?? "nil")
+                    The component wont be exported. Fix component name in the Figma file and try again.
+                    """)
                 return false
             }
             return true
         }
 
         logger.info("Fetching vector images...")
-        let imageIdToImagePath = try await loadImages(fileId: fileId, imagesDict: imagesDict, params: params)
+        let imageIdToImagePath = try await loadImages(
+            fileId: fileId,
+            imagesDict: imagesDict,
+            params: params,
+            onBatchProgress: onBatchProgress
+        )
 
         // Remove components for which image file could not be fetched
         let badNodeIds = Set(imagesDict.keys).symmetricDifference(Set(imageIdToImagePath.keys))
@@ -79,17 +92,23 @@ class ImageLoaderBase: @unchecked Sendable {
         }
 
         // Group images by name
-        let groups = Dictionary(grouping: imagesDict) { $1.name.parseNameAndIdiom(platform: platform).name }
+        let groups = Dictionary(grouping: imagesDict) {
+            $1.name.parseNameAndIdiom(platform: platform).name
+        }
 
         // Create image packs for groups
         let imagePacks = groups.compactMap { packName, components -> ImagePack? in
             let packImages = components.compactMap { nodeId, component -> Image? in
-                guard let urlString = imageIdToImagePath[nodeId], let url = URL(string: urlString) else {
+                guard let urlString = imageIdToImagePath[nodeId], let url = URL(string: urlString)
+                else {
                     return nil
                 }
                 let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
                 let isRTL = component.useRTL()
-                return Image(name: name, scale: .all, idiom: idiom, url: url, format: params.format, isRTL: isRTL)
+                return Image(
+                    name: name, scale: .all, idiom: idiom, url: url, format: params.format,
+                    isRTL: isRTL
+                )
             }
             return ImagePack(name: packName, images: packImages, platform: platform)
         }
@@ -101,34 +120,52 @@ class ImageLoaderBase: @unchecked Sendable {
         fileId: String,
         frameName: String,
         filter: String? = nil,
-        scales: [Double]
+        scales: [Double],
+        onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
-        let imagesDict = try await fetchImageComponents(fileId: fileId, frameName: frameName, filter: filter)
+        let imagesDict = try await fetchImageComponents(
+            fileId: fileId, frameName: frameName, filter: filter
+        )
 
         guard !imagesDict.isEmpty else {
             throw ExFigError.componentsNotFound
         }
 
+        // Calculate total batches across all scales for accurate progress
+        let batchSize = 100
+        let batchesPerScale = (imagesDict.count + batchSize - 1) / batchSize
+        let totalBatches = batchesPerScale * scales.count
+
+        // Shared counter for all scales
+        let sharedCounter = CompletedBatchCounter()
+
         // Parallel fetch for all scales (3x speedup for iOS with 3 scales)
-        logger.info("Fetching PNG images for scales \(scales) in parallel...")
         let images = try await loadImagesForAllScales(
             fileId: fileId,
             imagesDict: imagesDict,
-            scales: scales
+            scales: scales,
+            sharedCounter: sharedCounter,
+            totalBatches: totalBatches,
+            onBatchProgress: onBatchProgress
         )
 
         // Group images by name
-        let groups = Dictionary(grouping: imagesDict) { $1.name.parseNameAndIdiom(platform: platform).name }
+        let groups = Dictionary(grouping: imagesDict) {
+            $1.name.parseNameAndIdiom(platform: platform).name
+        }
 
         // Create image packs for groups
         let imagePacks = groups.compactMap { packName, components -> ImagePack? in
             let packImages = components.flatMap { nodeId, component -> [Image] in
                 let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
                 return scales.compactMap { scale -> Image? in
-                    guard let urlString = images[scale]?[nodeId], let url = URL(string: urlString) else {
+                    guard let urlString = images[scale]?[nodeId], let url = URL(string: urlString)
+                    else {
                         return nil
                     }
-                    return Image(name: name, scale: .individual(scale), idiom: idiom, url: url, format: "png")
+                    return Image(
+                        name: name, scale: .individual(scale), idiom: idiom, url: url, format: "png"
+                    )
                 }
             }
             return ImagePack(name: packName, images: packImages, platform: platform)
@@ -153,13 +190,14 @@ class ImageLoaderBase: @unchecked Sendable {
         darkSuffix: String
     ) -> (light: [ImagePack], dark: [ImagePack]) {
         let lightPacks = packs.filter { !$0.name.hasSuffix(darkSuffix) }
-        let darkPacks = packs
-            .filter { $0.name.hasSuffix(darkSuffix) }
-            .map { pack -> ImagePack in
-                var newPack = pack
-                newPack.name = String(pack.name.dropLast(darkSuffix.count))
-                return newPack
-            }
+        let darkPacks =
+            packs
+                .filter { $0.name.hasSuffix(darkSuffix) }
+                .map { pack -> ImagePack in
+                    var newPack = pack
+                    newPack.name = String(pack.name.dropLast(darkSuffix.count))
+                    return newPack
+                }
         return (lightPacks, darkPacks)
     }
 
@@ -171,20 +209,26 @@ class ImageLoaderBase: @unchecked Sendable {
     }
 
     /// Loads images for all scales in parallel.
-    private func loadImagesForAllScales(
+    private func loadImagesForAllScales( // swiftlint:disable:this function_parameter_count
         fileId: String,
         imagesDict: [NodeId: Component],
-        scales: [Double]
+        scales: [Double],
+        sharedCounter: CompletedBatchCounter,
+        totalBatches: Int,
+        onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [Double: [NodeId: ImagePath]] {
         try await withThrowingTaskGroup(
             of: (Double, [NodeId: ImagePath]).self
         ) { [self] group in
             for scale in scales {
-                group.addTask { [fileId, imagesDict] in
+                group.addTask { [fileId, imagesDict, sharedCounter, totalBatches, onBatchProgress] in
                     let result = try await self.loadImages(
                         fileId: fileId,
                         imagesDict: imagesDict,
-                        params: PNGParams(scale: scale)
+                        params: PNGParams(scale: scale),
+                        sharedCounter: sharedCounter,
+                        totalBatches: totalBatches,
+                        onBatchProgress: onBatchProgress
                     )
                     return (scale, result)
                 }
@@ -200,7 +244,10 @@ class ImageLoaderBase: @unchecked Sendable {
     private func loadImages(
         fileId: String,
         imagesDict: [NodeId: Component],
-        params: FormatParams
+        params: FormatParams,
+        sharedCounter: CompletedBatchCounter? = nil,
+        totalBatches totalBatchesOverride: Int? = nil,
+        onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [NodeId: ImagePath] {
         let batchSize = 100
         // Conservative concurrency limit to respect Figma API rate limits
@@ -209,6 +256,11 @@ class ImageLoaderBase: @unchecked Sendable {
 
         let nodeIds: [NodeId] = imagesDict.keys.map { $0 }
         let batches = nodeIds.chunked(into: batchSize)
+
+        // Use shared counter and total if provided (for multi-scale loading),
+        // otherwise create local counter (for single-scale/vector loading)
+        let completedCounter = sharedCounter ?? CompletedBatchCounter()
+        let totalBatches = totalBatchesOverride ?? batches.count
 
         // Capture format info for thread-safe closure (FormatParams is a class)
         let format = params.format
@@ -227,6 +279,8 @@ class ImageLoaderBase: @unchecked Sendable {
                     if let batchResult = try await group.next() {
                         results.append(batchResult)
                         activeTasks -= 1
+                        let completed = completedCounter.increment()
+                        onBatchProgress(completed, totalBatches)
                     }
                 }
 
@@ -246,6 +300,8 @@ class ImageLoaderBase: @unchecked Sendable {
             // Collect remaining results
             for try await batchResult in group {
                 results.append(batchResult)
+                let completed = completedCounter.increment()
+                onBatchProgress(completed, totalBatches)
             }
 
             return results.flatMap { $0 }
@@ -262,12 +318,13 @@ class ImageLoaderBase: @unchecked Sendable {
         imagesDict: [NodeId: Component]
     ) async throws -> [(NodeId, ImagePath)] {
         // Recreate FormatParams inside task to avoid Sendable issues
-        let params: FormatParams = switch format {
-        case "svg": SVGParams()
-        case "pdf": PDFParams()
-        case "png" where scale != nil: PNGParams(scale: scale!)
-        default: FormatParams(scale: scale, format: format)
-        }
+        let params: FormatParams =
+            switch format {
+            case "svg": SVGParams()
+            case "pdf": PDFParams()
+            case "png" where scale != nil: PNGParams(scale: scale!)
+            default: FormatParams(scale: scale, format: format)
+            }
 
         let endpoint = ImageEndpoint(fileId: fileId, nodeIds: nodeIds, params: params)
         let dict = try await client.request(endpoint)
@@ -277,8 +334,9 @@ class ImageLoaderBase: @unchecked Sendable {
                 return (nodeId, imagePath)
             } else {
                 let componentName = imagesDict[nodeId]?.name ?? ""
-                let errorMsg = "Unable to get image for node with id = \(nodeId). " +
-                    "Please check that component \(componentName) in the Figma file is not empty. Skipping..."
+                let errorMsg =
+                    "Unable to get image for node with id = \(nodeId). "
+                        + "Please check that component \(componentName) in the Figma file is not empty. Skipping..."
                 logger.error("\(errorMsg)")
                 return nil
             }
@@ -290,7 +348,8 @@ class ImageLoaderBase: @unchecked Sendable {
 
 extension String {
     /// Cached regex for parsing idiom suffix (e.g., "icon~ipad" -> name: "icon", idiom: "ipad")
-    private static let idiomRegex: NSRegularExpression? = try? NSRegularExpression(pattern: "(.*)~(.*)$")
+    private static let idiomRegex: NSRegularExpression? = try? NSRegularExpression(
+        pattern: "(.*)~(.*)$")
 
     func parseNameAndIdiom(platform: Platform) -> (name: String, idiom: String) {
         switch platform {
@@ -338,5 +397,21 @@ public extension Component {
     func useRTL() -> Bool {
         guard let description, !description.isEmpty else { return false }
         return description.localizedCaseInsensitiveContains("rtl")
+    }
+}
+
+// MARK: - Thread-safe Counter
+
+/// Thread-safe counter for tracking completed batches across concurrent tasks.
+final class CompletedBatchCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _count = 0
+
+    /// Increments the counter and returns the new value.
+    func increment() -> Int {
+        lock.withLock {
+            _count += 1
+            return _count
+        }
     }
 }

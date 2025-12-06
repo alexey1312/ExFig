@@ -29,9 +29,9 @@ final class TerminalUI: Sendable {
     func info(_ message: String) {
         guard outputMode != .quiet else { return }
         if useColors {
-            print(message.cyan)
+            TerminalOutputManager.shared.print(message.cyan)
         } else {
-            print(message)
+            TerminalOutputManager.shared.print(message)
         }
     }
 
@@ -39,7 +39,7 @@ final class TerminalUI: Sendable {
     func success(_ message: String) {
         guard outputMode != .quiet else { return }
         let icon = useColors ? "✓".green : "✓"
-        print("\(icon) \(message)")
+        TerminalOutputManager.shared.print("\(icon) \(message)")
     }
 
     /// Print a warning message (handles multi-line properly)
@@ -55,10 +55,10 @@ final class TerminalUI: Sendable {
 
             if index == 0 {
                 // First line gets the icon
-                print("\(icon) \(text)")
+                TerminalOutputManager.shared.print("\(icon) \(text)")
             } else {
                 // Subsequent lines are indented to align with text after icon
-                print("  \(text)")
+                TerminalOutputManager.shared.print("  \(text)")
             }
         }
     }
@@ -77,14 +77,14 @@ final class TerminalUI: Sendable {
     func error(_ message: String) {
         let icon = useColors ? "✗".red : "✗"
         let text = useColors ? message.red : message
-        print("\(icon) \(text)")
+        TerminalOutputManager.shared.print("\(icon) \(text)")
     }
 
     /// Print a debug message (only in verbose mode)
     func debug(_ message: String) {
         guard outputMode == .verbose else { return }
         let prefix = useColors ? "[DEBUG]".lightBlack : "[DEBUG]"
-        print("\(prefix) \(message)")
+        TerminalOutputManager.shared.print("\(prefix) \(message)")
     }
 
     // MARK: - Spinner Operations
@@ -97,7 +97,7 @@ final class TerminalUI: Sendable {
         guard outputMode.showProgress else {
             // Quiet mode or plain mode without animations
             if outputMode != .quiet {
-                print(message)
+                TerminalOutputManager.shared.print(message)
             }
             return try await operation()
         }
@@ -108,14 +108,14 @@ final class TerminalUI: Sendable {
             useAnimations: useAnimations
         )
 
-        await spinner.start()
+        spinner.start()
 
         do {
             let result = try await operation()
-            await spinner.succeed()
+            spinner.succeed()
             return result
         } catch {
-            await spinner.fail()
+            spinner.fail()
             throw error
         }
     }
@@ -128,11 +128,11 @@ final class TerminalUI: Sendable {
     ) async rethrows -> T {
         guard outputMode.showProgress else {
             if outputMode != .quiet {
-                print(message)
+                TerminalOutputManager.shared.print(message)
             }
             let result = try await operation()
             if outputMode != .quiet {
-                print("✓ \(successMessage)")
+                TerminalOutputManager.shared.print("✓ \(successMessage)")
             }
             return result
         }
@@ -143,14 +143,47 @@ final class TerminalUI: Sendable {
             useAnimations: useAnimations
         )
 
-        await spinner.start()
+        spinner.start()
 
         do {
             let result = try await operation()
-            await spinner.succeed(message: successMessage)
+            spinner.succeed(message: successMessage)
             return result
         } catch {
-            await spinner.fail()
+            spinner.fail()
+            throw error
+        }
+    }
+
+    /// Execute an operation with a spinner that shows batch progress (current/total)
+    func withSpinnerProgress<T: Sendable>(
+        _ message: String,
+        operation: @Sendable @escaping (@escaping @Sendable (Int, Int) -> Void) async throws -> T
+    ) async rethrows -> T {
+        guard outputMode.showProgress else {
+            if outputMode != .quiet {
+                TerminalOutputManager.shared.print(message)
+            }
+            // Provide no-op progress callback in quiet/plain mode
+            return try await operation { _, _ in }
+        }
+
+        let spinner = Spinner(
+            message: message,
+            useColors: useColors,
+            useAnimations: useAnimations
+        )
+
+        spinner.start()
+
+        do {
+            let result = try await operation { current, total in
+                spinner.update(message: "\(message) (\(current)/\(total) batches)")
+            }
+            spinner.succeed()
+            return result
+        } catch {
+            spinner.fail()
             throw error
         }
     }
@@ -165,7 +198,7 @@ final class TerminalUI: Sendable {
     ) async rethrows -> T {
         guard outputMode.showProgress, total > 0 else {
             if outputMode != .quiet {
-                print(message)
+                TerminalOutputManager.shared.print(message)
             }
             let dummyProgress = ProgressBar(
                 message: message,
@@ -183,12 +216,14 @@ final class TerminalUI: Sendable {
             useAnimations: useAnimations
         )
 
+        progressBar.start()
+
         do {
             let result = try await operation(progressBar)
-            await progressBar.succeed()
+            progressBar.succeed()
             return result
         } catch {
-            await progressBar.fail()
+            progressBar.fail()
             throw error
         }
     }

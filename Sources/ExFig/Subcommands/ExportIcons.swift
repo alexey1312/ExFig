@@ -95,24 +95,24 @@ extension ExFigCommand {
                 return
             }
 
-            let imagesTuple = try await ui.withSpinner("Fetching icons from Figma...") {
+            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .ios, logger: logger)
-                return try await loader.load(filter: filter)
+                return try await loader.load(filter: filter, onBatchProgress: onProgress)
             }
 
-            let icons = try await ui.withSpinner("Processing icons...") {
-                let processor = ImagesProcessor(
-                    platform: .ios,
-                    nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                    nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                    nameStyle: iconsParams.nameStyle
-                )
-
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
+            let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing icons...") {
+                    let processor = ImagesProcessor(
+                        platform: .ios,
+                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                        nameStyle: iconsParams.nameStyle
+                    )
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
                 }
-                return try result.get()
+            if let iconsWarning {
+                ui.warning(iconsWarning)
             }
 
             let assetsURL = ios.xcassetsPath.appendingPathComponent(iconsParams.assetsFolder)
@@ -191,25 +191,25 @@ extension ExFigCommand {
             }
 
             // 1. Get Icons info
-            let imagesTuple = try await ui.withSpinner("Fetching icons from Figma...") {
+            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter)
+                return try await loader.load(filter: filter, onBatchProgress: onProgress)
             }
 
             // 2. Process images
-            let icons = try await ui.withSpinner("Processing icons...") {
-                let processor = ImagesProcessor(
-                    platform: .android,
-                    nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                    nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                    nameStyle: .snakeCase
-                )
-
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
+            let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing icons...") {
+                    let processor = ImagesProcessor(
+                        platform: .android,
+                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                        nameStyle: .snakeCase
+                    )
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
                 }
-                return try result.get()
+            if let iconsWarning {
+                ui.warning(iconsWarning)
             }
 
             // Create empty temp directory
@@ -335,25 +335,25 @@ extension ExFigCommand {
             }
 
             // 1. Get Icons info
-            let imagesTuple = try await ui.withSpinner("Fetching icons from Figma...") {
+            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter)
+                return try await loader.load(filter: filter, onBatchProgress: onProgress)
             }
 
             // 2. Process images
-            let icons = try await ui.withSpinner("Processing icons...") {
-                let processor = ImagesProcessor(
-                    platform: .android,
-                    nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                    nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                    nameStyle: .snakeCase
-                )
-
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
+            let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing icons...") {
+                    let processor = ImagesProcessor(
+                        platform: .android,
+                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                        nameStyle: .snakeCase
+                    )
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
                 }
-                return try result.get()
+            if let iconsWarning {
+                ui.warning(iconsWarning)
             }
 
             // Create temp directory for SVG files
@@ -434,25 +434,25 @@ extension ExFigCommand {
             }
 
             // 1. Get Icons info
-            let imagesTuple = try await ui.withSpinner("Fetching icons from Figma...") {
+            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter)
+                return try await loader.load(filter: filter, onBatchProgress: onProgress)
             }
 
             // 2. Process images
-            let icons = try await ui.withSpinner("Processing icons...") {
-                let processor = ImagesProcessor(
-                    platform: .android, // Flutter uses similar naming to Android
-                    nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                    nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                    nameStyle: .snakeCase
-                )
-
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
+            let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing icons...") {
+                    let processor = ImagesProcessor(
+                        platform: .android, // Flutter uses similar naming to Android
+                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                        nameStyle: .snakeCase
+                    )
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
                 }
-                return try result.get()
+            if let iconsWarning {
+                ui.warning(iconsWarning)
             }
 
             // 3. Export icons

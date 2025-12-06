@@ -127,6 +127,10 @@ keyFiles:
   retryPolicy: Sources/FigmaAPI/Client/RetryPolicy.swift
   checkpoint: Sources/ExFig/Cache/CheckpointTracker.swift
   figmaClient: Sources/FigmaAPI/Client/FigmaClient.swift
+  terminalUI: Sources/ExFig/TerminalUI/TerminalUI.swift
+  outputManager: Sources/ExFig/TerminalUI/TerminalOutputManager.swift
+  spinner: Sources/ExFig/TerminalUI/Spinner.swift
+  progressBar: Sources/ExFig/TerminalUI/ProgressBar.swift
 
 faultTolerance:
   defaults:
@@ -139,6 +143,22 @@ faultTolerance:
     exponentialBackoff: 2s -> 4s -> 8s -> 16s with jitter
     rateLimitHandling: respects Retry-After header
     checkpointSystem: saves progress for resumption
+
+terminalUI:
+  classes:
+    TerminalUI: Main facade for terminal operations
+    TerminalOutputManager: Singleton coordinating output between animations and logs
+    Spinner: Animated spinner with DispatchQueue-based 12 FPS rendering
+    ProgressBar: Progress bar with percentage and ETA
+  patterns:
+    withSpinner: Indeterminate tasks
+    withSpinnerProgress: Batch progress with "(current/total)" display
+    withProgress: Counted items with progress bar
+  types:
+    BatchProgressCallback: "@Sendable (Int, Int) -> Void"
+  notes:
+    - Use DispatchQueue (not actors) for smooth UI rendering
+    - Callbacks passed to task groups must be @escaping
 
 templates:
   ios[10]: UIColor+extension, Color+extension, UIFont+extension, Font+extension, UIImage+extension, Image+extension, Label, LabelStyle, LabelStyle+extension, header

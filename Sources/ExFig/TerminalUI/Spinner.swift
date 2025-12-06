@@ -1,43 +1,69 @@
 import Foundation
 import Rainbow
 
-/// Animated spinner for terminal progress indication
-actor Spinner {
+/// Animated spinner for terminal progress indication.
+/// Uses a dedicated high-priority DispatchQueue to ensure smooth animation
+/// regardless of Swift concurrency thread pool load.
+final class Spinner: @unchecked Sendable {
     /// Spinner animation frames (Braille pattern)
     private static let frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
-    /// Animation interval in nanoseconds (80ms)
-    private static let intervalNanoseconds: UInt64 = 80_000_000
+    /// Animation interval (80ms = 12.5 FPS)
+    private static let intervalMs: Int = 80
 
-    private var message: String
-    private var isRunning = false
+    /// Dedicated high-priority queue for spinner rendering
+    private static let renderQueue = DispatchQueue(
+        label: "com.exfig.spinner",
+        qos: .userInteractive
+    )
+
+    private let lock = NSLock()
+    private var _message: String
+    private var _isRunning = false
     private var frameIndex = 0
-    private var task: Task<Void, Never>?
+    private var timer: DispatchSourceTimer?
     private let useColors: Bool
     private let useAnimations: Bool
 
+    private var message: String {
+        get { lock.withLock { _message } }
+        set { lock.withLock { _message = newValue } }
+    }
+
+    private var isRunning: Bool {
+        get { lock.withLock { _isRunning } }
+        set { lock.withLock { _isRunning = newValue } }
+    }
+
     init(message: String, useColors: Bool = true, useAnimations: Bool = true) {
-        self.message = message
+        _message = message
         self.useColors = useColors
         self.useAnimations = useAnimations
     }
 
     /// Start the spinner animation
     func start() {
-        guard !isRunning else { return }
-        isRunning = true
+        Self.renderQueue.async { [self] in
+            guard !isRunning else { return }
+            isRunning = true
+            TerminalOutputManager.shared.hasActiveAnimation = true
 
-        if useAnimations {
-            print(ANSICodes.hideCursor, terminator: "")
-            task = Task { [weak self] in
-                while await self?.isRunning == true {
-                    await self?.render()
-                    try? await Task.sleep(nanoseconds: Self.intervalNanoseconds)
+            if useAnimations {
+                printDirect("\(ANSICodes.hideCursor)")
+
+                let timer = DispatchSource.makeTimerSource(queue: Self.renderQueue)
+                timer.schedule(
+                    deadline: .now(),
+                    repeating: .milliseconds(Self.intervalMs)
+                )
+                timer.setEventHandler { [weak self] in
+                    self?.render()
                 }
+                self.timer = timer
+                timer.resume()
+            } else {
+                printDirect("\(message)\n")
             }
-        } else {
-            // Plain mode: just print the message
-            print(message)
         }
     }
 
@@ -45,7 +71,9 @@ actor Spinner {
     func update(message: String) {
         self.message = message
         if !useAnimations {
-            print(message)
+            Self.renderQueue.async {
+                self.printDirect("\(message)\n")
+            }
         }
     }
 
@@ -61,32 +89,41 @@ actor Spinner {
 
     /// Stop the spinner
     private func stop(success: Bool, message: String?) {
-        isRunning = false
-        task?.cancel()
-        task = nil
+        Self.renderQueue.async { [self] in
+            guard isRunning else { return }
+            isRunning = false
+            TerminalOutputManager.shared.hasActiveAnimation = false
+            timer?.cancel()
+            timer = nil
 
-        let finalMessage = message ?? self.message
-        let icon: String = if useColors {
-            success ? "✓".green : "✗".red
-        } else {
-            success ? "✓" : "✗"
-        }
+            let finalMessage = message ?? self.message
+            let icon: String = if useColors {
+                success ? "✓".green : "✗".red
+            } else {
+                success ? "✓" : "✗"
+            }
 
-        if useAnimations {
-            print("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)")
-            print(ANSICodes.showCursor, terminator: "")
-        } else {
-            print("\(icon) \(finalMessage)")
+            if useAnimations {
+                printDirect("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n")
+                printDirect("\(ANSICodes.showCursor)")
+            } else {
+                printDirect("\(icon) \(finalMessage)\n")
+            }
         }
-        ANSICodes.flushStdout()
     }
 
     /// Render a single frame of the spinner
     private func render() {
+        guard isRunning else { return }
+        let currentMessage = message
         let frame = Self.frames[frameIndex % Self.frames.count]
         let coloredFrame = useColors ? frame.cyan : frame
-        print("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(coloredFrame) \(message)", terminator: "")
-        ANSICodes.flushStdout()
+        printDirect("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(coloredFrame) \(currentMessage)")
         frameIndex += 1
+    }
+
+    /// Direct write to stdout, bypassing Swift's print buffering
+    private func printDirect(_ string: String) {
+        FileHandle.standardOutput.write(Data(string.utf8))
     }
 }

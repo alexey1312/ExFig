@@ -88,8 +88,8 @@ extension ExFigCommand {
             )
 
             // Load images from Figma
-            let imagePacks = try await ui.withSpinner("Fetching images from Figma...") {
-                try await loadImages(using: loader)
+            let imagePacks = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+                try await loadImages(using: loader, onBatchProgress: onProgress)
             }
 
             guard !imagePacks.isEmpty else {
@@ -157,14 +157,18 @@ extension ExFigCommand {
 
         // MARK: - Private Methods
 
-        private func loadImages(using loader: DownloadImageLoader) async throws -> [ImagePack] {
+        private func loadImages(
+            using loader: DownloadImageLoader,
+            onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
+        ) async throws -> [ImagePack] {
             if downloadOptions.isVectorFormat {
                 let params: FormatParams = downloadOptions.format == .svg ? SVGParams() : PDFParams()
                 return try await loader.loadVectorImages(
                     fileId: downloadOptions.fileId,
                     frameName: downloadOptions.frameName,
                     params: params,
-                    filter: downloadOptions.filter
+                    filter: downloadOptions.filter,
+                    onBatchProgress: onBatchProgress
                 )
             } else {
                 return try await loader.loadRasterImages(
@@ -172,7 +176,8 @@ extension ExFigCommand {
                     frameName: downloadOptions.frameName,
                     scale: downloadOptions.effectiveScale,
                     format: downloadOptions.format.rawValue,
-                    filter: downloadOptions.filter
+                    filter: downloadOptions.filter,
+                    onBatchProgress: onBatchProgress
                 )
             }
         }

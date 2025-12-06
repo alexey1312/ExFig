@@ -181,7 +181,9 @@ ExFig/
 │   │   ├── Subcommands/     # CLI commands
 │   │   ├── Loaders/         # Figma API data loaders
 │   │   ├── Input/           # YAML configuration parsing
-│   │   └── Output/          # File writing
+│   │   ├── Output/          # File writing
+│   │   ├── TerminalUI/      # Progress bars, spinners, logging
+│   │   └── Cache/           # Version tracking
 │   ├── ExFigCore/           # Core domain models
 │   │   ├── Models/          # Color, Image, TextStyle, etc.
 │   │   ├── Processor/       # Data transformation
