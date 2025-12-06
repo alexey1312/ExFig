@@ -1,0 +1,2 @@
+{% for image in images %}
+    {% if addObjcPrefix %}@objc {% endif %}static var {{ image.name }}: Image { Image(#function{% if not assetsInMainBundle %}, bundle: BundleProvider.bundle{% endif %}) }{% endfor %}

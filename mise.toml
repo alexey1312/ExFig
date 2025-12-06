@@ -1,0 +1,128 @@
+# =============================================================================
+# mise Configuration for ExFig
+# =============================================================================
+# This file defines project tools, tasks, and environment variables.
+#
+# Bootstrap Binary Version Management:
+# ------------------------------------
+# The mise version for this project is embedded in ./bin/mise bootstrap binary.
+# NO global mise installation required - ./bin/mise is self-contained!
+#
+# To update mise version:
+#   Option 1 (Recommended): bin/mise self-update
+#
+#   Option 2 (Manual regeneration):
+#     1. Install new mise temporarily: curl https://mise.run | sh
+#     2. Regenerate bootstrap: mise generate bootstrap > ./bin/mise
+#     3. Make executable: chmod +x ./bin/mise
+# =============================================================================
+
+[settings]
+lockfile = false
+experimental = true
+legacy_version_file = false
+
+# =============================================================================
+# Tools
+# =============================================================================
+
+[tools]
+python = "3.13"
+pre-commit = "4.5.0"
+swiftformat = "0.58.7"
+swiftlint = "0.62.2"
+xcsift = "1.0.14"
+git-cliff = "2.10.1"
+# Note: mdformat is managed by pre-commit with plugins (mdformat-tables, etc.)
+
+# =============================================================================
+# Tasks
+# =============================================================================
+
+[tasks.build]
+description = "Build the Swift package (debug)"
+run = "swift build 2>&1 | xcsift -w -f toon --toon-key-folding safe"
+
+[tasks."build:release"]
+description = "Build the Swift package (release)"
+run = "swift build --configuration release 2>&1 | xcsift -w -f toon --toon-key-folding safe"
+
+[tasks.test]
+description = "Run all tests"
+run = "swift test 2>&1 | xcsift -w -f toon --toon-key-folding safe"
+
+[tasks."test:filter"]
+description = "Run tests with filter (usage: mise run test:filter ExFigTests)"
+run = "swift test --filter {{arg(name='filter')}} 2>&1 | xcsift -w -f toon --toon-key-folding safe"
+
+[tasks.lint]
+description = "Run SwiftLint"
+run = "swiftlint lint --strict Sources Tests 2>&1 | xcsift -f toon --toon-key-folding safe"
+
+[tasks.format]
+description = "Format code with SwiftFormat"
+run = "swiftformat Sources Tests"
+
+[tasks.format-check]
+description = "Check code formatting (CI)"
+run = "swiftformat Sources Tests --lint"
+
+[tasks.setup]
+description = "Install tools and configure pre-commit hooks"
+run = """
+# Install pre-commit hooks (both pre-commit and commit-msg stages)
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# Pre-install mdformat hook to avoid delay on first commit
+pre-commit install-hooks
+"""
+
+[tasks.pre-commit]
+description = "Run pre-commit on all files"
+run = "pre-commit run --all-files"
+
+[tasks.format-md]
+description = "Format markdown files"
+run = "pre-commit run mdformat --all-files || true"
+
+[tasks.format-md-check]
+description = "Check markdown formatting (CI)"
+run = "pre-commit run mdformat --all-files"
+
+[tasks.changelog]
+description = "Generate CHANGELOG.md from git history"
+run = "git-cliff -o CHANGELOG.md"
+
+[tasks."changelog:unreleased"]
+description = "Preview unreleased changes"
+run = "git-cliff --unreleased"
+
+[tasks.coverage]
+description = "Run tests and show code coverage report"
+run = "./Scripts/coverage.sh --run-tests"
+
+[tasks."coverage:badge"]
+description = "Update coverage badge in README.md"
+run = """
+#!/bin/bash
+set -e
+
+COVERAGE=$(./Scripts/coverage.sh --quiet)
+
+# Determine badge color
+if (( $(echo "$COVERAGE >= 80" | bc -l) )); then
+  COLOR="brightgreen"
+elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then
+  COLOR="green"
+elif (( $(echo "$COVERAGE >= 40" | bc -l) )); then
+  COLOR="yellow"
+else
+  COLOR="red"
+fi
+
+# Update badge in README
+perl -i -pe "s|coverage-[0-9.]+%25-[a-z]+|coverage-${COVERAGE}%25-${COLOR}|g" README.md
+
+echo "Updated coverage badge to ${COVERAGE}% (${COLOR})"
+"""

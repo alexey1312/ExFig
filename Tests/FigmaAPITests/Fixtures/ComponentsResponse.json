@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "components": [
+      {
+        "key": "icon_abc123",
+        "node_id": "10:1",
+        "name": "Icons/24/arrow_right",
+        "description": "Arrow pointing right",
+        "containing_frame": {
+          "node_id": "10:0",
+          "name": "Icons",
+          "page_name": "Components"
+        }
+      },
+      {
+        "key": "icon_def456",
+        "node_id": "10:2",
+        "name": "Icons/24/arrow_left",
+        "description": "",
+        "containing_frame": {
+          "node_id": "10:0",
+          "name": "Icons",
+          "page_name": "Components"
+        }
+      },
+      {
+        "key": "icon_ghi789",
+        "node_id": "10:3",
+        "name": "Icons/16/close",
+        "description": "Close button icon",
+        "containing_frame": {
+          "node_id": "10:0",
+          "name": "Icons",
+          "page_name": "Components"
+        }
+      },
+      {
+        "key": "img_jkl012",
+        "node_id": "20:1",
+        "name": "Images/hero_banner",
+        "description": "Main hero banner image",
+        "containing_frame": {
+          "node_id": "20:0",
+          "name": "Images",
+          "page_name": "Assets"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,487 @@
+# ExFig configuration file
+
+Argument `-i` or `-input` specifies path to configuration file where all the properties stores: figma, ios, android.
+
+If no `-i` option is specified, ExFig looks for config files in this order:
+
+1. `figma-export.yaml` (for compatibility with figma-export users)
+2. `exfig.yaml`
+
+`./exfig colors`
+
+Specification of `exfig.yaml` file with all the available options:
+
+```yaml
+---
+figma:
+  # [required] Identifier of the file containing light color palette, icons and light images. To obtain a file id, open the file in the browser. The file id will be present in the URL after the word file and before the file name.
+  lightFileId: shPilWnVdJfo10YF12345
+  # [optional] Identifier of the file containing dark color palette and dark images.
+  darkFileId: KfF6DnJTWHGZzC912345
+  # [optional] Identifier of the file containing light high contrast color palette.
+  lightHighContrastFileId: KfF6DnJTWHGZzC912345
+  # [optional] Identifier of the file containing dark high contrast color palette.
+  darkHighContrastFileId: KfF6DnJTWHGZzC912345
+  # [optional] Figma API request timeout. The default value of this property is 30 (seconds). If you have a lot of resources to export set this value to 60 or more to give Figma API more time to prepare resources for exporting.
+  # timeout: 30
+
+# [optional] Common export parameters
+common:
+  # [optional] Version tracking cache configuration
+  # When enabled, ExFig checks the Figma file version before exporting.
+  # If the file version hasn't changed since the last export, the export is skipped.
+  # This is useful for CI/CD pipelines to avoid unnecessary exports.
+  cache:
+    # [optional] Enable version tracking. Default: false
+    enabled: true
+    # [optional] Custom path to cache file. Default: .exfig-cache.json
+    path: ".exfig-cache.json"
+
+  # [optional]
+  colors:
+    # [optional] RegExp pattern for color name validation before exporting. If a name contains "/" symbol it will be replaced by "_" before executing the RegExp
+    nameValidateRegexp: '^([a-zA-Z_]+)$' # RegExp pattern for: background, background_primary, widget_primary_background
+    # [optional] RegExp pattern for replacing. Supports only $n
+    nameReplaceRegexp: 'color_$1'
+    # [optional] Extract light and dark mode colors from the lightFileId specified in the figma params. Defaults to false
+    useSingleFile: true
+    # [optional] If useSingleFile is true, customize the suffix to denote a dark mode color. Defaults to '_dark'
+    darkModeSuffix: '_dark'
+    # [optional] If useSingleFile is true, customize the suffix to denote a light high contrast color. Defaults to '_lightHC'
+    lightHCModeSuffix: '_lightHC'
+    # [optional] If useSingleFile is true, customize the suffix to denote a dark high contrast color. Defaults to '_darkHC'
+    darkHCModeSuffix: '_darkHC'
+  # [optional]
+  variablesColors:
+    # [required] Identifier of the file containing variables
+    tokensFileId: shPilWnVdJfo10YF12345
+    # [required] Variables collection name
+    tokensCollectionName: Base collection
+    # [required] Name of the column containing light color variables in the tokens table
+    lightModeName: Light
+    # [optional] Name of the column containing dark color variables in the tokens table
+    darkModeName: Dark
+    # [optional] Name of the column containing light high contrast color variables in the tokens table
+    lightHCModeName: Contast Light
+    # [optional] Name of the column containing dark high contrast color variables in the tokens table
+    darkHCModeName: Contast Dark
+    # [optional] Name of the column containing color variables in the primitive table. If a value is not specified, the default values ​​will be taken
+    primitivesModeName: Collection_1
+    # [optional] RegExp pattern for color name validation before exporting. If a name contains "/" symbol it will be replaced by "_" before executing the RegExp
+    nameValidateRegexp: '^([a-zA-Z_]+)$'
+    # [optional] RegExp pattern for replacing. Supports only $n
+    nameReplaceRegexp: 'color_$1'
+  # [optional]
+  icons:
+    # [optional] Name of the Figma's frame where icons components are located
+    figmaFrameName: Icons
+    # [optional] RegExp pattern for icon name validation before exporting. If a name contains "/" symbol it will be replaced by "_" before executing the RegExp
+    nameValidateRegexp: '^(ic)_(\d\d)_([a-z0-9_]+)$' # RegExp pattern for: ic_24_icon_name, ic_24_icon
+    # [optional] RegExp pattern for replacing. Supports only $n
+    nameReplaceRegexp: 'icon_$2_$1'
+    # [optional] Extract light and dark mode icons from the lightFileId specified in the figma params. Defaults to false
+    useSingleFile: true
+    # [optional] If useSingleFile is true, customize the suffix to denote a dark mode icons. Defaults to '_dark'
+    darkModeSuffix: '_dark'
+  # [optional]
+  images:
+    # [optional]Name of the Figma's frame where image components are located
+    figmaFrameName: Illustrations
+    # [optional] RegExp pattern for image name validation before exporting. If a name contains "/" symbol it will be replaced by "_" before executing the RegExp
+    nameValidateRegexp: '^(img)_([a-z0-9_]+)$' # RegExp pattern for: img_image_name
+    # [optional] RegExp pattern for replacing. Supports only $n
+    nameReplaceRegexp: 'image_$2'
+    # [optional] Extract light and dark mode icons from the lightFileId specified in the figma params. Defaults to false
+    useSingleFile: true
+    # [optional] If useSingleFile is true, customize the suffix to denote a dark mode icons. Defaults to '_dark'
+    darkModeSuffix: '_dark'
+  # [optional]
+  typography:
+    # [optional] RegExp pattern for text style name validation before exporting. If a name contains "/" symbol it will be replaced by "_" before executing the RegExp
+    nameValidateRegexp: '^[a-zA-Z0-9_]+$' # RegExp pattern for: h1_regular, h1_medium
+    # [optional] RegExp pattern for replacing. Supports only $n
+    nameReplaceRegexp: 'font_$1'
+
+# [optional] iOS export parameters
+ios:
+  # Path to xcodeproj
+  xcodeprojPath: "./Example.xcodeproj"
+  # Xcode Target containing resources and corresponding swift code
+  target: "UIComponents"
+  # Absolute or relative path to the Assets.xcassets directory
+  xcassetsPath: "./Resources/Assets.xcassets"
+  # Is Assets.xcassets located in the main bundle?
+  xcassetsInMainBundle: true
+  # [optional] Is Assets.xcassets located in a swift package? Default value is false.
+  xcassetsInSwiftPackage: false
+  # [optional] When `xcassetsInSwiftPackage: true` use this property to specify a resource bundle name for Swift packages containing Assets.xcassets (e.g. ["PackageName_TargetName"]). This is necessary to avoid SwiftUI Preview crashes.
+  resourceBundleNames: []
+  # [optional] Add @objc attribute to generated properties so that they are accessible in Objective-C. Defaults to false
+  addObjcAttribute: false
+  # [optional] Path to the Stencil templates used to generate code
+  templatesPath: "./Resources/Templates"
+  
+  # [optional] Parameters for exporting colors
+  colors:
+    # How to export colors? Use .xcassets and UIColor/Color extension (useColorAssets = true) or UIColor/Color extension only (useColorAssets = false)
+    useColorAssets: true
+    # [required if useColorAssets: True] Name of the folder inside Assets.xcassets where to place colors (.colorset directories)
+    assetsFolder: Colors
+    # Color name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
+    nameStyle: camelCase
+    # [optional] Absolute or relative path to swift file where to export UIKit colors (UIColor) for accessing from the code (e.g. UIColor.backgroundPrimary)
+    colorSwift: "./Sources/UIColor+extension.swift"
+    # [optional] Absolute or relative path to swift file where to export SwiftUI colors (Color) for accessing from the code (e.g. Color.backgroundPrimary)
+    swiftuiColorSwift: "./Source/Color+extension.swift"
+    # [optional] If true and a color style name contains symbol "/" then "/" symbol indicates grouping by folders, and each folder will have the "Provides Namespace" property enabled. Defaults to `false`.
+    groupUsingNamespace: true
+
+  # [optional] Parameters for exporting icons
+  icons:
+    # Image file format: pdf or svg
+    format: pdf
+    # Name of the folder inside Assets.xcassets where to place icons (.imageset directories)
+    assetsFolder: Icons
+    # Icon name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
+    nameStyle: camelCase
+    # [optional] An array of icon names that will supports Preseve Vecotor Data. Use `- "*"` to enable this option for all icons.
+    preservesVectorRepresentation:
+    - ic24TabBarMain
+    - ic24TabBarEvents
+    - ic24TabBarProfile
+    # [optional] Absolute or relative path to swift file where to export icons (SwiftUI’s Image) for accessing from the code (e.g. Image.illZeroNoInternet)
+    swiftUIImageSwift: "./Source/Image+extension_icons.swift"
+    # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing icons from the code (e.g. UIImage.ic24ArrowRight)
+    imageSwift: "./Example/Source/UIImage+extension_icons.swift"
+    # Asset render mode: "template", "original" or "default". Default value is "template".
+    renderMode: default
+    # Configure the suffix for filtering Icons and to denote a asset render mode: "default". 
+    # It will work when renderMode value is "template". Defaults to nil.
+    renderModeDefaultSuffix: '_default'
+    # Configure the suffix for filtering Icons and to denote a asset render mode: "original". 
+    # It will work when renderMode value is "template". Defaults to nil.
+    renderModeOriginalSuffix: '_original'
+    # Configure the suffix for filtering Icons and to denote a asset render mode: "template". 
+    # It will work when renderMode value isn't "template". Defaults to nil.
+    renderModeTemplateSuffix: '_template'
+
+  # [optional] Parameters for exporting images
+  images:
+    # Name of the folder inside Assets.xcassets where to place images (.imageset directories)
+    assetsFolder: Illustrations
+    # Image name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
+    nameStyle: camelCase
+    # [optional] An array of asset scales that should be downloaded. The valid values are 1, 2, 3. The deafault value is [1, 2, 3].
+    scales: [1, 2, 3]
+    # [optional] Absolute or relative path to swift file where to export images (SwiftUI's Image) for accessing from the code (e.g. Image.illZeroNoInternet)
+    swiftUIImageSwift: "./Source/Image+extension_illustrations.swift"
+    # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing illustrations from the code (e.g. UIImage.illZeroNoInternet)
+    imageSwift: "./Example/Source/UIImage+extension_illustrations.swift"
+
+  # [optional] Parameters for exporting typography
+  typography:
+    # [optional] Absolute or relative path to swift file where to export UIKit fonts (UIFont extension).
+    fontSwift: "./Source/UIComponents/UIFont+extension.swift"
+    # [optional] Absolute or relative path to swift file where to generate LabelStyle extensions for each style (LabelStyle extension).
+    labelStyleSwift: "./Source/UIComponents/LabelStyle+extension.swift"
+    # [optional] Absolute or relative path to swift file where to export SwiftUI fonts (Font extension).
+    swiftUIFontSwift: "./Source/View/Common/Font+extension.swift"
+    # Should ExFig generate UILabel for each text style (font)? E.g. HeaderLabel, BodyLabel, CaptionLabel
+    generateLabels: true
+    # Relative or absolute path to directory where to place UILabel for each text style (font) (Requred if generateLabels = true)
+    labelsDirectory: "./Source/UIComponents/"
+    # Typography name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
+    nameStyle: camelCase
+
+# [optional] Android export parameters
+android:
+  # Relative or absolute path to the `main/res` folder including it. The colors/icons/images will be exported to this folder
+  mainRes: "./main/res"
+  # [optional] The package name, where the android resource constant `R` is located. Must be provided to enable code generation for Jetpack Compose
+  resourcePackage: "com.example"
+  # [optional] Relative or absolute path to the code source folder including it. The typography for Jetpack Compose will be exported to this folder
+  mainSrc: "./main/src/java"
+  # [optional] Path to the Stencil templates used to generate code
+  templatesPath: "./Resources/Templates"
+  
+  # Parameters for exporting colors
+  colors:
+    # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
+    composePackageName: "com.example"
+  # Parameters for exporting icons
+  icons:
+    # Where to place icons relative to `mainRes`? ExFig clears this directory every time your execute `exfig icons` command
+    output: "figma-import-icons"
+    # [optional] The package to export the Jetpack Compose icon code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
+    composePackageName: "com.example"
+  # Parameters for exporting images
+  images:
+    # Image file format: svg, png, or webp
+    format: webp
+    # Where to place images relative to `mainRes`? ExFig clears this directory every time your execute `exfig images` command
+    output: "figma-import-images"
+    # Format options for webp format only
+    # [optional] An array of asset scales that should be downloaded. The valid values are 1 (mdpi), 1.5 (hdpi), 2 (xhdpi), 3 (xxhdpi), 4 (xxxhdpi). The deafault value is [1, 1.5, 2, 3, 4].
+    scales: [1, 2, 3]
+    webpOptions:
+      # Encoding type: lossy or lossless
+      encoding: lossy
+      # Encoding quality in percents. Only for lossy encoding.
+      quality: 90
+  # Parameters for exporting typography
+  typography:
+    # Typography name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
+    nameStyle: camelCase
+    # [optional] The package to export the Jetpack Compose typography code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
+    composePackageName: "com.example"
+
+# [optional] Flutter export parameters
+flutter:
+  # Relative or absolute path to the Flutter `lib/generated/` folder for Dart files
+  output: "./lib/generated"
+  # [optional] Path to the Stencil templates used to generate code
+  templatesPath: "./templates"
+
+  # Parameters for exporting colors
+  colors:
+    # [optional] Output file name for colors. Defaults to "colors.dart"
+    output: "app_colors.dart"
+    # [optional] Class name for generated colors. Defaults to "AppColors"
+    className: "AppColors"
+
+  # Parameters for exporting icons
+  icons:
+    # Where to place SVG icon assets (relative path from project root)
+    output: "assets/icons"
+    # [optional] Output file name for icon constants. Defaults to "icons.dart"
+    dartFile: "app_icons.dart"
+    # [optional] Class name for generated icon constants. Defaults to "AppIcons"
+    className: "AppIcons"
+
+  # Parameters for exporting images
+  images:
+    # Where to place image assets (relative path from project root)
+    output: "assets/images"
+    # [optional] Output file name for image constants. Defaults to "images.dart"
+    dartFile: "app_images.dart"
+    # [optional] Class name for generated image constants. Defaults to "AppImages"
+    className: "AppImages"
+    # [optional] Image format: svg, png, or webp. Defaults to "png"
+    format: png
+    # [optional] An array of asset scales that should be downloaded. Defaults to [1, 2, 3]
+    scales: [1, 2, 3]
+    # [optional] Format options for webp format only
+    webpOptions:
+      # Encoding type: lossy or lossless
+      encoding: lossy
+      # Encoding quality in percents. Only for lossy encoding.
+      quality: 90
+```
+
+## CLI Options for Version Tracking
+
+In addition to the YAML configuration, you can control version tracking via CLI flags. Version tracking works for all
+export commands: `colors`, `icons`, `images`, and `typography`.
+
+```bash
+# Enable version tracking (overrides config)
+exfig colors --cache
+exfig icons --cache
+exfig images --cache
+exfig typography --cache
+
+# Disable version tracking (ignore cache, always export)
+exfig icons --no-cache
+
+# Force export and update cache (ignore cached version)
+exfig icons --force
+
+# Use custom cache file path
+exfig icons --cache-path ./custom-cache.json
+```
+
+### Priority Order
+
+1. `--no-cache` flag (highest priority - always disables cache)
+2. `--cache` or `--force` flags (enable cache)
+3. YAML `common.cache.enabled` configuration
+4. Default: disabled
+
+### Cache File Format
+
+The cache file (`.exfig-cache.json`) stores the Figma file versions:
+
+```json
+{
+  "schemaVersion": 1,
+  "files": {
+    "abc123LightFileId": {
+      "version": "1234567890",
+      "lastExport": "2024-01-15T10:30:00Z",
+      "fileName": "Design System"
+    }
+  }
+}
+```
+
+**Note:** The version changes when a Figma library is published, not on every auto-save. This makes it ideal for
+tracking intentional design changes.
+
+## JSON Export (download command)
+
+The `download` command exports Figma data as JSON for use with design token tools, custom pipelines, or debugging.
+
+### Command Structure
+
+```bash
+exfig download <subcommand> [options]
+```
+
+Subcommands:
+
+- `colors` - Export color variables/styles
+- `typography` - Export text styles
+- `icons` - Export icon components with URLs
+- `images` - Export image components with URLs
+- `all` - Export all types to a directory
+
+### Output Format Options
+
+| Option            | Values       | Default | Description                         |
+| ----------------- | ------------ | ------- | ----------------------------------- |
+| `--format` / `-f` | `w3c`, `raw` | `w3c`   | Output format                       |
+| `--output` / `-o` | path         | varies  | Output file path                    |
+| `--compact`       | flag         | false   | Minified JSON output                |
+| `--asset-format`  | see below    | `png`   | Format for icons/images             |
+| `--scale`         | 1-4          | 3       | Scale for raster formats (PNG, JPG) |
+
+Asset formats: `svg`, `png`, `pdf`, `jpg`
+
+### W3C Design Tokens Format
+
+The default `--format w3c` outputs JSON following the
+[W3C Design Tokens](https://design-tokens.github.io/community-group/format/) specification:
+
+```json
+{
+  "Background": {
+    "Primary": {
+      "$type": "color",
+      "$value": {
+        "Light": "#ffffff",
+        "Dark": "#1a1a1a"
+      },
+      "$description": "Primary background color"
+    }
+  }
+}
+```
+
+#### Token Type Mapping
+
+| Data Type  | W3C `$type`  | `$value` Format                              |
+| ---------- | ------------ | -------------------------------------------- |
+| Colors     | `color`      | Mode → hex string (`#RRGGBB` or `#RRGGBBAA`) |
+| Typography | `typography` | Object with fontFamily, fontSize, etc.       |
+| Icons      | `asset`      | Figma export URL string                      |
+| Images     | `asset`      | Figma export URL string                      |
+
+#### Color Token Structure
+
+Colors support multiple modes (Light, Dark, etc.) in the `$value` object:
+
+```json
+{
+  "Statement": {
+    "Background": {
+      "PrimaryPressed": {
+        "$type": "color",
+        "$value": {
+          "Light": "#022c8c",
+          "Dark": "#99bbff",
+          "Contrast Light": "#001c59",
+          "Contrast Dark": "#ccdeff"
+        }
+      }
+    }
+  }
+}
+```
+
+#### Typography Token Structure
+
+```json
+{
+  "Heading": {
+    "H1": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter-Bold",
+        "fontSize": 32,
+        "lineHeight": 40,
+        "letterSpacing": -0.5
+      }
+    }
+  }
+}
+```
+
+#### Asset Token Structure
+
+```json
+{
+  "Icons": {
+    "Navigation": {
+      "ArrowLeft": {
+        "$type": "asset",
+        "$value": "https://figma-alpha-api.s3.us-west-2.amazonaws.com/images/...",
+        "$description": "Left arrow navigation icon"
+      }
+    }
+  }
+}
+```
+
+### Raw Format
+
+The `--format raw` option outputs the Figma API response wrapped with metadata:
+
+```json
+{
+  "source": {
+    "name": "Design System",
+    "fileId": "abc123",
+    "exportedAt": "2024-01-15T10:30:00Z",
+    "exfigVersion": "1.0.0"
+  },
+  "data": {
+    "variableCollections": { ... },
+    "variables": { ... }
+  }
+}
+```
+
+This format is useful for:
+
+- Debugging Figma API responses
+- Building custom processing pipelines
+- Understanding the raw data structure
+
+### Examples
+
+```bash
+# Export colors as W3C tokens (default)
+exfig download colors -o tokens/colors.json
+
+# Export raw Figma API response
+exfig download colors -o debug/colors-raw.json --format raw
+
+# Export icons as SVG with W3C format
+exfig download icons -o tokens/icons.json --asset-format svg
+
+# Export all types to a directory
+exfig download all -o ./tokens/
+
+# Export with compact (minified) output
+exfig download colors -o tokens.json --compact
+```
