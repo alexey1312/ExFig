@@ -45,7 +45,7 @@ run = "swift build 2>&1 | xcsift -w -f toon --toon-key-folding safe"
 
 [tasks."build:release"]
 description = "Build the Swift package (release)"
-run = "swift build -c release 2>&1 | xcsift -w -f toon --toon-key-folding safe"
+run = "swift build --configuration release 2>&1 | xcsift -w -f toon --toon-key-folding safe"
 
 [tasks.test]
 description = "Run all tests"
