@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 - **cli**: Improve help text and add version to main command by @alexey1312
 
 
+### Miscellaneous Tasks
+
+- **release**: Use v-prefixed tags for mise/ubi compatibility by @alexey1312
+
+
 ## [1.0.1] - 2025-12-06
 
 ### Miscellaneous Tasks
