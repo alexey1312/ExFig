@@ -62,8 +62,8 @@ and Flutter.
 
 > **Note:** Exporting icons and images requires a Figma Professional/Organization plan (uses Shareable Team Libraries).
 
-> **Tip:** For optimal file sizes, use [image_optim](https://github.com/toy/image_optim) to compress exported
-> PNG/JPEG/GIF/SVG files after export.
+> **Tip:** For optimal PNG sizes, use oxipng (`ubi:shssoichiro/oxipng@9.1.5` via `mise use -g`) to compress exported PNG
+> files after export.
 
 ## Quick Start
 
