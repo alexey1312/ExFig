@@ -10,13 +10,13 @@ import Foundation
 struct FaultToleranceOptions: ParsableArguments {
     @Option(
         name: .long,
-        help: "Maximum number of retry attempts for failed API requests (default: 4)"
+        help: "Maximum retry attempts for failed API requests"
     )
     var maxRetries: Int = 4
 
     @Option(
         name: .long,
-        help: "Maximum API requests per minute (default: 10)"
+        help: "Maximum API requests per minute"
     )
     var rateLimit: Int = 10
 
@@ -65,13 +65,13 @@ struct FaultToleranceOptions: ParsableArguments {
 struct HeavyFaultToleranceOptions: ParsableArguments {
     @Option(
         name: .long,
-        help: "Maximum number of retry attempts for failed API requests (default: 4)"
+        help: "Maximum retry attempts for failed API requests"
     )
     var maxRetries: Int = 4
 
     @Option(
         name: .long,
-        help: "Maximum API requests per minute (default: 10)"
+        help: "Maximum API requests per minute"
     )
     var rateLimit: Int = 10
 
@@ -89,7 +89,7 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
 
     @Option(
         name: .long,
-        help: "Maximum concurrent CDN downloads (default: 20)"
+        help: "Maximum concurrent CDN downloads"
     )
     var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
 

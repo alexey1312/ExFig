@@ -17,7 +17,10 @@ struct ExFigOptions: ParsableArguments {
     /// exfig.yaml is preferred; figma-export.yaml is fallback for users migrating from figma-export.
     static let defaultConfigFiles = [defaultConfigFilename, "figma-export.yaml"]
 
-    @Option(name: .shortAndLong, help: "An input YAML file with figma and platform properties.")
+    @Option(
+        name: .shortAndLong,
+        help: "Path to YAML config file. Auto-detects exfig.yaml or figma-export.yaml if not specified."
+    )
     var input: String?
 
     // MARK: - Validated Properties
