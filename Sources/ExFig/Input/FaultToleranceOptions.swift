@@ -16,9 +16,9 @@ struct FaultToleranceOptions: ParsableArguments {
 
     @Option(
         name: .long,
-        help: "Maximum API requests per minute (default: 10)"
+        help: "Maximum API requests per minute (default: 18)"
     )
-    var rateLimit: Int = 10
+    var rateLimit: Int = 18
 
     /// Create a retry policy from the options.
     /// - Returns: A configured `RetryPolicy`.
@@ -71,9 +71,9 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
 
     @Option(
         name: .long,
-        help: "Maximum API requests per minute (default: 10)"
+        help: "Maximum API requests per minute (default: 18)"
     )
-    var rateLimit: Int = 10
+    var rateLimit: Int = 18
 
     @Flag(
         name: .long,
