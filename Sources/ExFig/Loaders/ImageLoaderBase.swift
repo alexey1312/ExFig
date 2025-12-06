@@ -405,13 +405,13 @@ public extension Component {
 /// Thread-safe counter for tracking completed batches across concurrent tasks.
 final class CompletedBatchCounter: @unchecked Sendable {
     private let lock = NSLock()
-    private var _count = 0
+    private var count = 0
 
     /// Increments the counter and returns the new value.
     func increment() -> Int {
-        lock.withLock {
-            _count += 1
-            return _count
-        }
+        lock.lock()
+        defer { lock.unlock() }
+        count += 1
+        return count
     }
 }

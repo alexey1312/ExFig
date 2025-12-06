@@ -14,36 +14,40 @@ final class ProgressBar: @unchecked Sendable {
         qos: .userInteractive
     )
 
-    private let lock = NSLock()
+    private struct State {
+        var current: Int = 0
+        var message: String
+        var isRunning = false
+        var needsRender = false
+    }
+
+    private let state: Lock<State>
     private let total: Int
-    private var _current: Int = 0
-    private var _message: String
     private let startTime: Date
     private let width: Int
     private let useColors: Bool
     private let useAnimations: Bool
-    private var _isRunning = false
+    // Timer is not Sendable, so we keep it separate and only access from renderQueue
     private var timer: DispatchSourceTimer?
-    private var _needsRender = false
 
     private var current: Int {
-        get { lock.withLock { _current } }
-        set { lock.withLock { _current = min(newValue, total) } }
+        get { state.withLock { $0.current } }
+        set { state.withLock { $0.current = min(newValue, total) } }
     }
 
     private var message: String {
-        get { lock.withLock { _message } }
-        set { lock.withLock { _message = newValue } }
+        get { state.withLock { $0.message } }
+        set { state.withLock { $0.message = newValue } }
     }
 
     private var isRunning: Bool {
-        get { lock.withLock { _isRunning } }
-        set { lock.withLock { _isRunning = newValue } }
+        get { state.withLock { $0.isRunning } }
+        set { state.withLock { $0.isRunning = newValue } }
     }
 
     private var needsRender: Bool {
-        get { lock.withLock { _needsRender } }
-        set { lock.withLock { _needsRender = newValue } }
+        get { state.withLock { $0.needsRender } }
+        set { state.withLock { $0.needsRender = newValue } }
     }
 
     init(
@@ -53,7 +57,7 @@ final class ProgressBar: @unchecked Sendable {
         useColors: Bool = true,
         useAnimations: Bool = true
     ) {
-        _message = message
+        state = Lock(State(message: message))
         self.total = max(total, 1) // Prevent division by zero
         self.width = width
         startTime = Date()
@@ -160,8 +164,12 @@ final class ProgressBar: @unchecked Sendable {
 
     /// Render if there are pending changes (called by timer)
     private func renderIfNeeded() {
-        guard isRunning, needsRender else { return }
-        needsRender = false
+        let shouldRender = state.withLock { state -> Bool in
+            guard state.isRunning, state.needsRender else { return false }
+            state.needsRender = false
+            return true
+        }
+        guard shouldRender else { return }
         render()
     }
 

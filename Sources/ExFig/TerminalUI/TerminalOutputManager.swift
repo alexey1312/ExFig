@@ -6,23 +6,26 @@ import Foundation
 final class TerminalOutputManager: @unchecked Sendable {
     static let shared = TerminalOutputManager()
 
-    private let lock = NSLock()
-    private var _hasActiveAnimation = false
-    private var _lastAnimationLine: String = ""
+    private struct State {
+        var hasActiveAnimation = false
+        var lastAnimationLine: String = ""
+    }
+
+    private let state = Lock(State())
 
     private init() {}
 
     var hasActiveAnimation: Bool {
-        get { lock.withLock { _hasActiveAnimation } }
-        set { lock.withLock { _hasActiveAnimation = newValue } }
+        get { state.withLock { $0.hasActiveAnimation } }
+        set { state.withLock { $0.hasActiveAnimation = newValue } }
     }
 
     /// Start an animation with initial frame. Sets flag, stores frame, and renders it atomically.
     /// Call this synchronously when starting spinner/progress to ensure immediate coordination.
     func startAnimation(initialFrame: String) {
-        lock.withLock {
-            _hasActiveAnimation = true
-            _lastAnimationLine = initialFrame
+        state.withLock { state in
+            state.hasActiveAnimation = true
+            state.lastAnimationLine = initialFrame
             // Render initial frame immediately so it's visible before any logs arrive
             printDirectUnsafe(initialFrame)
         }
@@ -31,15 +34,15 @@ final class TerminalOutputManager: @unchecked Sendable {
     /// Print message, coordinating with active animations.
     /// If an animation is active, clears the current line first, then redraws animation.
     func print(_ message: String) {
-        lock.withLock {
-            if _hasActiveAnimation {
+        state.withLock { state in
+            if state.hasActiveAnimation {
                 // Clear current line before printing
                 printDirectUnsafe("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)")
                 // Print message on new line
                 printDirectUnsafe("\(message)\n")
                 // Redraw the animation line immediately to prevent flicker
-                if !_lastAnimationLine.isEmpty {
-                    printDirectUnsafe(_lastAnimationLine)
+                if !state.lastAnimationLine.isEmpty {
+                    printDirectUnsafe(state.lastAnimationLine)
                 }
             } else {
                 printDirectUnsafe("\(message)\n")
@@ -50,23 +53,23 @@ final class TerminalOutputManager: @unchecked Sendable {
     /// Write animation frame. Called by Spinner/ProgressBar.
     /// This tracks the current animation line for redrawing after log messages.
     func writeAnimationFrame(_ frame: String) {
-        lock.withLock {
-            _lastAnimationLine = frame
+        state.withLock { state in
+            state.lastAnimationLine = frame
             printDirectUnsafe("\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(frame)")
         }
     }
 
     /// Write raw output without coordination (for cursor show/hide, final messages).
     func writeDirect(_ string: String) {
-        lock.withLock {
+        state.withLock { _ in
             printDirectUnsafe(string)
         }
     }
 
     /// Clear animation state when animation stops.
     func clearAnimationState() {
-        lock.withLock {
-            _lastAnimationLine = ""
+        state.withLock { state in
+            state.lastAnimationLine = ""
         }
     }
 

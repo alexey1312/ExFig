@@ -12,8 +12,17 @@ final class FileDownloader: Sendable {
     private let logger = Logger(label: "com.alexey1312.exfig.file-downloader")
     private let session: URLSession
 
-    init(session: URLSession = URLSession(configuration: .ephemeral)) {
+    /// Default concurrent downloads for CDN (S3/Cloudflare can handle high concurrency)
+    static let defaultMaxConcurrentDownloads = 20
+
+    init(session: URLSession = FileDownloader.createDefaultSession()) {
         self.session = session
+    }
+
+    private static func createDefaultSession() -> URLSession {
+        let config = URLSessionConfiguration.ephemeral
+        config.httpMaximumConnectionsPerHost = defaultMaxConcurrentDownloads
+        return URLSession(configuration: config)
     }
 
     /// Fetch files with optional progress callback

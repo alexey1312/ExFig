@@ -17,26 +17,30 @@ final class Spinner: @unchecked Sendable {
         qos: .userInteractive
     )
 
-    private let lock = NSLock()
-    private var _message: String
-    private var _isRunning = false
-    private var frameIndex = 0
+    private struct State {
+        var message: String
+        var isRunning = false
+        var frameIndex = 0
+    }
+
+    private let state: Lock<State>
+    // Timer is not Sendable, so we keep it separate and only access from renderQueue
     private var timer: DispatchSourceTimer?
     private let useColors: Bool
     private let useAnimations: Bool
 
     private var message: String {
-        get { lock.withLock { _message } }
-        set { lock.withLock { _message = newValue } }
+        get { state.withLock { $0.message } }
+        set { state.withLock { $0.message = newValue } }
     }
 
     private var isRunning: Bool {
-        get { lock.withLock { _isRunning } }
-        set { lock.withLock { _isRunning = newValue } }
+        get { state.withLock { $0.isRunning } }
+        set { state.withLock { $0.isRunning = newValue } }
     }
 
     init(message: String, useColors: Bool = true, useAnimations: Bool = true) {
-        _message = message
+        state = Lock(State(message: message))
         self.useColors = useColors
         self.useAnimations = useAnimations
     }
@@ -129,11 +133,17 @@ final class Spinner: @unchecked Sendable {
 
     /// Render a single frame of the spinner
     private func render() {
-        guard isRunning else { return }
-        let currentMessage = message
-        let frame = Self.frames[frameIndex % Self.frames.count]
+        let (currentMessage, currentFrameIndex) = state.withLock { state -> (String, Int) in
+            guard state.isRunning else { return ("", 0) }
+            let msg = state.message
+            let idx = state.frameIndex
+            state.frameIndex += 1
+            return (msg, idx)
+        }
+        guard !currentMessage.isEmpty else { return }
+
+        let frame = Self.frames[currentFrameIndex % Self.frames.count]
         let coloredFrame = useColors ? frame.cyan : frame
         TerminalOutputManager.shared.writeAnimationFrame("\(coloredFrame) \(currentMessage)")
-        frameIndex += 1
     }
 }

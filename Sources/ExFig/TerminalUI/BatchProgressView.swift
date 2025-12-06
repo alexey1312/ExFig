@@ -147,21 +147,24 @@ actor BatchProgressView {
         guard useAnimations, lineCount > 0 else { return }
 
         // Move up and clear all lines
+        var output = ""
         for _ in 0 ..< lineCount {
-            print(ANSICodes.cursorUp(1), terminator: "")
-            print(ANSICodes.clearLine, terminator: "")
+            output += ANSICodes.cursorUp(1)
+            output += ANSICodes.clearLine
         }
         lineCount = 0
-        ANSICodes.flushStdout()
+        TerminalOutputManager.shared.writeDirect(output)
     }
 
     /// Render the batch progress view.
     private func render() {
         guard useAnimations else { return }
 
+        var output = ""
+
         // Clear previous render
         if lineCount > 0 {
-            print(ANSICodes.cursorUp(lineCount), terminator: "")
+            output += ANSICodes.cursorUp(lineCount)
         }
 
         var lines: [String] = []
@@ -187,14 +190,14 @@ actor BatchProgressView {
             lines.append(line)
         }
 
-        // Print all lines
+        // Build output
         for line in lines {
-            print(ANSICodes.clearLine, terminator: "")
-            print(line)
+            output += ANSICodes.clearLine
+            output += line + "\n"
         }
 
         lineCount = lines.count
-        ANSICodes.flushStdout()
+        TerminalOutputManager.shared.writeDirect(output)
     }
 
     // MARK: - Formatting Helpers

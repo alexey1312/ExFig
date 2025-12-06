@@ -76,14 +76,15 @@ actor MultiProgressManager {
     func clear() {
         if useAnimations, lineCount > 0 {
             // Move up and clear all lines
+            var output = ""
             for _ in 0 ..< lineCount {
-                print(ANSICodes.cursorUp(1), terminator: "")
-                print(ANSICodes.clearLine, terminator: "")
+                output += ANSICodes.cursorUp(1)
+                output += ANSICodes.clearLine
             }
+            TerminalOutputManager.shared.writeDirect(output)
         }
         progressItems.removeAll()
         lineCount = 0
-        ANSICodes.flushStdout()
     }
 
     /// Render all progress items
@@ -93,15 +94,17 @@ actor MultiProgressManager {
             return
         }
 
+        var output = ""
+
         // Move cursor up to clear previous render
         if lineCount > 0 {
-            print(ANSICodes.cursorUp(lineCount), terminator: "")
+            output += ANSICodes.cursorUp(lineCount)
         }
 
         let sortedItems = progressItems.values.sorted { $0.id.uuidString < $1.id.uuidString }
 
         for item in sortedItems {
-            print(ANSICodes.clearLine, terminator: "")
+            output += ANSICodes.clearLine
 
             let icon: String = switch item.status {
             case .running:
@@ -114,13 +117,13 @@ actor MultiProgressManager {
 
             if let total = item.total, total > 0 {
                 let percentage = Double(item.current) / Double(total) * 100
-                print("\(icon) \(item.label) [\(item.current)/\(total)] \(String(format: "%.0f%%", percentage))")
+                output += "\(icon) \(item.label) [\(item.current)/\(total)] \(String(format: "%.0f%%", percentage))\n"
             } else {
-                print("\(icon) \(item.label)")
+                output += "\(icon) \(item.label)\n"
             }
         }
 
         lineCount = sortedItems.count
-        ANSICodes.flushStdout()
+        TerminalOutputManager.shared.writeDirect(output)
     }
 }

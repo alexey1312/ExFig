@@ -15,7 +15,7 @@ final class FaultToleranceOptionsTests: XCTestCase {
     func testDefaultRateLimit() throws {
         let options = try FaultToleranceOptions.parse([])
 
-        XCTAssertEqual(options.rateLimit, 10)
+        XCTAssertEqual(options.rateLimit, 18)
     }
 
     // MARK: - Max Retries Flag
@@ -81,7 +81,7 @@ final class FaultToleranceOptionsTests: XCTestCase {
         let limiter = options.createRateLimiter()
 
         let status = await limiter.status()
-        XCTAssertEqual(status.requestsPerMinute, 10.0)
+        XCTAssertEqual(status.requestsPerMinute, 18.0)
     }
 
     func testCreateRateLimiterWithCustomRate() async throws {
@@ -119,7 +119,7 @@ final class HeavyFaultToleranceOptionsTests: XCTestCase {
         let options = try HeavyFaultToleranceOptions.parse([])
 
         XCTAssertEqual(options.maxRetries, 4)
-        XCTAssertEqual(options.rateLimit, 10)
+        XCTAssertEqual(options.rateLimit, 18)
         XCTAssertFalse(options.failFast)
         XCTAssertFalse(options.resume)
     }

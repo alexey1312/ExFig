@@ -136,7 +136,7 @@ extension ExFigCommand {
             ui.info("Downloading \(filesToDownload.count) files...")
             let downloadedFiles = try await ui.withProgress("Downloading", total: filesToDownload.count) { progress in
                 try await ExFigCommand.fileDownloader.fetch(files: filesToDownload) { current, _ in
-                    await progress.update(current: current)
+                    progress.update(current: current)
                 }
             }
 

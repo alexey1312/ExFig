@@ -139,9 +139,23 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 | `Spinner`               | Animated spinner with message updates                 |
 | `ProgressBar`           | Progress bar with percentage and ETA                  |
 | `BatchProgressCallback` | `@Sendable (Int, Int) -> Void` for batch progress     |
+| `Lock<T>`               | Thread-safe state wrapper (NSLock-based, Sendable)    |
 
-**Important:** `Spinner` and `ProgressBar` use `DispatchQueue` (not Swift actors) for smooth 12 FPS rendering without
-blocking.
+**TerminalOutputManager API:**
+
+| Method                          | Purpose                                       |
+| ------------------------------- | --------------------------------------------- |
+| `startAnimation(initialFrame:)` | Atomic animation start with first frame       |
+| `writeAnimationFrame(_:)`       | Update animation line (stores for redraw)     |
+| `writeDirect(_:)`               | Raw output (cursor show/hide, final messages) |
+| `clearAnimationState()`         | Reset stored frame on animation stop          |
+| `print(_:)`                     | Log message with animation coordination       |
+
+**Concurrency patterns:**
+
+- `Spinner` and `ProgressBar` use `DispatchQueue` (not Swift actors) for smooth 12 FPS rendering
+- All terminal output routes through `TerminalOutputManager` to prevent race conditions
+- `Lock<T>` wrapper provides thread-safe state with NSLock (compatible with macOS 12.0+)
 
 ### Fault Tolerance for API Commands
 
@@ -152,7 +166,7 @@ All commands support configurable retry and rate limiting via CLI flags:
 exfig colors --max-retries 6 --rate-limit 15
 
 # Heavy commands (icons, images, fetch) also support fail-fast
-exfig icons --max-retries 4 --rate-limit 10 --fail-fast
+exfig icons --max-retries 4 --rate-limit 18 --fail-fast
 exfig fetch -f FILE_ID -r "Frame" -o ./out --fail-fast
 ```
 

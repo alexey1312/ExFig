@@ -140,7 +140,7 @@ extension ExFigCommand {
             let localFiles: [FileContents] = if remoteFilesCount > 0 {
                 try await ui.withProgress("Downloading images", total: remoteFilesCount) { progress in
                     try await fileDownloader.fetch(files: localAndRemoteFiles) { current, _ in
-                        await progress.update(current: current)
+                        progress.update(current: current)
                     }
                 }
             } else {
@@ -246,7 +246,7 @@ extension ExFigCommand {
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading SVG files", total: remoteFiles.count) { progress in
                     try await fileDownloader.fetch(files: remoteFiles) { current, _ in
-                        await progress.update(current: current)
+                        progress.update(current: current)
                     }
                 }
             } else {
@@ -336,7 +336,7 @@ extension ExFigCommand {
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading images", total: remoteFiles.count) { progress in
                     try await fileDownloader.fetch(files: remoteFiles) { current, _ in
-                        await progress.update(current: current)
+                        progress.update(current: current)
                     }
                 }
             } else {
@@ -362,7 +362,7 @@ extension ExFigCommand {
                 let filesToConvert = localFiles.map(\.destination.url)
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
                     try await converter.convertBatch(files: filesToConvert) { current, _ in
-                        await progress.update(current: current)
+                        progress.update(current: current)
                     }
                 }
                 localFiles = localFiles.map { $0.changingExtension(newExtension: "webp") }
@@ -484,7 +484,7 @@ extension ExFigCommand {
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading images", total: remoteFiles.count) { progress in
                     try await fileDownloader.fetch(files: remoteFiles) { current, _ in
-                        await progress.update(current: current)
+                        progress.update(current: current)
                     }
                 }
             } else {
@@ -507,7 +507,7 @@ extension ExFigCommand {
                 let filesToConvert = localFiles.map(\.destination.url)
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
                     try await converter.convertBatch(files: filesToConvert) { current, _ in
-                        await progress.update(current: current)
+                        progress.update(current: current)
                     }
                 }
                 localFiles = localFiles.map { $0.changingExtension(newExtension: "webp") }
