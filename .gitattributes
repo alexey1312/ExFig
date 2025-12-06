@@ -1,0 +1,2 @@
+Libraries/**/*.dylib filter=lfs diff=lfs merge=lfs -text
+Libraries/**/*.a filter=lfs diff=lfs merge=lfs -text

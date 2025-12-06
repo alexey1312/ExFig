@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ExFig}",
+            "name": "Debug exfig",
+            "program": "${workspaceFolder:ExFig}/.build/debug/exfig",
+            "preLaunchTask": "swift: Build Debug exfig"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ExFig}",
+            "name": "Release exfig",
+            "program": "${workspaceFolder:ExFig}/.build/release/exfig",
+            "preLaunchTask": "swift: Build Release exfig"
+        }
+    ]
+}

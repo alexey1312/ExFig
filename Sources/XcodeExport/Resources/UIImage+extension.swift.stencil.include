@@ -1,0 +1,2 @@
+{% for image in images %}
+    {% if addObjcPrefix %}@objc {% endif %}static var {{ image.name }}: UIImage { UIImage(named: #function{% if not assetsInMainBundle %}, in: BundleProvider.bundle, compatibleWith: nil{% endif %})! }{% endfor %}

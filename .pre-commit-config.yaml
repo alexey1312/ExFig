@@ -1,0 +1,35 @@
+repos:
+  - repo: local
+    hooks:
+      - id: swiftformat
+        name: SwiftFormat
+        entry: bin/mise exec -- swiftformat
+        language: system
+        types: [swift]
+        args: []
+
+      - id: swiftlint
+        name: SwiftLint
+        entry: bin/mise exec -- swiftlint lint --strict
+        language: system
+        types: [swift]
+
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        name: Markdown Format
+        types: [markdown]
+        exclude: ^\.github/ISSUE_TEMPLATE/
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-tables
+          - mdformat-frontmatter
+          - mdformat-footnote
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, docs, style, refactor, perf, test, chore, ci, revert]
