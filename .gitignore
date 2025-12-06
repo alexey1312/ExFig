@@ -90,3 +90,7 @@ iOSInjectionProject/
 
 # Dart/Flutter
 .dart_tool/
+
+# LLVM profiling
+*.profraw
+*.profdata

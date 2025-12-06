@@ -48,7 +48,9 @@ struct ExFigCommand: AsyncParsableCommand {
         commandName: "exfig",
         abstract: "Exports resources from Figma",
         discussion: """
-        Exports resources (colors, icons, images) from Figma to Xcode / Android Studio project.
+        Version: \(version)
+
+        Exports resources (colors, icons, images) from Figma to Xcode / Android Studio / Flutter project.
 
         Requires FIGMA_PERSONAL_TOKEN environment variable to be set.
         """,

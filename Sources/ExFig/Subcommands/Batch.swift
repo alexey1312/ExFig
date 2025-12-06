@@ -21,16 +21,16 @@ extension ExFigCommand {
         @OptionGroup
         var globalOptions: GlobalOptions
 
-        @Option(name: .long, help: "Maximum number of configs to process in parallel (default: 3)")
+        @Option(name: .long, help: "Maximum configs to process in parallel")
         var parallel: Int = 3
 
         @Flag(name: .long, help: "Stop processing on first error")
         var failFast: Bool = false
 
-        @Option(name: .long, help: "Figma API requests per minute (default: 10)")
+        @Option(name: .long, help: "Figma API requests per minute")
         var rateLimit: Int = 10
 
-        @Option(name: .long, help: "Maximum retry attempts for failed requests (default: 4)")
+        @Option(name: .long, help: "Maximum retry attempts for failed requests")
         var maxRetries: Int = 4
 
         @Flag(name: .long, help: "Resume from previous checkpoint if available")
