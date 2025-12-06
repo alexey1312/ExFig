@@ -1,6 +1,9 @@
 // swiftlint:disable file_length
 @testable import FigmaAPI
 import Foundation
+#if canImport(FoundationNetworking)
+    import FoundationNetworking
+#endif
 import Testing
 
 @Suite("RateLimitedClient")
