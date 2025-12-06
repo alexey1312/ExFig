@@ -73,7 +73,13 @@ struct ExFigCommand: AsyncParsableCommand {
 extension ExFigCommand {
     /// Initialize TerminalUI with global options
     static func initializeTerminalUI(verbose: Bool, quiet: Bool) {
-        terminalUI = TerminalUI.create(verbose: verbose, quiet: quiet)
+        let outputMode = TTYDetector.effectiveMode(verbose: verbose, quiet: quiet)
+
+        // Bootstrap logging system to use our custom handler
+        // This ensures all Logger output goes through TerminalOutputManager
+        ExFigLogging.bootstrap(outputMode: outputMode)
+
+        terminalUI = TerminalUI(outputMode: outputMode)
         terminalUI.installSignalHandlers()
     }
 }

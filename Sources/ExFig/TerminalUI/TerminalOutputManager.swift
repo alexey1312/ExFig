@@ -17,6 +17,17 @@ final class TerminalOutputManager: @unchecked Sendable {
         set { lock.withLock { _hasActiveAnimation = newValue } }
     }
 
+    /// Start an animation with initial frame. Sets flag, stores frame, and renders it atomically.
+    /// Call this synchronously when starting spinner/progress to ensure immediate coordination.
+    func startAnimation(initialFrame: String) {
+        lock.withLock {
+            _hasActiveAnimation = true
+            _lastAnimationLine = initialFrame
+            // Render initial frame immediately so it's visible before any logs arrive
+            printDirectUnsafe(initialFrame)
+        }
+    }
+
     /// Print message, coordinating with active animations.
     /// If an animation is active, clears the current line first, then redraws animation.
     func print(_ message: String) {

@@ -63,18 +63,26 @@ final class ProgressBar: @unchecked Sendable {
 
     /// Start the progress bar rendering loop
     func start() {
-        Self.renderQueue.async { [self] in
-            guard !isRunning else { return }
-            isRunning = true
-            TerminalOutputManager.shared.hasActiveAnimation = true
+        guard !isRunning else { return }
+        isRunning = true
+        needsRender = true
 
+        // Build initial frame synchronously
+        let initialFrame = buildFrame(currentValue: 0)
+
+        // Set animation flag and initial frame synchronously BEFORE dispatching
+        // This ensures log messages see the animation state immediately
+        TerminalOutputManager.shared.startAnimation(initialFrame: initialFrame)
+
+        Self.renderQueue.async { [self] in
             if useAnimations {
                 TerminalOutputManager.shared.writeDirect(ANSICodes.hideCursor)
+                // First frame already rendered by startAnimation(), start timer for next frames
 
                 // Use timer-based rendering like Spinner for consistent frame rate
                 let timer = DispatchSource.makeTimerSource(queue: Self.renderQueue)
                 timer.schedule(
-                    deadline: .now(),
+                    deadline: .now() + .milliseconds(Self.intervalMs),
                     repeating: .milliseconds(Self.intervalMs)
                 )
                 timer.setEventHandler { [weak self] in
@@ -83,9 +91,6 @@ final class ProgressBar: @unchecked Sendable {
                 self.timer = timer
                 timer.resume()
             }
-
-            // Initial render
-            needsRender = true
         }
     }
 
@@ -123,29 +128,33 @@ final class ProgressBar: @unchecked Sendable {
 
     /// Finish and clear the progress bar
     private func finish(success: Bool, message: String?) {
-        Self.renderQueue.async { [self] in
-            guard isRunning else { return }
-            isRunning = false
-            TerminalOutputManager.shared.hasActiveAnimation = false
-            TerminalOutputManager.shared.clearAnimationState()
+        guard isRunning else { return }
+        isRunning = false
+
+        // Stop animation state synchronously so subsequent print() calls don't coordinate
+        TerminalOutputManager.shared.hasActiveAnimation = false
+        TerminalOutputManager.shared.clearAnimationState()
+
+        // Cancel timer synchronously on render queue
+        Self.renderQueue.sync {
             timer?.cancel()
             timer = nil
+        }
 
-            let finalMessage = message ?? self.message
-            let icon: String = if useColors {
-                success ? "✓".green : "✗".red
-            } else {
-                success ? "✓" : "✗"
-            }
+        let finalMessage = message ?? self.message
+        let icon: String = if useColors {
+            success ? "✓".green : "✗".red
+        } else {
+            success ? "✓" : "✗"
+        }
 
-            if useAnimations {
-                TerminalOutputManager.shared.writeDirect(
-                    "\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n"
-                )
-                TerminalOutputManager.shared.writeDirect(ANSICodes.showCursor)
-            } else {
-                TerminalOutputManager.shared.writeDirect("\(icon) \(finalMessage)\n")
-            }
+        if useAnimations {
+            TerminalOutputManager.shared.writeDirect(
+                "\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n"
+            )
+            TerminalOutputManager.shared.writeDirect(ANSICodes.showCursor)
+        } else {
+            TerminalOutputManager.shared.writeDirect("\(icon) \(finalMessage)\n")
         }
     }
 
@@ -158,7 +167,12 @@ final class ProgressBar: @unchecked Sendable {
 
     /// Render the progress bar
     private func render() {
-        let currentValue = current
+        let line = buildFrame(currentValue: current)
+        TerminalOutputManager.shared.writeAnimationFrame(line)
+    }
+
+    /// Build the progress bar frame string
+    private func buildFrame(currentValue: Int) -> String {
         let percentage = Double(currentValue) / Double(total)
         let filled = Int(percentage * Double(width))
         let empty = width - filled
@@ -176,9 +190,7 @@ final class ProgressBar: @unchecked Sendable {
         let countStr = "\(currentValue)/\(total)"
         let eta = calculateETA(currentValue: currentValue)
 
-        let line = "\(bar) \(percentStr) \(countStr) \(eta) \(message)"
-
-        TerminalOutputManager.shared.writeAnimationFrame(line)
+        return "\(bar) \(percentStr) \(countStr) \(eta) \(message)"
     }
 
     /// Render in plain mode (no animations)

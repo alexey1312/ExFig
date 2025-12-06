@@ -43,17 +43,25 @@ final class Spinner: @unchecked Sendable {
 
     /// Start the spinner animation
     func start() {
-        Self.renderQueue.async { [self] in
-            guard !isRunning else { return }
-            isRunning = true
-            TerminalOutputManager.shared.hasActiveAnimation = true
+        guard !isRunning else { return }
+        isRunning = true
 
+        let initialMessage = message
+        let initialFrame = Self.frames[0]
+        let coloredFrame = useColors ? initialFrame.cyan : initialFrame
+
+        // Set animation flag and initial frame synchronously BEFORE dispatching
+        // This ensures log messages see the animation state immediately
+        TerminalOutputManager.shared.startAnimation(initialFrame: "\(coloredFrame) \(initialMessage)")
+
+        Self.renderQueue.async { [self] in
             if useAnimations {
                 TerminalOutputManager.shared.writeDirect(ANSICodes.hideCursor)
+                // First frame already rendered by startAnimation(), start timer for next frames
 
                 let timer = DispatchSource.makeTimerSource(queue: Self.renderQueue)
                 timer.schedule(
-                    deadline: .now(),
+                    deadline: .now() + .milliseconds(Self.intervalMs),
                     repeating: .milliseconds(Self.intervalMs)
                 )
                 timer.setEventHandler { [weak self] in
@@ -62,7 +70,7 @@ final class Spinner: @unchecked Sendable {
                 self.timer = timer
                 timer.resume()
             } else {
-                TerminalOutputManager.shared.writeDirect("\(message)\n")
+                TerminalOutputManager.shared.writeDirect("\(initialMessage)\n")
             }
         }
     }
@@ -89,29 +97,33 @@ final class Spinner: @unchecked Sendable {
 
     /// Stop the spinner
     private func stop(success: Bool, message: String?) {
-        Self.renderQueue.async { [self] in
-            guard isRunning else { return }
-            isRunning = false
-            TerminalOutputManager.shared.hasActiveAnimation = false
-            TerminalOutputManager.shared.clearAnimationState()
+        guard isRunning else { return }
+        isRunning = false
+
+        // Stop animation state synchronously so subsequent print() calls don't coordinate
+        TerminalOutputManager.shared.hasActiveAnimation = false
+        TerminalOutputManager.shared.clearAnimationState()
+
+        // Cancel timer synchronously on render queue
+        Self.renderQueue.sync {
             timer?.cancel()
             timer = nil
+        }
 
-            let finalMessage = message ?? self.message
-            let icon: String = if useColors {
-                success ? "✓".green : "✗".red
-            } else {
-                success ? "✓" : "✗"
-            }
+        let finalMessage = message ?? self.message
+        let icon: String = if useColors {
+            success ? "✓".green : "✗".red
+        } else {
+            success ? "✓" : "✗"
+        }
 
-            if useAnimations {
-                TerminalOutputManager.shared.writeDirect(
-                    "\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n"
-                )
-                TerminalOutputManager.shared.writeDirect(ANSICodes.showCursor)
-            } else {
-                TerminalOutputManager.shared.writeDirect("\(icon) \(finalMessage)\n")
-            }
+        if useAnimations {
+            TerminalOutputManager.shared.writeDirect(
+                "\(ANSICodes.carriageReturn)\(ANSICodes.clearToEndOfLine)\(icon) \(finalMessage)\n"
+            )
+            TerminalOutputManager.shared.writeDirect(ANSICodes.showCursor)
+        } else {
+            TerminalOutputManager.shared.writeDirect("\(icon) \(finalMessage)\n")
         }
     }
 
