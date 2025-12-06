@@ -2,88 +2,88 @@
 import XCTest
 
 final class SpinnerTests: XCTestCase {
-    func testInitialization() async {
+    func testInitialization() {
         let spinner = Spinner(message: "Loading...", useColors: false, useAnimations: false)
 
         // Spinner should be created without errors
         XCTAssertNotNil(spinner)
     }
 
-    func testStartInPlainMode() async {
+    func testStartInPlainMode() {
         let spinner = Spinner(message: "Processing", useColors: false, useAnimations: false)
 
         // In plain mode, start just prints the message (no animation)
-        await spinner.start()
+        spinner.start()
 
         // Should complete without hanging
         XCTAssertNotNil(spinner)
     }
 
-    func testUpdateMessage() async {
+    func testUpdateMessage() {
         let spinner = Spinner(message: "Initial", useColors: false, useAnimations: false)
 
-        await spinner.start()
-        await spinner.update(message: "Updated")
+        spinner.start()
+        spinner.update(message: "Updated")
 
         // Should update without errors
         XCTAssertNotNil(spinner)
     }
 
-    func testSucceed() async {
+    func testSucceed() {
         let spinner = Spinner(message: "Task", useColors: false, useAnimations: false)
 
-        await spinner.start()
-        await spinner.succeed(message: "Done!")
+        spinner.start()
+        spinner.succeed(message: "Done!")
 
         // Should complete successfully
         XCTAssertNotNil(spinner)
     }
 
-    func testSucceedWithDefaultMessage() async {
+    func testSucceedWithDefaultMessage() {
         let spinner = Spinner(message: "Original message", useColors: false, useAnimations: false)
 
-        await spinner.start()
-        await spinner.succeed()
+        spinner.start()
+        spinner.succeed()
 
         // Should use original message when nil passed
         XCTAssertNotNil(spinner)
     }
 
-    func testFail() async {
+    func testFail() {
         let spinner = Spinner(message: "Task", useColors: false, useAnimations: false)
 
-        await spinner.start()
-        await spinner.fail(message: "Error occurred")
+        spinner.start()
+        spinner.fail(message: "Error occurred")
 
         // Should complete with failure
         XCTAssertNotNil(spinner)
     }
 
-    func testFailWithDefaultMessage() async {
+    func testFailWithDefaultMessage() {
         let spinner = Spinner(message: "Original message", useColors: false, useAnimations: false)
 
-        await spinner.start()
-        await spinner.fail()
+        spinner.start()
+        spinner.fail()
 
         // Should use original message when nil passed
         XCTAssertNotNil(spinner)
     }
 
-    func testStartTwiceDoesNothing() async {
+    func testStartTwiceDoesNothing() {
         let spinner = Spinner(message: "Test", useColors: false, useAnimations: false)
 
-        await spinner.start()
-        await spinner.start() // Second call should be ignored
+        spinner.start()
+        spinner.start() // Second call should be ignored
 
-        await spinner.succeed()
+        spinner.succeed()
         XCTAssertNotNil(spinner)
     }
 
-    func testWithColorsEnabled() async {
+    func testWithColorsEnabled() {
         let spinner = Spinner(message: "Colored", useColors: true, useAnimations: false)
 
-        await spinner.start()
-        await spinner.succeed()
+        spinner.start()
+        spinner.succeed()
 
         XCTAssertNotNil(spinner)
     }

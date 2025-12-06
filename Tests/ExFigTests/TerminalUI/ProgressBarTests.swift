@@ -2,7 +2,7 @@
 import XCTest
 
 final class ProgressBarTests: XCTestCase {
-    func testInitialization() async {
+    func testInitialization() {
         let progress = ProgressBar(
             message: "Downloading",
             total: 100,
@@ -13,7 +13,7 @@ final class ProgressBarTests: XCTestCase {
         XCTAssertNotNil(progress)
     }
 
-    func testInitializationWithZeroTotal() async {
+    func testInitializationWithZeroTotal() {
         // Should handle zero total by using 1 to prevent division by zero
         let progress = ProgressBar(
             message: "Empty",
@@ -22,11 +22,11 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.succeed()
+        progress.succeed()
         XCTAssertNotNil(progress)
     }
 
-    func testUpdate() async {
+    func testUpdate() {
         let progress = ProgressBar(
             message: "Processing",
             total: 10,
@@ -34,12 +34,12 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.update(current: 5)
+        progress.update(current: 5)
 
         XCTAssertNotNil(progress)
     }
 
-    func testUpdateWithMessage() async {
+    func testUpdateWithMessage() {
         let progress = ProgressBar(
             message: "Initial",
             total: 10,
@@ -47,12 +47,12 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.update(current: 3, message: "Updated message")
+        progress.update(current: 3, message: "Updated message")
 
         XCTAssertNotNil(progress)
     }
 
-    func testUpdateBeyondTotal() async {
+    func testUpdateBeyondTotal() {
         let progress = ProgressBar(
             message: "Test",
             total: 5,
@@ -61,13 +61,13 @@ final class ProgressBarTests: XCTestCase {
         )
 
         // Should clamp to total
-        await progress.update(current: 10)
-        await progress.succeed()
+        progress.update(current: 10)
+        progress.succeed()
 
         XCTAssertNotNil(progress)
     }
 
-    func testIncrement() async {
+    func testIncrement() {
         let progress = ProgressBar(
             message: "Counting",
             total: 5,
@@ -75,14 +75,14 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.increment()
-        await progress.increment()
-        await progress.increment()
+        progress.increment()
+        progress.increment()
+        progress.increment()
 
         XCTAssertNotNil(progress)
     }
 
-    func testIncrementWithMessage() async {
+    func testIncrementWithMessage() {
         let progress = ProgressBar(
             message: "Processing",
             total: 3,
@@ -90,14 +90,14 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.increment(message: "Step 1")
-        await progress.increment(message: "Step 2")
-        await progress.increment(message: "Step 3")
+        progress.increment(message: "Step 1")
+        progress.increment(message: "Step 2")
+        progress.increment(message: "Step 3")
 
         XCTAssertNotNil(progress)
     }
 
-    func testSucceed() async {
+    func testSucceed() {
         let progress = ProgressBar(
             message: "Task",
             total: 10,
@@ -105,13 +105,13 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.update(current: 5)
-        await progress.succeed(message: "Completed!")
+        progress.update(current: 5)
+        progress.succeed(message: "Completed!")
 
         XCTAssertNotNil(progress)
     }
 
-    func testSucceedWithDefaultMessage() async {
+    func testSucceedWithDefaultMessage() {
         let progress = ProgressBar(
             message: "Original",
             total: 10,
@@ -119,12 +119,12 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.succeed()
+        progress.succeed()
 
         XCTAssertNotNil(progress)
     }
 
-    func testFail() async {
+    func testFail() {
         let progress = ProgressBar(
             message: "Task",
             total: 10,
@@ -132,13 +132,13 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.update(current: 3)
-        await progress.fail(message: "Error!")
+        progress.update(current: 3)
+        progress.fail(message: "Error!")
 
         XCTAssertNotNil(progress)
     }
 
-    func testFailWithDefaultMessage() async {
+    func testFailWithDefaultMessage() {
         let progress = ProgressBar(
             message: "Original",
             total: 10,
@@ -146,12 +146,12 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.fail()
+        progress.fail()
 
         XCTAssertNotNil(progress)
     }
 
-    func testWithColorsEnabled() async {
+    func testWithColorsEnabled() {
         let progress = ProgressBar(
             message: "Colored",
             total: 5,
@@ -159,13 +159,13 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.update(current: 2)
-        await progress.succeed()
+        progress.update(current: 2)
+        progress.succeed()
 
         XCTAssertNotNil(progress)
     }
 
-    func testCustomWidth() async {
+    func testCustomWidth() {
         let progress = ProgressBar(
             message: "Wide bar",
             total: 100,
@@ -174,13 +174,13 @@ final class ProgressBarTests: XCTestCase {
             useAnimations: false
         )
 
-        await progress.update(current: 50)
-        await progress.succeed()
+        progress.update(current: 50)
+        progress.succeed()
 
         XCTAssertNotNil(progress)
     }
 
-    func testProgressAtBoundaries() async {
+    func testProgressAtBoundaries() {
         let progress = ProgressBar(
             message: "Boundaries",
             total: 10,
@@ -189,12 +189,12 @@ final class ProgressBarTests: XCTestCase {
         )
 
         // Test 0%
-        await progress.update(current: 0)
+        progress.update(current: 0)
 
         // Test 100%
-        await progress.update(current: 10)
+        progress.update(current: 10)
 
-        await progress.succeed()
+        progress.succeed()
 
         XCTAssertNotNil(progress)
     }
