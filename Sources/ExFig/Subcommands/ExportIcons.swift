@@ -109,7 +109,7 @@ extension ExFigCommand {
                 )
 
                 let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning?.errorDescription {
+                if let warning = result.warning {
                     ui.warning(warning)
                 }
                 return try result.get()
@@ -206,7 +206,7 @@ extension ExFigCommand {
                 )
 
                 let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning?.errorDescription {
+                if let warning = result.warning {
                     ui.warning(warning)
                 }
                 return try result.get()
@@ -350,7 +350,7 @@ extension ExFigCommand {
                 )
 
                 let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning?.errorDescription {
+                if let warning = result.warning {
                     ui.warning(warning)
                 }
                 return try result.get()
@@ -449,7 +449,7 @@ extension ExFigCommand {
                 )
 
                 let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                if let warning = result.warning?.errorDescription {
+                if let warning = result.warning {
                     ui.warning(warning)
                 }
                 return try result.get()

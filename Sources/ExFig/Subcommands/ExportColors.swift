@@ -129,7 +129,7 @@ extension ExFigCommand {
                         lightHC: colors.lightHC,
                         darkHC: colors.darkHC
                     )
-                    if let warning = result.warning?.errorDescription {
+                    if let warning = result.warning {
                         ui.warning(warning)
                     }
                     return try result.get()
@@ -155,7 +155,7 @@ extension ExFigCommand {
                         nameStyle: .snakeCase
                     )
                     let result = processor.process(light: colors.light, dark: colors.dark)
-                    if let warning = result.warning?.errorDescription {
+                    if let warning = result.warning {
                         ui.warning(warning)
                     }
                     return try result.get()
@@ -181,7 +181,7 @@ extension ExFigCommand {
                         nameStyle: NameStyle.camelCase
                     )
                     let result = processor.process(light: colors.light, dark: colors.dark)
-                    if let warning = result.warning?.errorDescription {
+                    if let warning = result.warning {
                         ui.warning(warning)
                     }
                     return try result.get()

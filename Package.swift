@@ -22,6 +22,7 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Rainbow", from: "4.2.0"),
         .package(url: "https://github.com/the-swift-collective/libwebp.git", from: "1.4.1"),
         .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
+        .package(url: "https://github.com/toon-format/toon-swift", from: "0.3.0"),
     ],
     targets: [
         // Main target
@@ -41,6 +42,7 @@ let package = Package(
                 .product(name: "Rainbow", package: "Rainbow"),
                 .product(name: "WebP", package: "libwebp"),
                 .product(name: "LibPNG", package: "libpng"),
+                .product(name: "ToonFormat", package: "toon-swift"),
             ]
         ),
 

@@ -1,3 +1,4 @@
+import ExFigCore
 import Foundation
 import Rainbow
 
@@ -41,11 +42,35 @@ final class TerminalUI: Sendable {
         print("\(icon) \(message)")
     }
 
-    /// Print a warning message
+    /// Print a warning message (handles multi-line properly)
     func warning(_ message: String) {
         let icon = useColors ? "⚠".yellow : "⚠"
-        let text = useColors ? message.yellow : message
-        print("\(icon) \(text)")
+
+        // Split message into lines and apply formatting to each
+        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
+
+        for (index, line) in lines.enumerated() {
+            let lineStr = String(line)
+            let text = useColors ? lineStr.yellow : lineStr
+
+            if index == 0 {
+                // First line gets the icon
+                print("\(icon) \(text)")
+            } else {
+                // Subsequent lines are indented to align with text after icon
+                print("  \(text)")
+            }
+        }
+    }
+
+    /// Print a formatted AssetsValidatorWarning
+    func warning(_ warning: AssetsValidatorWarning) {
+        let formatter = WarningFormatter()
+        let formattedMessage = formatter.format(warning)
+
+        guard !formattedMessage.isEmpty else { return }
+
+        self.warning(formattedMessage)
     }
 
     /// Print an error message

@@ -1,4 +1,5 @@
 @testable import ExFig
+import ExFigCore
 import XCTest
 
 final class TerminalUITests: XCTestCase {
@@ -315,6 +316,53 @@ final class TerminalUITests: XCTestCase {
         let ui = TerminalUI(outputMode: .verbose)
 
         ui.debug("Colored debug")
+    }
+
+    // MARK: - Multi-line Warning Tests
+
+    func testWarningMultilineDoesNotCrash() {
+        let ui = TerminalUI(outputMode: .plain)
+
+        // Multi-line warning should be handled properly
+        ui.warning("Line 1\nassets[3]: a,b,c\n  item1\n  item2")
+    }
+
+    func testWarningWithAssetsValidatorWarning() {
+        let ui = TerminalUI(outputMode: .plain)
+        let warning = AssetsValidatorWarning.lightAssetsNotFoundInDarkPalette(
+            assets: ["icon-a", "icon-b"]
+        )
+
+        // Should not crash - will print multi-line formatted output
+        ui.warning(warning)
+    }
+
+    func testWarningWithLargeAssetsValidatorWarning() {
+        let ui = TerminalUI(outputMode: .plain)
+        let assets = (1 ... 50).map { "asset-\($0)" }
+        let warning = AssetsValidatorWarning.lightAssetsNotFoundInDarkPalette(
+            assets: assets
+        )
+
+        // Should handle large lists without crashing
+        ui.warning(warning)
+    }
+
+    func testWarningWithEmptyAssetsValidatorWarning() {
+        let ui = TerminalUI(outputMode: .plain)
+        let warning = AssetsValidatorWarning.lightAssetsNotFoundInDarkPalette(
+            assets: []
+        )
+
+        // Should handle empty list gracefully
+        ui.warning(warning)
+    }
+
+    func testWarningWithColorsMultiline() {
+        let ui = TerminalUI(outputMode: .normal)
+
+        // Colors should apply to all lines
+        ui.warning("Line 1\nLine 2\nLine 3")
     }
 }
 
