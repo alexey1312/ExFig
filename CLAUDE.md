@@ -165,8 +165,9 @@ All commands support configurable retry and rate limiting via CLI flags:
 # Light commands (colors, typography, download subcommands)
 exfig colors --max-retries 6 --rate-limit 15
 
-# Heavy commands (icons, images, fetch) also support fail-fast
+# Heavy commands (icons, images, fetch) also support fail-fast and concurrent downloads
 exfig icons --max-retries 4 --rate-limit 18 --fail-fast
+exfig icons --concurrent-downloads 50  # Increase CDN parallelism (default: 20)
 exfig fetch -f FILE_ID -r "Frame" -o ./out --fail-fast
 ```
 
@@ -197,7 +198,8 @@ let data = try await client.request(endpoint)
 
 **Key files:**
 
-- `Sources/ExFig/Input/FaultToleranceOptions.swift` - CLI options for retry/rate limit
+- `Sources/ExFig/Input/FaultToleranceOptions.swift` - CLI options for retry/rate limit/concurrent downloads
+- `Sources/ExFig/Output/FileDownloader.swift` - CDN download with configurable concurrency
 - `Sources/FigmaAPI/Client/RateLimitedClient.swift` - Rate-limiting wrapper
 - `Sources/FigmaAPI/Client/RetryPolicy.swift` - Retry with exponential backoff
 - `Sources/ExFig/Cache/CheckpointTracker.swift` - Checkpoint management for resumable exports

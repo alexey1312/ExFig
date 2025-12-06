@@ -87,6 +87,18 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
     )
     var resume: Bool = false
 
+    @Option(
+        name: .long,
+        help: "Maximum concurrent CDN downloads (default: 20)"
+    )
+    var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
+
+    /// Create a file downloader with configured concurrency.
+    /// - Returns: A configured `FileDownloader`.
+    func createFileDownloader() -> FileDownloader {
+        FileDownloader(maxConcurrentDownloads: concurrentDownloads)
+    }
+
     /// Create a retry policy from the options.
     /// - Returns: A configured `RetryPolicy`.
     func createRetryPolicy() -> RetryPolicy {

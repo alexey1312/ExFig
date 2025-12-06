@@ -134,8 +134,9 @@ extension ExFigCommand {
 
             // Download files with progress
             ui.info("Downloading \(filesToDownload.count) files...")
+            let fileDownloader = faultToleranceOptions.createFileDownloader()
             let downloadedFiles = try await ui.withProgress("Downloading", total: filesToDownload.count) { progress in
-                try await ExFigCommand.fileDownloader.fetch(files: filesToDownload) { current, _ in
+                try await fileDownloader.fetch(files: filesToDownload) { current, _ in
                     progress.update(current: current)
                 }
             }

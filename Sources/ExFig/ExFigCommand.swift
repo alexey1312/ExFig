@@ -39,7 +39,6 @@ struct ExFigCommand: AsyncParsableCommand {
 
     static let svgFileConverter = NativeVectorDrawableConverter()
     static let fileWriter = FileWriter()
-    static let fileDownloader = FileDownloader()
     static let logger = Logger(label: "com.alexey1312.exfig")
 
     /// Shared terminal UI instance (initialized by subcommands)

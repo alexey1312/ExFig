@@ -297,7 +297,7 @@ All commands support fault tolerance options for reliable exports:
 # Custom retry count (default: 4)
 exfig colors --max-retries 6
 
-# Custom rate limit (default: 10 req/min)
+# Custom rate limit (default: 18 req/min)
 exfig icons --rate-limit 20
 ```
 
@@ -311,14 +311,18 @@ exfig icons --fail-fast
 
 # Resume from checkpoint after interruption
 exfig images --resume
+
+# Increase concurrent CDN downloads (default: 20)
+exfig icons --concurrent-downloads 50
 ```
 
-| Option          | Description                           | Commands             |
-| --------------- | ------------------------------------- | -------------------- |
-| `--max-retries` | Maximum retry attempts (default: 4)   | All                  |
-| `--rate-limit`  | API requests per minute (default: 10) | All                  |
-| `--fail-fast`   | Stop immediately on error             | icons, images, fetch |
-| `--resume`      | Continue from checkpoint              | icons, images, fetch |
+| Option                   | Description                            | Commands             |
+| ------------------------ | -------------------------------------- | -------------------- |
+| `--max-retries`          | Maximum retry attempts (default: 4)    | All                  |
+| `--rate-limit`           | API requests per minute (default: 18)  | All                  |
+| `--fail-fast`            | Stop immediately on error              | icons, images, fetch |
+| `--resume`               | Continue from checkpoint               | icons, images, fetch |
+| `--concurrent-downloads` | Concurrent CDN downloads (default: 20) | icons, images, fetch |
 
 ### Checkpoint System
 

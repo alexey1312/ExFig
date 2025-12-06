@@ -190,12 +190,13 @@ exfig icons --fail-fast
 exfig images --resume
 ```
 
-| Option          | Description                           | Commands             |
-| --------------- | ------------------------------------- | -------------------- |
-| `--max-retries` | Maximum retry attempts (default: 4)   | All                  |
-| `--rate-limit`  | API requests per minute (default: 10) | All                  |
-| `--fail-fast`   | Stop immediately on error             | icons, images, fetch |
-| `--resume`      | Continue from checkpoint              | icons, images, fetch |
+| Option                   | Description                            | Commands             |
+| ------------------------ | -------------------------------------- | -------------------- |
+| `--max-retries`          | Maximum retry attempts (default: 4)    | All                  |
+| `--rate-limit`           | API requests per minute (default: 18)  | All                  |
+| `--fail-fast`            | Stop immediately on error              | icons, images, fetch |
+| `--resume`               | Continue from checkpoint               | icons, images, fetch |
+| `--concurrent-downloads` | Concurrent CDN downloads (default: 20) | icons, images, fetch |
 
 ## Quick Fetch (No Config File)
 
@@ -226,22 +227,23 @@ exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 
 ### Fetch Options
 
-| Option               | Short | Description                                                                     | Default     |
-| -------------------- | ----- | ------------------------------------------------------------------------------- | ----------- |
-| `--file-id`          | `-f`  | Figma file ID (required)                                                        | -           |
-| `--frame`            | `-r`  | Figma frame name (required)                                                     | -           |
-| `--output`           | `-o`  | Output directory (required)                                                     | -           |
-| `--format`           |       | Image format: png, svg, jpg, pdf, webp                                          | png         |
-| `--scale`            |       | Scale factor (0.01-4.0)                                                         | 3 (for PNG) |
-| `--filter`           |       | Filter pattern (e.g., "icon/\*")                                                | -           |
-| `--name-style`       |       | Name style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE | -           |
-| `--dark-mode-suffix` |       | Suffix for dark variants (e.g., "\_dark")                                       | -           |
-| `--webp-encoding`    |       | WebP encoding: lossy, lossless                                                  | lossy       |
-| `--webp-quality`     |       | WebP quality (0-100)                                                            | 80          |
-| `--max-retries`      |       | Maximum retry attempts                                                          | 4           |
-| `--rate-limit`       |       | API requests per minute                                                         | 10          |
-| `--fail-fast`        |       | Stop on first error                                                             | false       |
-| `--resume`           |       | Resume from checkpoint                                                          | false       |
+| Option                   | Short | Description                                                                     | Default     |
+| ------------------------ | ----- | ------------------------------------------------------------------------------- | ----------- |
+| `--file-id`              | `-f`  | Figma file ID (required)                                                        | -           |
+| `--frame`                | `-r`  | Figma frame name (required)                                                     | -           |
+| `--output`               | `-o`  | Output directory (required)                                                     | -           |
+| `--format`               |       | Image format: png, svg, jpg, pdf, webp                                          | png         |
+| `--scale`                |       | Scale factor (0.01-4.0)                                                         | 3 (for PNG) |
+| `--filter`               |       | Filter pattern (e.g., "icon/\*")                                                | -           |
+| `--name-style`           |       | Name style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE | -           |
+| `--dark-mode-suffix`     |       | Suffix for dark variants (e.g., "\_dark")                                       | -           |
+| `--webp-encoding`        |       | WebP encoding: lossy, lossless                                                  | lossy       |
+| `--webp-quality`         |       | WebP quality (0-100)                                                            | 80          |
+| `--max-retries`          |       | Maximum retry attempts                                                          | 4           |
+| `--rate-limit`           |       | API requests per minute                                                         | 18          |
+| `--fail-fast`            |       | Stop on first error                                                             | false       |
+| `--resume`               |       | Resume from checkpoint                                                          | false       |
+| `--concurrent-downloads` |       | Concurrent CDN downloads                                                        | 20          |
 
 ## JSON Export (Design Tokens)
 
