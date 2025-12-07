@@ -13,24 +13,24 @@ struct RetryPolicyTests {
         // Attempt 0 means first retry
         let delay = policy.delay(for: 0)
 
-        // Base delay is 1.0, with 20% jitter: 0.8 to 1.2
-        #expect(delay >= 0.8)
-        #expect(delay <= 1.2)
+        // Base delay is 3.0, with 20% jitter: 2.4 to 3.6
+        #expect(delay >= 2.4)
+        #expect(delay <= 3.6)
     }
 
     @Test("Delay increases exponentially with attempt number")
     func delayIncreasesExponentially() {
         let policy = RetryPolicy(jitterFactor: 0) // No jitter for predictable test
 
-        let delay0 = policy.delay(for: 0) // 1 * 2^0 = 1
-        let delay1 = policy.delay(for: 1) // 1 * 2^1 = 2
-        let delay2 = policy.delay(for: 2) // 1 * 2^2 = 4
-        let delay3 = policy.delay(for: 3) // 1 * 2^3 = 8
+        let delay0 = policy.delay(for: 0) // 3 * 2^0 = 3
+        let delay1 = policy.delay(for: 1) // 3 * 2^1 = 6
+        let delay2 = policy.delay(for: 2) // 3 * 2^2 = 12
+        let delay3 = policy.delay(for: 3) // 3 * 2^3 = 24
 
-        #expect(delay0 == 1.0)
-        #expect(delay1 == 2.0)
-        #expect(delay2 == 4.0)
-        #expect(delay3 == 8.0)
+        #expect(delay0 == 3.0)
+        #expect(delay1 == 6.0)
+        #expect(delay2 == 12.0)
+        #expect(delay3 == 24.0)
     }
 
     @Test("Delay is capped at maxDelay")
@@ -53,12 +53,12 @@ struct RetryPolicyTests {
             delays.insert(policy.delay(for: 0))
         }
 
-        // With 50% jitter on base delay of 1.0: range is 0.5 to 1.5
+        // With 50% jitter on base delay of 3.0: range is 1.5 to 4.5
         // Should have some variation
         #expect(delays.count > 1, "Jitter should produce variation")
         for delay in delays {
-            #expect(delay >= 0.5)
-            #expect(delay <= 1.5)
+            #expect(delay >= 1.5)
+            #expect(delay <= 4.5)
         }
     }
 
@@ -240,7 +240,7 @@ struct RetryPolicyTests {
 
         let delay = policy.delay(for: 1, error: error)
 
-        #expect(delay == 2.0) // 1 * 2^1
+        #expect(delay == 6.0) // 3 * 2^1
     }
 
     @Test("delay respects retryAfter over maxDelay")
