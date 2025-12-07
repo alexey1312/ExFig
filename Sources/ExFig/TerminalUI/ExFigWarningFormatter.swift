@@ -10,6 +10,24 @@ struct ExFigWarningFormatter {
     func format(_ warning: ExFigWarning) -> String {
         switch warning {
         // Compact format warnings
+        case .configMissing, .composeRequirementMissing, .noConfigsFound,
+             .noValidConfigs, .xcodeProjectUpdateFailed, .checkpointExpired,
+             .checkpointPathMismatch, .retrying, .preFetchPartialFailure:
+            formatCompact(warning)
+
+        // Multiline format warnings
+        case let .noAssetsFound(assetType, frameName):
+            formatNoAssetsFound(assetType: assetType, frameName: frameName)
+
+        case let .invalidConfigsSkipped(count):
+            formatInvalidConfigsSkipped(count: count)
+        }
+    }
+
+    // MARK: - Compact Formatters
+
+    private func formatCompact(_ warning: ExFigWarning) -> String {
+        switch warning {
         case let .configMissing(platform, assetType):
             "Config missing: platform=\(platform), assetType=\(assetType)"
 
@@ -34,12 +52,12 @@ struct ExFigWarningFormatter {
         case let .retrying(attempt, maxAttempts, error, delay):
             "Retrying: attempt=\(attempt)/\(maxAttempts), error=\(error), delay=\(delay)"
 
-        // Multiline format warnings
-        case let .noAssetsFound(assetType, frameName):
-            formatNoAssetsFound(assetType: assetType, frameName: frameName)
+        case let .preFetchPartialFailure(failed, total):
+            "Pre-fetch partial failure: \(failed)/\(total) files failed, using fallback"
 
-        case let .invalidConfigsSkipped(count):
-            formatInvalidConfigsSkipped(count: count)
+        // Multiline cases handled in main format() method
+        case .noAssetsFound, .invalidConfigsSkipped:
+            fatalError("Multiline warnings should not reach formatCompact")
         }
     }
 

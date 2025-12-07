@@ -186,6 +186,21 @@ extension ExFigCommand {
         ) async -> (BatchResult, SharedRateLimiter) {
             let rateLimiter = SharedRateLimiter(requestsPerMinute: Double(rateLimit))
             let retryPolicy = RetryPolicy(maxRetries: maxRetries)
+
+            // Pre-fetch file versions if cache is enabled (optimization)
+            let preFetchConfig = PreFetchConfiguration(
+                configs: configs,
+                cacheEnabled: cache,
+                noCacheFlag: noCache,
+                verbose: globalOptions.verbose,
+                rateLimiter: rateLimiter,
+                retryPolicy: retryPolicy
+            )
+            let preFetchedVersions = await FileVersionPreFetcher.preFetchIfNeeded(
+                configuration: preFetchConfig,
+                ui: ui
+            )
+
             let runner = BatchConfigRunner(
                 rateLimiter: rateLimiter,
                 retryPolicy: retryPolicy,
@@ -211,10 +226,21 @@ extension ExFigCommand {
 
             let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
 
-            let result = await executor.execute(configs: configs) { configFile in
-                let configResult = await runner.process(configFile: configFile, ui: ui)
-                await checkpointManager.update(for: configFile, result: configResult)
-                return configResult
+            // Wrap execution with pre-fetched versions context if available
+            let result: BatchResult = if let preFetchedVersions {
+                await PreFetchedVersionsStorage.$versions.withValue(preFetchedVersions) {
+                    await executor.execute(configs: configs) { configFile in
+                        let configResult = await runner.process(configFile: configFile, ui: ui)
+                        await checkpointManager.update(for: configFile, result: configResult)
+                        return configResult
+                    }
+                }
+            } else {
+                await executor.execute(configs: configs) { configFile in
+                    let configResult = await runner.process(configFile: configFile, ui: ui)
+                    await checkpointManager.update(for: configFile, result: configResult)
+                    return configResult
+                }
             }
 
             return (result, rateLimiter)

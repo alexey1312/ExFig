@@ -204,7 +204,7 @@ final class TerminalUITests: XCTestCase {
 
         let result = await ui.withProgress("Processing", total: 10) { progressBar in
             for i in 1 ... 10 {
-                await progressBar.update(current: i)
+                progressBar.update(current: i)
             }
             return "completed"
         }

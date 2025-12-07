@@ -120,6 +120,7 @@ keyDirectories:
   input: Sources/ExFig/Input/
   output: Sources/ExFig/Output/
   cache: Sources/ExFig/Cache/
+  batch: Sources/ExFig/Batch/
   terminalUI: Sources/ExFig/TerminalUI/
   templates: Sources/*/Resources/
   tests: Tests/
@@ -136,6 +137,9 @@ keyFiles:
   outputManager: Sources/ExFig/TerminalUI/TerminalOutputManager.swift
   spinner: Sources/ExFig/TerminalUI/Spinner.swift
   progressBar: Sources/ExFig/TerminalUI/ProgressBar.swift
+  preFetchedVersions: Sources/ExFig/Batch/PreFetchedFileVersions.swift
+  fileIdExtractor: Sources/ExFig/Batch/FileIdExtractor.swift
+  fileVersionPreFetcher: Sources/ExFig/Batch/FileVersionPreFetcher.swift
 
 faultTolerance:
   defaults:
@@ -148,6 +152,16 @@ faultTolerance:
     exponentialBackoff: 2s -> 4s -> 8s -> 16s with jitter
     rateLimitHandling: respects Retry-After header
     checkpointSystem: saves progress for resumption
+
+batchPreFetch:
+  purpose: Pre-fetch file metadata for unique fileIds before parallel processing
+  trigger: "--cache flag enabled on batch command"
+  pattern: "@TaskLocal injection (PreFetchedVersionsStorage)"
+  files:
+    PreFetchedFileVersions: Storage struct with TaskLocal
+    FileIdExtractor: Extracts unique fileIds from YAML configs
+    FileVersionPreFetcher: Parallel pre-fetching with spinner
+  fallback: Individual configs fetch own metadata if pre-fetch fails
 
 terminalUI:
   classes:

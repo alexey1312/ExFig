@@ -99,8 +99,21 @@ final class ImageTrackingManager: @unchecked Sendable {
         }
     }
 
-    /// Fetches file metadata from Figma API.
+    /// Fetches file metadata from Figma API or pre-fetched storage.
+    ///
+    /// In batch mode with `--cache`, file versions are pre-fetched before parallel
+    /// config processing. This method checks the pre-fetched storage first to avoid
+    /// redundant API calls when multiple configs reference the same file.
     private func fetchFileMetadata(fileId: String) async throws -> FileMetadata {
+        // Check pre-fetched versions first (batch optimization)
+        if let preFetched = PreFetchedVersionsStorage.versions,
+           let metadata = preFetched.metadata(for: fileId)
+        {
+            logger.debug("Using pre-fetched version for \(fileId)")
+            return metadata
+        }
+
+        // Fall back to API request (standalone mode or missing pre-fetch)
         let endpoint = FileMetadataEndpoint(fileId: fileId)
         return try await client.request(endpoint)
     }
