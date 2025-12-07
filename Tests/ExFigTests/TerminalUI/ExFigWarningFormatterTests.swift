@@ -177,6 +177,24 @@ final class ExFigWarningFormatterTests: XCTestCase {
         XCTAssertTrue(result.contains("delay=500ms"))
     }
 
+    // MARK: - Pre-fetch Warnings
+
+    func testPreFetchPartialFailureFormatsAsCompact() {
+        let warning = ExFigWarning.preFetchPartialFailure(failed: 1, total: 3)
+
+        let result = formatter.format(warning)
+
+        XCTAssertEqual(result, "Pre-fetch partial failure: 1/3 files failed, using fallback")
+    }
+
+    func testPreFetchPartialFailureWithAllFailed() {
+        let warning = ExFigWarning.preFetchPartialFailure(failed: 5, total: 5)
+
+        let result = formatter.format(warning)
+
+        XCTAssertTrue(result.contains("5/5 files failed"))
+    }
+
     // MARK: - Edge Cases
 
     func testConfigMissingWithEmptyPlatform() {

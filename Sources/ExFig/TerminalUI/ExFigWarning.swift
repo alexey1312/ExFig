@@ -41,4 +41,9 @@ enum ExFigWarning: Sendable {
 
     /// Retrying a failed request.
     case retrying(attempt: Int, maxAttempts: Int, error: String, delay: String)
+
+    // MARK: - Pre-fetch Warnings
+
+    /// Pre-fetch failed for some files, falling back to per-config fetch.
+    case preFetchPartialFailure(failed: Int, total: Int)
 }

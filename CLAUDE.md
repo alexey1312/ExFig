@@ -177,13 +177,13 @@ RetryLogger.formatRetryMessage(context)
 
 **Warning types:**
 
-| Category        | Cases                                                                                                      |
-| --------------- | ---------------------------------------------------------------------------------------------------------- |
-| Configuration   | `configMissing`, `composeRequirementMissing`                                                               |
-| Asset Discovery | `noAssetsFound`                                                                                            |
-| Xcode           | `xcodeProjectUpdateFailed`                                                                                 |
-| Batch           | `noConfigsFound`, `invalidConfigsSkipped`, `noValidConfigs`, `checkpointExpired`, `checkpointPathMismatch` |
-| Retry           | `retrying(attempt:maxAttempts:error:delay:)`                                                               |
+| Category        | Cases                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Configuration   | `configMissing`, `composeRequirementMissing`                                                                                         |
+| Asset Discovery | `noAssetsFound`                                                                                                                      |
+| Xcode           | `xcodeProjectUpdateFailed`                                                                                                           |
+| Batch           | `noConfigsFound`, `invalidConfigsSkipped`, `noValidConfigs`, `checkpointExpired`, `checkpointPathMismatch`, `preFetchPartialFailure` |
+| Retry           | `retrying(attempt:maxAttempts:error:delay:)`                                                                                         |
 
 **Adding new warnings:**
 
@@ -278,6 +278,34 @@ let data = try await client.request(endpoint)
 - `Sources/FigmaAPI/Client/RateLimitedClient.swift` - Rate-limiting wrapper
 - `Sources/FigmaAPI/Client/RetryPolicy.swift` - Retry with exponential backoff
 - `Sources/ExFig/Cache/CheckpointTracker.swift` - Checkpoint management for resumable exports
+
+### Batch Pre-fetch Optimization
+
+When `--cache` is enabled, batch processing pre-fetches file metadata for all unique Figma file IDs before parallel
+config processing. This avoids redundant API calls when multiple configs reference the same files.
+
+**Key files:**
+
+- `Sources/ExFig/Batch/PreFetchedFileVersions.swift` - Storage struct with `@TaskLocal` injection
+- `Sources/ExFig/Batch/FileIdExtractor.swift` - Extracts unique fileIds from YAML configs
+- `Sources/ExFig/Batch/FileVersionPreFetcher.swift` - Parallel pre-fetching with spinner
+- `Sources/ExFig/Cache/ImageTrackingManager.swift` - Checks `PreFetchedVersionsStorage` before API call
+
+**Pattern:**
+
+```swift
+// Pre-fetched versions are injected via @TaskLocal (same pattern as InjectedClientStorage)
+let result = await PreFetchedVersionsStorage.$versions.withValue(preFetchedVersions) {
+    await executor.execute(configs: configs) { ... }
+}
+
+// ImageTrackingManager checks TaskLocal first, falls back to API
+if let preFetched = PreFetchedVersionsStorage.versions,
+   let metadata = preFetched.metadata(for: fileId) {
+    return metadata  // Use pre-fetched
+}
+// ... fall back to API request
+```
 
 ## Figma API Reference
 
