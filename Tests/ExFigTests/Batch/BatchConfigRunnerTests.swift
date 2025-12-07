@@ -65,6 +65,48 @@ final class BatchConfigRunnerTests: XCTestCase {
         }
     }
 
+    func testCacheAndConcurrencyOptionsPassedToExporter() {
+        // Given
+        let runner = BatchConfigRunner(
+            rateLimiter: SharedRateLimiter(requestsPerMinute: 600),
+            retryPolicy: RetryPolicy(maxRetries: 1),
+            globalOptions: GlobalOptions(),
+            maxRetries: 1,
+            resume: true,
+            cache: true,
+            noCache: false,
+            force: true,
+            cachePath: "/custom/path",
+            concurrentDownloads: 50
+        )
+
+        // Then - verify options are stored in runner
+        XCTAssertTrue(runner.cache)
+        XCTAssertFalse(runner.noCache)
+        XCTAssertTrue(runner.force)
+        XCTAssertEqual(runner.cachePath, "/custom/path")
+        XCTAssertEqual(runner.concurrentDownloads, 50)
+        XCTAssertTrue(runner.resume)
+    }
+
+    func testDefaultCacheAndConcurrencyOptions() {
+        // Given
+        let runner = BatchConfigRunner(
+            rateLimiter: SharedRateLimiter(requestsPerMinute: 600),
+            retryPolicy: RetryPolicy(maxRetries: 1),
+            globalOptions: GlobalOptions(),
+            maxRetries: 1,
+            resume: false
+        )
+
+        // Then - verify defaults
+        XCTAssertFalse(runner.cache)
+        XCTAssertFalse(runner.noCache)
+        XCTAssertFalse(runner.force)
+        XCTAssertNil(runner.cachePath)
+        XCTAssertEqual(runner.concurrentDownloads, 20)
+    }
+
     private func makeConfigFile() throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let content = """

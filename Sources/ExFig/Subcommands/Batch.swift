@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import ArgumentParser
 import FigmaAPI
 import Foundation
@@ -43,6 +44,23 @@ extension ExFigCommand {
 
         @Option(name: .long, help: "Path to write JSON report")
         var report: String?
+
+        // Cache options
+        @Flag(name: .long, help: "Enable version tracking cache (skip export if unchanged)")
+        var cache: Bool = false
+
+        @Flag(name: .long, help: "Disable version tracking cache (always export)")
+        var noCache: Bool = false
+
+        @Flag(name: .long, help: "Force export and update cache (ignore cached version)")
+        var force: Bool = false
+
+        @Option(name: .long, help: "Custom path to cache file (default: .exfig-cache.json)")
+        var cachePath: String?
+
+        // Download concurrency
+        @Option(name: .long, help: "Maximum concurrent CDN downloads")
+        var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
 
         @Argument(help: "Config files or directory to process")
         var paths: [String]
@@ -173,7 +191,12 @@ extension ExFigCommand {
                 retryPolicy: retryPolicy,
                 globalOptions: globalOptions,
                 maxRetries: maxRetries,
-                resume: resume
+                resume: resume,
+                cache: cache,
+                noCache: noCache,
+                force: force,
+                cachePath: cachePath,
+                concurrentDownloads: concurrentDownloads
             )
 
             ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers...")
