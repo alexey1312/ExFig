@@ -13,11 +13,22 @@ enum WebpConverterError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case let .fileNotFound(path):
-            "Input file not found: \(path)"
+            "File not found: \(path)"
         case let .invalidInputFormat(path):
-            "Invalid input format: '\(path)' is not a valid PNG file"
+            "Invalid PNG format: \(path)"
         case let .encodingFailed(file, reason):
-            "WebP encoding failed for '\(file)': \(reason)"
+            "WebP encoding failed: \(file) - \(reason)"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .fileNotFound:
+            "Check that the file path exists"
+        case .invalidInputFormat:
+            "Ensure the file is a valid PNG image"
+        case .encodingFailed:
+            "Try re-exporting the source image from Figma"
         }
     }
 }

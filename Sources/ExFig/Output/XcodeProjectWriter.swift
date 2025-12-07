@@ -8,7 +8,14 @@ enum XcodeProjectWriterError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case let .unableToFindTarget(name):
-            "Unable to find target \(name)"
+            "Target not found: \(name)"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .unableToFindTarget:
+            "Check target name in Xcode project settings"
         }
     }
 }

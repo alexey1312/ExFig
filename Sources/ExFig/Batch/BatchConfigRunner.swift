@@ -205,7 +205,8 @@ struct BatchConfigRunner: Sendable {
             return .success(config: configFile, stats: stats)
 
         } catch {
-            ui.error("Failed: \(configFile.name) - \(error.localizedDescription)")
+            ui.error("Failed: \(configFile.name)")
+            ui.error(error)
             return .failure(config: configFile, error: error)
         }
     }

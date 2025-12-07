@@ -139,13 +139,26 @@ public enum SVGParseError: Error, LocalizedError {
         case let .unexpectedCharacter(char):
             "Unexpected character: \(char)"
         case .unexpectedEndOfInput:
-            "Unexpected end of input"
+            "Unexpected end of path data"
         case let .invalidNumber(str):
             "Invalid number: \(str)"
         case let .unknownCommand(cmd):
             "Unknown SVG path command: \(cmd)"
         case .invalidArcArguments:
             "Invalid arc arguments"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .unexpectedCharacter, .unknownCommand:
+            "Check SVG path syntax"
+        case .unexpectedEndOfInput:
+            "Ensure path data is complete"
+        case .invalidNumber:
+            "Check numeric values in path data"
+        case .invalidArcArguments:
+            "Verify arc command parameters (rx, ry, rotation, flags, x, y)"
         }
     }
 }

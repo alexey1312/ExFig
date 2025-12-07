@@ -328,7 +328,14 @@ enum BatchExecutorError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .rateLimiterNotConfigured:
-            "Rate limiter not configured for batch execution"
+            "Rate limiter not configured"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .rateLimiterNotConfigured:
+            "Use --rate-limit option to configure rate limiting"
         }
     }
 }

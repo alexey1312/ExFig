@@ -142,6 +142,7 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 | `Lock<T>`               | Thread-safe state wrapper (NSLock-based, Sendable)    |
 | `ExFigWarning`          | Enum of all warning types for consistent messaging    |
 | `ExFigWarningFormatter` | Formats warnings as compact or multiline TOON strings |
+| `ExFigErrorFormatter`   | Formats errors with recovery suggestions              |
 | `ConflictFormatter`     | Formats batch output path conflicts for display       |
 
 **TerminalOutputManager API:**
@@ -190,6 +191,49 @@ RetryLogger.formatRetryMessage(context)
 2. Add formatting in `ExFigWarningFormatter.format(_:)` — use compact `key=value` for simple warnings, multiline for
    complex
 3. Call via `ui.warning(.yourNewCase)`
+
+### Errors System
+
+All errors implement `LocalizedError` with `errorDescription` and optional `recoverySuggestion`:
+
+```swift
+// Display errors with recovery suggestions
+ui.error(ExFigError.accessTokenNotFound)
+// Output:
+// ✗ FIGMA_PERSONAL_TOKEN not set
+//   → Run: export FIGMA_PERSONAL_TOKEN=your_token
+
+// For any Error type
+ui.error(someError)  // Auto-formats LocalizedError or falls back to localizedDescription
+```
+
+**Key error types:**
+
+| Module          | Error Type                        | Purpose                           |
+| --------------- | --------------------------------- | --------------------------------- |
+| `ExFig`         | `ExFigError`                      | Main CLI errors                   |
+| `ExFig`         | `ConfigDiscoveryError`            | Config file discovery errors      |
+| `ExFig`         | `BatchExecutorError`              | Batch processing errors           |
+| `ExFig`         | `WebpConverterError`              | WebP conversion errors            |
+| `ExFig`         | `PngDecoderError`                 | PNG decoding errors               |
+| `ExFigCore`     | `AssetsValidatorError`            | Asset validation errors           |
+| `SVGKit`        | `SVGParseError`, `SVGParserError` | SVG parsing errors                |
+| `AndroidExport` | `ImageVectorExportError`          | Android ImageVector export errors |
+| `XcodeExport`   | `XcodeImagesExporterBase.Error`   | iOS asset catalog errors          |
+| `FigmaAPI`      | `FigmaAPIError`                   | Figma API errors (reference impl) |
+
+**Error formatting classes:**
+
+| Class                 | Purpose                                                |
+| --------------------- | ------------------------------------------------------ |
+| `ExFigErrorFormatter` | Formats `LocalizedError` with recovery suggestion line |
+
+**Adding new errors:**
+
+1. Create enum conforming to `LocalizedError`
+2. Implement `errorDescription` with compact TOON format (`key=value`)
+3. Implement `recoverySuggestion` with actionable fix (or `nil` for simple errors)
+4. Call via `ui.error(yourError)` — formatter handles display
 
 ### Fault Tolerance for API Commands
 

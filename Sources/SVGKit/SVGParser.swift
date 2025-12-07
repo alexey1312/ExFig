@@ -946,9 +946,20 @@ public enum SVGParserError: Error, LocalizedError, Equatable {
         case .invalidSVGRoot:
             "Invalid SVG: root element must be <svg>"
         case .missingDimensions:
-            "Invalid SVG: missing width/height or viewBox"
+            "Invalid SVG: missing dimensions"
         case let .invalidPathData(path):
             "Invalid path data: \(path)"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .invalidSVGRoot:
+            "Ensure SVG file starts with <svg> element"
+        case .missingDimensions:
+            "Add width/height or viewBox attribute to SVG"
+        case .invalidPathData:
+            "Check SVG path syntax"
         }
     }
 }

@@ -294,7 +294,7 @@ extension ExFigCommand {
             }
 
             for failure in result.failures {
-                ui.error("\(failure.config.name) - \(failure.error.localizedDescription)")
+                ui.error("\(failure.config.name): \(failure.error.localizedDescription)")
             }
         }
 

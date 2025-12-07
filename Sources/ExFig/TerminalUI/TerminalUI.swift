@@ -83,8 +83,36 @@ final class TerminalUI: Sendable {
     /// Print an error message
     func error(_ message: String) {
         let icon = useColors ? "✗".red : "✗"
-        let text = useColors ? message.red : message
-        TerminalOutputManager.shared.print("\(icon) \(text)")
+
+        // Split message into lines and apply formatting to each
+        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
+
+        for (index, line) in lines.enumerated() {
+            let lineStr = String(line)
+            let text = useColors ? lineStr.red : lineStr
+
+            if index == 0 {
+                // First line gets the icon
+                TerminalOutputManager.shared.print("\(icon) \(text)")
+            } else {
+                // Subsequent lines are indented to align with text after icon
+                TerminalOutputManager.shared.print("  \(text)")
+            }
+        }
+    }
+
+    /// Print a formatted LocalizedError with optional recovery suggestion
+    func error(_ error: any LocalizedError) {
+        let formatter = ExFigErrorFormatter()
+        let formattedMessage = formatter.format(error)
+        self.error(formattedMessage)
+    }
+
+    /// Print a formatted Error
+    func error(_ error: any Error) {
+        let formatter = ExFigErrorFormatter()
+        let formattedMessage = formatter.format(error)
+        self.error(formattedMessage)
     }
 
     /// Print a debug message (only in verbose mode)
