@@ -10,11 +10,22 @@ enum NativeWebpEncoderError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidDimensions:
-            "Invalid image dimensions: width and height must be greater than 0"
+            "Invalid image dimensions: width and height must be > 0"
         case let .invalidRgbaData(expected, actual):
             "Invalid RGBA data: expected \(expected) bytes, got \(actual)"
         case .encodingFailed:
-            "WebP encoding failed: unknown error"
+            "WebP encoding failed"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .invalidDimensions:
+            "Ensure the source image has valid dimensions"
+        case .invalidRgbaData:
+            "Re-export the source image from Figma"
+        case .encodingFailed:
+            "Try re-exporting the source image or use a different format"
         }
     }
 }

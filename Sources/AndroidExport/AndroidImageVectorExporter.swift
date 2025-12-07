@@ -106,7 +106,16 @@ public enum ImageVectorExportError: Error, LocalizedError {
         case let .invalidFileName(name):
             "Invalid file name: \(name)"
         case let .svgParsingFailed(name, error):
-            "Failed to parse SVG '\(name)': \(error.localizedDescription)"
+            "SVG parsing failed: \(name) - \(error.localizedDescription)"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .invalidFileName:
+            "Use alphanumeric characters, underscores, and hyphens only"
+        case .svgParsingFailed:
+            "Re-export SVG from Figma or check SVG syntax"
         }
     }
 }

@@ -6,8 +6,11 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
         case templateDoesNotSupportAppending
 
         var errorDescription: String? {
-            "Custom templates doesn't supported when \"append\" property is equal to true. " +
-                "Use default templates or change \"append\" property to false"
+            "Custom templates not supported with append=true"
+        }
+
+        var recoverySuggestion: String? {
+            "Use default templates or set append=false in config"
         }
     }
 

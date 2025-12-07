@@ -9,25 +9,37 @@ enum AssetsValidatorError: LocalizedError, Sendable {
     case secondAssetsNotFoundInFirstPalette(assets: [String], firstAssetsName: String, secondAssetsName: String)
     case descriptionMismatch(assetName: String, light: String, dark: String)
 
-    // swiftlint:disable line_length
     var errorDescription: String? {
-        let error = switch self {
+        switch self {
         case let .badName(name):
-            "Bad asset name «\(name)»"
+            "Invalid asset name: \(name)"
         case let .countMismatch(light, dark):
-            "The number of assets doesn't match. Light theme contains \(light), and dark \(dark)."
+            "Asset count mismatch: light=\(light), dark=\(dark)"
         case let .countMismatchLightHighContrastColors(light, lightHC):
-            "The number of assets doesn't match. Light color palette contains \(light), and light high contrast color palette \(lightHC)."
+            "Asset count mismatch: light=\(light), lightHC=\(lightHC)"
         case let .countMismatchDarkHighContrastColors(dark, darkHC):
-            "The number of assets doesn't match. Dark color palette contains \(dark), and dark high contrast color palette \(darkHC)."
-        case let .secondAssetsNotFoundInFirstPalette(secondAsset, firstAssetsName, secondAssetsName):
-            "\(firstAssetsName) theme doesn't contains following assets: \(secondAsset.joined(separator: ", ")), which exists in \(secondAssetsName.lowercased()) theme. Add these assets to \(firstAssetsName.lowercased()) theme and publish to the Team Library."
+            "Asset count mismatch: dark=\(dark), darkHC=\(darkHC)"
+        case let .secondAssetsNotFoundInFirstPalette(assets, firstAssetsName, _):
+            "Missing assets in \(firstAssetsName): \(assets.joined(separator: ", "))"
         case let .foundDuplicate(assetName):
-            "Found duplicates of asset with name \(assetName). Remove duplicates."
+            "Duplicate asset: \(assetName)"
         case let .descriptionMismatch(assetName, light, dark):
-            "Asset with name \(assetName) have different description. In dark theme «\(dark)», in light theme «\(light)»"
+            "Description mismatch for \(assetName): light=\"\(light)\", dark=\"\(dark)\""
         }
-        return "❌ \(error)"
     }
-    // swiftlint:enable line_length
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .badName:
+            "Rename asset using valid characters"
+        case .countMismatch, .countMismatchLightHighContrastColors, .countMismatchDarkHighContrastColors:
+            "Add missing assets to match theme counts"
+        case .secondAssetsNotFoundInFirstPalette:
+            "Add missing assets and publish to Team Library"
+        case .foundDuplicate:
+            "Remove duplicate assets with the same name"
+        case .descriptionMismatch:
+            "Update descriptions to match in both themes"
+        }
+    }
 }

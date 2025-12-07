@@ -21,11 +21,22 @@ enum PngDecoderError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidFormat:
-            "Invalid PNG format: file is not a valid PNG image"
+            "Invalid PNG format"
         case let .fileNotFound(path):
             "PNG file not found: \(path)"
         case let .decodingFailed(reason):
             "PNG decoding failed: \(reason)"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .invalidFormat:
+            "Ensure the file is a valid PNG image"
+        case .fileNotFound:
+            "Check that the file path exists"
+        case .decodingFailed:
+            "Re-export the image from Figma"
         }
     }
 }

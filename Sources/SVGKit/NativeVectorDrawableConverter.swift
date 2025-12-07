@@ -11,7 +11,16 @@ public enum VectorDrawableConverterError: Error, LocalizedError {
         case let .directoryNotFound(url):
             "Directory not found: \(url.path)"
         case let .invalidSVG(url, error):
-            "Invalid SVG file '\(url.lastPathComponent)': \(error.localizedDescription)"
+            "Invalid SVG: \(url.lastPathComponent) - \(error.localizedDescription)"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .directoryNotFound:
+            "Check the directory path exists"
+        case .invalidSVG:
+            "Re-export SVG from Figma or check SVG syntax"
         }
     }
 }

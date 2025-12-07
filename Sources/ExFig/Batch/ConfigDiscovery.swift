@@ -14,7 +14,18 @@ enum ConfigDiscoveryError: LocalizedError {
         case let .fileNotFound(url):
             "Config file not found: \(url.path)"
         case let .invalidConfig(url, reason):
-            "Invalid config at \(url.path): \(reason)"
+            "Invalid config: \(url.lastPathComponent) - \(reason)"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .directoryNotFound:
+            "Check the directory path exists"
+        case .fileNotFound:
+            "Check the config file path"
+        case .invalidConfig:
+            "Validate config with: exfig validate <config>"
         }
     }
 }
