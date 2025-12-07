@@ -101,7 +101,7 @@ extension ExFigCommand {
             guard let ios = params.ios,
                   let imagesParams = ios.images
             else {
-                ui.warning("Nothing to do. You haven't specified ios.images parameters in the config file.")
+                ui.warning(.configMissing(platform: "ios", assetType: "images"))
                 return 0
             }
 
@@ -177,7 +177,7 @@ extension ExFigCommand {
                 }
                 try xcodeProject.save()
             } catch {
-                ui.warning("Unable to add some file references to Xcode project")
+                ui.warning(.xcodeProjectUpdateFailed)
             }
 
             await checkForUpdate(logger: logger)
@@ -189,7 +189,7 @@ extension ExFigCommand {
         // swiftlint:disable:next function_body_length
         private func exportAndroidImages(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
             guard let androidImages = params.android?.images else {
-                ui.warning("Nothing to do. You haven't specified android.images parameter in the config file.")
+                ui.warning(.configMissing(platform: "android", assetType: "images"))
                 return 0
             }
 
@@ -233,7 +233,7 @@ extension ExFigCommand {
             ui: TerminalUI
         ) async throws {
             guard let android = params.android, let androidImages = android.images else {
-                ui.warning("Nothing to do. You haven't specified android.images parameter in the config file.")
+                ui.warning(.configMissing(platform: "android", assetType: "images"))
                 return
             }
 
@@ -327,7 +327,7 @@ extension ExFigCommand {
             ui: TerminalUI
         ) async throws {
             guard let android = params.android, let androidImages = android.images else {
-                ui.warning("Nothing to do. You haven't specified android.images parameter in the config file.")
+                ui.warning(.configMissing(platform: "android", assetType: "images"))
                 return
             }
 
@@ -440,7 +440,7 @@ extension ExFigCommand {
         // swiftlint:disable:next function_body_length
         private func exportFlutterImages(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
             guard let flutter = params.flutter, let flutterImages = flutter.images else {
-                ui.warning("Nothing to do. You haven't specified flutter.images parameter in the config file.")
+                ui.warning(.configMissing(platform: "flutter", assetType: "images"))
                 return 0
             }
 

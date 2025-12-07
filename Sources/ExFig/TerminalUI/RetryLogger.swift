@@ -42,19 +42,25 @@ enum RetryLogger {
         }
     }
 
-    /// Format a retry message for display.
+    /// Format a retry message for display using TOON compact format.
     /// - Parameter context: Message context containing all formatting parameters.
     /// - Returns: Formatted message string.
     static func formatRetryMessage(_ context: RetryMessageContext) -> String {
         let errorDescription = describeError(context.error)
         let delayStr = formatDelay(context.delay)
 
+        let formatter = ExFigWarningFormatter()
+        let warning = ExFigWarning.retrying(
+            attempt: context.attempt,
+            maxAttempts: context.maxAttempts,
+            error: errorDescription,
+            delay: delayStr
+        )
+
         let icon = context.useColors ? "⚠".yellow : "⚠"
-        let attemptInfo = "(\(context.attempt)/\(context.maxAttempts))"
+        var message = "\(icon) \(formatter.format(warning))"
 
-        var message = "\(icon) \(errorDescription). Retrying in \(delayStr)... \(attemptInfo)"
-
-        // Add config name if not empty (for batch processing)
+        // Add config name prefix if not empty (for batch processing)
         if !context.configName.isEmpty {
             let prefix = context.useColors ? "[\(context.configName)]".lightBlack : "[\(context.configName)]"
             message = "\(prefix) \(message)"

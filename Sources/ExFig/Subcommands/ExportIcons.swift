@@ -101,7 +101,7 @@ extension ExFigCommand {
             guard let ios = params.ios,
                   let iconsParams = ios.icons
             else {
-                ui.warning("Nothing to do. You haven't specified ios.icons parameters in the config file.")
+                ui.warning(.configMissing(platform: "ios", assetType: "icons"))
                 return 0
             }
 
@@ -178,7 +178,7 @@ extension ExFigCommand {
                 }
                 try xcodeProject.save()
             } catch {
-                ui.warning("Unable to add some file references to Xcode project")
+                ui.warning(.xcodeProjectUpdateFailed)
             }
 
             await checkForUpdate(logger: logger)
@@ -190,7 +190,7 @@ extension ExFigCommand {
         // swiftlint:disable:next function_body_length
         private func exportAndroidIcons(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
             guard let android = params.android, let androidIcons = android.icons else {
-                ui.warning("Nothing to do. You haven't specified android.icons parameter in the config file.")
+                ui.warning(.configMissing(platform: "android", assetType: "icons"))
                 return 0
             }
 
@@ -342,12 +342,12 @@ extension ExFigCommand {
             }
 
             guard let packageName = androidIcons.composePackageName else {
-                ui.warning("composePackageName is required for ImageVector export. Skipping Compose generation.")
+                ui.warning(.composeRequirementMissing(requirement: "composePackageName"))
                 return 0
             }
 
             guard let srcDirectory = android.mainSrc else {
-                ui.warning("mainSrc is required for ImageVector export. Skipping Compose generation.")
+                ui.warning(.composeRequirementMissing(requirement: "mainSrc"))
                 return 0
             }
 
@@ -448,7 +448,7 @@ extension ExFigCommand {
 
         private func exportFlutterIcons(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
             guard let flutter = params.flutter, let flutterIcons = flutter.icons else {
-                ui.warning("Nothing to do. You haven't specified flutter.icons parameter in the config file.")
+                ui.warning(.configMissing(platform: "flutter", assetType: "icons"))
                 return 0
             }
 

@@ -73,6 +73,13 @@ final class TerminalUI: Sendable {
         self.warning(formattedMessage)
     }
 
+    /// Print a formatted ExFigWarning
+    func warning(_ warning: ExFigWarning) {
+        let formatter = ExFigWarningFormatter()
+        let formattedMessage = formatter.format(warning)
+        self.warning(formattedMessage)
+    }
+
     /// Print an error message
     func error(_ message: String) {
         let icon = useColors ? "✗".red : "✗"

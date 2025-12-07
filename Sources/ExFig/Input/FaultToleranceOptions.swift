@@ -237,11 +237,18 @@ func resolveClient(
     }
     let baseClient = FigmaClient(accessToken: accessToken, timeout: timeout)
     let rateLimiter = options.createRateLimiter()
+    let maxRetries = options.maxRetries
     return options.createRateLimitedClient(
         wrapping: baseClient,
         rateLimiter: rateLimiter,
         onRetry: { attempt, error in
-            ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+            let warning = ExFigWarning.retrying(
+                attempt: attempt,
+                maxAttempts: maxRetries,
+                error: error.localizedDescription,
+                delay: "..."
+            )
+            ui.warning(warning)
         }
     )
 }
@@ -266,11 +273,18 @@ func resolveClient(
     }
     let baseClient = FigmaClient(accessToken: accessToken, timeout: timeout)
     let rateLimiter = options.createRateLimiter()
+    let maxRetries = options.maxRetries
     return options.createRateLimitedClient(
         wrapping: baseClient,
         rateLimiter: rateLimiter,
         onRetry: { attempt, error in
-            ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+            let warning = ExFigWarning.retrying(
+                attempt: attempt,
+                maxAttempts: maxRetries,
+                error: error.localizedDescription,
+                delay: "..."
+            )
+            ui.warning(warning)
         }
     )
 }

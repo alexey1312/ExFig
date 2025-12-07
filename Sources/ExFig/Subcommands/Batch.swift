@@ -110,7 +110,7 @@ extension ExFigCommand {
         private func discoverAndValidateConfigs(ui: TerminalUI) throws -> [URL] {
             let configURLs = try discoverConfigs(ui: ui)
             guard !configURLs.isEmpty else {
-                ui.warning("No config files found")
+                ui.warning(.noConfigsFound)
                 return []
             }
 
@@ -119,19 +119,19 @@ extension ExFigCommand {
 
             if validConfigs.count < configURLs.count {
                 let skipped = configURLs.count - validConfigs.count
-                ui.warning("Skipping \(skipped) invalid config file(s)")
+                ui.warning(.invalidConfigsSkipped(count: skipped))
             }
 
             guard !validConfigs.isEmpty else {
-                ui.warning("No valid ExFig config files found")
+                ui.warning(.noValidConfigs)
                 return []
             }
 
             // Check for conflicts
             let conflicts = try discovery.detectOutputPathConflicts(validConfigs)
-            for conflict in conflicts {
-                let configNames = conflict.configs.map(\.lastPathComponent).joined(separator: ", ")
-                ui.warning("Output path conflict: '\(conflict.path)' used by: \(configNames)")
+            if !conflicts.isEmpty {
+                let formatter = ConflictFormatter()
+                ui.warning(formatter.format(conflicts))
             }
 
             return validConfigs
@@ -164,13 +164,13 @@ extension ExFigCommand {
             }
 
             if existing.isExpired() {
-                ui.warning("Checkpoint expired (older than 24h), starting fresh")
+                ui.warning(.checkpointExpired)
                 try? BatchCheckpoint.delete(from: workingDirectory)
                 return nil
             }
 
             if !existing.matchesPaths(paths) {
-                ui.warning("Checkpoint paths don't match current request, starting fresh")
+                ui.warning(.checkpointPathMismatch)
                 try? BatchCheckpoint.delete(from: workingDirectory)
                 return nil
             }

@@ -216,7 +216,7 @@ extension ExFigCommand {
             ui: TerminalUI
         ) throws {
             guard let colorParams = iosParams.colors else {
-                ui.warning("Nothing to do. Add ios.colors parameters to the config file.")
+                ui.warning(.configMissing(platform: "ios", assetType: "colors"))
                 return
             }
 
@@ -266,7 +266,7 @@ extension ExFigCommand {
                 }
                 try xcodeProject.save()
             } catch {
-                ui.warning("Unable to add some file references to Xcode project")
+                ui.warning(.xcodeProjectUpdateFailed)
             }
         }
 
