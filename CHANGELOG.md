@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.5] - 2025-12-07
+
+### Features
+
+- **terminal**: Add unified warning types with TOON formatting by @alexey1312
+
+- **terminal**: Add unified error formatting with recovery suggestions by @alexey1312
+
+- **batch**: Pre-fetch file versions for cache-enabled batch runs by @alexey1312
+
+
 ## [1.0.4] - 2025-12-07
 
 ### Bug Fixes
