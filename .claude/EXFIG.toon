@@ -65,6 +65,11 @@ commands:
       maxRetries: --max-retries N (default 4)
       resume: --resume
       report: --report PATH
+      cache: --cache
+      noCache: --no-cache
+      force: --force
+      cachePath: --cache-path PATH
+      concurrentDownloads: --concurrent-downloads N (default 20)
 
   download:
     purpose: Export Figma data as JSON

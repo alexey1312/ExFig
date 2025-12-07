@@ -13,6 +13,11 @@ protocol ConfigExportPerforming: Sendable {
 struct SubcommandConfigExporter: ConfigExportPerforming {
     let globalOptions: GlobalOptions
     let resume: Bool
+    let cache: Bool
+    let noCache: Bool
+    let force: Bool
+    let cachePath: String?
+    let concurrentDownloads: Int
 
     func export(
         configFile: ConfigFile,
@@ -21,11 +26,17 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         ui: TerminalUI
     ) async throws -> ExportStats {
         try await InjectedClientStorage.$client.withValue(client) {
-            let cacheOptions = CacheOptions()
+            var cacheOptions = CacheOptions()
+            cacheOptions.cache = cache
+            cacheOptions.noCache = noCache
+            cacheOptions.force = force
+            cacheOptions.cachePath = cachePath
+
             let faultToleranceOptions = FaultToleranceOptions()
 
             var heavyFaultToleranceOptions = HeavyFaultToleranceOptions()
             heavyFaultToleranceOptions.resume = resume
+            heavyFaultToleranceOptions.concurrentDownloads = concurrentDownloads
 
             let colors = makeColors(
                 options: options,
@@ -71,6 +82,11 @@ struct BatchConfigRunner: Sendable {
     let globalOptions: GlobalOptions
     let maxRetries: Int
     let resume: Bool
+    let cache: Bool
+    let noCache: Bool
+    let force: Bool
+    let cachePath: String?
+    let concurrentDownloads: Int
     let exporter: any ConfigExportPerforming
 
     init(
@@ -79,6 +95,11 @@ struct BatchConfigRunner: Sendable {
         globalOptions: GlobalOptions,
         maxRetries: Int,
         resume: Bool,
+        cache: Bool = false,
+        noCache: Bool = false,
+        force: Bool = false,
+        cachePath: String? = nil,
+        concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads,
         exporter: ConfigExportPerforming? = nil
     ) {
         self.rateLimiter = rateLimiter
@@ -86,9 +107,19 @@ struct BatchConfigRunner: Sendable {
         self.globalOptions = globalOptions
         self.maxRetries = maxRetries
         self.resume = resume
+        self.cache = cache
+        self.noCache = noCache
+        self.force = force
+        self.cachePath = cachePath
+        self.concurrentDownloads = concurrentDownloads
         self.exporter = exporter ?? SubcommandConfigExporter(
             globalOptions: globalOptions,
-            resume: resume
+            resume: resume,
+            cache: cache,
+            noCache: noCache,
+            force: force,
+            cachePath: cachePath,
+            concurrentDownloads: concurrentDownloads
         )
     }
 
