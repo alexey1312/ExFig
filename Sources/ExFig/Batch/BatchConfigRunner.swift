@@ -38,33 +38,48 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
             heavyFaultToleranceOptions.resume = resume
             heavyFaultToleranceOptions.concurrentDownloads = concurrentDownloads
 
-            let colors = makeColors(
-                options: options,
-                cacheOptions: cacheOptions,
-                faultToleranceOptions: faultToleranceOptions
-            )
-            let colorsCount = try await colors.performExport(client: client, ui: ui)
+            let params = options.params
+            var colorsCount = 0
+            var iconsCount = 0
+            var imagesCount = 0
+            var typographyCount = 0
 
-            let icons = makeIcons(
-                options: options,
-                cacheOptions: cacheOptions,
-                faultToleranceOptions: heavyFaultToleranceOptions
-            )
-            let iconsCount = try await icons.performExport(client: client, ui: ui)
+            // Only run exports for configured asset types
+            if hasColorsConfig(params) {
+                let colors = makeColors(
+                    options: options,
+                    cacheOptions: cacheOptions,
+                    faultToleranceOptions: faultToleranceOptions
+                )
+                colorsCount = try await colors.performExport(client: client, ui: ui)
+            }
 
-            let images = makeImages(
-                options: options,
-                cacheOptions: cacheOptions,
-                faultToleranceOptions: heavyFaultToleranceOptions
-            )
-            let imagesCount = try await images.performExport(client: client, ui: ui)
+            if hasIconsConfig(params) {
+                let icons = makeIcons(
+                    options: options,
+                    cacheOptions: cacheOptions,
+                    faultToleranceOptions: heavyFaultToleranceOptions
+                )
+                iconsCount = try await icons.performExport(client: client, ui: ui)
+            }
 
-            let typography = makeTypography(
-                options: options,
-                cacheOptions: cacheOptions,
-                faultToleranceOptions: faultToleranceOptions
-            )
-            let typographyCount = try await typography.performExport(client: client, ui: ui)
+            if hasImagesConfig(params) {
+                let images = makeImages(
+                    options: options,
+                    cacheOptions: cacheOptions,
+                    faultToleranceOptions: heavyFaultToleranceOptions
+                )
+                imagesCount = try await images.performExport(client: client, ui: ui)
+            }
+
+            if hasTypographyConfig(params) {
+                let typography = makeTypography(
+                    options: options,
+                    cacheOptions: cacheOptions,
+                    faultToleranceOptions: faultToleranceOptions
+                )
+                typographyCount = try await typography.performExport(client: client, ui: ui)
+            }
 
             return ExportStats(
                 colors: colorsCount,
@@ -73,6 +88,37 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                 typography: typographyCount
             )
         }
+    }
+
+    // MARK: - Config Detection
+
+    private func hasColorsConfig(_ params: Params?) -> Bool {
+        guard let params else { return false }
+        let hasColorSource = params.common?.colors != nil || params.common?.variablesColors != nil
+        let hasColorOutput = params.ios?.colors != nil
+            || params.android?.colors != nil
+            || params.flutter?.colors != nil
+        return hasColorSource || hasColorOutput
+    }
+
+    private func hasIconsConfig(_ params: Params?) -> Bool {
+        guard let params else { return false }
+        return params.ios?.icons != nil
+            || params.android?.icons != nil
+            || params.flutter?.icons != nil
+    }
+
+    private func hasImagesConfig(_ params: Params?) -> Bool {
+        guard let params else { return false }
+        return params.ios?.images != nil
+            || params.android?.images != nil
+            || params.flutter?.images != nil
+    }
+
+    private func hasTypographyConfig(_ params: Params?) -> Bool {
+        guard let params else { return false }
+        return params.ios?.typography != nil
+            || params.android?.typography != nil
     }
 }
 
