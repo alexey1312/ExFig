@@ -153,7 +153,7 @@ extension ExFigCommand.Download {
             }
 
             guard !components.isEmpty else {
-                ui.warning("No icons found in frame '\(effectiveFrameName)'")
+                ui.warning(.noAssetsFound(assetType: "icons", frameName: effectiveFrameName))
                 return
             }
 
@@ -211,7 +211,7 @@ extension ExFigCommand.Download {
             }
 
             guard !components.isEmpty else {
-                ui.warning("No images found in frame '\(effectiveFrameName)'")
+                ui.warning(.noAssetsFound(assetType: "images", frameName: effectiveFrameName))
                 return
             }
 

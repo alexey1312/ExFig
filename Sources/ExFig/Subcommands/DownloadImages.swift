@@ -73,11 +73,18 @@ extension ExFigCommand {
             // Create Figma client with fault tolerance
             let baseClient = FigmaClient(accessToken: accessToken, timeout: TimeInterval(downloadOptions.timeout))
             let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let maxRetries = faultToleranceOptions.maxRetries
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,
                 rateLimiter: rateLimiter,
                 onRetry: { attempt, error in
-                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                    let warning = ExFigWarning.retrying(
+                        attempt: attempt,
+                        maxAttempts: maxRetries,
+                        error: error.localizedDescription,
+                        delay: "..."
+                    )
+                    ui.warning(warning)
                 }
             )
 
@@ -93,7 +100,7 @@ extension ExFigCommand {
             }
 
             guard !imagePacks.isEmpty else {
-                ui.warning("No images found in frame '\(downloadOptions.frameName)'")
+                ui.warning(.noAssetsFound(assetType: "images", frameName: downloadOptions.frameName))
                 return
             }
 

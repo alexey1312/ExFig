@@ -157,7 +157,7 @@ extension ExFigCommand {
                 }
                 try xcodeProject.save()
             } catch {
-                ui.warning("Unable to add some file references to Xcode project")
+                ui.warning(.xcodeProjectUpdateFailed)
             }
         }
 

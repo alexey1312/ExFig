@@ -140,6 +140,9 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 | `ProgressBar`           | Progress bar with percentage and ETA                  |
 | `BatchProgressCallback` | `@Sendable (Int, Int) -> Void` for batch progress     |
 | `Lock<T>`               | Thread-safe state wrapper (NSLock-based, Sendable)    |
+| `ExFigWarning`          | Enum of all warning types for consistent messaging    |
+| `ExFigWarningFormatter` | Formats warnings as compact or multiline TOON strings |
+| `ConflictFormatter`     | Formats batch output path conflicts for display       |
 
 **TerminalOutputManager API:**
 
@@ -156,6 +159,37 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 - `Spinner` and `ProgressBar` use `DispatchQueue` (not Swift actors) for smooth 12 FPS rendering
 - All terminal output routes through `TerminalOutputManager` to prevent race conditions
 - `Lock<T>` wrapper provides thread-safe state with NSLock (compatible with macOS 12.0+)
+
+### Warnings System
+
+Use `ExFigWarning` enum for all CLI warnings to ensure consistent formatting:
+
+```swift
+// Typed warnings - preferred
+ui.warning(.configMissing(platform: "ios", assetType: "icons"))
+ui.warning(.noAssetsFound(assetType: "images", frameName: "Frame"))
+ui.warning(.xcodeProjectUpdateFailed)
+
+// Formatted retry messages via RetryLogger (for rate-limited clients)
+RetryLogger.formatRetryMessage(context)
+```
+
+**Warning types:**
+
+| Category        | Cases                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| Configuration   | `configMissing`, `composeRequirementMissing`                                                               |
+| Asset Discovery | `noAssetsFound`                                                                                            |
+| Xcode           | `xcodeProjectUpdateFailed`                                                                                 |
+| Batch           | `noConfigsFound`, `invalidConfigsSkipped`, `noValidConfigs`, `checkpointExpired`, `checkpointPathMismatch` |
+| Retry           | `retrying(attempt:maxAttempts:error:delay:)`                                                               |
+
+**Adding new warnings:**
+
+1. Add case to `ExFigWarning` enum in `Sources/ExFig/TerminalUI/ExFigWarning.swift`
+2. Add formatting in `ExFigWarningFormatter.format(_:)` — use compact `key=value` for simple warnings, multiline for
+   complex
+3. Call via `ui.warning(.yourNewCase)`
 
 ### Fault Tolerance for API Commands
 
