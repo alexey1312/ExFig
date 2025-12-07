@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2025-12-07
+
+### Bug Fixes
+
+- **batch**: Skip unconfigured asset types and simplify output by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **release**: Use git-cliff for release notes generation by @alexey1312
+
+
+## [1.0.3] - 2025-12-07
+
+### Bug Fixes
+
+- **api**: Increase default retry base delay to 3 seconds by @alexey1312
+
+
+### Documentation
+
+- **oxipng**: Update doc to oxipng by @alexey1312
+
+
+### Features
+
+- **batch**: Add cache and concurrency options to batch command by @alexey1312
+
+
 ## [1.0.2] - 2025-12-06
 
 ### Bug Fixes
