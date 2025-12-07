@@ -46,6 +46,8 @@ public struct SVGPath: Equatable, Sendable {
     public let strokeWidth: Double?
     public let strokeLineCap: StrokeCap?
     public let strokeLineJoin: StrokeJoin?
+    public let strokeDashArray: [Double]?
+    public let strokeDashOffset: Double?
     public let fillRule: FillRule?
     public let opacity: Double?
 
@@ -58,6 +60,8 @@ public struct SVGPath: Equatable, Sendable {
         strokeWidth: Double?,
         strokeLineCap: StrokeCap?,
         strokeLineJoin: StrokeJoin?,
+        strokeDashArray: [Double]? = nil,
+        strokeDashOffset: Double? = nil,
         fillRule: FillRule?,
         opacity: Double?
     ) {
@@ -69,6 +73,8 @@ public struct SVGPath: Equatable, Sendable {
         self.strokeWidth = strokeWidth
         self.strokeLineCap = strokeLineCap
         self.strokeLineJoin = strokeLineJoin
+        self.strokeDashArray = strokeDashArray
+        self.strokeDashOffset = strokeDashOffset
         self.fillRule = fillRule
         self.opacity = opacity
     }
@@ -227,7 +233,8 @@ public struct SVGColor: Equatable, Sendable {
 /// Parses SVG files into ParsedSVG structures
 public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this type_body_length
     private static let inheritableAttributes = [
-        "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "fill-rule", "opacity",
+        "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
+        "stroke-dasharray", "stroke-dashoffset", "fill-rule", "opacity",
     ]
 
     private let pathParser = SVGPathParser()
@@ -241,8 +248,20 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     /// Storage for radial gradient definitions
     private var radialGradientDefs: [String: SVGRadialGradient] = [:]
 
+    /// Storage for <symbol> and reusable element definitions (for <use> support)
+    private var symbolDefs: [String: XMLElement] = [:]
+
+    /// Storage for all elements with id attribute (for <use> support)
+    private var elementDefs: [String: XMLElement] = [:]
+
+    /// Storage for CSS styles from <style> blocks: selector -> properties
+    private var cssStyles: [String: [String: String]] = [:]
+
     /// Current viewBox for coordinate resolution
     private var currentViewBox: (minX: Double, minY: Double, width: Double, height: Double)?
+
+    /// Maximum depth for resolving nested <use> references
+    private let maxUseDepth = 10
 
     public init() {}
 
@@ -300,6 +319,15 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         clipPathDefs = [:]
         linearGradientDefs = [:]
         radialGradientDefs = [:]
+        symbolDefs = [:]
+        elementDefs = [:]
+        cssStyles = [:]
+
+        // Index all elements with id for <use> resolution
+        indexElementsWithId(from: root)
+
+        // Parse CSS <style> blocks
+        parseStyleElements(from: root)
 
         // Parse dimensions
         let (width, height) = try parseDimensions(from: root)
@@ -405,9 +433,22 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         inheritedAttributes: [String: String]
     ) throws {
         let attrs = mergeAttributes(from: element, with: inheritedAttributes)
+        let name = elementName(element)
+
+        // Skip <defs> - elements there are only used via <use> references
+        if name == "defs" {
+            return
+        }
+
+        // Process <use> elements
+        if name == "use" {
+            let (usePaths, _) = try resolveUseElement(element, inheritedAttributes: attrs)
+            paths.append(contentsOf: usePaths)
+            return // Don't recurse into <use> children
+        }
 
         // Process path elements
-        if elementName(element) == "path" {
+        if name == "path" {
             if let pathData = attributeValue(element, forName: "d") {
                 let path = try createSVGPath(pathData: pathData, attributes: attrs)
                 paths.append(path)
@@ -457,6 +498,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             SVGPath.StrokeJoin(rawValue: $0)
         }
 
+        let strokeDashArray = parseStrokeDashArray(attributes["stroke-dasharray"])
+        let strokeDashOffset = attributes["stroke-dashoffset"].flatMap { Double($0) }
+
         let fillRule: SVGPath.FillRule? = if let rule = attributes["fill-rule"] {
             rule == "evenodd" ? .evenOdd : .nonZero
         } else {
@@ -474,9 +518,23 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             strokeWidth: strokeWidth,
             strokeLineCap: strokeLineCap,
             strokeLineJoin: strokeLineJoin,
+            strokeDashArray: strokeDashArray,
+            strokeDashOffset: strokeDashOffset,
             fillRule: fillRule,
             opacity: opacity
         )
+    }
+
+    /// Parses stroke-dasharray attribute value
+    private func parseStrokeDashArray(_ value: String?) -> [Double]? {
+        guard let value, !value.isEmpty, value.lowercased() != "none" else {
+            return nil
+        }
+
+        let parts = value.split { $0 == "," || $0.isWhitespace }
+        let values = parts.compactMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+
+        return values.isEmpty ? nil : values
     }
 
     private func convertShapeToPath(_ element: XMLElement, attributes: [String: String]) throws -> SVGPath? {
@@ -642,6 +700,271 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         }
     }
 
+    // MARK: - <use> and <symbol> Support
+
+    /// Recursively indexes all elements with id attribute for <use> resolution
+    private func indexElementsWithId(from element: XMLElement) {
+        // Index this element if it has an id
+        if let id = attributeValue(element, forName: "id") {
+            elementDefs[id] = element
+
+            // Also track <symbol> elements separately
+            if elementName(element) == "symbol" {
+                symbolDefs[id] = element
+            }
+        }
+
+        // Recurse into children
+        for child in element.children ?? [] {
+            if let childElement = child as? XMLElement {
+                indexElementsWithId(from: childElement)
+            }
+        }
+    }
+
+    // MARK: - CSS Style Parsing
+
+    /// Recursively finds and parses all <style> elements
+    private func parseStyleElements(from element: XMLElement) {
+        let name = elementName(element)
+
+        if name == "style" {
+            // Extract CSS text content (handles CDATA and regular text)
+            if let cssText = element.stringValue {
+                parseCSSRules(cssText)
+            }
+        }
+
+        // Recurse into children (including defs)
+        for child in element.children ?? [] {
+            if let childElement = child as? XMLElement {
+                parseStyleElements(from: childElement)
+            }
+        }
+    }
+
+    /// Parses CSS rules from a style block text
+    private func parseCSSRules(_ css: String) {
+        // Simple CSS parser: matches selectors { properties }
+        // Pattern: ([^{]+)\{([^}]+)\}
+        let pattern = #"([^{]+)\{([^}]+)\}"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return
+        }
+
+        let matches = regex.matches(in: css, options: [], range: NSRange(css.startIndex..., in: css))
+        for match in matches {
+            guard let selectorRange = Range(match.range(at: 1), in: css),
+                  let propertiesRange = Range(match.range(at: 2), in: css)
+            else {
+                continue
+            }
+
+            let selectorsString = String(css[selectorRange])
+            let propertiesString = String(css[propertiesRange])
+
+            let properties = parseCSSProperties(propertiesString)
+            guard !properties.isEmpty else { continue }
+
+            // Handle multiple selectors separated by comma
+            let selectors = selectorsString.split(separator: ",").map {
+                $0.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+
+            for selector in selectors {
+                cssStyles[selector, default: [:]].merge(properties) { _, new in new }
+            }
+        }
+    }
+
+    /// Parses CSS property declarations (key: value; pairs)
+    private func parseCSSProperties(_ properties: String) -> [String: String] {
+        var result: [String: String] = [:]
+        let declarations = properties.split(separator: ";")
+        for declaration in declarations {
+            let parts = declaration.split(separator: ":", maxSplits: 1)
+            if parts.count == 2 {
+                let property = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                let value = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                if !value.isEmpty {
+                    result[property] = value
+                }
+            }
+        }
+        return result
+    }
+
+    /// Gets CSS styles for an element based on its class and id
+    private func getCSSStyles(for element: XMLElement) -> [String: String] {
+        var styles: [String: String] = [:]
+
+        // Apply ID selector styles (#id)
+        if let id = attributeValue(element, forName: "id") {
+            if let idStyles = cssStyles["#\(id)"] {
+                styles.merge(idStyles) { _, new in new }
+            }
+        }
+
+        // Apply class selector styles (.class)
+        if let classAttr = attributeValue(element, forName: "class") {
+            let classes = classAttr.split { $0.isWhitespace }
+            for cls in classes {
+                if let classStyles = cssStyles[".\(cls)"] {
+                    styles.merge(classStyles) { _, new in new }
+                }
+            }
+        }
+
+        return styles
+    }
+
+    /// Resolves a <use> element by finding and processing its referenced content
+    /// - Parameters:
+    ///   - useElement: The <use> element to resolve
+    ///   - inheritedAttributes: Attributes inherited from parent elements
+    ///   - depth: Current recursion depth (to prevent infinite loops)
+    /// - Returns: Tuple of (paths, groups) resolved from the referenced element
+    private func resolveUseElement(
+        _ useElement: XMLElement,
+        inheritedAttributes: [String: String],
+        depth: Int = 0
+    ) throws -> (paths: [SVGPath], groups: [SVGGroup]) {
+        // Check depth limit to prevent infinite recursion
+        guard depth < maxUseDepth else {
+            return ([], [])
+        }
+
+        // Get href or xlink:href attribute
+        let href = attributeValue(useElement, forName: "href")
+            ?? attributeValue(useElement, forName: "xlink:href")
+
+        // Validate href format (should be #id)
+        guard let href, href.hasPrefix("#"), href.count > 1 else {
+            return ([], [])
+        }
+
+        let refId = String(href.dropFirst())
+
+        // Find referenced element
+        guard let referencedElement = symbolDefs[refId] ?? elementDefs[refId] else {
+            return ([], [])
+        }
+
+        // Merge attributes from <use> element
+        let attrs = mergeAttributes(from: useElement, with: inheritedAttributes)
+
+        // Check if <use> has x, y, or transform attributes
+        let useX = attributeValue(useElement, forName: "x").flatMap { Double($0) }
+        let useY = attributeValue(useElement, forName: "y").flatMap { Double($0) }
+        let useTransform = parseTransform(from: useElement)
+
+        // Determine if we need to wrap in a group (for position offset or transform)
+        let needsGroup = useX != nil || useY != nil || useTransform != nil
+
+        // Parse the referenced element's content
+        var resolvedPaths: [SVGPath] = []
+        var resolvedGroups: [SVGGroup] = []
+
+        try resolveReferencedContent(
+            referencedElement,
+            into: &resolvedPaths,
+            groups: &resolvedGroups,
+            inheritedAttributes: attrs,
+            depth: depth
+        )
+
+        // If we need to wrap in a group, create one
+        if needsGroup {
+            // Combine x/y offset with any existing transform
+            let transform: SVGTransform? = if let useX, let useY {
+                if let existingTransform = useTransform {
+                    // Combine translate with existing transform
+                    SVGTransform(
+                        translateX: (existingTransform.translateX ?? 0) + useX,
+                        translateY: (existingTransform.translateY ?? 0) + useY,
+                        scaleX: existingTransform.scaleX,
+                        scaleY: existingTransform.scaleY,
+                        rotation: existingTransform.rotation,
+                        pivotX: existingTransform.pivotX,
+                        pivotY: existingTransform.pivotY
+                    )
+                } else {
+                    SVGTransform(translateX: useX, translateY: useY)
+                }
+            } else if let useX {
+                SVGTransform(translateX: useX, translateY: 0)
+            } else if let useY {
+                SVGTransform(translateX: 0, translateY: useY)
+            } else {
+                useTransform
+            }
+
+            let group = SVGGroup(
+                transform: transform,
+                clipPath: nil,
+                paths: resolvedPaths,
+                children: resolvedGroups,
+                opacity: attrs["opacity"].flatMap { Double($0) }
+            )
+            return ([], [group])
+        }
+
+        return (resolvedPaths, resolvedGroups)
+    }
+
+    /// Resolves content from a referenced element (symbol, g, path, etc.)
+    private func resolveReferencedContent(
+        _ element: XMLElement,
+        into paths: inout [SVGPath],
+        groups: inout [SVGGroup],
+        inheritedAttributes: [String: String],
+        depth: Int
+    ) throws {
+        let name = elementName(element)
+
+        // For <symbol>, process its children
+        if name == "symbol" || name == "g" {
+            for child in element.children ?? [] {
+                if let childElement = child as? XMLElement {
+                    try resolveReferencedContent(
+                        childElement,
+                        into: &paths,
+                        groups: &groups,
+                        inheritedAttributes: inheritedAttributes,
+                        depth: depth
+                    )
+                }
+            }
+            return
+        }
+
+        // For <use>, recursively resolve
+        if name == "use" {
+            let (usePaths, useGroups) = try resolveUseElement(
+                element,
+                inheritedAttributes: inheritedAttributes,
+                depth: depth + 1
+            )
+            paths.append(contentsOf: usePaths)
+            groups.append(contentsOf: useGroups)
+            return
+        }
+
+        // For <path>, create path
+        if name == "path", let pathData = attributeValue(element, forName: "d") {
+            let pathAttrs = mergeAttributes(from: element, with: inheritedAttributes)
+            let path = try createSVGPath(pathData: pathData, attributes: pathAttrs)
+            paths.append(path)
+            return
+        }
+
+        // For other shapes, convert to path
+        let attrs = mergeAttributes(from: element, with: inheritedAttributes)
+        if let path = try convertShapeToPath(element, attributes: attrs) {
+            paths.append(path)
+        }
+    }
+
     private func collectGroups(
         from element: XMLElement,
         into groups: inout [SVGGroup],
@@ -656,6 +979,11 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             if name == "g" {
                 let group = try parseGroup(childElement, inheritedAttributes: inheritedAttributes)
                 groups.append(group)
+            } else if name == "use" {
+                // Process <use> elements that may create groups
+                let attrs = mergeAttributes(from: childElement, with: inheritedAttributes)
+                let (_, useGroups) = try resolveUseElement(childElement, inheritedAttributes: attrs)
+                groups.append(contentsOf: useGroups)
             } else if name != "defs" {
                 // Skip defs but recurse into other non-group elements
                 try collectGroups(from: childElement, into: &groups, inheritedAttributes: inheritedAttributes)
@@ -685,11 +1013,19 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
     private func mergeAttributes(from element: XMLElement, with inherited: [String: String]) -> [String: String] {
         var attrs = inherited
+
+        // Apply CSS styles (lower priority than element attributes)
+        let cssAttrs = getCSSStyles(for: element)
+        attrs.merge(cssAttrs) { _, new in new }
+
+        // Apply element attributes (override CSS)
         for attr in Self.inheritableAttributes {
             if let value = attributeValue(element, forName: attr) {
                 attrs[attr] = value
             }
         }
+
+        // Apply inline style attribute (highest priority)
         if let style = attributeValue(element, forName: "style") {
             attrs.merge(parseStyleAttribute(style)) { _, new in new }
         }

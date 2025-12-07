@@ -9,6 +9,8 @@ public struct SVGTransform: Equatable, Sendable {
     public let rotation: Double?
     public let pivotX: Double?
     public let pivotY: Double?
+    public let skewX: Double?
+    public let skewY: Double?
 
     public init(
         translateX: Double? = nil,
@@ -17,7 +19,9 @@ public struct SVGTransform: Equatable, Sendable {
         scaleY: Double? = nil,
         rotation: Double? = nil,
         pivotX: Double? = nil,
-        pivotY: Double? = nil
+        pivotY: Double? = nil,
+        skewX: Double? = nil,
+        skewY: Double? = nil
     ) {
         self.translateX = translateX
         self.translateY = translateY
@@ -26,6 +30,8 @@ public struct SVGTransform: Equatable, Sendable {
         self.rotation = rotation
         self.pivotX = pivotX
         self.pivotY = pivotY
+        self.skewX = skewX
+        self.skewY = skewY
     }
 
     /// Parses an SVG transform attribute string
@@ -69,9 +75,12 @@ private struct ParsedTransformValues {
     var rotation: Double?
     var pivotX: Double?
     var pivotY: Double?
+    var skewX: Double?
+    var skewY: Double?
 
     var hasValidTransform: Bool {
-        translateX != nil || translateY != nil || scaleX != nil || scaleY != nil || rotation != nil
+        translateX != nil || translateY != nil || scaleX != nil || scaleY != nil ||
+            rotation != nil || skewX != nil || skewY != nil
     }
 
     mutating func apply(match: NSTextCheckingResult, in string: String) {
@@ -91,6 +100,12 @@ private struct ParsedTransformValues {
             applyScale(values)
         case "rotate":
             applyRotate(values)
+        case "matrix":
+            applyMatrix(values)
+        case "skewX":
+            applySkewX(values)
+        case "skewY":
+            applySkewY(values)
         default:
             break
         }
@@ -117,6 +132,42 @@ private struct ParsedTransformValues {
         }
     }
 
+    private mutating func applyMatrix(_ values: [Double]) {
+        // matrix(a, b, c, d, e, f) where:
+        // a = scaleX * cos(rotation), b = scaleX * sin(rotation)
+        // c = -scaleY * sin(rotation), d = scaleY * cos(rotation)
+        // e = translateX, f = translateY
+        guard values.count == 6 else { return }
+        let (a, b, c, d, e, f) = (values[0], values[1], values[2], values[3], values[4], values[5])
+
+        // Translation is straightforward
+        translateX = e
+        translateY = f
+
+        // Extract scale from matrix
+        scaleX = sqrt(a * a + b * b)
+        scaleY = sqrt(c * c + d * d)
+
+        // Determine sign of scaleY based on determinant
+        let det = a * d - b * c
+        if det < 0 {
+            scaleY = -(scaleY ?? 1)
+        }
+
+        // Extract rotation (in degrees)
+        rotation = atan2(b, a) * 180 / .pi
+    }
+
+    private mutating func applySkewX(_ values: [Double]) {
+        guard let angle = values.first else { return }
+        skewX = angle
+    }
+
+    private mutating func applySkewY(_ values: [Double]) {
+        guard let angle = values.first else { return }
+        skewY = angle
+    }
+
     func toTransform() -> SVGTransform {
         SVGTransform(
             translateX: translateX,
@@ -125,7 +176,9 @@ private struct ParsedTransformValues {
             scaleY: scaleY,
             rotation: rotation,
             pivotX: pivotX,
-            pivotY: pivotY
+            pivotY: pivotY,
+            skewX: skewX,
+            skewY: skewY
         )
     }
 }
