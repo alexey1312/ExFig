@@ -290,11 +290,11 @@ extension ExFigCommand {
                 if stats.typography > 0 { parts.append("\(stats.typography) typography") }
 
                 let statsString = parts.isEmpty ? "validated" : parts.joined(separator: ", ")
-                ui.success("✓ \(success.config.name) - \(statsString)")
+                ui.success("\(success.config.name) - \(statsString)")
             }
 
             for failure in result.failures {
-                ui.error("✗ \(failure.config.name) - \(failure.error.localizedDescription)")
+                ui.error("\(failure.config.name) - \(failure.error.localizedDescription)")
             }
         }
 
