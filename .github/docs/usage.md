@@ -339,14 +339,20 @@ exfig icons --resume
 
 ## Batch Processing
 
-Process multiple configuration files in parallel with shared rate limiting:
+Process multiple configuration files in parallel with shared rate limiting.
+
+> **Note:** Directory scanning is non-recursive. Only YAML files directly in the specified directory are processed. Use
+> shell globbing for nested configs (e.g., `./configs/*/*.yaml`).
 
 ```bash
-# Process all configs in a directory
+# Process all configs in a directory (non-recursive)
 exfig batch ./configs/
 
 # Process specific config files
 exfig batch ios-app.yaml android-app.yaml flutter-app.yaml
+
+# Process nested configs via shell glob
+exfig batch ./configs/*/*.yaml
 
 # With custom parallelism (default: 3)
 exfig batch ./configs/ --parallel 5

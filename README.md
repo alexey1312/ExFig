@@ -292,14 +292,20 @@ See [CONFIG.md](CONFIG.md#json-export-download-command) for full documentation.
 
 ## Batch Processing
 
-Process multiple configuration files in parallel with shared rate limiting:
+Process multiple configuration files in parallel with shared rate limiting.
+
+> **Note:** Directory scanning is non-recursive. Only YAML files directly in the specified directory are processed. Use
+> shell globbing for nested configs (e.g., `./configs/*/*.yaml`).
 
 ```bash
-# Process all configs in a directory
+# Process all configs in a directory (non-recursive)
 exfig batch ./configs/
 
 # Process specific config files
 exfig batch ios-app.yaml android-app.yaml flutter-app.yaml
+
+# Process nested configs via shell glob
+exfig batch ./configs/*/*.yaml
 
 # With custom parallelism (default: 3)
 exfig batch ./configs/ --parallel 5
@@ -313,14 +319,19 @@ exfig batch ./configs/ --report batch-results.json
 
 ### Batch Options
 
-| Option          | Description                                | Default |
-| --------------- | ------------------------------------------ | ------- |
-| `--parallel`    | Maximum concurrent configs                 | 3       |
-| `--fail-fast`   | Stop processing on first error             | false   |
-| `--rate-limit`  | Figma API requests per minute              | 10      |
-| `--max-retries` | Maximum retry attempts for failed requests | 4       |
-| `--resume`      | Resume from previous checkpoint            | false   |
-| `--report`      | Path to write JSON report                  |         |
+| Option                   | Description                                | Default |
+| ------------------------ | ------------------------------------------ | ------- |
+| `--parallel`             | Maximum concurrent configs                 | 3       |
+| `--fail-fast`            | Stop processing on first error             | false   |
+| `--rate-limit`           | Figma API requests per minute              | 10      |
+| `--max-retries`          | Maximum retry attempts for failed requests | 4       |
+| `--resume`               | Resume from previous checkpoint            | false   |
+| `--report`               | Path to write JSON report                  |         |
+| `--cache`                | Enable version tracking cache              | false   |
+| `--no-cache`             | Disable version tracking cache             | false   |
+| `--force`                | Force export and update cache              | false   |
+| `--cache-path`           | Custom cache file path                     |         |
+| `--concurrent-downloads` | Maximum concurrent CDN downloads           | 20      |
 
 ### Batch Report Format
 

@@ -35,12 +35,12 @@ public struct RetryPolicy: Sendable {
     /// Create a retry policy with default values.
     /// - Parameters:
     ///   - maxRetries: Maximum retry attempts (default: 4).
-    ///   - baseDelay: Base delay in seconds (default: 1.0).
+    ///   - baseDelay: Base delay in seconds (default: 3.0).
     ///   - maxDelay: Maximum delay in seconds (default: 30.0).
     ///   - jitterFactor: Jitter factor 0.0-1.0 (default: 0.2).
     public init(
         maxRetries: Int = 4,
-        baseDelay: TimeInterval = 1.0,
+        baseDelay: TimeInterval = 3.0,
         maxDelay: TimeInterval = 30.0,
         jitterFactor: Double = 0.2
     ) {
