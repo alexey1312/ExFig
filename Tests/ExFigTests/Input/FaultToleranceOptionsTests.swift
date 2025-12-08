@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 @testable import ExFig
 import ExFigCore
 import FigmaAPI
@@ -16,6 +17,34 @@ final class FaultToleranceOptionsTests: XCTestCase {
         let options = try FaultToleranceOptions.parse([])
 
         XCTAssertEqual(options.rateLimit, 10)
+    }
+
+    func testDefaultTimeout() throws {
+        let options = try FaultToleranceOptions.parse([])
+
+        XCTAssertNil(options.timeout)
+    }
+
+    // MARK: - Timeout Flag
+
+    func testTimeoutFlag() throws {
+        let options = try FaultToleranceOptions.parse(["--timeout", "60"])
+
+        XCTAssertEqual(options.timeout, 60)
+    }
+
+    func testTimeoutFlagWithLargeValue() throws {
+        let options = try FaultToleranceOptions.parse(["--timeout", "300"])
+
+        XCTAssertEqual(options.timeout, 300)
+    }
+
+    func testTimeoutValidationRejectsZero() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--timeout", "0"]))
+    }
+
+    func testTimeoutValidationRejectsNegative() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--timeout", "-1"]))
     }
 
     // MARK: - Max Retries Flag
@@ -46,13 +75,25 @@ final class FaultToleranceOptionsTests: XCTestCase {
         XCTAssertEqual(options.rateLimit, 100)
     }
 
-    // MARK: - Both Flags
+    // MARK: - Combined Flags
 
-    func testBothFlags() throws {
+    func testBothRetriesAndRateLimit() throws {
         let options = try FaultToleranceOptions.parse(["--max-retries", "3", "--rate-limit", "15"])
 
         XCTAssertEqual(options.maxRetries, 3)
         XCTAssertEqual(options.rateLimit, 15)
+    }
+
+    func testAllFlags() throws {
+        let options = try FaultToleranceOptions.parse([
+            "--max-retries", "3",
+            "--rate-limit", "15",
+            "--timeout", "90",
+        ])
+
+        XCTAssertEqual(options.maxRetries, 3)
+        XCTAssertEqual(options.rateLimit, 15)
+        XCTAssertEqual(options.timeout, 90)
     }
 
     // MARK: - createRetryPolicy
@@ -120,8 +161,37 @@ final class HeavyFaultToleranceOptionsTests: XCTestCase {
 
         XCTAssertEqual(options.maxRetries, 4)
         XCTAssertEqual(options.rateLimit, 10)
+        XCTAssertNil(options.timeout)
         XCTAssertFalse(options.failFast)
         XCTAssertFalse(options.resume)
+    }
+
+    // MARK: - Timeout Flag
+
+    func testTimeoutFlag() throws {
+        let options = try HeavyFaultToleranceOptions.parse(["--timeout", "60"])
+
+        XCTAssertEqual(options.timeout, 60)
+    }
+
+    func testTimeoutValidationRejectsZero() {
+        XCTAssertThrowsError(try HeavyFaultToleranceOptions.parse(["--timeout", "0"]))
+    }
+
+    func testTimeoutValidationRejectsNegative() {
+        XCTAssertThrowsError(try HeavyFaultToleranceOptions.parse(["--timeout", "-1"]))
+    }
+
+    func testTimeoutWithOtherFlags() throws {
+        let options = try HeavyFaultToleranceOptions.parse([
+            "--timeout", "90",
+            "--max-retries", "6",
+            "--rate-limit", "20",
+        ])
+
+        XCTAssertEqual(options.timeout, 90)
+        XCTAssertEqual(options.maxRetries, 6)
+        XCTAssertEqual(options.rateLimit, 20)
     }
 
     // MARK: - Fail Fast Flag
@@ -153,12 +223,14 @@ final class HeavyFaultToleranceOptionsTests: XCTestCase {
         let options = try HeavyFaultToleranceOptions.parse([
             "--max-retries", "6",
             "--rate-limit", "20",
+            "--timeout", "120",
             "--fail-fast",
             "--resume",
         ])
 
         XCTAssertEqual(options.maxRetries, 6)
         XCTAssertEqual(options.rateLimit, 20)
+        XCTAssertEqual(options.timeout, 120)
         XCTAssertTrue(options.failFast)
         XCTAssertTrue(options.resume)
     }

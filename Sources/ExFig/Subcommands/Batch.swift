@@ -4,6 +4,7 @@ import FigmaAPI
 import Foundation
 
 extension ExFigCommand {
+    // swiftlint:disable:next type_body_length
     struct Batch: AsyncParsableCommand {
         static let configuration = CommandConfiguration(
             commandName: "batch",
@@ -62,8 +63,18 @@ extension ExFigCommand {
         @Option(name: .long, help: "Maximum concurrent CDN downloads")
         var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
 
+        // Connection options
+        @Option(name: .long, help: "Figma API request timeout in seconds (overrides config)")
+        var timeout: Int?
+
         @Argument(help: "Config files or directory to process")
         var paths: [String]
+
+        mutating func validate() throws {
+            if let timeout, timeout <= 0 {
+                throw ValidationError("Timeout must be positive")
+            }
+        }
 
         // swiftlint:disable:next function_body_length
         func run() async throws {
@@ -211,7 +222,8 @@ extension ExFigCommand {
                 noCache: noCache,
                 force: force,
                 cachePath: cachePath,
-                concurrentDownloads: concurrentDownloads
+                concurrentDownloads: concurrentDownloads,
+                cliTimeout: timeout
             )
 
             ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers...")
