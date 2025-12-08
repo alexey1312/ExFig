@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.7] - 2025-12-08
+
+### Bug Fixes
+
+- **release**: Use v-prefixed version format consistently by @alexey1312
+
+
 ## [1.0.6] - 2025-12-08
 
 ### Features
