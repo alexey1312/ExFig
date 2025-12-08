@@ -25,22 +25,41 @@ struct FileVersionInfo: Sendable {
 
 /// Manages Figma file version tracking and caching.
 /// Used to skip exports when files haven't changed since last export.
+///
+/// ## Batch Mode
+///
+/// When `batchMode` is true (detected via `SharedGranularCacheStorage.cache`),
+/// the manager uses shared cache instead of loading from disk, and defers
+/// cache updates to the batch orchestrator.
 final class ImageTrackingManager: @unchecked Sendable {
     private let client: Client
     private let cachePath: URL
     private let logger: Logger
     private var cache: ImageTrackingCache
 
+    /// Whether running in batch mode (defers cache saves).
+    let batchMode: Bool
+
     /// Creates a new tracking manager.
     /// - Parameters:
     ///   - client: Figma API client for fetching file metadata.
     ///   - cachePath: Path to the cache file (nil uses default).
     ///   - logger: Logger for debug output.
-    init(client: Client, cachePath: String? = nil, logger: Logger) {
+    ///   - batchMode: If true, uses shared cache and defers saves.
+    init(client: Client, cachePath: String? = nil, logger: Logger, batchMode: Bool = false) {
         self.client = client
-        self.cachePath = ImageTrackingCache.resolvePath(customPath: cachePath)
         self.logger = logger
-        cache = ImageTrackingCache.load(from: self.cachePath)
+        self.batchMode = batchMode
+
+        // In batch mode, use shared cache if available
+        if batchMode, let shared = SharedGranularCacheStorage.cache {
+            self.cachePath = shared.cachePath
+            cache = shared.cache
+            logger.debug("Using shared granular cache (batch mode)")
+        } else {
+            self.cachePath = ImageTrackingCache.resolvePath(customPath: cachePath)
+            cache = ImageTrackingCache.load(from: self.cachePath)
+        }
     }
 
     // MARK: - Version Checking
@@ -162,17 +181,35 @@ final class ImageTrackingManager: @unchecked Sendable {
 
     /// Updates node hashes for a file after successful export.
     ///
+    /// In batch mode, this is a no-op — the caller is responsible for collecting
+    /// hashes via `ExportStats.computedNodeHashes` and the batch orchestrator
+    /// will merge and save them after all configs complete.
+    ///
     /// - Parameters:
     ///   - fileId: The Figma file ID.
     ///   - hashes: Map of node ID to computed hash.
     func updateNodeHashes(fileId: String, hashes: [NodeId: String]) throws {
+        guard !batchMode else {
+            logger.debug("Skipping node hash save in batch mode (\(hashes.count) hashes for \(fileId))")
+            return
+        }
+
         cache.updateNodeHashes(fileId: fileId, hashes: hashes)
         try cache.save(to: cachePath)
         logger.debug("Updated \(hashes.count) node hashes for \(fileId)")
     }
 
     /// Clears node hashes for a file (used with --force flag).
+    ///
+    /// In batch mode, this updates only the in-memory cache (shared).
+    /// The batch orchestrator handles final persistence.
     func clearNodeHashes(fileId: String) throws {
+        if batchMode {
+            // In batch mode, just log — force clears are handled at batch start
+            logger.debug("Force flag: node hashes will be cleared for \(fileId)")
+            return
+        }
+
         cache.clearNodeHashes(fileId: fileId)
         try cache.save(to: cachePath)
         logger.debug("Cleared node hashes for \(fileId)")

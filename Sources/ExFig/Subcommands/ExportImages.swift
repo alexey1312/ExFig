@@ -49,10 +49,25 @@ extension ExFigCommand {
             _ = try await performExport(client: client, ui: ui)
         }
 
+        /// Result of images export for batch mode integration.
+        struct ImagesExportResult {
+            let count: Int
+            let computedHashes: [String: [String: String]]
+            let granularCacheStats: GranularCacheStats?
+        }
+
         /// Result of a platform export operation with granular cache hashes.
         private struct PlatformExportResult {
             let count: Int
             let hashes: [String: [NodeId: String]]
+            /// Number of images skipped by granular cache.
+            let skippedCount: Int
+
+            init(count: Int, hashes: [String: [NodeId: String]], skippedCount: Int = 0) {
+                self.count = count
+                self.hashes = hashes
+                self.skippedCount = skippedCount
+            }
         }
 
         /// Performs the actual export and returns the number of exported images.
@@ -60,10 +75,26 @@ extension ExFigCommand {
         ///   - client: The Figma API client to use.
         ///   - ui: The terminal UI for progress and messages.
         /// - Returns: The number of images exported.
-        func performExport( // swiftlint:disable:this function_body_length
+        func performExport(
             client: Client,
             ui: TerminalUI
         ) async throws -> Int {
+            let result = try await performExportWithResult(client: client, ui: ui)
+            return result.count
+        }
+
+        /// Performs export and returns full result with hashes for batch mode.
+        /// - Parameters:
+        ///   - client: The Figma API client to use.
+        ///   - ui: The terminal UI for progress and messages.
+        /// - Returns: Export result including count, hashes, and granular cache stats.
+        func performExportWithResult( // swiftlint:disable:this function_body_length
+            client: Client,
+            ui: TerminalUI
+        ) async throws -> ImagesExportResult {
+            // Detect batch mode via TaskLocal
+            let batchMode = SharedGranularCacheStorage.cache != nil
+
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(
@@ -74,12 +105,13 @@ extension ExFigCommand {
                     configCachePath: options.params.common?.cache?.path,
                     assetType: "Images",
                     ui: ui,
-                    logger: logger
+                    logger: logger,
+                    batchMode: batchMode
                 )
             )
 
             guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
-                return 0
+                return ImagesExportResult(count: 0, computedHashes: [:], granularCacheStats: nil)
             }
 
             // Check for granular cache warnings and setup
@@ -104,6 +136,7 @@ extension ExFigCommand {
                 : nil
 
             var totalImages = 0
+            var totalSkipped = 0
             var allComputedHashes: [String: [NodeId: String]] = [:]
 
             if options.params.ios != nil {
@@ -115,6 +148,7 @@ extension ExFigCommand {
                     ui: ui
                 )
                 totalImages += result.count
+                totalSkipped += result.skippedCount
                 allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
             }
 
@@ -127,6 +161,7 @@ extension ExFigCommand {
                     ui: ui
                 )
                 totalImages += result.count
+                totalSkipped += result.skippedCount
                 allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
             }
 
@@ -139,20 +174,37 @@ extension ExFigCommand {
                     ui: ui
                 )
                 totalImages += result.count
+                totalSkipped += result.skippedCount
                 allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
             }
 
             // Update cache after successful export
             try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
 
-            // Update granular cache node hashes
+            // Update granular cache node hashes (no-op in batch mode)
             if granularCacheEnabled {
                 for (fileId, hashes) in allComputedHashes where !hashes.isEmpty {
                     try trackingManager.updateNodeHashes(fileId: fileId, hashes: hashes)
                 }
             }
 
-            return totalImages
+            // Convert NodeId keys to String for batch result
+            let stringHashes = allComputedHashes.mapValues { nodeHashes in
+                nodeHashes.reduce(into: [String: String]()) { result, pair in
+                    result[pair.key] = pair.value
+                }
+            }
+
+            // Build granular cache stats if granular cache was used
+            let stats: GranularCacheStats? = granularCacheEnabled && (totalImages > 0 || totalSkipped > 0)
+                ? GranularCacheStats(skipped: totalSkipped, exported: totalImages)
+                : nil
+
+            return ImagesExportResult(
+                count: totalImages,
+                computedHashes: stringHashes,
+                granularCacheStats: stats
+            )
         }
 
         /// Merges hash maps from multiple platform exports.
@@ -207,7 +259,11 @@ extension ExFigCommand {
             // Early return if all images skipped by granular cache
             if loaderResult.allSkipped {
                 ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
-                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
             }
 
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
@@ -273,10 +329,19 @@ extension ExFigCommand {
                 try fileWriter.write(files: localFiles)
             }
 
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - images.count
+                : 0
+
             guard params.ios?.xcassetsInSwiftPackage == false else {
                 await checkForUpdate(logger: logger)
                 ui.success("Done! Exported \(images.count) images.")
-                return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: images.count,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: skippedCount
+                )
             }
 
             do {
@@ -294,7 +359,11 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(images.count) images.")
-            return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
+            return PlatformExportResult(
+                count: images.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
 
         private func exportAndroidImages( // swiftlint:disable:this function_body_length
@@ -330,7 +399,11 @@ extension ExFigCommand {
             // Early return if all images skipped by granular cache
             if loaderResult.allSkipped {
                 ui.success("All images unchanged (granular cache hit). Skipping Android export.")
-                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
             }
 
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
@@ -369,8 +442,17 @@ extension ExFigCommand {
 
             await checkForUpdate(logger: logger)
 
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - images.count
+                : 0
+
             ui.success("Done! Exported \(images.count) images.")
-            return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
+            return PlatformExportResult(
+                count: images.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
 
         // swiftlint:disable:next function_body_length
@@ -629,7 +711,11 @@ extension ExFigCommand {
             // Early return if all images skipped by granular cache
             if loaderResult.allSkipped {
                 ui.success("All images unchanged (granular cache hit). Skipping Flutter export.")
-                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
             }
 
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
@@ -723,8 +809,17 @@ extension ExFigCommand {
 
             await checkForUpdate(logger: logger)
 
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - images.count
+                : 0
+
             ui.success("Done! Exported \(images.count) images to Flutter project.")
-            return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
+            return PlatformExportResult(
+                count: images.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
     }
 }

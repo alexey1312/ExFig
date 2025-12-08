@@ -353,6 +353,20 @@ exfig batch --cache --experimental-granular-cache --force
 - `Sources/ExFig/Cache/FNV1aHasher.swift` - Pure Swift FNV-1a 64-bit implementation
 - `Sources/FigmaAPI/Model/NodeHashableProperties.swift` - Hashable visual properties struct
 - `Sources/FigmaAPI/Model/FloatNormalization.swift` - Float normalization for stable hashing
+- `Sources/ExFig/Batch/SharedGranularCache.swift` - TaskLocal storage for batch mode cache sharing
+
+**Batch mode behavior:**
+
+When using granular cache in batch mode (`exfig batch --cache --experimental-granular-cache`), the cache is shared
+across all parallel config workers to avoid race conditions:
+
+1. Cache is loaded once before batch execution and shared via `@TaskLocal`
+2. Workers read from shared cache (no disk I/O during parallel execution)
+3. Workers return computed hashes in `ExportStats.computedNodeHashes`
+4. After batch completes, all hashes are merged and saved once to disk
+5. Batch summary shows aggregated granular cache stats: `Granular cache: N nodes skipped, M nodes exported`
+
+This pattern ensures multiple configs referencing the same Figma file all benefit from granular cache tracking.
 
 **Known limitations:**
 

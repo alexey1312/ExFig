@@ -20,6 +20,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
     let experimentalGranularCache: Bool
     let concurrentDownloads: Int
 
+    // swiftlint:disable:next function_body_length
     func export(
         configFile: ConfigFile,
         options: ExFigOptions,
@@ -27,24 +28,17 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         ui: TerminalUI
     ) async throws -> ExportStats {
         try await InjectedClientStorage.$client.withValue(client) {
-            var cacheOptions = CacheOptions()
-            cacheOptions.cache = cache
-            cacheOptions.noCache = noCache
-            cacheOptions.force = force
-            cacheOptions.cachePath = cachePath
-            cacheOptions.experimentalGranularCache = experimentalGranularCache
-
+            let cacheOptions = makeCacheOptions()
             let faultToleranceOptions = FaultToleranceOptions()
-
-            var heavyFaultToleranceOptions = HeavyFaultToleranceOptions()
-            heavyFaultToleranceOptions.resume = resume
-            heavyFaultToleranceOptions.concurrentDownloads = concurrentDownloads
+            let heavyFaultToleranceOptions = makeHeavyFaultToleranceOptions()
 
             let params = options.params
             var colorsCount = 0
             var iconsCount = 0
             var imagesCount = 0
             var typographyCount = 0
+            var allComputedHashes: [String: [String: String]] = [:]
+            var allGranularStats: GranularCacheStats?
 
             // Only run exports for configured asset types
             if hasColorsConfig(params) {
@@ -62,7 +56,10 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: heavyFaultToleranceOptions
                 )
-                iconsCount = try await icons.performExport(client: client, ui: ui)
+                let result = try await icons.performExportWithResult(client: client, ui: ui)
+                iconsCount = result.count
+                allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
+                allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
             }
 
             if hasImagesConfig(params) {
@@ -71,7 +68,10 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: heavyFaultToleranceOptions
                 )
-                imagesCount = try await images.performExport(client: client, ui: ui)
+                let result = try await images.performExportWithResult(client: client, ui: ui)
+                imagesCount = result.count
+                allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
+                allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
             }
 
             if hasTypographyConfig(params) {
@@ -87,9 +87,44 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                 colors: colorsCount,
                 icons: iconsCount,
                 images: imagesCount,
-                typography: typographyCount
+                typography: typographyCount,
+                computedNodeHashes: allComputedHashes,
+                granularCacheStats: allGranularStats
             )
         }
+    }
+
+    private func makeCacheOptions() -> CacheOptions {
+        var options = CacheOptions()
+        options.cache = cache
+        options.noCache = noCache
+        options.force = force
+        options.cachePath = cachePath
+        options.experimentalGranularCache = experimentalGranularCache
+        return options
+    }
+
+    private func makeHeavyFaultToleranceOptions() -> HeavyFaultToleranceOptions {
+        var options = HeavyFaultToleranceOptions()
+        options.resume = resume
+        options.concurrentDownloads = concurrentDownloads
+        return options
+    }
+
+    /// Merges computed hashes from two results.
+    private func mergeHashes(
+        _ existing: [String: [String: String]],
+        _ new: [String: [String: String]]
+    ) -> [String: [String: String]] {
+        var result = existing
+        for (fileId, hashes) in new {
+            if let existingHashes = result[fileId] {
+                result[fileId] = existingHashes.merging(hashes) { _, new in new }
+            } else {
+                result[fileId] = hashes
+            }
+        }
+        return result
     }
 
     // MARK: - Config Detection
