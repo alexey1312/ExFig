@@ -49,12 +49,21 @@ extension ExFigCommand {
             _ = try await performExport(client: client, ui: ui)
         }
 
+        /// Result of a platform export operation with granular cache hashes.
+        private struct PlatformExportResult {
+            let count: Int
+            let hashes: [String: [NodeId: String]]
+        }
+
         /// Performs the actual export and returns the number of exported images.
         /// - Parameters:
         ///   - client: The Figma API client to use.
         ///   - ui: The terminal UI for progress and messages.
         /// - Returns: The number of images exported.
-        func performExport(client: Client, ui: TerminalUI) async throws -> Int {
+        func performExport( // swiftlint:disable:this function_body_length
+            client: Client,
+            ui: TerminalUI
+        ) async throws -> Int {
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(
@@ -73,51 +82,145 @@ extension ExFigCommand {
                 return 0
             }
 
+            // Check for granular cache warnings and setup
+            let configCacheEnabled = options.params.common?.cache?.isEnabled ?? false
+            if let warning = cacheOptions.granularCacheWarning(configEnabled: configCacheEnabled) {
+                ui.warning(warning)
+            }
+
+            let granularCacheEnabled = cacheOptions.isGranularCacheEnabled(configEnabled: configCacheEnabled)
+
+            // Clear node hashes if force flag with granular cache
+            if cacheOptions.force, granularCacheEnabled {
+                let fileIds = [options.params.figma.lightFileId] +
+                    (options.params.figma.darkFileId.map { [$0] } ?? [])
+                for fileId in fileIds {
+                    try trackingManager.clearNodeHashes(fileId: fileId)
+                }
+            }
+
+            let granularCacheManager: GranularCacheManager? = granularCacheEnabled
+                ? trackingManager.createGranularCacheManager()
+                : nil
+
             var totalImages = 0
+            var allComputedHashes: [String: [NodeId: String]] = [:]
 
             if options.params.ios != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export images to Xcode project.")
-                totalImages += try await exportiOSImages(client: client, params: options.params, ui: ui)
+                let result = try await exportiOSImages(
+                    client: client,
+                    params: options.params,
+                    granularCacheManager: granularCacheManager,
+                    ui: ui
+                )
+                totalImages += result.count
+                allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
             }
 
             if options.params.android != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export images to Android Studio project.")
-                totalImages += try await exportAndroidImages(client: client, params: options.params, ui: ui)
+                let result = try await exportAndroidImages(
+                    client: client,
+                    params: options.params,
+                    granularCacheManager: granularCacheManager,
+                    ui: ui
+                )
+                totalImages += result.count
+                allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
             }
 
             if options.params.flutter != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export images to Flutter project.")
-                totalImages += try await exportFlutterImages(client: client, params: options.params, ui: ui)
+                let result = try await exportFlutterImages(
+                    client: client,
+                    params: options.params,
+                    granularCacheManager: granularCacheManager,
+                    ui: ui
+                )
+                totalImages += result.count
+                allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
             }
 
             // Update cache after successful export
             try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
 
+            // Update granular cache node hashes
+            if granularCacheEnabled {
+                for (fileId, hashes) in allComputedHashes where !hashes.isEmpty {
+                    try trackingManager.updateNodeHashes(fileId: fileId, hashes: hashes)
+                }
+            }
+
             return totalImages
         }
 
-        // swiftlint:disable:next function_body_length
-        private func exportiOSImages(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
+        /// Merges hash maps from multiple platform exports.
+        private func mergeHashes(
+            _ existing: [String: [NodeId: String]],
+            _ new: [String: [NodeId: String]]
+        ) -> [String: [NodeId: String]] {
+            var result = existing
+            for (fileId, hashes) in new {
+                if let existingHashes = result[fileId] {
+                    result[fileId] = existingHashes.merging(hashes) { _, new in new }
+                } else {
+                    result[fileId] = hashes
+                }
+            }
+            return result
+        }
+
+        private func exportiOSImages( // swiftlint:disable:this function_body_length
+            client: Client,
+            params: Params,
+            granularCacheManager: GranularCacheManager?,
+            ui: TerminalUI
+        ) async throws -> PlatformExportResult {
             guard let ios = params.ios,
                   let imagesParams = ios.images
             else {
                 ui.warning(.configMissing(platform: "ios", assetType: "images"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
-            let imagesTuple = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
-                let loader = ImagesLoader(client: client, params: params, platform: .ios, logger: logger)
-                return try await loader.load(filter: filter, onBatchProgress: onProgress)
+            // iOS uses PNG/raster images - granular cache not applicable
+            // Just load normally (granular cache is handled inside loader for vector formats)
+            let loader = ImagesLoader(client: client, params: params, platform: .ios, logger: logger)
+            loader.granularCacheManager = granularCacheManager
+
+            let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+                if granularCacheManager != nil {
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return ImagesLoaderResultWithHashes(
+                        light: result.light,
+                        dark: result.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
             }
+
+            // Early return if all images skipped by granular cache
+            if loaderResult.allSkipped {
+                ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
+                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
+            let processor = ImagesProcessor(
+                platform: .ios,
+                nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                nameStyle: imagesParams.nameStyle
+            )
 
             let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
                 try await ui.withSpinner("Processing images...") {
-                    let processor = ImagesProcessor(
-                        platform: .ios,
-                        nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-                        nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-                        nameStyle: imagesParams.nameStyle
-                    )
                     let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
                     return try (result.get(), result.warning)
                 }
@@ -139,8 +242,16 @@ extension ExFigCommand {
             )
 
             let exporter = XcodeImagesExporter(output: output)
-            let localAndRemoteFiles = try exporter.export(assets: images, append: filter != nil)
-            if filter == nil {
+            // Process allNames with the same transformations applied to images
+            let allAssetNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let localAndRemoteFiles = try exporter.export(
+                assets: images,
+                allAssetNames: allAssetNames,
+                append: filter != nil
+            )
+            if filter == nil, granularCacheManager == nil {
                 try? FileManager.default.removeItem(atPath: assetsURL.path)
             }
 
@@ -165,7 +276,7 @@ extension ExFigCommand {
             guard params.ios?.xcassetsInSwiftPackage == false else {
                 await checkForUpdate(logger: logger)
                 ui.success("Done! Exported \(images.count) images.")
-                return images.count
+                return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
             }
 
             do {
@@ -183,20 +294,46 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(images.count) images.")
-            return images.count
+            return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
         }
 
-        // swiftlint:disable:next function_body_length
-        private func exportAndroidImages(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
+        private func exportAndroidImages( // swiftlint:disable:this function_body_length
+            client: Client,
+            params: Params,
+            granularCacheManager: GranularCacheManager?,
+            ui: TerminalUI
+        ) async throws -> PlatformExportResult {
             guard let androidImages = params.android?.images else {
                 ui.warning(.configMissing(platform: "android", assetType: "images"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
-            let imagesTuple = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
-                let loader = ImagesLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter, onBatchProgress: onProgress)
+            // Android SVG format uses granular cache; PNG/WebP don't
+            let loader = ImagesLoader(client: client, params: params, platform: .android, logger: logger)
+            loader.granularCacheManager = granularCacheManager
+
+            let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+                if granularCacheManager != nil {
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return ImagesLoaderResultWithHashes(
+                        light: result.light,
+                        dark: result.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
             }
+
+            // Early return if all images skipped by granular cache
+            if loaderResult.allSkipped {
+                ui.success("All images unchanged (granular cache hit). Skipping Android export.")
+                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
 
             let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
                 try await ui.withSpinner("Processing images...") {
@@ -215,21 +352,32 @@ extension ExFigCommand {
 
             switch androidImages.format {
             case .svg:
-                try await exportAndroidSVGImages(images: images, params: params, ui: ui)
+                try await exportAndroidSVGImages(
+                    images: images,
+                    params: params,
+                    granularCacheManager: granularCacheManager,
+                    ui: ui
+                )
             case .png, .webp:
-                try await exportAndroidRasterImages(images: images, params: params, ui: ui)
+                try await exportAndroidRasterImages(
+                    images: images,
+                    params: params,
+                    granularCacheManager: granularCacheManager,
+                    ui: ui
+                )
             }
 
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(images.count) images.")
-            return images.count
+            return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
         }
 
         // swiftlint:disable:next function_body_length
         private func exportAndroidSVGImages(
             images: [AssetPair<ImagesProcessor.AssetType>],
             params: Params,
+            granularCacheManager: GranularCacheManager?,
             ui: TerminalUI
         ) async throws {
             guard let android = params.android, let androidImages = android.images else {
@@ -287,7 +435,7 @@ extension ExFigCommand {
                 .appendingPathComponent(androidImages.output)
                 .appendingPathComponent("drawable-night", isDirectory: true).path)
 
-            if filter == nil {
+            if filter == nil, granularCacheManager == nil {
                 // Clear output directory
                 try? FileManager.default.removeItem(atPath: lightDirectory.path)
                 try? FileManager.default.removeItem(atPath: darkDirectory.path)
@@ -324,6 +472,7 @@ extension ExFigCommand {
         private func exportAndroidRasterImages(
             images: [AssetPair<ImagesProcessor.AssetType>],
             params: Params,
+            granularCacheManager: GranularCacheManager?,
             ui: TerminalUI
         ) async throws {
             guard let android = params.android, let androidImages = android.images else {
@@ -383,7 +532,7 @@ extension ExFigCommand {
                 localFiles = localFiles.map { $0.changingExtension(newExtension: "webp") }
             }
 
-            if filter == nil {
+            if filter == nil, granularCacheManager == nil {
                 // Clear output directory
                 let outputDirectory = URL(fileURLWithPath: android.mainRes.appendingPathComponent(androidImages.output)
                     .path)
@@ -437,11 +586,15 @@ extension ExFigCommand {
             }
         }
 
-        // swiftlint:disable:next function_body_length
-        private func exportFlutterImages(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
+        private func exportFlutterImages( // swiftlint:disable:this function_body_length
+            client: Client,
+            params: Params,
+            granularCacheManager: GranularCacheManager?,
+            ui: TerminalUI
+        ) async throws -> PlatformExportResult {
             guard let flutter = params.flutter, let flutterImages = flutter.images else {
                 ui.warning(.configMissing(platform: "flutter", assetType: "images"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
             // Determine format
@@ -454,21 +607,43 @@ extension ExFigCommand {
                 "webp"
             }
 
-            // 1. Get Images info
-            let imagesTuple = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
-                let loader = ImagesLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter, onBatchProgress: onProgress)
+            // 1. Get Images info (Flutter uses .android platform for similar loading behavior)
+            let loader = ImagesLoader(client: client, params: params, platform: .android, logger: logger)
+            loader.granularCacheManager = granularCacheManager
+
+            let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+                if granularCacheManager != nil {
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return ImagesLoaderResultWithHashes(
+                        light: result.light,
+                        dark: result.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
             }
 
+            // Early return if all images skipped by granular cache
+            if loaderResult.allSkipped {
+                ui.success("All images unchanged (granular cache hit). Skipping Flutter export.")
+                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
             // 2. Process images
+            let processor = ImagesProcessor(
+                platform: .android, // Flutter uses similar naming to Android
+                nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                nameStyle: .snakeCase
+            )
+
             let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
                 try await ui.withSpinner("Processing images...") {
-                    let processor = ImagesProcessor(
-                        platform: .android, // Flutter uses similar naming to Android
-                        nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-                        nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-                        nameStyle: .snakeCase
-                    )
                     let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
                     return try (result.get(), result.warning)
                 }
@@ -491,7 +666,11 @@ extension ExFigCommand {
                 scales: flutterImages.scales,
                 format: formatString
             )
-            let (dartFile, assetFiles) = try exporter.export(images: images)
+            // Process allNames with the same transformations applied to images
+            let allImageNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let (dartFile, assetFiles) = try exporter.export(images: images, allImageNames: allImageNames)
 
             // 4. Download image files
             let remoteFiles = assetFiles.filter { $0.sourceURL != nil }
@@ -530,7 +709,7 @@ extension ExFigCommand {
             }
 
             // Clear output directory if not filtering
-            if filter == nil {
+            if filter == nil, granularCacheManager == nil {
                 try? FileManager.default.removeItem(atPath: assetsDirectory.path)
             }
 
@@ -545,7 +724,7 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(images.count) images to Flutter project.")
-            return images.count
+            return PlatformExportResult(count: images.count, hashes: loaderResult.computedHashes)
         }
     }
 }

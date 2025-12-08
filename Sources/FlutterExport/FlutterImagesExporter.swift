@@ -16,16 +16,28 @@ public final class FlutterImagesExporter: FlutterExporter {
         super.init(templatesPath: output.templatesPath)
     }
 
-    /// Exports images as multi-scale assets + Dart constants file
-    /// Returns FileContents for both the Dart file and the image asset files
-    public func export(images: [AssetPair<ImagePack>]) throws -> (dartFile: FileContents, assetFiles: [FileContents]) {
-        let dartFile = try makeImagesDartFileContents(images: images)
+    /// Exports images as multi-scale assets + Dart constants file.
+    ///
+    /// - Parameters:
+    ///   - images: Image asset pairs to export (may be filtered subset for granular cache).
+    ///   - allImageNames: Optional complete list of all image names for Dart file generation.
+    ///                    When provided, Dart file includes all images even if only a subset is exported.
+    ///                    Note: When using allImageNames, dark mode variants are not included.
+    /// - Returns: FileContents for both the Dart file and the image asset files.
+    public func export(
+        images: [AssetPair<ImagePack>],
+        allImageNames: [String]? = nil
+    ) throws -> (dartFile: FileContents, assetFiles: [FileContents]) {
+        let dartFile = try makeImagesDartFileContents(images: images, allImageNames: allImageNames)
         let assetFiles = makeImagesAssetFiles(images: images)
         return (dartFile, assetFiles)
     }
 
-    private func makeImagesDartFileContents(images: [AssetPair<ImagePack>]) throws -> FileContents {
-        let contents = try makeImagesDartContents(images)
+    private func makeImagesDartFileContents(
+        images: [AssetPair<ImagePack>],
+        allImageNames: [String]? = nil
+    ) throws -> FileContents {
+        let contents = try makeImagesDartContents(images, allImageNames: allImageNames)
 
         guard let fileURL = URL(string: outputFileName) else {
             fatalError("Invalid file URL: \(outputFileName)")
@@ -34,7 +46,10 @@ public final class FlutterImagesExporter: FlutterExporter {
         return try makeFileContents(for: contents, directory: output.outputDirectory, file: fileURL)
     }
 
-    private func makeImagesDartContents(_ images: [AssetPair<ImagePack>]) throws -> String {
+    private func makeImagesDartContents(
+        _ images: [AssetPair<ImagePack>],
+        allImageNames: [String]? = nil
+    ) throws -> String {
         let className = output.imagesClassName ?? "AppImages"
 
         guard let assetsDirectory = output.imagesAssetsDirectory else {
@@ -43,22 +58,36 @@ public final class FlutterImagesExporter: FlutterExporter {
 
         let relativePath = assetsDirectory.path
 
-        let imagesList: [[String: Any]] = images.map { imagePair in
-            let name = imagePair.light.name.lowerCamelCased()
-            let snakeName = imagePair.light.name.snakeCased()
-            let hasDark = imagePair.dark != nil
-
-            var result: [String: Any] = [
-                "name": name,
-                "lightPath": "\(relativePath)/\(snakeName).\(format)",
-                "hasDark": hasDark,
-            ]
-
-            if hasDark {
-                result["darkPath"] = "\(relativePath)/\(snakeName)_dark.\(format)"
+        // Use allImageNames if provided (for granular cache), otherwise derive from images
+        let imagesList: [[String: Any]] = if let allNames = allImageNames {
+            // When using allImageNames, dark mode is not tracked (simplified for granular cache)
+            allNames.map { name in
+                let camelName = name.lowerCamelCased()
+                let snakeName = name.snakeCased()
+                return [
+                    "name": camelName,
+                    "lightPath": "\(relativePath)/\(snakeName).\(format)",
+                    "hasDark": false,
+                ] as [String: Any]
             }
+        } else {
+            images.map { imagePair in
+                let name = imagePair.light.name.lowerCamelCased()
+                let snakeName = imagePair.light.name.snakeCased()
+                let hasDark = imagePair.dark != nil
 
-            return result
+                var result: [String: Any] = [
+                    "name": name,
+                    "lightPath": "\(relativePath)/\(snakeName).\(format)",
+                    "hasDark": hasDark,
+                ]
+
+                if hasDark {
+                    result["darkPath"] = "\(relativePath)/\(snakeName)_dark.\(format)"
+                }
+
+                return result
+            }
         }
 
         let context: [String: Any] = [

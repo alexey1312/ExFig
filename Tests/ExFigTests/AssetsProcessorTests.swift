@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 import ExFigCore
 import XCTest
 
@@ -352,5 +353,134 @@ final class AssetsProcessorTests: XCTestCase {
         let extracted = try result.get()
 
         XCTAssertEqual(extracted[0].name, "n2_icon_arrow_back_24")
+    }
+
+    // MARK: - processNames tests (granular cache support)
+
+    func testProcessNamesWithCamelCase() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameStyle: .camelCase
+        )
+
+        let names = ["motive-box-04-color", "ic_24_icon", "some/name"]
+        let result = processor.processNames(names)
+
+        XCTAssertEqual(result, ["motiveBox04Color", "ic24Icon", "someName"])
+    }
+
+    func testProcessNamesWithSnakeCase() {
+        let processor = ImagesProcessor(
+            platform: .android,
+            nameStyle: .snakeCase
+        )
+
+        let names = ["motiveBox04Color", "IconName", "some/name"]
+        let result = processor.processNames(names)
+
+        XCTAssertEqual(result, ["motive_box_04_color", "icon_name", "some_name"])
+    }
+
+    func testProcessNamesWithPascalCase() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameStyle: .pascalCase
+        )
+
+        let names = ["motive-box-04-color", "ic_24_icon", "some/name"]
+        let result = processor.processNames(names)
+
+        XCTAssertEqual(result, ["MotiveBox04Color", "Ic24Icon", "SomeName"])
+    }
+
+    func testProcessNamesWithKebabCase() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameStyle: .kebabCase
+        )
+
+        let names = ["motiveBox04Color", "IconName", "some_name"]
+        let result = processor.processNames(names)
+
+        XCTAssertEqual(result, ["motive-box-04-color", "icon-name", "some-name"])
+    }
+
+    func testProcessNamesWithScreamingSnakeCase() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameStyle: .screamingSnakeCase
+        )
+
+        let names = ["motive-box-04-color", "ic_24_icon", "some/name"]
+        let result = processor.processNames(names)
+
+        XCTAssertEqual(result, ["MOTIVE_BOX_04_COLOR", "IC_24_ICON", "SOME_NAME"])
+    }
+
+    func testProcessNamesWithoutNameStyle() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameStyle: nil
+        )
+
+        let names = ["motive-box-04-color", "ic_24_icon"]
+        let result = processor.processNames(names)
+
+        // Without nameStyle, names should be returned as-is (with / normalization)
+        XCTAssertEqual(result, ["motive-box-04-color", "ic_24_icon"])
+    }
+
+    func testProcessNamesWithSlashNormalization() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameStyle: .camelCase
+        )
+
+        let names = ["icons/arrow", "icons/icons"]
+        let result = processor.processNames(names)
+
+        // "icons/icons" should become "icons" (duplication removed)
+        // "icons/arrow" should become "icons_arrow" then camelCased
+        XCTAssertEqual(result, ["iconsArrow", "icons"])
+    }
+
+    func testProcessNamesWithValidateAndReplace() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameValidateRegexp: #"^ic_(\d\d)_(.+)$"#,
+            nameReplaceRegexp: #"icon_$1_$2"#,
+            nameStyle: .camelCase
+        )
+
+        let names = ["ic_24_arrow", "ic_32_back"]
+        let result = processor.processNames(names)
+
+        XCTAssertEqual(result, ["icon24Arrow", "icon32Back"])
+    }
+
+    func testProcessNamesIgnoresNonMatchingRegexp() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameValidateRegexp: #"^ic_(\d\d)_(.+)$"#,
+            nameReplaceRegexp: #"icon_$1_$2"#,
+            nameStyle: .camelCase
+        )
+
+        // "no_match" doesn't match the regexp, so it should be processed without replacement
+        let names = ["ic_24_arrow", "no_match"]
+        let result = processor.processNames(names)
+
+        XCTAssertEqual(result, ["icon24Arrow", "noMatch"])
+    }
+
+    func testProcessNamesEmptyArray() {
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameStyle: .camelCase
+        )
+
+        let result = processor.processNames([])
+
+        XCTAssertEqual(result, [])
     }
 }

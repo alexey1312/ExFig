@@ -54,7 +54,10 @@ extension ExFigCommand {
         ///   - client: The Figma API client to use.
         ///   - ui: The terminal UI for progress and messages.
         /// - Returns: The number of icons exported.
-        func performExport(client: Client, ui: TerminalUI) async throws -> Int {
+        func performExport( // swiftlint:disable:this function_body_length
+            client: Client,
+            ui: TerminalUI
+        ) async throws -> Int {
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(
@@ -73,51 +76,149 @@ extension ExFigCommand {
                 return 0
             }
 
+            // Check for granular cache warning
+            let configCacheEnabled = options.params.common?.cache?.isEnabled ?? false
+            if let warning = cacheOptions.granularCacheWarning(configEnabled: configCacheEnabled) {
+                ui.warning(warning)
+            }
+
+            // Determine if granular cache is enabled
+            let granularCacheEnabled = cacheOptions.isGranularCacheEnabled(configEnabled: configCacheEnabled)
+
+            // Clear node hashes if --force flag is set
+            if cacheOptions.force, granularCacheEnabled {
+                let fileIds = [options.params.figma.lightFileId] +
+                    (options.params.figma.darkFileId.map { [$0] } ?? [])
+                for fileId in fileIds {
+                    try trackingManager.clearNodeHashes(fileId: fileId)
+                }
+            }
+
+            // Create granular cache manager if enabled
+            let granularCacheManager: GranularCacheManager? = granularCacheEnabled
+                ? trackingManager.createGranularCacheManager()
+                : nil
+
             var totalIcons = 0
+            var allComputedHashes: [String: [NodeId: String]] = [:]
 
             if options.params.ios != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export icons to Xcode project.")
-                totalIcons += try await exportiOSIcons(client: client, params: options.params, ui: ui)
+                let result = try await exportiOSIcons(
+                    client: client,
+                    params: options.params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalIcons += result.count
+                mergeHashes(&allComputedHashes, result.hashes)
             }
 
             if options.params.android != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export icons to Android Studio project.")
-                totalIcons += try await exportAndroidIcons(client: client, params: options.params, ui: ui)
+                let result = try await exportAndroidIcons(
+                    client: client,
+                    params: options.params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalIcons += result.count
+                mergeHashes(&allComputedHashes, result.hashes)
             }
 
             if options.params.flutter != nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
-                totalIcons += try await exportFlutterIcons(client: client, params: options.params, ui: ui)
+                let result = try await exportFlutterIcons(
+                    client: client,
+                    params: options.params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalIcons += result.count
+                mergeHashes(&allComputedHashes, result.hashes)
             }
 
-            // Update cache after successful export
+            // Update file version cache after successful export
             try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
+
+            // Update node hashes for granular cache
+            if granularCacheEnabled {
+                for (fileId, hashes) in allComputedHashes where !hashes.isEmpty {
+                    try trackingManager.updateNodeHashes(fileId: fileId, hashes: hashes)
+                }
+            }
 
             return totalIcons
         }
 
+        /// Result of exporting icons for a single platform.
+        private struct PlatformExportResult {
+            let count: Int
+            let hashes: [String: [NodeId: String]]
+        }
+
+        /// Merges computed hashes from one result into the accumulator.
+        private func mergeHashes(
+            _ accumulator: inout [String: [NodeId: String]],
+            _ newHashes: [String: [NodeId: String]]
+        ) {
+            for (fileId, hashes) in newHashes {
+                if accumulator[fileId] != nil {
+                    accumulator[fileId]!.merge(hashes) { _, new in new }
+                } else {
+                    accumulator[fileId] = hashes
+                }
+            }
+        }
+
         // swiftlint:disable:next function_body_length
-        private func exportiOSIcons(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
+        private func exportiOSIcons(
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
             guard let ios = params.ios,
                   let iconsParams = ios.icons
             else {
                 ui.warning(.configMissing(platform: "ios", assetType: "icons"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
-            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
+            let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .ios, logger: logger)
-                return try await loader.load(filter: filter, onBatchProgress: onProgress)
+                if let manager = granularCacheManager {
+                    loader.granularCacheManager = manager
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let output = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return IconsLoaderResultWithHashes(
+                        light: output.light,
+                        dark: output.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
             }
+
+            // If granular cache skipped all icons, return early
+            if loaderResult.allSkipped {
+                ui.success("All icons unchanged (granular cache). Skipping export.")
+                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
+            let processor = ImagesProcessor(
+                platform: .ios,
+                nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                nameStyle: iconsParams.nameStyle
+            )
 
             let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
                 try await ui.withSpinner("Processing icons...") {
-                    let processor = ImagesProcessor(
-                        platform: .ios,
-                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                        nameStyle: iconsParams.nameStyle
-                    )
                     let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
                     return try (result.get(), result.warning)
                 }
@@ -140,8 +241,16 @@ extension ExFigCommand {
             )
 
             let exporter = XcodeIconsExporter(output: output)
-            let localAndRemoteFiles = try exporter.export(icons: icons, append: filter != nil)
-            if filter == nil {
+            // Process allNames with the same transformations applied to icons
+            let allIconNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let localAndRemoteFiles = try exporter.export(
+                icons: icons,
+                allIconNames: allIconNames,
+                append: filter != nil
+            )
+            if filter == nil, granularCacheManager == nil {
                 try? FileManager.default.removeItem(atPath: assetsURL.path)
             }
 
@@ -166,7 +275,7 @@ extension ExFigCommand {
             guard params.ios?.xcassetsInSwiftPackage == false else {
                 await checkForUpdate(logger: logger)
                 ui.success("Done! Exported \(icons.count) icons.")
-                return icons.count
+                return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
             }
 
             do {
@@ -184,38 +293,69 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(icons.count) icons.")
-            return icons.count
+            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
         }
 
         // swiftlint:disable:next function_body_length
-        private func exportAndroidIcons(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
+        private func exportAndroidIcons(
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
             guard let android = params.android, let androidIcons = android.icons else {
                 ui.warning(.configMissing(platform: "android", assetType: "icons"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
             // Check if ImageVector format is requested
             let composeFormat = androidIcons.composeFormat ?? .resourceReference
 
             if composeFormat == .imageVector {
-                return try await exportAndroidIconsAsImageVector(client: client, params: params, ui: ui)
+                return try await exportAndroidIconsAsImageVector(
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
             }
 
             // 1. Get Icons info
-            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
+            let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter, onBatchProgress: onProgress)
+                if let manager = granularCacheManager {
+                    loader.granularCacheManager = manager
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let output = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return IconsLoaderResultWithHashes(
+                        light: output.light,
+                        dark: output.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
             }
 
+            // If granular cache skipped all icons, return early
+            if loaderResult.allSkipped {
+                ui.success("All icons unchanged (granular cache). Skipping export.")
+                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
             // 2. Process images
+            let processor = ImagesProcessor(
+                platform: .android,
+                nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                nameStyle: .snakeCase
+            )
+
             let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
                 try await ui.withSpinner("Processing icons...") {
-                    let processor = ImagesProcessor(
-                        platform: .android,
-                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                        nameStyle: .snakeCase
-                    )
                     let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
                     return try (result.get(), result.warning)
                 }
@@ -275,7 +415,7 @@ extension ExFigCommand {
                 .appendingPathComponent(androidIcons.output)
                 .appendingPathComponent("drawable-night", isDirectory: true).path)
 
-            if filter == nil {
+            if filter == nil, granularCacheManager == nil {
                 // Clear output directory
                 try? FileManager.default.removeItem(atPath: lightDirectory.path)
                 try? FileManager.default.removeItem(atPath: darkDirectory.path)
@@ -313,7 +453,14 @@ extension ExFigCommand {
             }.map { fileContents -> String in
                 fileContents.destination.file.deletingPathExtension().lastPathComponent
             })
-            let composeFile = try composeExporter.exportIcons(iconNames: Array(composeIconNames).sorted())
+            // Process allNames with the same transformations applied to icons
+            let allIconNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let composeFile = try composeExporter.exportIcons(
+                iconNames: Array(composeIconNames).sorted(),
+                allIconNames: allIconNames
+            )
             composeFile.map { localFiles.append($0) }
 
             let filesToWrite = localFiles
@@ -327,45 +474,67 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(icons.count) icons.")
-            return icons.count
+            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
         }
 
         // Exports Android icons as Jetpack Compose ImageVector Kotlin files
-        // swiftlint:disable:next function_body_length
+        // swiftlint:disable:next function_body_length cyclomatic_complexity
         private func exportAndroidIconsAsImageVector(
             client: Client,
             params: Params,
-            ui: TerminalUI
-        ) async throws -> Int {
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
             guard let android = params.android, let androidIcons = android.icons else {
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
             guard let packageName = androidIcons.composePackageName else {
                 ui.warning(.composeRequirementMissing(requirement: "composePackageName"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
             guard let srcDirectory = android.mainSrc else {
                 ui.warning(.composeRequirementMissing(requirement: "mainSrc"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
             // 1. Get Icons info
-            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
+            let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter, onBatchProgress: onProgress)
+                if let manager = granularCacheManager {
+                    loader.granularCacheManager = manager
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let output = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return IconsLoaderResultWithHashes(
+                        light: output.light,
+                        dark: output.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
             }
 
+            // If granular cache skipped all icons, return early
+            if loaderResult.allSkipped {
+                ui.success("All icons unchanged (granular cache). Skipping export.")
+                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
             // 2. Process images
+            let processor = ImagesProcessor(
+                platform: .android,
+                nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                nameStyle: .snakeCase
+            )
+
             let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
                 try await ui.withSpinner("Processing icons...") {
-                    let processor = ImagesProcessor(
-                        platform: .android,
-                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                        nameStyle: .snakeCase
-                    )
                     let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
                     return try (result.get(), result.warning)
                 }
@@ -426,7 +595,7 @@ extension ExFigCommand {
                 let files = try exporter.export(svgFiles: svgFiles)
 
                 // Clear output directory if not filtering
-                if filter == nil {
+                if filter == nil, granularCacheManager == nil {
                     try? FileManager.default.removeItem(atPath: outputDirectory.path)
                 }
 
@@ -443,30 +612,57 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Generated \(kotlinFiles.count) ImageVector files.")
-            return icons.count
+            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
         }
 
-        private func exportFlutterIcons(client: Client, params: Params, ui: TerminalUI) async throws -> Int {
+        // swiftlint:disable:next function_body_length
+        private func exportFlutterIcons(
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
             guard let flutter = params.flutter, let flutterIcons = flutter.icons else {
                 ui.warning(.configMissing(platform: "flutter", assetType: "icons"))
-                return 0
+                return PlatformExportResult(count: 0, hashes: [:])
             }
 
             // 1. Get Icons info
-            let imagesTuple = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
+            let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
                 let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
-                return try await loader.load(filter: filter, onBatchProgress: onProgress)
+                if let manager = granularCacheManager {
+                    loader.granularCacheManager = manager
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let output = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return IconsLoaderResultWithHashes(
+                        light: output.light,
+                        dark: output.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
             }
 
+            // If granular cache skipped all icons, return early
+            if loaderResult.allSkipped {
+                ui.success("All icons unchanged (granular cache). Skipping export.")
+                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
             // 2. Process images
+            let processor = ImagesProcessor(
+                platform: .android, // Flutter uses similar naming to Android
+                nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                nameStyle: .snakeCase
+            )
+
             let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
                 try await ui.withSpinner("Processing icons...") {
-                    let processor = ImagesProcessor(
-                        platform: .android, // Flutter uses similar naming to Android
-                        nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                        nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                        nameStyle: .snakeCase
-                    )
                     let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
                     return try (result.get(), result.warning)
                 }
@@ -484,7 +680,11 @@ extension ExFigCommand {
             )
 
             let exporter = FlutterIconsExporter(output: output, outputFileName: flutterIcons.dartFile)
-            let (dartFile, assetFiles) = try exporter.export(icons: icons)
+            // Process allNames with the same transformations applied to icons
+            let allIconNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let (dartFile, assetFiles) = try exporter.export(icons: icons, allIconNames: allIconNames)
 
             // 4. Download SVG files
             let remoteFiles = assetFiles.filter { $0.sourceURL != nil }
@@ -501,7 +701,7 @@ extension ExFigCommand {
             }
 
             // Clear output directory if not filtering
-            if filter == nil {
+            if filter == nil, granularCacheManager == nil {
                 try? FileManager.default.removeItem(atPath: assetsDirectory.path)
             }
 
@@ -516,7 +716,7 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(icons.count) icons to Flutter project.")
-            return icons.count
+            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
         }
     }
 }

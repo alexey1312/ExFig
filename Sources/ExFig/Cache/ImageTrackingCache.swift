@@ -1,10 +1,15 @@
 import Foundation
 
-/// Cache model for tracking Figma file versions.
+/// Cache model for tracking Figma file versions and node hashes.
 /// Used to skip exports when files haven't changed since last export.
+///
+/// Schema versions:
+/// - v1: File-level version tracking only
+/// - v2: Added per-node hash tracking for granular cache (experimental)
 struct ImageTrackingCache: Codable, Sendable {
     /// Current schema version for cache file format.
-    static let currentSchemaVersion = 1
+    /// v2 adds nodeHashes field to CachedFileInfo.
+    static let currentSchemaVersion = 2
 
     /// Default cache file name.
     static let defaultFileName = ".exfig-cache.json"
@@ -42,11 +47,22 @@ struct CachedFileInfo: Codable, Sendable {
     /// Optional: file name for debugging/display purposes.
     let fileName: String?
 
+    /// Optional: per-node content hashes for granular change detection.
+    /// Maps node ID (e.g., "1:23") to FNV-1a 64-bit hash hex string.
+    /// Only populated when `--experimental-granular-cache` is used.
+    var nodeHashes: [String: String]?
+
     /// Creates cached file info.
-    init(version: String, lastExport: Date = Date(), fileName: String? = nil) {
+    init(
+        version: String,
+        lastExport: Date = Date(),
+        fileName: String? = nil,
+        nodeHashes: [String: String]? = nil
+    ) {
         self.version = version
         self.lastExport = ISO8601DateFormatter().string(from: lastExport)
         self.fileName = fileName
+        self.nodeHashes = nodeHashes
     }
 }
 
@@ -55,6 +71,7 @@ struct CachedFileInfo: Codable, Sendable {
 extension ImageTrackingCache {
     /// Loads cache from a file at the specified path.
     /// Returns an empty cache if file doesn't exist or is invalid.
+    /// Migrates from older schema versions automatically.
     static func load(from path: URL) -> ImageTrackingCache {
         guard FileManager.default.fileExists(atPath: path.path) else {
             return ImageTrackingCache()
@@ -65,11 +82,14 @@ extension ImageTrackingCache {
             let decoder = JSONDecoder()
             let cache = try decoder.decode(ImageTrackingCache.self, from: data)
 
-            // Check schema version and migrate if needed
-            if cache.schemaVersion != currentSchemaVersion {
-                // For now, just return empty cache on schema mismatch
-                // Future: implement migration logic
-                return ImageTrackingCache()
+            // Migration: v1 → v2 (nodeHashes field added, backward compatible)
+            if cache.schemaVersion < currentSchemaVersion {
+                // v1 files decode fine with v2 schema (nodeHashes will be nil)
+                // Return with updated schema version
+                return ImageTrackingCache(
+                    schemaVersion: currentSchemaVersion,
+                    files: cache.files
+                )
             }
 
             return cache
@@ -111,15 +131,76 @@ extension ImageTrackingCache {
 
     /// Updates cache with new file version after successful export.
     mutating func updateFileVersion(fileId: String, version: String, fileName: String? = nil) {
+        let existingHashes = files[fileId]?.nodeHashes
         files[fileId] = CachedFileInfo(
             version: version,
             lastExport: Date(),
-            fileName: fileName
+            fileName: fileName,
+            nodeHashes: existingHashes
         )
     }
 
     /// Returns cached version for a file, if available.
     func cachedVersion(for fileId: String) -> String? {
         files[fileId]?.version
+    }
+}
+
+// MARK: - Node Hash Operations
+
+extension ImageTrackingCache {
+    /// Returns node IDs that have changed compared to cached hashes.
+    ///
+    /// - Parameters:
+    ///   - fileId: The Figma file ID.
+    ///   - currentHashes: Map of node ID to current hash for all nodes to export.
+    /// - Returns: Array of node IDs that need re-export (new or changed).
+    ///            Deleted nodes (in cache but not in currentHashes) are excluded.
+    func changedNodeIds(fileId: String, currentHashes: [String: String]) -> [String] {
+        guard let cachedInfo = files[fileId],
+              let cachedHashes = cachedInfo.nodeHashes
+        else {
+            // No cached hashes, all nodes need export
+            return Array(currentHashes.keys)
+        }
+
+        var changedIds: [String] = []
+
+        for (nodeId, currentHash) in currentHashes {
+            if let cachedHash = cachedHashes[nodeId] {
+                // Node exists in cache - check if hash changed
+                if cachedHash != currentHash {
+                    changedIds.append(nodeId)
+                }
+            } else {
+                // New node not in cache
+                changedIds.append(nodeId)
+            }
+        }
+
+        // Note: Deleted nodes (in cachedHashes but not in currentHashes)
+        // are silently ignored - they will be cleaned up when cache is saved
+
+        return changedIds
+    }
+
+    /// Updates node hashes for a file after successful export.
+    ///
+    /// - Parameters:
+    ///   - fileId: The Figma file ID.
+    ///   - hashes: Map of node ID to hash for all exported nodes.
+    mutating func updateNodeHashes(fileId: String, hashes: [String: String]) {
+        guard var fileInfo = files[fileId] else { return }
+        fileInfo.nodeHashes = hashes
+        files[fileId] = fileInfo
+    }
+
+    /// Clears node hashes for a file (used with --force flag).
+    ///
+    /// - Parameter fileId: The Figma file ID.
+    mutating func clearNodeHashes(fileId: String) {
+        guard var fileInfo = files[fileId] else { return }
+        fileInfo.nodeHashes = nil
+        files[fileId] = fileInfo
     }
 }

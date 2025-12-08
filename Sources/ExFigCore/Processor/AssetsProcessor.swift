@@ -46,7 +46,7 @@ public protocol AssetsProcessable: AssetNameProcessable {
     func process(assets: [AssetType]) -> ProcessingResult
 }
 
-public struct ColorsProcessor: AssetsProcessable {
+public struct ColorsProcessor: AssetsProcessable, Sendable {
     public typealias AssetType = Color
 
     public let platform: Platform
@@ -62,7 +62,7 @@ public struct ColorsProcessor: AssetsProcessable {
     }
 }
 
-public struct TypographyProcessor: AssetsProcessable {
+public struct TypographyProcessor: AssetsProcessable, Sendable {
     public typealias AssetType = TextStyle
 
     public let platform: Platform
@@ -78,7 +78,7 @@ public struct TypographyProcessor: AssetsProcessable {
     }
 }
 
-public struct ImagesProcessor: AssetsProcessable {
+public struct ImagesProcessor: AssetsProcessable, Sendable {
     public typealias AssetType = ImagePack
 
     public let platform: Platform
@@ -96,6 +96,43 @@ public struct ImagesProcessor: AssetsProcessable {
         self.nameValidateRegexp = nameValidateRegexp
         self.nameReplaceRegexp = nameReplaceRegexp
         self.nameStyle = nameStyle
+    }
+
+    /// Processes a list of raw asset names applying the same transformations as `process()`:
+    /// - Replaces "/" with "_" and removes duplication (e.g. "color/color" becomes "color")
+    /// - Applies `nameReplaceRegexp` if configured
+    /// - Applies `nameStyle` transformation if configured
+    ///
+    /// Use this method to transform raw component names (e.g., from granular cache)
+    /// to match the processed asset names in generated code.
+    public func processNames(_ names: [String]) -> [String] {
+        names.map { name in
+            // Normalize: replace "/" with "_" and remove duplication
+            var result = name
+            let split = result.split(separator: "/")
+            if split.count == 2, split[0] == split[1] {
+                result = String(split[0])
+            } else {
+                result = result.replacingOccurrences(of: "/", with: "_")
+            }
+
+            // Apply nameReplaceRegexp if configured
+            if let replaceRegExp = nameReplaceRegexp, let regexp = nameValidateRegexp {
+                result = result.replace(regexp) { array in
+                    replaceRegExp.replace(#"\$(\d)"#) {
+                        guard let index = Int($0[1]) else { return "" }
+                        return array[index]
+                    }
+                }
+            }
+
+            // Apply nameStyle transformation if configured
+            if let style = nameStyle {
+                result = normalizeName(result, style: style)
+            }
+
+            return result
+        }
     }
 }
 

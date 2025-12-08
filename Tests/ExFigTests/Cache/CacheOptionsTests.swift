@@ -65,4 +65,60 @@ final class CacheOptionsTests: XCTestCase {
             "/cli/path.json"
         )
     }
+
+    // MARK: - Experimental Granular Cache
+
+    func testGranularCacheDisabledByDefault() throws {
+        let options = try CacheOptions.parse([])
+
+        XCTAssertFalse(options.experimentalGranularCache)
+    }
+
+    func testGranularCacheFlagParsed() throws {
+        let options = try CacheOptions.parse(["--experimental-granular-cache"])
+
+        XCTAssertTrue(options.experimentalGranularCache)
+    }
+
+    func testIsGranularCacheEnabledReturnsFalseWithoutCacheFlag() throws {
+        let options = try CacheOptions.parse(["--experimental-granular-cache"])
+
+        XCTAssertFalse(options.isGranularCacheEnabled(configEnabled: false))
+    }
+
+    func testIsGranularCacheEnabledReturnsTrueWithCacheFlag() throws {
+        let options = try CacheOptions.parse(["--cache", "--experimental-granular-cache"])
+
+        XCTAssertTrue(options.isGranularCacheEnabled(configEnabled: false))
+    }
+
+    func testIsGranularCacheEnabledReturnsTrueWithConfigEnabled() throws {
+        let options = try CacheOptions.parse(["--experimental-granular-cache"])
+
+        XCTAssertTrue(options.isGranularCacheEnabled(configEnabled: true))
+    }
+
+    func testGranularCacheWarningWhenNoCacheEnabled() throws {
+        let options = try CacheOptions.parse(["--experimental-granular-cache"])
+
+        let warning = options.granularCacheWarning(configEnabled: false)
+
+        XCTAssertEqual(warning, .granularCacheWithoutCache)
+    }
+
+    func testNoGranularCacheWarningWhenCacheEnabled() throws {
+        let options = try CacheOptions.parse(["--cache", "--experimental-granular-cache"])
+
+        let warning = options.granularCacheWarning(configEnabled: false)
+
+        XCTAssertNil(warning)
+    }
+
+    func testNoGranularCacheWarningWhenNotRequested() throws {
+        let options = try CacheOptions.parse([])
+
+        let warning = options.granularCacheWarning(configEnabled: false)
+
+        XCTAssertNil(warning)
+    }
 }

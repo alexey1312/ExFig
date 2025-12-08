@@ -12,7 +12,8 @@ struct ExFigWarningFormatter {
         // Compact format warnings
         case .configMissing, .composeRequirementMissing, .noConfigsFound,
              .noValidConfigs, .xcodeProjectUpdateFailed, .checkpointExpired,
-             .checkpointPathMismatch, .retrying, .preFetchPartialFailure:
+             .checkpointPathMismatch, .retrying, .preFetchPartialFailure,
+             .granularCacheWithoutCache:
             formatCompact(warning)
 
         // Multiline format warnings
@@ -26,6 +27,7 @@ struct ExFigWarningFormatter {
 
     // MARK: - Compact Formatters
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func formatCompact(_ warning: ExFigWarning) -> String {
         switch warning {
         case let .configMissing(platform, assetType):
@@ -54,6 +56,9 @@ struct ExFigWarningFormatter {
 
         case let .preFetchPartialFailure(failed, total):
             "Pre-fetch partial failure: \(failed)/\(total) files failed, using fallback"
+
+        case .granularCacheWithoutCache:
+            "--experimental-granular-cache ignored: requires --cache flag"
 
         // Multiline cases handled in main format() method
         case .noAssetsFound, .invalidConfigsSkipped:

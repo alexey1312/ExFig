@@ -59,6 +59,12 @@ extension ExFigCommand {
         @Option(name: .long, help: "Custom path to cache file (default: .exfig-cache.json)")
         var cachePath: String?
 
+        @Flag(
+            name: .long,
+            help: "[EXPERIMENTAL] Enable per-node hash tracking for granular cache invalidation"
+        )
+        var experimentalGranularCache: Bool = false
+
         // Download concurrency
         @Option(name: .long, help: "Maximum concurrent CDN downloads")
         var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
@@ -222,6 +228,7 @@ extension ExFigCommand {
                 noCache: noCache,
                 force: force,
                 cachePath: cachePath,
+                experimentalGranularCache: experimentalGranularCache,
                 concurrentDownloads: concurrentDownloads,
                 cliTimeout: timeout
             )

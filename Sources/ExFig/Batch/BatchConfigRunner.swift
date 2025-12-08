@@ -17,6 +17,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
     let noCache: Bool
     let force: Bool
     let cachePath: String?
+    let experimentalGranularCache: Bool
     let concurrentDownloads: Int
 
     func export(
@@ -31,6 +32,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
             cacheOptions.noCache = noCache
             cacheOptions.force = force
             cacheOptions.cachePath = cachePath
+            cacheOptions.experimentalGranularCache = experimentalGranularCache
 
             let faultToleranceOptions = FaultToleranceOptions()
 
@@ -132,6 +134,7 @@ struct BatchConfigRunner: Sendable {
     let noCache: Bool
     let force: Bool
     let cachePath: String?
+    let experimentalGranularCache: Bool
     let concurrentDownloads: Int
     /// CLI timeout override (in seconds). When set, overrides per-config YAML timeout.
     let cliTimeout: Int?
@@ -147,6 +150,7 @@ struct BatchConfigRunner: Sendable {
         noCache: Bool = false,
         force: Bool = false,
         cachePath: String? = nil,
+        experimentalGranularCache: Bool = false,
         concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads,
         cliTimeout: Int? = nil,
         exporter: ConfigExportPerforming? = nil
@@ -160,6 +164,7 @@ struct BatchConfigRunner: Sendable {
         self.noCache = noCache
         self.force = force
         self.cachePath = cachePath
+        self.experimentalGranularCache = experimentalGranularCache
         self.concurrentDownloads = concurrentDownloads
         self.cliTimeout = cliTimeout
         self.exporter = exporter ?? SubcommandConfigExporter(
@@ -169,6 +174,7 @@ struct BatchConfigRunner: Sendable {
             noCache: noCache,
             force: force,
             cachePath: cachePath,
+            experimentalGranularCache: experimentalGranularCache,
             concurrentDownloads: concurrentDownloads
         )
     }

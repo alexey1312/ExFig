@@ -805,6 +805,88 @@ final class XcodeIconsExporterTests: XCTestCase {
         """
         expectNoDifference(generatedCode, referenceCode)
     }
+
+    // MARK: - Tests for allIconNames (granular cache support)
+
+    /// Tests that when allIconNames is provided, the extension file contains all icons
+    /// even when only a subset of icons is exported (simulating granular cache behavior).
+    func testExportWithAllIconNames_generatesExtensionWithAllNames() throws {
+        let output = XcodeImagesOutput(
+            assetsFolderURL: URL(string: "~/")!,
+            assetsInMainBundle: true,
+            uiKitImageExtensionURL: uiKitImageExtensionURL
+        )
+        let exporter = XcodeIconsExporter(output: output)
+
+        // Export only image1, but provide allIconNames with both image1 and image2
+        let result = try exporter.export(
+            icons: [AssetPair(light: ImagePack(image: image1), dark: nil)],
+            allIconNames: ["image1", "image2", "image3"],
+            append: false
+        )
+
+        // Should have 4 files: Contents.json, image1.imageset/Contents.json, image1.pdf, extension.swift
+        XCTAssertEqual(result.count, 4)
+
+        // Verify extension file contains all 3 icons, not just the exported one
+        let extensionFile = result.last!
+        let content = try XCTUnwrap(extensionFile.data)
+        let generatedCode = String(data: content, encoding: .utf8)
+
+        let referenceCode = """
+        \(header)
+
+        import UIKit
+
+        private class BundleProvider {
+            static let bundle = Bundle(for: BundleProvider.self)
+        }
+
+        public extension UIImage {
+            static var image1: UIImage { UIImage(named: #function)! }
+            static var image2: UIImage { UIImage(named: #function)! }
+            static var image3: UIImage { UIImage(named: #function)! }
+        }
+
+        """
+        expectNoDifference(generatedCode, referenceCode)
+    }
+
+    /// Tests that when allIconNames is nil, the extension file is derived from exported icons.
+    func testExportWithoutAllIconNames_generatesExtensionFromExportedIcons() throws {
+        let output = XcodeImagesOutput(
+            assetsFolderURL: URL(string: "~/")!,
+            assetsInMainBundle: true,
+            uiKitImageExtensionURL: uiKitImageExtensionURL
+        )
+        let exporter = XcodeIconsExporter(output: output)
+
+        let result = try exporter.export(
+            icons: [AssetPair(light: ImagePack(image: image1), dark: nil)],
+            allIconNames: nil,
+            append: false
+        )
+
+        let extensionFile = result.last!
+        let content = try XCTUnwrap(extensionFile.data)
+        let generatedCode = String(data: content, encoding: .utf8)
+
+        let referenceCode = """
+        \(header)
+
+        import UIKit
+
+        private class BundleProvider {
+            static let bundle = Bundle(for: BundleProvider.self)
+        }
+
+        public extension UIImage {
+            static var image1: UIImage { UIImage(named: #function)! }
+        }
+
+        """
+        expectNoDifference(generatedCode, referenceCode)
+    }
 }
 
 private extension XcodeIconsExporterTests {
