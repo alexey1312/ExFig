@@ -41,7 +41,7 @@ jobs:
 
       - name: Set version from tag
         run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
+          VERSION="${GITHUB_REF#refs/tags/}"
           FILE="Sources/ExFig/ExFigCommand.swift"
           if [ "${{ matrix.platform }}" = "macos" ]; then
             sed -i '' "s/static let version = \".*\"/static let version = \"$VERSION\"/" "$FILE"
@@ -94,7 +94,7 @@ jobs:
 
       - name: Update version in main branch
         run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
+          VERSION="${GITHUB_REF#refs/tags/}"
           FILE="Sources/ExFig/ExFigCommand.swift"
           sed -i "s/static let version = \".*\"/static let version = \"$VERSION\"/" "$FILE"
 
