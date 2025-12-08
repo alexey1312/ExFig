@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2025-12-08
+
+### Features
+
+- **svg**: Add CSS styles, use/symbol refs, stroke-dasharray parsing by @alexey1312
+
+- **cli**: Add --timeout flag for API request timeout override by @alexey1312
+
+- **cache**: Add granular node-level cache tracking  by @alexey1312 in [#9](https://github.com/alexey1312/ExFig/pull/9)
+
+
 ## [1.0.5] - 2025-12-07
 
 ### Features
@@ -11,8 +22,6 @@ All notable changes to this project will be documented in this file.
 - **terminal**: Add unified error formatting with recovery suggestions by @alexey1312
 
 - **batch**: Pre-fetch file versions for cache-enabled batch runs by @alexey1312
-
-- **cache**: Add experimental granular per-node cache tracking (`--experimental-granular-cache`) by @alexey1312
 
 
 ## [1.0.4] - 2025-12-07
