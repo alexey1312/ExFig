@@ -20,6 +20,18 @@ struct FaultToleranceOptions: ParsableArguments {
     )
     var rateLimit: Int = 10
 
+    @Option(
+        name: .long,
+        help: "Figma API request timeout in seconds (overrides config)"
+    )
+    var timeout: Int?
+
+    mutating func validate() throws {
+        if let timeout, timeout <= 0 {
+            throw ValidationError("Timeout must be positive")
+        }
+    }
+
     /// Create a retry policy from the options.
     /// - Returns: A configured `RetryPolicy`.
     func createRetryPolicy() -> RetryPolicy {
@@ -62,6 +74,7 @@ struct FaultToleranceOptions: ParsableArguments {
 /// In addition to basic retry and rate limiting, these options support:
 /// - `--fail-fast`: Stop on first error without retrying
 /// - `--resume`: Continue from checkpoint after interruption
+/// - `--timeout`: Figma API request timeout in seconds
 struct HeavyFaultToleranceOptions: ParsableArguments {
     @Option(
         name: .long,
@@ -74,6 +87,12 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
         help: "Maximum API requests per minute"
     )
     var rateLimit: Int = 10
+
+    @Option(
+        name: .long,
+        help: "Figma API request timeout in seconds (overrides config)"
+    )
+    var timeout: Int?
 
     @Flag(
         name: .long,
@@ -92,6 +111,12 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
         help: "Maximum concurrent CDN downloads"
     )
     var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
+
+    mutating func validate() throws {
+        if let timeout, timeout <= 0 {
+            throw ValidationError("Timeout must be positive")
+        }
+    }
 
     /// Create a file downloader with configured concurrency.
     /// - Returns: A configured `FileDownloader`.
@@ -222,10 +247,12 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
 ///
 /// - Parameters:
 ///   - accessToken: Figma personal access token.
-///   - timeout: Request timeout interval (optional, uses FigmaClient default if nil).
-///   - options: Fault tolerance options for creating new client.
+///   - timeout: Request timeout interval from config (optional, uses FigmaClient default if nil).
+///   - options: Fault tolerance options for creating new client (may contain CLI timeout override).
 ///   - ui: Terminal UI for retry warnings.
 /// - Returns: A configured `Client` instance.
+///
+/// Timeout precedence: CLI `--timeout` > YAML config > FigmaClient default (30s)
 func resolveClient(
     accessToken: String,
     timeout: TimeInterval?,
@@ -235,7 +262,9 @@ func resolveClient(
     if let injectedClient = InjectedClientStorage.client {
         return injectedClient
     }
-    let baseClient = FigmaClient(accessToken: accessToken, timeout: timeout)
+    // CLI timeout takes precedence over config timeout
+    let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout
+    let baseClient = FigmaClient(accessToken: accessToken, timeout: effectiveTimeout)
     let rateLimiter = options.createRateLimiter()
     let maxRetries = options.maxRetries
     return options.createRateLimitedClient(
@@ -258,10 +287,12 @@ func resolveClient(
 ///
 /// - Parameters:
 ///   - accessToken: Figma personal access token.
-///   - timeout: Request timeout interval (optional, uses FigmaClient default if nil).
-///   - options: Heavy fault tolerance options for creating new client.
+///   - timeout: Request timeout interval from config (optional, uses FigmaClient default if nil).
+///   - options: Heavy fault tolerance options for creating new client (may contain CLI timeout override).
 ///   - ui: Terminal UI for retry warnings.
 /// - Returns: A configured `Client` instance.
+///
+/// Timeout precedence: CLI `--timeout` > YAML config > FigmaClient default (30s)
 func resolveClient(
     accessToken: String,
     timeout: TimeInterval?,
@@ -271,7 +302,9 @@ func resolveClient(
     if let injectedClient = InjectedClientStorage.client {
         return injectedClient
     }
-    let baseClient = FigmaClient(accessToken: accessToken, timeout: timeout)
+    // CLI timeout takes precedence over config timeout
+    let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout
+    let baseClient = FigmaClient(accessToken: accessToken, timeout: effectiveTimeout)
     let rateLimiter = options.createRateLimiter()
     let maxRetries = options.maxRetries
     return options.createRateLimitedClient(

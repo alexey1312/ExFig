@@ -133,6 +133,8 @@ struct BatchConfigRunner: Sendable {
     let force: Bool
     let cachePath: String?
     let concurrentDownloads: Int
+    /// CLI timeout override (in seconds). When set, overrides per-config YAML timeout.
+    let cliTimeout: Int?
     let exporter: any ConfigExportPerforming
 
     init(
@@ -146,6 +148,7 @@ struct BatchConfigRunner: Sendable {
         force: Bool = false,
         cachePath: String? = nil,
         concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads,
+        cliTimeout: Int? = nil,
         exporter: ConfigExportPerforming? = nil
     ) {
         self.rateLimiter = rateLimiter
@@ -158,6 +161,7 @@ struct BatchConfigRunner: Sendable {
         self.force = force
         self.cachePath = cachePath
         self.concurrentDownloads = concurrentDownloads
+        self.cliTimeout = cliTimeout
         self.exporter = exporter ?? SubcommandConfigExporter(
             globalOptions: globalOptions,
             resume: resume,
@@ -179,9 +183,13 @@ struct BatchConfigRunner: Sendable {
 
             let retryHandler = RetryLogger.createHandler(ui: ui, maxAttempts: maxRetries)
 
+            // CLI timeout takes precedence over per-config YAML timeout
+            let effectiveTimeout: TimeInterval? = cliTimeout.map { TimeInterval($0) }
+                ?? options.params.figma.timeout
+
             let baseClient = FigmaClient(
                 accessToken: options.accessToken,
-                timeout: options.params.figma.timeout
+                timeout: effectiveTimeout
             )
 
             let client = RateLimitedClient(

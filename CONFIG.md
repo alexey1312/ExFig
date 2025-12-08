@@ -23,6 +23,7 @@ figma:
   # [optional] Identifier of the file containing dark high contrast color palette.
   darkHighContrastFileId: KfF6DnJTWHGZzC912345
   # [optional] Figma API request timeout. The default value of this property is 30 (seconds). If you have a lot of resources to export set this value to 60 or more to give Figma API more time to prepare resources for exporting.
+  # Note: CLI flag --timeout overrides this config value. Example: exfig colors --timeout 60
   # timeout: 30
 
 # [optional] Common export parameters
