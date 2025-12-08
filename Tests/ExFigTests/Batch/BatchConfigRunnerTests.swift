@@ -77,6 +77,7 @@ final class BatchConfigRunnerTests: XCTestCase {
             noCache: false,
             force: true,
             cachePath: "/custom/path",
+            experimentalGranularCache: true,
             concurrentDownloads: 50
         )
 
@@ -85,6 +86,7 @@ final class BatchConfigRunnerTests: XCTestCase {
         XCTAssertFalse(runner.noCache)
         XCTAssertTrue(runner.force)
         XCTAssertEqual(runner.cachePath, "/custom/path")
+        XCTAssertTrue(runner.experimentalGranularCache)
         XCTAssertEqual(runner.concurrentDownloads, 50)
         XCTAssertTrue(runner.resume)
     }
@@ -104,6 +106,7 @@ final class BatchConfigRunnerTests: XCTestCase {
         XCTAssertFalse(runner.noCache)
         XCTAssertFalse(runner.force)
         XCTAssertNil(runner.cachePath)
+        XCTAssertFalse(runner.experimentalGranularCache)
         XCTAssertEqual(runner.concurrentDownloads, 20)
     }
 

@@ -27,6 +27,12 @@ struct CacheOptions: ParsableArguments {
     )
     var cachePath: String?
 
+    @Flag(
+        name: .long,
+        help: "[EXPERIMENTAL] Enable per-node hash tracking for granular cache invalidation"
+    )
+    var experimentalGranularCache: Bool = false
+
     /// Resolves the effective cache enabled state.
     /// CLI flags take priority over YAML config.
     /// - Parameter configEnabled: The value from YAML config (common.cache.enabled).
@@ -49,5 +55,22 @@ struct CacheOptions: ParsableArguments {
     /// - Returns: The cache path to use (nil means use default).
     func resolvePath(configPath: String?) -> String? {
         cachePath ?? configPath
+    }
+
+    /// Checks if granular cache is enabled with proper --cache flag.
+    /// - Parameter configEnabled: The value from YAML config (common.cache.enabled).
+    /// - Returns: Whether granular cache should be active.
+    func isGranularCacheEnabled(configEnabled: Bool) -> Bool {
+        experimentalGranularCache && isEnabled(configEnabled: configEnabled)
+    }
+
+    /// Returns a warning if granular cache is enabled without --cache.
+    /// - Parameter configEnabled: The value from YAML config (common.cache.enabled).
+    /// - Returns: Warning if misconfigured, nil otherwise.
+    func granularCacheWarning(configEnabled: Bool) -> ExFigWarning? {
+        if experimentalGranularCache, !isEnabled(configEnabled: configEnabled) {
+            return .granularCacheWithoutCache
+        }
+        return nil
     }
 }

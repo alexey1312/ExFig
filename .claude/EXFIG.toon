@@ -28,6 +28,7 @@ commands:
       input: -i/--input PATH
       cache: --cache/--no-cache
       force: --force
+      experimentalGranularCache: --experimental-granular-cache (requires --cache)
       maxRetries: --max-retries N
       rateLimit: --rate-limit N
       failFast: --fail-fast
@@ -38,7 +39,7 @@ commands:
   images:
     purpose: Export images from Figma components
     args: [FILTER]
-    options: (same as icons)
+    options: (same as icons, including --experimental-granular-cache)
 
   typography:
     purpose: Export text styles from Figma
@@ -69,6 +70,7 @@ commands:
       noCache: --no-cache
       force: --force
       cachePath: --cache-path PATH
+      experimentalGranularCache: --experimental-granular-cache (requires --cache)
       concurrentDownloads: --concurrent-downloads N (default 20)
 
   download:
@@ -140,6 +142,11 @@ keyFiles:
   preFetchedVersions: Sources/ExFig/Batch/PreFetchedFileVersions.swift
   fileIdExtractor: Sources/ExFig/Batch/FileIdExtractor.swift
   fileVersionPreFetcher: Sources/ExFig/Batch/FileVersionPreFetcher.swift
+  granularCacheManager: Sources/ExFig/Cache/GranularCacheManager.swift
+  nodeHasher: Sources/ExFig/Cache/NodeHasher.swift
+  fnv1aHasher: Sources/ExFig/Cache/FNV1aHasher.swift
+  nodeHashableProperties: Sources/FigmaAPI/Model/NodeHashableProperties.swift
+  floatNormalization: Sources/FigmaAPI/Model/FloatNormalization.swift
 
 faultTolerance:
   defaults:
@@ -163,6 +170,30 @@ batchPreFetch:
     FileVersionPreFetcher: Parallel pre-fetching with spinner
   fallback: Individual configs fetch own metadata if pre-fetch fails
 
+granularCache:
+  purpose: Per-node hash tracking to skip unchanged assets
+  status: experimental
+  trigger: "--experimental-granular-cache with --cache"
+  algorithm: FNV-1a 64-bit (pure Swift, ~2 GB/s)
+  files:
+    GranularCacheManager: Per-node hash tracking orchestration
+    NodeHasher: Combines FNV-1a with canonical JSON
+    FNV1aHasher: Pure Swift FNV-1a 64-bit implementation
+    NodeHashableProperties: Hashable visual properties struct
+    FloatNormalization: Normalize floats to 6 decimal places
+  hashedNodeProperties: name, type, fills, strokes, strokeWeight, strokeAlign, strokeJoin, strokeCap, effects, opacity, blendMode, clipsContent, rotation, children
+  hashedPaintProperties: type, blendMode, color, opacity, gradientStops
+  hashedEffectProperties: type, radius, spread, offset, color, visible
+  recursion: children hashed recursively
+  excludedProperties: boundVariables, absoluteBoundingBox, absoluteRenderBounds, constraints, interactions, pluginData
+  cacheSchema:
+    version: 2
+    nodeHashes: "[nodeId: 16-char hex string]"
+  limitations:
+    configChanges: not detected - use --force
+    firstRun: populates hashes
+    cacheSize: 25KB per 1000 nodes
+
 terminalUI:
   classes:
     TerminalUI: Main facade for terminal operations
@@ -179,8 +210,8 @@ terminalUI:
   types:
     BatchProgressCallback: "@Sendable (Int, Int) -> Void (in Loaders/ImageLoaderBase.swift)"
   notes:
-    - Use DispatchQueue (not actors) for smooth UI rendering
-    - Callbacks passed to task groups must be @escaping
+    rendering: Use DispatchQueue not actors for smooth UI rendering
+    callbacks: Callbacks passed to task groups must be @escaping
 
 templates:
   ios[10]: UIColor+extension, Color+extension, UIFont+extension, Font+extension, UIImage+extension, Image+extension, Label, LabelStyle, LabelStyle+extension, header

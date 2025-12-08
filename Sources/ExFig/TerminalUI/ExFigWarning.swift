@@ -1,5 +1,5 @@
 /// Unified warning types for ExFig CLI output with TOON formatting support.
-enum ExFigWarning: Sendable {
+enum ExFigWarning: Sendable, Equatable {
     // MARK: - Configuration Warnings
 
     /// Platform/asset type configuration is missing from config file.
@@ -46,4 +46,9 @@ enum ExFigWarning: Sendable {
 
     /// Pre-fetch failed for some files, falling back to per-config fetch.
     case preFetchPartialFailure(failed: Int, total: Int)
+
+    // MARK: - Granular Cache Warnings
+
+    /// Granular cache flag used without --cache enabled.
+    case granularCacheWithoutCache
 }

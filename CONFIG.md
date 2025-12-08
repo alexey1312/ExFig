@@ -299,7 +299,34 @@ exfig icons --force
 
 # Use custom cache file path
 exfig icons --cache-path ./custom-cache.json
+
+# Enable granular node-level cache (experimental)
+# Tracks per-node content hashes to skip unchanged assets even when file version changes
+exfig icons --cache --experimental-granular-cache
+exfig images --cache --experimental-granular-cache
+
+# Force full re-export (clears node hashes when using granular cache)
+exfig icons --cache --experimental-granular-cache --force
 ```
+
+### Granular Cache (Experimental)
+
+The `--experimental-granular-cache` flag enables per-node change detection using FNV-1a content hashing. When enabled
+alongside `--cache`, ExFig computes hashes of each node's visual properties and compares them with cached values.
+
+**Benefits:**
+
+- Skip unchanged assets even when the Figma file version changes
+- Export only the 3 icons that changed out of 500, not all 500
+- Significant time savings for large design systems with frequent minor updates
+
+**Limitations:**
+
+- Config changes (output path, format, scale) are not detected — use `--force` when config changes
+- First run with granular cache populates hashes, subsequent runs benefit from tracking
+
+**Hashed properties:** `name`, `type`, `fills`, `strokes`, `strokeWeight`, `strokeAlign`, `strokeJoin`, `strokeCap`,
+`effects`, `opacity`, `blendMode`, `clipsContent`, `rotation`, `children` (recursive)
 
 ### Priority Order
 
@@ -314,19 +341,26 @@ The cache file (`.exfig-cache.json`) stores the Figma file versions:
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "files": {
     "abc123LightFileId": {
       "version": "1234567890",
       "lastExport": "2024-01-15T10:30:00Z",
-      "fileName": "Design System"
+      "fileName": "Design System",
+      "nodeHashes": {
+        "1:23": "a1b2c3d4e5f67890",
+        "4:56": "0987654321fedcba"
+      }
     }
   }
 }
 ```
 
-**Note:** The version changes when a Figma library is published, not on every auto-save. This makes it ideal for
-tracking intentional design changes.
+**Schema notes:**
+
+- `schemaVersion: 2` — supports granular node hashes (backward compatible with v1)
+- `nodeHashes` — optional field, populated when `--experimental-granular-cache` is used
+- The file version changes when a Figma library is published, not on every auto-save
 
 ## JSON Export (download command)
 

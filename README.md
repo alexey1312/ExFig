@@ -4,7 +4,7 @@
 [![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
-![Coverage](https://img.shields.io/badge/coverage-58.63%25-yellow)
+![Coverage](https://img.shields.io/badge/coverage-55.32%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
@@ -52,6 +52,7 @@ and Flutter.
 - 🔁 Automatic retries with exponential backoff
 - 💾 Checkpoint/resume for interrupted exports
 - 🕐 Version tracking (skip unchanged files)
+- 🧬 Granular cache (per-node change detection, experimental)
 
 ### Developer Experience
 
@@ -184,6 +185,29 @@ exfig icons --force
 
 **Note:** The version changes when a Figma library is **published**, not on every auto-save. This means exports are
 skipped only when designers intentionally publish their changes.
+
+### Experimental: Granular Cache
+
+When `--cache` is enabled, you can add `--experimental-granular-cache` to track per-node content hashes. This allows
+skipping unchanged assets even when the file version changes (useful when only some icons/images were modified):
+
+```bash
+exfig icons --cache --experimental-granular-cache
+exfig images --cache --experimental-granular-cache
+exfig batch --cache --experimental-granular-cache
+
+# Force full re-export and update hashes
+exfig icons --cache --experimental-granular-cache --force
+```
+
+**How it works:** Computes FNV-1a hash of each node's visual properties (fills, strokes, effects, rotation, children).
+Only exports nodes whose hashes differ from the cached values.
+
+**Known limitations:**
+
+- Config changes (output path, format, scale) are not detected - use `--force` when config changes
+- First run with granular cache populates hashes, subsequent runs benefit from tracking
+- Output directory is not cleared - only changed files are overwritten
 
 ## Fault Tolerance
 

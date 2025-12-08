@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 
 - **batch**: Pre-fetch file versions for cache-enabled batch runs by @alexey1312
 
+- **cache**: Add experimental granular per-node cache tracking (`--experimental-granular-cache`) by @alexey1312
+
 
 ## [1.0.4] - 2025-12-07
 
