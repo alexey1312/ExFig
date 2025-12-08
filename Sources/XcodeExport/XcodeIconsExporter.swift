@@ -2,7 +2,19 @@ import ExFigCore
 import Foundation
 
 public final class XcodeIconsExporter: XcodeImagesExporterBase {
-    public func export(icons: [AssetPair<ImagePack>], append: Bool) throws -> [FileContents] {
+    /// Exports icons to Xcode project.
+    ///
+    /// - Parameters:
+    ///   - icons: Icon asset pairs to export (may be filtered subset for granular cache).
+    ///   - allIconNames: Optional complete list of all icon names for Swift extension generation.
+    ///                   When provided, extensions include all icons even if only a subset is exported.
+    ///   - append: Whether to append to existing extension files.
+    /// - Returns: File contents to write.
+    public func export(
+        icons: [AssetPair<ImagePack>],
+        allIconNames: [String]? = nil,
+        append: Bool
+    ) throws -> [FileContents] {
         // Generate metadata (Assets.xcassets/Icons/Contents.json)
         let contentsFile = XcodeEmptyContents().makeFileContents(to: output.assetsFolderURL)
 
@@ -20,8 +32,8 @@ public final class XcodeIconsExporter: XcodeImagesExporterBase {
             )
         }
 
-        // Generate extensions
-        let imageNames = icons.map { normalizeName($0.light.name) }
+        // Generate extensions - use allIconNames if provided, otherwise derive from icons
+        let imageNames = allIconNames ?? icons.map { normalizeName($0.light.name) }
         let extensionFiles = try generateExtensions(names: imageNames, append: append)
 
         return [contentsFile] + imageAssetsFiles + extensionFiles

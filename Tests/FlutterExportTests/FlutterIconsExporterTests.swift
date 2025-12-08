@@ -125,4 +125,46 @@ final class FlutterIconsExporterTests: XCTestCase {
 
         XCTAssertTrue(generatedCode?.contains("class MyIcons") == true)
     }
+
+    // MARK: - Tests for allIconNames (granular cache support)
+
+    /// Tests that when allIconNames is provided, the Dart file contains all icons
+    /// even when only a subset is exported (simulating granular cache behavior).
+    func testExportWithAllIconNames_generatesDartFileWithAllNames() throws {
+        let exporter = FlutterIconsExporter(output: output, outputFileName: nil)
+
+        // Export only one icon, but provide allIconNames with multiple names
+        let result = try exporter.export(
+            icons: [iconPairLightOnly],
+            allIconNames: ["ic_add", "ic_remove", "ic_edit"]
+        )
+
+        let fileContent = try XCTUnwrap(result.dartFile.data)
+        let generatedCode = String(data: fileContent, encoding: .utf8)
+
+        // Verify all 3 icons are in the Dart file
+        XCTAssertTrue(generatedCode?.contains("static const String icAdd = ") == true)
+        XCTAssertTrue(generatedCode?.contains("static const String icRemove = ") == true)
+        XCTAssertTrue(generatedCode?.contains("static const String icEdit = ") == true)
+
+        // But only 1 asset file is created
+        XCTAssertEqual(result.assetFiles.count, 1)
+    }
+
+    /// Tests that when allIconNames is nil, the Dart file is derived from exported icons.
+    func testExportWithoutAllIconNames_generatesDartFileFromExportedIcons() throws {
+        let exporter = FlutterIconsExporter(output: output, outputFileName: nil)
+
+        let result = try exporter.export(
+            icons: [iconPairLightOnly],
+            allIconNames: nil
+        )
+
+        let fileContent = try XCTUnwrap(result.dartFile.data)
+        let generatedCode = String(data: fileContent, encoding: .utf8)
+
+        // Verify only the exported icon is in the Dart file
+        XCTAssertTrue(generatedCode?.contains("static const String icAdd = ") == true)
+        XCTAssertFalse(generatedCode?.contains("static const String icRemove = ") == true)
+    }
 }

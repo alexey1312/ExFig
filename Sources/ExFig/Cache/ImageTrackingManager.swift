@@ -152,6 +152,31 @@ final class ImageTrackingManager: @unchecked Sendable {
     var currentCachePath: URL {
         cachePath
     }
+
+    // MARK: - Granular Cache Operations
+
+    /// Creates a GranularCacheManager using this manager's cache.
+    func createGranularCacheManager() -> GranularCacheManager {
+        GranularCacheManager(client: client, cache: cache)
+    }
+
+    /// Updates node hashes for a file after successful export.
+    ///
+    /// - Parameters:
+    ///   - fileId: The Figma file ID.
+    ///   - hashes: Map of node ID to computed hash.
+    func updateNodeHashes(fileId: String, hashes: [NodeId: String]) throws {
+        cache.updateNodeHashes(fileId: fileId, hashes: hashes)
+        try cache.save(to: cachePath)
+        logger.debug("Updated \(hashes.count) node hashes for \(fileId)")
+    }
+
+    /// Clears node hashes for a file (used with --force flag).
+    func clearNodeHashes(fileId: String) throws {
+        cache.clearNodeHashes(fileId: fileId)
+        try cache.save(to: cachePath)
+        logger.debug("Cleared node hashes for \(fileId)")
+    }
 }
 
 // MARK: - Convenience Extensions
