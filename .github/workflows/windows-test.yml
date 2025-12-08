@@ -1,0 +1,25 @@
+name: Windows Build Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@main
+        with:
+          branch: swift-6.0.2-release
+          tag: 6.0.2-RELEASE
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Build (Debug)
+        run: swift build
+
+      - name: Build (Release)
+        run: swift build -c release

@@ -88,6 +88,10 @@ class ImageLoaderBase: @unchecked Sendable {
             filter: filter
         )
 
+        logger.debug(
+            "Granular cache: fileId=\(fileId), frameName=\(frameName), components before filter=\(allComponents.count)"
+        )
+
         // Extract all component names for template generation (sorted to match AssetsProcessor order)
         let allComponentNames = allComponents.values.map(\.name).sorted()
 
@@ -105,6 +109,13 @@ class ImageLoaderBase: @unchecked Sendable {
         let result = try await manager.filterChangedComponents(
             fileId: fileId,
             components: allComponents
+        )
+
+        logger.debug(
+            """
+            Granular cache: changedComponents=\(result.changedComponents.count), \
+            computedHashes=\(result.computedHashes.count)
+            """
         )
 
         let allSkipped = result.changedComponents.isEmpty && !allComponents.isEmpty
