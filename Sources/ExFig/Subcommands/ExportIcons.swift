@@ -49,15 +49,38 @@ extension ExFigCommand {
             _ = try await performExport(client: client, ui: ui)
         }
 
+        /// Result of icons export for batch mode integration.
+        struct IconsExportResult {
+            let count: Int
+            let computedHashes: [String: [String: String]]
+            let granularCacheStats: GranularCacheStats?
+        }
+
         /// Performs the actual export and returns the number of exported icons.
         /// - Parameters:
         ///   - client: The Figma API client to use.
         ///   - ui: The terminal UI for progress and messages.
         /// - Returns: The number of icons exported.
-        func performExport( // swiftlint:disable:this function_body_length
+        func performExport(
             client: Client,
             ui: TerminalUI
         ) async throws -> Int {
+            let result = try await performExportWithResult(client: client, ui: ui)
+            return result.count
+        }
+
+        /// Performs export and returns full result with hashes for batch mode.
+        /// - Parameters:
+        ///   - client: The Figma API client to use.
+        ///   - ui: The terminal UI for progress and messages.
+        /// - Returns: Export result including count, hashes, and granular cache stats.
+        func performExportWithResult( // swiftlint:disable:this function_body_length
+            client: Client,
+            ui: TerminalUI
+        ) async throws -> IconsExportResult {
+            // Detect batch mode via TaskLocal
+            let batchMode = SharedGranularCacheStorage.cache != nil
+
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(
@@ -68,12 +91,13 @@ extension ExFigCommand {
                     configCachePath: options.params.common?.cache?.path,
                     assetType: "Icons",
                     ui: ui,
-                    logger: logger
+                    logger: logger,
+                    batchMode: batchMode
                 )
             )
 
             guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
-                return 0
+                return IconsExportResult(count: 0, computedHashes: [:], granularCacheStats: nil)
             }
 
             // Check for granular cache warning
@@ -100,6 +124,7 @@ extension ExFigCommand {
                 : nil
 
             var totalIcons = 0
+            var totalSkipped = 0
             var allComputedHashes: [String: [NodeId: String]] = [:]
 
             if options.params.ios != nil {
@@ -111,6 +136,7 @@ extension ExFigCommand {
                     granularCacheManager: granularCacheManager
                 )
                 totalIcons += result.count
+                totalSkipped += result.skippedCount
                 mergeHashes(&allComputedHashes, result.hashes)
             }
 
@@ -123,6 +149,7 @@ extension ExFigCommand {
                     granularCacheManager: granularCacheManager
                 )
                 totalIcons += result.count
+                totalSkipped += result.skippedCount
                 mergeHashes(&allComputedHashes, result.hashes)
             }
 
@@ -135,26 +162,51 @@ extension ExFigCommand {
                     granularCacheManager: granularCacheManager
                 )
                 totalIcons += result.count
+                totalSkipped += result.skippedCount
                 mergeHashes(&allComputedHashes, result.hashes)
             }
 
             // Update file version cache after successful export
             try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
 
-            // Update node hashes for granular cache
+            // Update node hashes for granular cache (no-op in batch mode)
             if granularCacheEnabled {
                 for (fileId, hashes) in allComputedHashes where !hashes.isEmpty {
                     try trackingManager.updateNodeHashes(fileId: fileId, hashes: hashes)
                 }
             }
 
-            return totalIcons
+            // Convert NodeId keys to String for batch result
+            let stringHashes = allComputedHashes.mapValues { nodeHashes in
+                nodeHashes.reduce(into: [String: String]()) { result, pair in
+                    result[pair.key] = pair.value
+                }
+            }
+
+            // Build granular cache stats if granular cache was used
+            let stats: GranularCacheStats? = granularCacheEnabled && (totalIcons > 0 || totalSkipped > 0)
+                ? GranularCacheStats(skipped: totalSkipped, exported: totalIcons)
+                : nil
+
+            return IconsExportResult(
+                count: totalIcons,
+                computedHashes: stringHashes,
+                granularCacheStats: stats
+            )
         }
 
         /// Result of exporting icons for a single platform.
         private struct PlatformExportResult {
             let count: Int
             let hashes: [String: [NodeId: String]]
+            /// Number of icons skipped by granular cache.
+            let skippedCount: Int
+
+            init(count: Int, hashes: [String: [NodeId: String]], skippedCount: Int = 0) {
+                self.count = count
+                self.hashes = hashes
+                self.skippedCount = skippedCount
+            }
         }
 
         /// Merges computed hashes from one result into the accumulator.
@@ -182,7 +234,7 @@ extension ExFigCommand {
                   let iconsParams = ios.icons
             else {
                 ui.warning(.configMissing(platform: "ios", assetType: "icons"))
-                return PlatformExportResult(count: 0, hashes: [:])
+                return PlatformExportResult(count: 0, hashes: [:], skippedCount: 0)
             }
 
             let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
@@ -205,7 +257,11 @@ extension ExFigCommand {
             // If granular cache skipped all icons, return early
             if loaderResult.allSkipped {
                 ui.success("All icons unchanged (granular cache). Skipping export.")
-                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
             }
 
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
@@ -272,10 +328,19 @@ extension ExFigCommand {
                 try fileWriter.write(files: localFiles)
             }
 
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - icons.count
+                : 0
+
             guard params.ios?.xcassetsInSwiftPackage == false else {
                 await checkForUpdate(logger: logger)
                 ui.success("Done! Exported \(icons.count) icons.")
-                return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: icons.count,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: skippedCount
+                )
             }
 
             do {
@@ -293,7 +358,11 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(icons.count) icons.")
-            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
+            return PlatformExportResult(
+                count: icons.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
 
         // swiftlint:disable:next function_body_length
@@ -341,7 +410,11 @@ extension ExFigCommand {
             // If granular cache skipped all icons, return early
             if loaderResult.allSkipped {
                 ui.success("All icons unchanged (granular cache). Skipping export.")
-                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
             }
 
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
@@ -362,6 +435,11 @@ extension ExFigCommand {
             if let iconsWarning {
                 ui.warning(iconsWarning)
             }
+
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - icons.count
+                : 0
 
             // Create empty temp directory
             let tempDirectoryLightURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -474,7 +552,11 @@ extension ExFigCommand {
             await checkForUpdate(logger: logger)
 
             ui.success("Done! Exported \(icons.count) icons.")
-            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
+            return PlatformExportResult(
+                count: icons.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
 
         // Exports Android icons as Jetpack Compose ImageVector Kotlin files
@@ -520,7 +602,11 @@ extension ExFigCommand {
             // If granular cache skipped all icons, return early
             if loaderResult.allSkipped {
                 ui.success("All icons unchanged (granular cache). Skipping export.")
-                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
             }
 
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
@@ -611,8 +697,17 @@ extension ExFigCommand {
 
             await checkForUpdate(logger: logger)
 
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - icons.count
+                : 0
+
             ui.success("Done! Generated \(kotlinFiles.count) ImageVector files.")
-            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
+            return PlatformExportResult(
+                count: icons.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
 
         // swiftlint:disable:next function_body_length
@@ -648,7 +743,11 @@ extension ExFigCommand {
             // If granular cache skipped all icons, return early
             if loaderResult.allSkipped {
                 ui.success("All icons unchanged (granular cache). Skipping export.")
-                return PlatformExportResult(count: 0, hashes: loaderResult.computedHashes)
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
             }
 
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
@@ -715,8 +814,17 @@ extension ExFigCommand {
 
             await checkForUpdate(logger: logger)
 
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - icons.count
+                : 0
+
             ui.success("Done! Exported \(icons.count) icons to Flutter project.")
-            return PlatformExportResult(count: icons.count, hashes: loaderResult.computedHashes)
+            return PlatformExportResult(
+                count: icons.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
     }
 }

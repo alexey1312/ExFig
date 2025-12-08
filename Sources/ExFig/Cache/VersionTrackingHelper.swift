@@ -21,6 +21,30 @@ struct VersionTrackingConfig {
     let assetType: String
     let ui: TerminalUI
     let logger: Logger
+    /// Whether running in batch mode (defers cache saves, uses shared granular cache).
+    let batchMode: Bool
+
+    init(
+        client: Client,
+        params: Params,
+        cacheOptions: CacheOptions,
+        configCacheEnabled: Bool,
+        configCachePath: String?,
+        assetType: String,
+        ui: TerminalUI,
+        logger: Logger,
+        batchMode: Bool = false
+    ) {
+        self.client = client
+        self.params = params
+        self.cacheOptions = cacheOptions
+        self.configCacheEnabled = configCacheEnabled
+        self.configCachePath = configCachePath
+        self.assetType = assetType
+        self.ui = ui
+        self.logger = logger
+        self.batchMode = batchMode
+    }
 }
 
 /// Helper for version tracking in export commands.
@@ -35,7 +59,11 @@ enum VersionTrackingHelper {
 
         guard cacheEnabled else {
             return .proceed(
-                manager: createDummyManager(client: config.client, logger: config.logger),
+                manager: createDummyManager(
+                    client: config.client,
+                    logger: config.logger,
+                    batchMode: config.batchMode
+                ),
                 versions: []
             )
         }
@@ -44,7 +72,8 @@ enum VersionTrackingHelper {
         let manager = ImageTrackingManager(
             client: config.client,
             cachePath: cachePath,
-            logger: config.logger
+            logger: config.logger,
+            batchMode: config.batchMode
         )
 
         let result = try await config.ui.withSpinner("Checking for changes...") {
@@ -113,9 +142,13 @@ enum VersionTrackingHelper {
     }
 
     /// Creates a dummy manager for when cache is disabled (no-op for updateCache).
-    private static func createDummyManager(client: Client, logger: Logger) -> ImageTrackingManager {
+    private static func createDummyManager(
+        client: Client,
+        logger: Logger,
+        batchMode: Bool = false
+    ) -> ImageTrackingManager {
         // When cache is disabled, we still return a manager but won't call updateCache
-        ImageTrackingManager(client: client, cachePath: nil, logger: logger)
+        ImageTrackingManager(client: client, cachePath: nil, logger: logger, batchMode: batchMode)
     }
 
     /// Updates cache after successful export if versions are available.

@@ -218,6 +218,9 @@ extension ExFigCommand {
                 ui: ui
             )
 
+            // Pre-load granular cache if enabled
+            let sharedGranularCache: SharedGranularCache? = prepareSharedGranularCache()
+
             let runner = BatchConfigRunner(
                 rateLimiter: rateLimiter,
                 retryPolicy: retryPolicy,
@@ -236,6 +239,9 @@ extension ExFigCommand {
             ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers...")
             if globalOptions.verbose {
                 ui.info("Rate limit: \(rateLimit) req/min, max retries: \(maxRetries)")
+                if sharedGranularCache != nil {
+                    ui.info("Granular cache: shared across workers")
+                }
             }
 
             let executor = BatchExecutor(
@@ -245,16 +251,11 @@ extension ExFigCommand {
 
             let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
 
-            // Wrap execution with pre-fetched versions context if available
-            let result: BatchResult = if let preFetchedVersions {
-                await PreFetchedVersionsStorage.$versions.withValue(preFetchedVersions) {
-                    await executor.execute(configs: configs) { configFile in
-                        let configResult = await runner.process(configFile: configFile, ui: ui)
-                        await checkpointManager.update(for: configFile, result: configResult)
-                        return configResult
-                    }
-                }
-            } else {
+            // Wrap execution with both pre-fetched versions and shared granular cache
+            let result: BatchResult = await withBatchContext(
+                preFetchedVersions: preFetchedVersions,
+                sharedGranularCache: sharedGranularCache
+            ) {
                 await executor.execute(configs: configs) { configFile in
                     let configResult = await runner.process(configFile: configFile, ui: ui)
                     await checkpointManager.update(for: configFile, result: configResult)
@@ -262,7 +263,83 @@ extension ExFigCommand {
                 }
             }
 
+            // After batch: merge all computed hashes and save once
+            if let sharedCache = sharedGranularCache {
+                saveGranularCacheAfterBatch(result: result, sharedCache: sharedCache, ui: ui)
+            }
+
             return (result, rateLimiter)
+        }
+
+        /// Prepares shared granular cache for batch mode.
+        private func prepareSharedGranularCache() -> SharedGranularCache? {
+            // Only enable if granular cache is requested and cache is enabled
+            guard experimentalGranularCache, cache, !noCache else { return nil }
+
+            let resolvedCachePath = ImageTrackingCache.resolvePath(customPath: cachePath)
+            let cacheData = ImageTrackingCache.load(from: resolvedCachePath)
+
+            return SharedGranularCache(cache: cacheData, cachePath: resolvedCachePath)
+        }
+
+        /// Wraps execution with TaskLocal context for pre-fetched versions and shared granular cache.
+        private func withBatchContext<T>(
+            preFetchedVersions: PreFetchedFileVersions?,
+            sharedGranularCache: SharedGranularCache?,
+            operation: () async -> T
+        ) async -> T {
+            switch (preFetchedVersions, sharedGranularCache) {
+            case let (versions?, cache?):
+                // Both contexts
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await SharedGranularCacheStorage.$cache.withValue(cache) {
+                        await operation()
+                    }
+                }
+            case let (versions?, nil):
+                // Only pre-fetched versions
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await operation()
+                }
+            case let (nil, cache?):
+                // Only granular cache
+                await SharedGranularCacheStorage.$cache.withValue(cache) {
+                    await operation()
+                }
+            case (nil, nil):
+                // No context
+                await operation()
+            }
+        }
+
+        /// Saves granular cache after batch completes by merging all computed hashes.
+        private func saveGranularCacheAfterBatch(
+            result: BatchResult,
+            sharedCache: SharedGranularCache,
+            ui: TerminalUI
+        ) {
+            var updatedCache = sharedCache.cache
+
+            // Merge all computed hashes from successful configs
+            for success in result.successes {
+                for (fileId, hashes) in success.stats.computedNodeHashes {
+                    let nodeHashes = hashes.reduce(into: [NodeId: String]()) { result, pair in
+                        result[pair.key] = pair.value
+                    }
+                    updatedCache.updateNodeHashes(fileId: fileId, hashes: nodeHashes)
+                }
+            }
+
+            // Save merged cache
+            do {
+                try updatedCache.save(to: sharedCache.cachePath)
+                if globalOptions.verbose {
+                    let totalHashes = result.totalStats.computedNodeHashes.values.reduce(0) { $0 + $1.count }
+                    ui.info("Granular cache saved: \(totalHashes) node hashes")
+                }
+            } catch {
+                ui.warning("Failed to save granular cache: \(error.localizedDescription)")
+            }
         }
 
         private func handleResults(
@@ -324,6 +401,14 @@ extension ExFigCommand {
             ui.info("")
             ui.info("Batch complete: \(result.successCount) succeeded, \(result.failureCount) failed")
             ui.info("Duration: \(String(format: "%.2f", result.duration))s")
+
+            // Display aggregated granular cache stats if available
+            if let granularStats = result.totalStats.granularCacheStats {
+                let skipped = granularStats.skipped
+                let exported = granularStats.exported
+                ui.info("Granular cache: \(skipped) nodes skipped, \(exported) nodes exported")
+            }
+
             ui.info("")
 
             for success in result.successes {

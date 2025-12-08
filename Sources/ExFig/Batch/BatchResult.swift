@@ -20,15 +20,81 @@ struct ExportStats: Sendable {
     let images: Int
     let typography: Int
 
-    static let zero = ExportStats(colors: 0, icons: 0, images: 0, typography: 0)
+    /// Computed node hashes for granular cache update (batch mode only).
+    /// Maps fileId -> (nodeId -> hash).
+    let computedNodeHashes: [String: [String: String]]
+
+    /// Granular cache statistics (batch mode only).
+    let granularCacheStats: GranularCacheStats?
+
+    init(
+        colors: Int = 0,
+        icons: Int = 0,
+        images: Int = 0,
+        typography: Int = 0,
+        computedNodeHashes: [String: [String: String]] = [:],
+        granularCacheStats: GranularCacheStats? = nil
+    ) {
+        self.colors = colors
+        self.icons = icons
+        self.images = images
+        self.typography = typography
+        self.computedNodeHashes = computedNodeHashes
+        self.granularCacheStats = granularCacheStats
+    }
+
+    static let zero = ExportStats()
 
     static func + (lhs: ExportStats, rhs: ExportStats) -> ExportStats {
         ExportStats(
             colors: lhs.colors + rhs.colors,
             icons: lhs.icons + rhs.icons,
             images: lhs.images + rhs.images,
-            typography: lhs.typography + rhs.typography
+            typography: lhs.typography + rhs.typography,
+            computedNodeHashes: mergeHashes(lhs.computedNodeHashes, rhs.computedNodeHashes),
+            granularCacheStats: GranularCacheStats.merge(lhs.granularCacheStats, rhs.granularCacheStats)
         )
+    }
+
+    /// Merges two hash dictionaries.
+    private static func mergeHashes(
+        _ lhs: [String: [String: String]],
+        _ rhs: [String: [String: String]]
+    ) -> [String: [String: String]] {
+        var result = lhs
+        for (fileId, hashes) in rhs {
+            if let existing = result[fileId] {
+                result[fileId] = existing.merging(hashes) { _, new in new }
+            } else {
+                result[fileId] = hashes
+            }
+        }
+        return result
+    }
+}
+
+/// Statistics about granular cache effectiveness.
+struct GranularCacheStats: Sendable {
+    /// Number of nodes skipped (unchanged).
+    let skipped: Int
+    /// Number of nodes exported (changed or new).
+    let exported: Int
+
+    /// Total nodes processed.
+    var total: Int { skipped + exported }
+
+    /// Merges two stats, returning nil if both are nil.
+    static func merge(_ lhs: GranularCacheStats?, _ rhs: GranularCacheStats?) -> GranularCacheStats? {
+        switch (lhs, rhs) {
+        case let (l?, r?):
+            GranularCacheStats(skipped: l.skipped + r.skipped, exported: l.exported + r.exported)
+        case let (l?, nil):
+            l
+        case let (nil, r?):
+            r
+        case (nil, nil):
+            nil
+        }
     }
 }
 
