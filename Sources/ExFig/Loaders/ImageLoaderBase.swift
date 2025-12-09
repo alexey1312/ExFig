@@ -138,6 +138,88 @@ class ImageLoaderBase: @unchecked Sendable {
         )
     }
 
+    /// Fetches components with granular cache filtering and light/dark pairing.
+    ///
+    /// When using `useSingleFile` mode with dark mode suffix, if either the light
+    /// or dark version of a component changes, both versions are included in the result.
+    /// This ensures that the `ImagesProcessor` validation passes (it requires matching pairs).
+    func fetchImageComponentsWithGranularCacheAndPairing(
+        fileId: String,
+        frameName: String,
+        filter: String? = nil,
+        darkModeSuffix: String
+    ) async throws -> GranularFilterResult {
+        let allComponents = try await fetchImageComponents(
+            fileId: fileId, frameName: frameName, filter: filter
+        )
+        let allComponentNames = allComponents.values.map(\.name).sorted()
+
+        guard let manager = granularCacheManager, !allComponents.isEmpty else {
+            return GranularFilterResult(
+                components: allComponents, computedHashes: [:],
+                allSkipped: false, allComponentNames: allComponentNames
+            )
+        }
+
+        let result = try await manager.filterChangedComponents(
+            fileId: fileId, components: allComponents
+        )
+
+        if result.changedComponents.isEmpty {
+            logger.info(
+                "Granular cache: All \(allComponents.count) components unchanged, skipping export"
+            )
+            return GranularFilterResult(
+                components: [:], computedHashes: result.computedHashes,
+                allSkipped: true, allComponentNames: allComponentNames
+            )
+        }
+
+        let pairedComponents = buildPairedComponents(
+            allComponents: allComponents,
+            changedComponents: result.changedComponents,
+            darkModeSuffix: darkModeSuffix
+        )
+
+        logGranularCachePairingStats(
+            changed: result.changedComponents.count, paired: pairedComponents.count,
+            total: allComponents.count
+        )
+
+        return GranularFilterResult(
+            components: pairedComponents, computedHashes: result.computedHashes,
+            allSkipped: false, allComponentNames: allComponentNames
+        )
+    }
+
+    /// Extracts the base name from a component name by removing the dark mode suffix if present.
+    private func baseName(for name: String, darkModeSuffix: String) -> String {
+        name.hasSuffix(darkModeSuffix) ? String(name.dropLast(darkModeSuffix.count)) : name
+    }
+
+    /// Builds paired components map including both light and dark versions when either changes.
+    private func buildPairedComponents(
+        allComponents: [NodeId: Component],
+        changedComponents: [NodeId: Component],
+        darkModeSuffix: String
+    ) -> [NodeId: Component] {
+        let changedBaseNames = Set(changedComponents.values.map {
+            baseName(for: $0.name, darkModeSuffix: darkModeSuffix)
+        })
+        return allComponents.filter { _, component in
+            changedBaseNames.contains(baseName(for: component.name, darkModeSuffix: darkModeSuffix))
+        }
+    }
+
+    /// Logs granular cache statistics with pairing info.
+    private func logGranularCachePairingStats(changed: Int, paired: Int, total: Int) {
+        if paired > changed {
+            logger.info("Granular cache: \(changed)/\(total) changed, \(paired) with pairs")
+        } else {
+            logger.info("Granular cache: \(changed)/\(total) components changed")
+        }
+    }
+
     /// Loads vector images (SVG/PDF) from Figma.
     func loadVectorImages(
         fileId: String,
@@ -244,6 +326,111 @@ class ImageLoaderBase: @unchecked Sendable {
     ) async throws -> VectorImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCache(
             fileId: fileId, frameName: frameName, filter: filter
+        )
+
+        // If all components were skipped by granular cache, return early
+        if filterResult.allSkipped {
+            return VectorImagesWithHashesResult(
+                packs: [],
+                computedHashes: filterResult.computedHashes,
+                allSkipped: true,
+                allNames: filterResult.allComponentNames
+            )
+        }
+
+        var imagesDict = filterResult.components
+
+        guard !imagesDict.isEmpty else {
+            throw ExFigError.componentsNotFound
+        }
+
+        // Component name must not be empty
+        imagesDict = imagesDict.filter { (_: NodeId, component: Component) in
+            if component.name.trimmingCharacters(in: .whitespaces).isEmpty {
+                logger.warning(
+                    """
+                    Found a component with empty name.
+                    Page name: \(component.containingFrame.pageName)
+                    Frame: \(component.containingFrame.name ?? "nil")
+                    Description: \(component.description ?? "nil")
+                    The component wont be exported. Fix component name in the Figma file and try again.
+                    """)
+                return false
+            }
+            return true
+        }
+
+        logger.info("Fetching vector images...")
+        let imageIdToImagePath = try await loadImages(
+            fileId: fileId,
+            imagesDict: imagesDict,
+            params: params,
+            onBatchProgress: onBatchProgress
+        )
+
+        // Remove components for which image file could not be fetched
+        let badNodeIds = Set(imagesDict.keys).symmetricDifference(Set(imageIdToImagePath.keys))
+        for nodeId in badNodeIds {
+            imagesDict.removeValue(forKey: nodeId)
+        }
+
+        // Group images by name
+        let groups = Dictionary(grouping: imagesDict) {
+            $1.name.parseNameAndIdiom(platform: platform).name
+        }
+
+        // Create image packs for groups
+        let imagePacks = groups.compactMap { packName, components -> ImagePack? in
+            let packImages = components.compactMap { nodeId, component -> Image? in
+                guard let urlString = imageIdToImagePath[nodeId], let url = URL(string: urlString)
+                else {
+                    return nil
+                }
+                let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
+                let isRTL = component.useRTL()
+                return Image(
+                    name: name, scale: .all, idiom: idiom, url: url, format: params.format,
+                    isRTL: isRTL
+                )
+            }
+            return ImagePack(name: packName, images: packImages, platform: platform)
+        }
+
+        return VectorImagesWithHashesResult(
+            packs: imagePacks,
+            computedHashes: filterResult.computedHashes,
+            allSkipped: false,
+            allNames: filterResult.allComponentNames
+        )
+    }
+
+    /// Loads vector images with granular cache tracking and light/dark pairing.
+    ///
+    /// When using `useSingleFile` mode with dark mode suffix, if either the light
+    /// or dark version of a component changes, both versions are fetched and exported.
+    /// This ensures that the `ImagesProcessor` validation passes (it requires matching pairs).
+    ///
+    /// - Parameters:
+    ///   - fileId: The Figma file ID.
+    ///   - frameName: The frame name to filter components.
+    ///   - params: Format parameters (SVG/PDF).
+    ///   - filter: Optional filter pattern for component names.
+    ///   - darkModeSuffix: The suffix used to identify dark mode components (e.g., "-dark").
+    ///   - onBatchProgress: Progress callback.
+    /// - Returns: Image packs with paired light/dark versions, computed hashes, and skip status.
+    func loadVectorImagesWithGranularCacheAndPairing( // swiftlint:disable:this function_body_length
+        fileId: String,
+        frameName: String,
+        params: FormatParams,
+        filter: String? = nil,
+        darkModeSuffix: String,
+        onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
+    ) async throws -> VectorImagesWithHashesResult {
+        let filterResult = try await fetchImageComponentsWithGranularCacheAndPairing(
+            fileId: fileId,
+            frameName: frameName,
+            filter: filter,
+            darkModeSuffix: darkModeSuffix
         )
 
         // If all components were skipped by granular cache, return early
