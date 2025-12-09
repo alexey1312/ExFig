@@ -71,7 +71,10 @@ extension ExFigCommand {
                 return 0
             }
 
-            ui.info("Using ExFig \(ExFigCommand.version) to export colors.")
+            // Suppress version message in batch mode
+            if BatchProgressViewStorage.progressView == nil {
+                ui.info("Using ExFig \(ExFigCommand.version) to export colors.")
+            }
             let commonParams = options.params.common
 
             if commonParams?.colors != nil, commonParams?.variablesColors != nil {
@@ -145,7 +148,10 @@ extension ExFigCommand {
                     try exportXcodeColors(colorPairs: colorPairs, iosParams: ios, ui: ui)
                 }
 
-                await checkForUpdate(logger: logger)
+                // Suppress update check in batch mode (will be shown once at the end)
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
 
                 ui.success("Done! Exported \(colorPairs.count) colors to Xcode project.")
             }
@@ -171,7 +177,10 @@ extension ExFigCommand {
                     try exportAndroidColors(colorPairs: colorPairs, androidParams: android)
                 }
 
-                await checkForUpdate(logger: logger)
+                // Suppress update check in batch mode (will be shown once at the end)
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
 
                 ui.success("Done! Exported \(colorPairs.count) colors to Android project.")
             }
@@ -197,7 +206,10 @@ extension ExFigCommand {
                     try exportFlutterColors(colorPairs: colorPairs, flutterParams: flutter)
                 }
 
-                await checkForUpdate(logger: logger)
+                // Suppress update check in batch mode (will be shown once at the end)
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
 
                 ui.success("Done! Exported \(colorPairs.count) colors to Flutter project.")
             }

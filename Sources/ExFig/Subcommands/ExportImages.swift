@@ -141,7 +141,10 @@ extension ExFigCommand {
             var allComputedHashes: [String: [NodeId: String]] = [:]
 
             if options.params.ios != nil {
-                ui.info("Using ExFig \(ExFigCommand.version) to export images to Xcode project.")
+                // Suppress version message in batch mode
+                if BatchProgressViewStorage.progressView == nil {
+                    ui.info("Using ExFig \(ExFigCommand.version) to export images to Xcode project.")
+                }
                 let result = try await exportiOSImages(
                     client: client,
                     params: options.params,
@@ -154,7 +157,10 @@ extension ExFigCommand {
             }
 
             if options.params.android != nil {
-                ui.info("Using ExFig \(ExFigCommand.version) to export images to Android Studio project.")
+                // Suppress version message in batch mode
+                if BatchProgressViewStorage.progressView == nil {
+                    ui.info("Using ExFig \(ExFigCommand.version) to export images to Android Studio project.")
+                }
                 let result = try await exportAndroidImages(
                     client: client,
                     params: options.params,
@@ -167,7 +173,10 @@ extension ExFigCommand {
             }
 
             if options.params.flutter != nil {
-                ui.info("Using ExFig \(ExFigCommand.version) to export images to Flutter project.")
+                // Suppress version message in batch mode
+                if BatchProgressViewStorage.progressView == nil {
+                    ui.info("Using ExFig \(ExFigCommand.version) to export images to Flutter project.")
+                }
                 let result = try await exportFlutterImages(
                     client: client,
                     params: options.params,
@@ -340,7 +349,10 @@ extension ExFigCommand {
                 : 0
 
             guard params.ios?.xcassetsInSwiftPackage == false else {
-                await checkForUpdate(logger: logger)
+                // Suppress update check in batch mode (will be shown once at the end)
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
                 ui.success("Done! Exported \(images.count) images.")
                 return PlatformExportResult(
                     count: images.count,
@@ -361,7 +373,10 @@ extension ExFigCommand {
                 ui.warning(.xcodeProjectUpdateFailed)
             }
 
-            await checkForUpdate(logger: logger)
+            // Suppress update check in batch mode (will be shown once at the end)
+            if BatchProgressViewStorage.progressView == nil {
+                await checkForUpdate(logger: logger)
+            }
 
             ui.success("Done! Exported \(images.count) images.")
             return PlatformExportResult(
@@ -445,7 +460,10 @@ extension ExFigCommand {
                 )
             }
 
-            await checkForUpdate(logger: logger)
+            // Suppress update check in batch mode (will be shown once at the end)
+            if BatchProgressViewStorage.progressView == nil {
+                await checkForUpdate(logger: logger)
+            }
 
             // Calculate skipped count for granular cache stats
             let skippedCount = granularCacheManager != nil

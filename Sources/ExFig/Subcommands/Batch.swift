@@ -279,6 +279,9 @@ extension ExFigCommand {
             // Clear progress view after batch completes
             await progressView.clear()
 
+            // Check for updates once at the end (suppressed during individual exports)
+            await checkForUpdate(logger: logger)
+
             // After batch: merge all computed hashes and save once
             if let sharedCache = sharedGranularCache {
                 saveGranularCacheAfterBatch(result: result, sharedCache: sharedCache, ui: ui)
