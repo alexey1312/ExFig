@@ -49,7 +49,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
     // MARK: - Shared Cache in Batch Mode
 
-    func testUsesSharedCacheInBatchMode() async throws {
+    func testUsesSharedCacheInBatchMode() throws {
         // Create cache with pre-populated node hashes
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "fileA", version: "v1")
@@ -59,7 +59,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
 
         // Create manager in batch mode with shared cache
-        await SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
             let manager = ImageTrackingManager(
                 client: mockClient,
                 cachePath: nil,
@@ -191,7 +191,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
     // MARK: - Batch Mode with TaskLocal Injection
 
-    func testBatchModeWorksWithTaskLocalInjection() async throws {
+    func testBatchModeWorksWithTaskLocalInjection() throws {
         // Create shared cache with node hashes
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "icons-file", version: "v5")
@@ -206,7 +206,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
         var managerInBatchMode: ImageTrackingManager?
 
-        await SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
             // Create manager inside TaskLocal scope
             managerInBatchMode = ImageTrackingManager(
                 client: mockClient,
@@ -223,7 +223,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
     // MARK: - Parallel Access in Batch Mode
 
-    func testMultipleManagersShareSameCache() async throws {
+    func testMultipleManagersShareSameCache() throws {
         // Create shared cache
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "shared-file", version: "v1")
@@ -232,7 +232,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
         let cachePath = tempDirectory.appendingPathComponent("shared.json")
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
 
-        await SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
             // Create multiple managers (simulating parallel config processing)
             let manager1 = ImageTrackingManager(
                 client: mockClient,

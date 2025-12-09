@@ -44,6 +44,21 @@ final class TerminalUI: Sendable {
 
     /// Print a warning message (handles multi-line properly)
     func warning(_ message: String) {
+        // In batch mode, coordinate with progress display
+        if let progressView = BatchProgressViewStorage.progressView {
+            Task {
+                await progressView.clearForLog()
+                printWarning(message)
+                await progressView.render()
+            }
+            return
+        }
+
+        printWarning(message)
+    }
+
+    /// Internal helper to print warning message with formatting
+    private func printWarning(_ message: String) {
         let icon = useColors ? "⚠".yellow : "⚠"
 
         // Split message into lines and apply formatting to each
@@ -82,6 +97,21 @@ final class TerminalUI: Sendable {
 
     /// Print an error message
     func error(_ message: String) {
+        // In batch mode, coordinate with progress display
+        if let progressView = BatchProgressViewStorage.progressView {
+            Task {
+                await progressView.clearForLog()
+                printError(message)
+                await progressView.render()
+            }
+            return
+        }
+
+        printError(message)
+    }
+
+    /// Internal helper to print error message with formatting
+    private func printError(_ message: String) {
         let icon = useColors ? "✗".red : "✗"
 
         // Split message into lines and apply formatting to each
@@ -129,6 +159,11 @@ final class TerminalUI: Sendable {
         _ message: String,
         operation: @Sendable () async throws -> T
     ) async rethrows -> T {
+        // Suppress in batch mode to avoid corrupting multi-line progress display
+        if BatchProgressViewStorage.progressView != nil {
+            return try await operation()
+        }
+
         guard outputMode.showProgress else {
             // Quiet mode or plain mode without animations
             if outputMode != .quiet {
@@ -195,6 +230,11 @@ final class TerminalUI: Sendable {
         _ message: String,
         operation: @Sendable @escaping (@escaping @Sendable (Int, Int) -> Void) async throws -> T
     ) async rethrows -> T {
+        // Suppress in batch mode to avoid corrupting multi-line progress display
+        if BatchProgressViewStorage.progressView != nil {
+            return try await operation { _, _ in }
+        }
+
         guard outputMode.showProgress else {
             if outputMode != .quiet {
                 TerminalOutputManager.shared.print(message)
@@ -231,6 +271,17 @@ final class TerminalUI: Sendable {
         total: Int,
         operation: @Sendable (ProgressBar) async throws -> T
     ) async rethrows -> T {
+        // Suppress in batch mode to avoid corrupting multi-line progress display
+        if BatchProgressViewStorage.progressView != nil {
+            let noopProgress = ProgressBar(
+                message: message,
+                total: max(total, 1),
+                useColors: false,
+                useAnimations: false
+            )
+            return try await operation(noopProgress)
+        }
+
         guard outputMode.showProgress, total > 0 else {
             if outputMode != .quiet {
                 TerminalOutputManager.shared.print(message)

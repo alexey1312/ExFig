@@ -83,7 +83,9 @@ Sources/ExFig/
 ├── Input/           # Config & CLI options (ExFigOptions, DownloadOptions, etc.)
 ├── Output/          # File writers (FileWriter, WebpConverter, etc.)
 ├── TerminalUI/      # Progress bars, spinners, logging, output coordination
-└── Cache/           # Version tracking for incremental exports
+├── Cache/           # Version tracking for incremental exports
+├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
+└── Batch/           # Batch processing (executor, runner, checkpoint)
 
 Sources/*/Resources/ # Stencil templates for code generation
 Tests/               # Test targets mirror source structure
@@ -132,18 +134,20 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 
 **Key TerminalUI classes:**
 
-| Class                   | Purpose                                               |
-| ----------------------- | ----------------------------------------------------- |
-| `TerminalUI`            | Main facade for all terminal operations               |
-| `TerminalOutputManager` | Singleton coordinating output between animations/logs |
-| `Spinner`               | Animated spinner with message updates                 |
-| `ProgressBar`           | Progress bar with percentage and ETA                  |
-| `BatchProgressCallback` | `@Sendable (Int, Int) -> Void` for batch progress     |
-| `Lock<T>`               | Thread-safe state wrapper (NSLock-based, Sendable)    |
-| `ExFigWarning`          | Enum of all warning types for consistent messaging    |
-| `ExFigWarningFormatter` | Formats warnings as compact or multiline TOON strings |
-| `ExFigErrorFormatter`   | Formats errors with recovery suggestions              |
-| `ConflictFormatter`     | Formats batch output path conflicts for display       |
+| Class                      | Purpose                                               |
+| -------------------------- | ----------------------------------------------------- |
+| `TerminalUI`               | Main facade for all terminal operations               |
+| `TerminalOutputManager`    | Singleton coordinating output between animations/logs |
+| `Spinner`                  | Animated spinner with message updates                 |
+| `ProgressBar`              | Progress bar with percentage and ETA                  |
+| `BatchProgressView`        | Multi-line per-config progress display for batch mode |
+| `BatchProgressViewStorage` | `@TaskLocal` injection for batch progress view        |
+| `BatchProgressCallback`    | `@Sendable (Int, Int) -> Void` for batch progress     |
+| `Lock<T>`                  | Thread-safe state wrapper (NSLock-based, Sendable)    |
+| `ExFigWarning`             | Enum of all warning types for consistent messaging    |
+| `ExFigWarningFormatter`    | Formats warnings as compact or multiline TOON strings |
+| `ExFigErrorFormatter`      | Formats errors with recovery suggestions              |
+| `ConflictFormatter`        | Formats batch output path conflicts for display       |
 
 **TerminalOutputManager API:**
 
@@ -160,6 +164,37 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 - `Spinner` and `ProgressBar` use `DispatchQueue` (not Swift actors) for smooth 12 FPS rendering
 - All terminal output routes through `TerminalOutputManager` to prevent race conditions
 - `Lock<T>` wrapper provides thread-safe state with NSLock (compatible with macOS 12.0+)
+
+**Batch Mode Progress Display:**
+
+The `BatchProgressView` actor provides rich multi-line progress display for batch processing:
+
+```swift
+// In Batch.swift
+let progressView = BatchProgressView(useColors: !quiet, useAnimations: isTTY)
+
+// Register all configs
+for config in configs {
+    await progressView.registerConfig(name: config.name)
+}
+
+// Inject via @TaskLocal to suppress individual export UI
+await BatchProgressViewStorage.$progressView.withValue(progressView) {
+    // Process configs in parallel
+}
+
+// Progress view automatically displays:
+// - Per-config progress bars with ETA
+// - Asset counts (colors/icons/images/typography)
+// - Status indicators: ○ pending, ● running, ✓ success, ✗ failed
+// - Rate limiter status
+```
+
+**Batch mode UI suppression:**
+
+- Individual export commands detect `BatchProgressViewStorage.progressView` via `@TaskLocal`
+- Spinners and progress bars are automatically suppressed in batch mode
+- Critical logs (errors/warnings) coordinate with progress display via `clearForLog()` → print → `render()`
 
 ### Warnings System
 
@@ -314,6 +349,47 @@ if let preFetched = PreFetchedVersionsStorage.versions,
 }
 // ... fall back to API request
 ```
+
+### Pipelined Downloads (Batch Mode)
+
+In batch mode, downloads from all configs are coordinated through a shared queue to enable cross-config pipelining.
+While one config is fetching from Figma API, another can be downloading from CDN simultaneously.
+
+**Key files:**
+
+- `Sources/ExFig/Pipeline/SharedDownloadQueue.swift` - Actor coordinating downloads across configs
+- `Sources/ExFig/Pipeline/SharedDownloadQueueStorage.swift` - `@TaskLocal` injection for queue
+- `Sources/ExFig/Pipeline/PipelinedDownloader.swift` - Helper that uses queue when available
+- `Sources/ExFig/Pipeline/DownloadJob.swift` - Represents a batch of files to download
+
+**How it works:**
+
+1. `Batch.swift` creates `SharedDownloadQueue` with `concurrentDownloads × parallel` capacity
+2. Each config runner gets queue + priority injected via `SharedDownloadQueueStorage` TaskLocal
+3. `ExportIcons`/`ExportImages` call `PipelinedDownloader.download()` which checks for injected queue
+4. Downloads from all configs compete for slots in the shared queue (earlier configs get higher priority)
+5. In standalone mode (no batch), falls back to direct `FileDownloader`
+
+**Pattern:**
+
+```swift
+// Queue is injected via @TaskLocal (same pattern as InjectedClientStorage)
+try await SharedDownloadQueueStorage.$queue.withValue(downloadQueue) {
+    try await SharedDownloadQueueStorage.$configId.withValue(configFile.name) {
+        try await export(...)  // PipelinedDownloader checks SharedDownloadQueueStorage
+    }
+}
+
+// PipelinedDownloader uses queue when available, otherwise direct download
+if let queue = SharedDownloadQueueStorage.queue,
+   let configId = SharedDownloadQueueStorage.configId {
+    return try await downloadWithQueue(...)  // Pipelined
+} else {
+    return try await fileDownloader.fetch(...)  // Direct
+}
+```
+
+**Expected performance:** ~45% improvement in batch mode with multiple configs.
 
 ### Granular Node-Level Cache (Experimental)
 

@@ -60,7 +60,10 @@ extension ExFigCommand {
                 return 0
             }
 
-            ui.info("Using ExFig \(ExFigCommand.version) to export typography.")
+            // Suppress version message in batch mode
+            if BatchProgressViewStorage.progressView == nil {
+                ui.info("Using ExFig \(ExFigCommand.version) to export typography.")
+            }
 
             let textStyles = try await ui.withSpinner("Fetching text styles from Figma...") {
                 let loader = TextStylesLoader(client: client, params: options.params.figma)
@@ -84,7 +87,10 @@ extension ExFigCommand {
                     try exportXcodeTextStyles(textStyles: processedTextStyles, iosParams: ios, ui: ui)
                 }
 
-                await checkForUpdate(logger: logger)
+                // Suppress update check in batch mode (will be shown once at the end)
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
 
                 ui.success("Done! Exported \(processedTextStyles.count) text styles to Xcode project.")
             }
@@ -104,7 +110,10 @@ extension ExFigCommand {
                     try exportAndroidTextStyles(textStyles: processedTextStyles, androidParams: android)
                 }
 
-                await checkForUpdate(logger: logger)
+                // Suppress update check in batch mode (will be shown once at the end)
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
 
                 ui.success("Done! Exported \(processedTextStyles.count) text styles to Android project.")
             }

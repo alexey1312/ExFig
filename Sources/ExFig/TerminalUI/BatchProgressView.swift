@@ -20,6 +20,7 @@ actor BatchProgressView {
         let name: String
         var status: Status
         var exportProgress: ExportProgress
+        var startTime: Date?
 
         enum Status: Sendable {
             case pending
@@ -83,6 +84,7 @@ actor BatchProgressView {
     func startConfig(name: String) {
         guard var state = configStates[name] else { return }
         state.status = .running
+        state.startTime = Date()
         configStates[name] = state
         render()
     }
@@ -156,8 +158,19 @@ actor BatchProgressView {
         TerminalOutputManager.shared.writeDirect(output)
     }
 
+    /// Clear progress display temporarily for log output.
+    /// This moves cursor up and clears lines without resetting lineCount,
+    /// allowing render() to redraw the progress after the log message.
+    func clearForLog() {
+        guard useAnimations, lineCount > 0 else { return }
+
+        // Move up and clear from cursor to end of screen
+        TerminalOutputManager.shared.writeDirect(ANSICodes.cursorUp(lineCount))
+        TerminalOutputManager.shared.writeDirect(ANSICodes.clearToEndOfScreen)
+    }
+
     /// Render the batch progress view.
-    private func render() {
+    func render() {
         guard useAnimations else { return }
 
         var output = ""
@@ -282,12 +295,47 @@ actor BatchProgressView {
         return Double(completed) / Double(total)
     }
 
+    /// Calculate estimated time remaining for a config based on progress
+    private func calculateETA(_ config: ConfigState) -> TimeInterval? {
+        guard case .running = config.status,
+              let startTime = config.startTime
+        else {
+            return nil
+        }
+
+        let progress = calculateOverallProgress(config)
+        guard progress > 0.1 else { return nil } // Need at least 10% data
+
+        let elapsed = Date().timeIntervalSince(startTime)
+        let estimatedTotal = elapsed / progress
+        let remaining = estimatedTotal - elapsed
+
+        return max(0, remaining)
+    }
+
+    /// Format duration as "Xs" or "Xm Ys"
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let sec = Int(seconds)
+        if sec < 60 {
+            return "\(sec)s"
+        } else {
+            let min = sec / 60
+            let remainingSec = sec % 60
+            return "\(min)m \(remainingSec)s"
+        }
+    }
+
     private func formatStatusText(_ config: ConfigState) -> String {
         switch config.status {
         case .pending:
             return useColors ? "Waiting...".lightBlack : "Waiting..."
         case .running:
-            return formatExportProgress(config.exportProgress)
+            var text = formatExportProgress(config.exportProgress)
+            if let eta = calculateETA(config), eta > 1 {
+                let etaStr = formatDuration(eta)
+                text += useColors ? "  ETA: \(etaStr)".lightBlack : "  ETA: \(etaStr)"
+            }
+            return text
         case .succeeded:
             return formatExportProgress(config.exportProgress) + (useColors ? " ✓".green : " ✓")
         case let .failed(error):
