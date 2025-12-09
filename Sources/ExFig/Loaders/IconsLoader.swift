@@ -172,11 +172,13 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         let fileId = params.figma.lightFileId
         let darkSuffix = params.common?.icons?.darkModeSuffix ?? "_dark"
 
-        let result = try await loadVectorImagesWithGranularCache(
+        // Use pairing-aware method to ensure light/dark pairs are exported together
+        let result = try await loadVectorImagesWithGranularCacheAndPairing(
             fileId: fileId,
             frameName: frameName,
             params: formatParams,
             filter: filter,
+            darkModeSuffix: darkSuffix,
             onBatchProgress: onBatchProgress
         )
 

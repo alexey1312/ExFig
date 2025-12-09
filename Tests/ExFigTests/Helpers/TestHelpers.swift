@@ -190,17 +190,21 @@ extension Params {
         iconsFrameName: String? = nil,
         imagesFrameName: String? = nil,
         useSingleFileIcons: Bool? = nil,
-        useSingleFileImages: Bool? = nil
+        useSingleFileImages: Bool? = nil,
+        iconsDarkModeSuffix: String? = nil
     ) -> Params {
         var commonComponents: [String] = []
 
-        if iconsFrameName != nil || useSingleFileIcons != nil {
+        if iconsFrameName != nil || useSingleFileIcons != nil || iconsDarkModeSuffix != nil {
             var iconParts: [String] = []
             if let frameName = iconsFrameName {
                 iconParts.append("\"figmaFrameName\": \"\(frameName)\"")
             }
             if let useSingle = useSingleFileIcons {
                 iconParts.append("\"useSingleFile\": \(useSingle)")
+            }
+            if let darkSuffix = iconsDarkModeSuffix {
+                iconParts.append("\"darkModeSuffix\": \"\(darkSuffix)\"")
             }
             commonComponents.append("\"icons\": { \(iconParts.joined(separator: ", ")) }")
         }
