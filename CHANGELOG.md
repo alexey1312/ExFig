@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2025-12-09
+
+### Features
+
+- **icons**: Ensure light/dark pairs export together with granular cache by @alexey1312
+
+
 ## [1.1.0] - 2025-12-09
 
 ### Other
