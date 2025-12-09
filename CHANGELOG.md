@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2025-12-09
+
+### Bug Fixes
+
+- **cache**: Sort children by name for stable granular cache hashing by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **release**: Add static Swift stdlib for Linux builds by @alexey1312
+
+
 ## [1.1.1] - 2025-12-09
 
 ### Features
