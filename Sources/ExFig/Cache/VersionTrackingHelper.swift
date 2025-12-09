@@ -152,11 +152,13 @@ enum VersionTrackingHelper {
     }
 
     /// Updates cache after successful export if versions are available.
+    /// In batch mode, defers cache save to the batch orchestrator.
     static func updateCacheIfNeeded(
         manager: ImageTrackingManager?,
         versions: [FileVersionInfo]
     ) throws {
         guard let manager, !versions.isEmpty else { return }
-        try manager.updateCache(with: versions)
+        // Pass manager's batchMode flag to defer saves in batch mode
+        try manager.updateCache(with: versions, batchMode: manager.batchMode)
     }
 }

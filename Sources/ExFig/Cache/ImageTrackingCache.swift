@@ -189,9 +189,18 @@ extension ImageTrackingCache {
     /// - Parameters:
     ///   - fileId: The Figma file ID.
     ///   - hashes: Map of node ID to hash for all exported nodes.
+    /// - Note: Merges with existing hashes (new hashes overwrite old for same nodeId).
     mutating func updateNodeHashes(fileId: String, hashes: [String: String]) {
         guard var fileInfo = files[fileId] else { return }
-        fileInfo.nodeHashes = hashes
+
+        // Merge with existing hashes instead of replacing
+        if var existingHashes = fileInfo.nodeHashes {
+            existingHashes.merge(hashes) { _, new in new }
+            fileInfo.nodeHashes = existingHashes
+        } else {
+            fileInfo.nodeHashes = hashes
+        }
+
         files[fileId] = fileInfo
     }
 

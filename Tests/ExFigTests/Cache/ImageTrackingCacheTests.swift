@@ -300,4 +300,60 @@ final class ImageTrackingCacheTests: XCTestCase {
         XCTAssertEqual(loadedCache.files["fileA"]?.nodeHashes?["1:1"], "hash1")
         XCTAssertEqual(loadedCache.files["fileA"]?.nodeHashes?["1:2"], "hash2")
     }
+
+    // MARK: - Hash Merge Tests
+
+    func testUpdateNodeHashesMergesWithExisting() {
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "fileA", version: "v1")
+
+        // First update: add hashes for nodes 1:1, 1:2
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "hash1", "1:2": "hash2"])
+
+        // Second update: add hashes for nodes 1:3, 1:4
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:3": "hash3", "1:4": "hash4"])
+
+        // All 4 hashes should be present
+        let hashes = cache.files["fileA"]?.nodeHashes
+        XCTAssertEqual(hashes?.count, 4)
+        XCTAssertEqual(hashes?["1:1"], "hash1")
+        XCTAssertEqual(hashes?["1:2"], "hash2")
+        XCTAssertEqual(hashes?["1:3"], "hash3")
+        XCTAssertEqual(hashes?["1:4"], "hash4")
+    }
+
+    func testUpdateNodeHashesOverwritesExistingForSameNode() {
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "fileA", version: "v1")
+
+        // First update: add hash for node 1:1
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "oldHash"])
+
+        // Second update: update hash for same node 1:1
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "newHash"])
+
+        // New hash should overwrite old
+        let hashes = cache.files["fileA"]?.nodeHashes
+        XCTAssertEqual(hashes?.count, 1)
+        XCTAssertEqual(hashes?["1:1"], "newHash")
+    }
+
+    func testUpdateNodeHashesMergesMultipleUpdates() {
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "fileA", version: "v1")
+
+        // Simulate batch mode: multiple configs updating same file
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "hash1", "1:2": "hash2"])
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:3": "hash3"])
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:4": "hash4", "1:5": "hash5"])
+
+        // All hashes should be present
+        let hashes = cache.files["fileA"]?.nodeHashes
+        XCTAssertEqual(hashes?.count, 5)
+        XCTAssertEqual(hashes?["1:1"], "hash1")
+        XCTAssertEqual(hashes?["1:2"], "hash2")
+        XCTAssertEqual(hashes?["1:3"], "hash3")
+        XCTAssertEqual(hashes?["1:4"], "hash4")
+        XCTAssertEqual(hashes?["1:5"], "hash5")
+    }
 }

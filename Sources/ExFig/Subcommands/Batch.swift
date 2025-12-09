@@ -320,7 +320,20 @@ extension ExFigCommand {
         ) {
             var updatedCache = sharedCache.cache
 
-            // Merge all computed hashes from successful configs
+            // First, merge all file versions from successful configs
+            for success in result.successes {
+                if let versions = success.stats.fileVersions {
+                    for version in versions {
+                        updatedCache.updateFileVersion(
+                            fileId: version.fileId,
+                            version: version.currentVersion,
+                            fileName: version.fileName
+                        )
+                    }
+                }
+            }
+
+            // Then merge all computed hashes from successful configs
             for success in result.successes {
                 for (fileId, hashes) in success.stats.computedNodeHashes {
                     let nodeHashes = hashes.reduce(into: [NodeId: String]()) { result, pair in
