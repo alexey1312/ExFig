@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2025-12-09
+
+### Documentation
+
+- **batch**: Clarify granular cache merge sequence by @alexey1312
+
+
+### Features
+
+- **batch**: Add shared granular cache for parallel configs by @alexey1312
+
+
 ## [1.0.7] - 2025-12-08
 
 ### Bug Fixes
