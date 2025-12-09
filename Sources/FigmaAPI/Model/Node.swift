@@ -186,8 +186,14 @@ public struct PaintColor: Codable, Sendable {
 public extension Document {
     /// Converts the document to a hashable properties struct for change detection.
     /// Float values are normalized to 6 decimal places to handle Figma API precision drift.
+    /// Children are sorted by name for stable hashing regardless of Figma API order.
     func toHashableProperties() -> NodeHashableProperties {
-        NodeHashableProperties(
+        // Sort children by name for stable hash (Figma API may return in different order)
+        let sortedChildren = children?
+            .map { $0.toHashableProperties() }
+            .sorted { $0.name < $1.name }
+
+        return NodeHashableProperties(
             name: name,
             type: type ?? "UNKNOWN",
             fills: fills.map { $0.toHashablePaint() },
@@ -201,7 +207,7 @@ public extension Document {
             blendMode: blendMode?.rawValue,
             clipsContent: clipsContent,
             rotation: rotation?.normalized,
-            children: children?.map { $0.toHashableProperties() }
+            children: sortedChildren
         )
     }
 }
