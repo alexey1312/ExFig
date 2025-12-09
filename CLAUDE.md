@@ -134,18 +134,20 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 
 **Key TerminalUI classes:**
 
-| Class                   | Purpose                                               |
-| ----------------------- | ----------------------------------------------------- |
-| `TerminalUI`            | Main facade for all terminal operations               |
-| `TerminalOutputManager` | Singleton coordinating output between animations/logs |
-| `Spinner`               | Animated spinner with message updates                 |
-| `ProgressBar`           | Progress bar with percentage and ETA                  |
-| `BatchProgressCallback` | `@Sendable (Int, Int) -> Void` for batch progress     |
-| `Lock<T>`               | Thread-safe state wrapper (NSLock-based, Sendable)    |
-| `ExFigWarning`          | Enum of all warning types for consistent messaging    |
-| `ExFigWarningFormatter` | Formats warnings as compact or multiline TOON strings |
-| `ExFigErrorFormatter`   | Formats errors with recovery suggestions              |
-| `ConflictFormatter`     | Formats batch output path conflicts for display       |
+| Class                      | Purpose                                               |
+| -------------------------- | ----------------------------------------------------- |
+| `TerminalUI`               | Main facade for all terminal operations               |
+| `TerminalOutputManager`    | Singleton coordinating output between animations/logs |
+| `Spinner`                  | Animated spinner with message updates                 |
+| `ProgressBar`              | Progress bar with percentage and ETA                  |
+| `BatchProgressView`        | Multi-line per-config progress display for batch mode |
+| `BatchProgressViewStorage` | `@TaskLocal` injection for batch progress view        |
+| `BatchProgressCallback`    | `@Sendable (Int, Int) -> Void` for batch progress     |
+| `Lock<T>`                  | Thread-safe state wrapper (NSLock-based, Sendable)    |
+| `ExFigWarning`             | Enum of all warning types for consistent messaging    |
+| `ExFigWarningFormatter`    | Formats warnings as compact or multiline TOON strings |
+| `ExFigErrorFormatter`      | Formats errors with recovery suggestions              |
+| `ConflictFormatter`        | Formats batch output path conflicts for display       |
 
 **TerminalOutputManager API:**
 
@@ -162,6 +164,37 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 - `Spinner` and `ProgressBar` use `DispatchQueue` (not Swift actors) for smooth 12 FPS rendering
 - All terminal output routes through `TerminalOutputManager` to prevent race conditions
 - `Lock<T>` wrapper provides thread-safe state with NSLock (compatible with macOS 12.0+)
+
+**Batch Mode Progress Display:**
+
+The `BatchProgressView` actor provides rich multi-line progress display for batch processing:
+
+```swift
+// In Batch.swift
+let progressView = BatchProgressView(useColors: !quiet, useAnimations: isTTY)
+
+// Register all configs
+for config in configs {
+    await progressView.registerConfig(name: config.name)
+}
+
+// Inject via @TaskLocal to suppress individual export UI
+await BatchProgressViewStorage.$progressView.withValue(progressView) {
+    // Process configs in parallel
+}
+
+// Progress view automatically displays:
+// - Per-config progress bars with ETA
+// - Asset counts (colors/icons/images/typography)
+// - Status indicators: ○ pending, ● running, ✓ success, ✗ failed
+// - Rate limiter status
+```
+
+**Batch mode UI suppression:**
+
+- Individual export commands detect `BatchProgressViewStorage.progressView` via `@TaskLocal`
+- Spinners and progress bars are automatically suppressed in batch mode
+- Critical logs (errors/warnings) coordinate with progress display via `clearForLog()` → print → `render()`
 
 ### Warnings System
 

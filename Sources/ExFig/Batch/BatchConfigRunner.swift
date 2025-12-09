@@ -264,8 +264,17 @@ struct BatchConfigRunner: Sendable {
         )
     }
 
-    func process(configFile: ConfigFile, ui: TerminalUI) async -> ConfigResult {
-        ui.info("Processing: \(configFile.name)")
+    func process(
+        configFile: ConfigFile,
+        ui: TerminalUI,
+        progressView: BatchProgressView? = nil
+    ) async -> ConfigResult {
+        // Start config in progress view or log to UI
+        if let progressView {
+            await progressView.startConfig(name: configFile.name)
+        } else {
+            ui.info("Processing: \(configFile.name)")
+        }
 
         do {
             var options = ExFigOptions()
@@ -300,12 +309,32 @@ struct BatchConfigRunner: Sendable {
                 client: client,
                 ui: ui
             )
-            ui.success("Completed: \(configFile.name)")
+
+            // Update progress view with final counts or log success
+            if let progressView {
+                await progressView.updateProgress(
+                    name: configFile.name,
+                    colors: stats.colors > 0 ? (stats.colors, stats.colors) : nil,
+                    icons: stats.icons > 0 ? (stats.icons, stats.icons) : nil,
+                    images: stats.images > 0 ? (stats.images, stats.images) : nil,
+                    typography: stats.typography > 0 ? (stats.typography, stats.typography) : nil
+                )
+                await progressView.succeedConfig(name: configFile.name)
+            } else {
+                ui.success("Completed: \(configFile.name)")
+            }
+
             return .success(config: configFile, stats: stats)
 
         } catch {
-            ui.error("Failed: \(configFile.name)")
-            ui.error(error)
+            // Update progress view with failure or log error
+            if let progressView {
+                let errorMsg = String(error.localizedDescription.prefix(30))
+                await progressView.failConfig(name: configFile.name, error: errorMsg)
+            } else {
+                ui.error("Failed: \(configFile.name)")
+                ui.error(error)
+            }
             return .failure(config: configFile, error: error)
         }
     }

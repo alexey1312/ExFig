@@ -195,6 +195,7 @@ extension ExFigCommand {
             return existing
         }
 
+        // swiftlint:disable:next function_body_length
         private func executeBatch(
             configs: [ConfigFile],
             checkpoint: BatchCheckpoint,
@@ -237,6 +238,17 @@ extension ExFigCommand {
                 ui: ui
             )
 
+            // Create batch progress view for rich per-config progress display
+            let progressView = BatchProgressView(
+                useColors: !globalOptions.quiet,
+                useAnimations: !globalOptions.quiet && TTYDetector.isTTY
+            )
+
+            // Register all configs upfront
+            for config in configs {
+                await progressView.registerConfig(name: config.name)
+            }
+
             let executor = BatchExecutor(maxParallel: parallel, failFast: failFast)
             let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
             let runnerFactory = makeRunnerFactory(
@@ -246,18 +258,26 @@ extension ExFigCommand {
                 priorityMap: priorityMap
             )
 
-            // Wrap execution with both pre-fetched versions and shared granular cache
-            let result: BatchResult = await withBatchContext(
-                preFetchedVersions: preFetchedVersions,
-                sharedGranularCache: sharedGranularCache
-            ) {
-                await executor.execute(configs: configs) { configFile in
-                    let runner = runnerFactory(configFile)
-                    let configResult = await runner.process(configFile: configFile, ui: ui)
-                    await checkpointManager.update(for: configFile, result: configResult)
-                    return configResult
+            // Wrap execution with batch progress view and batch context injection
+            let result: BatchResult = await BatchProgressViewStorage.$progressView.withValue(progressView) {
+                await withBatchContext(
+                    preFetchedVersions: preFetchedVersions,
+                    sharedGranularCache: sharedGranularCache
+                ) {
+                    await executeWithProgressUpdates(
+                        executor: executor,
+                        configs: configs,
+                        checkpointManager: checkpointManager,
+                        runnerFactory: runnerFactory,
+                        progressView: progressView,
+                        rateLimiter: rateLimiter,
+                        ui: ui
+                    )
                 }
             }
+
+            // Clear progress view after batch completes
+            await progressView.clear()
 
             // After batch: merge all computed hashes and save once
             if let sharedCache = sharedGranularCache {
@@ -265,6 +285,45 @@ extension ExFigCommand {
             }
 
             return (result, rateLimiter)
+        }
+
+        // swiftlint:disable function_parameter_count
+        /// Execute batch with progress view updates and rate limiter status.
+        private func executeWithProgressUpdates(
+            executor: BatchExecutor,
+            configs: [ConfigFile],
+            checkpointManager: CheckpointManager,
+            runnerFactory: @escaping @Sendable (ConfigFile) -> BatchConfigRunner,
+            progressView: BatchProgressView,
+            rateLimiter: SharedRateLimiter,
+            ui: TerminalUI
+        ) async -> BatchResult {
+            // swiftlint:enable function_parameter_count
+            // Start rate limiter status updates (every 500ms)
+            let rateLimiterTask = Task {
+                while !Task.isCancelled {
+                    let status = await rateLimiter.status()
+                    await progressView.updateRateLimiterStatus(status)
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+                }
+            }
+
+            // Execute batch with progress view
+            let result = await executor.execute(configs: configs) { configFile in
+                let runner = runnerFactory(configFile)
+                let configResult = await runner.process(
+                    configFile: configFile,
+                    ui: ui,
+                    progressView: progressView
+                )
+                await checkpointManager.update(for: configFile, result: configResult)
+                return configResult
+            }
+
+            // Stop rate limiter updates
+            rateLimiterTask.cancel()
+
+            return result
         }
 
         /// Creates a factory function for BatchConfigRunner instances.
