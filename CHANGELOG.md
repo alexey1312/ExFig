@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2025-12-09
+
+### Other
+
+- Update batch 
+
+* feat(batch): add pipelined download queue for parallelism
+
+Introduce SharedDownloadQueue to coordinate CDN downloads across
+parallel configs in batch mode. Downloads are prioritized by config
+submission order and processed with shared concurrency pool.
+
+- Add DownloadJob/DownloadJobResult for batch coordination
+- Add PipelinedDownloader helper with TaskLocal injection
+- Add SharedDownloadQueueStorage for config-level context
+- Update BatchConfigRunner to inject queue and priority
+- Update ExportIcons/ExportImages to use PipelinedDownloader
+- Scale total download slots by parallel workers count
+
+Benefits: eliminates per-config download bottlenecks, improves
+throughput in multi-config batch runs, maintains FIFO ordering.
+
+* feat(batch): add rich progress view with ETA and status
+
+- Add BatchProgressView integration with per-config status tracking
+- Calculate and display ETA based on export progress
+- Coordinate UI suppression via BatchProgressViewStorage TaskLocal
+- Clear/redraw progress display for log/error output
+- Update rate limiter status every 500ms during execution
+- Suppress spinners and progress bars in batch mode to prevent corruption
+
+* feat(batch): centralize update check to end of batch
+
+Suppress individual update checks during batch exports and check once
+after all configs complete. by @alexey1312 in [#10](https://github.com/alexey1312/ExFig/pull/10)
+
+
 ## [1.0.8] - 2025-12-09
 
 ### Documentation
