@@ -316,10 +316,13 @@ extension ExFigCommand {
             let remoteFilesCount = localAndRemoteFiles.filter { $0.sourceURL != nil }.count
             let fileDownloader = faultToleranceOptions.createFileDownloader()
 
-            // Download with progress bar
+            // Download with progress bar (uses pipelined queue in batch mode)
             let localFiles: [FileContents] = if remoteFilesCount > 0 {
                 try await ui.withProgress("Downloading images", total: remoteFilesCount) { progress in
-                    try await fileDownloader.fetch(files: localAndRemoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: localAndRemoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }
@@ -491,7 +494,10 @@ extension ExFigCommand {
             let fileDownloader = faultToleranceOptions.createFileDownloader()
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading SVG files", total: remoteFiles.count) { progress in
-                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }
@@ -583,7 +589,10 @@ extension ExFigCommand {
             let fileDownloader = faultToleranceOptions.createFileDownloader()
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading images", total: remoteFiles.count) { progress in
-                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }
@@ -760,13 +769,16 @@ extension ExFigCommand {
                 : nil
             let (dartFile, assetFiles) = try exporter.export(images: images, allImageNames: allImageNames)
 
-            // 4. Download image files
+            // 4. Download image files (uses pipelined queue in batch mode)
             let remoteFiles = assetFiles.filter { $0.sourceURL != nil }
             let fileDownloader = faultToleranceOptions.createFileDownloader()
 
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading images", total: remoteFiles.count) { progress in
-                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }

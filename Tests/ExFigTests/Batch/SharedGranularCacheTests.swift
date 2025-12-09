@@ -152,7 +152,7 @@ final class SharedGranularCacheStorageTests: XCTestCase {
         XCTAssertNil(SharedGranularCacheStorage.cache)
     }
 
-    func testStorageCanBeSetViaTaskLocal() async {
+    func testStorageCanBeSetViaTaskLocal() {
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "fileA", version: "v1")
         cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "hash1"])
@@ -162,14 +162,14 @@ final class SharedGranularCacheStorageTests: XCTestCase {
 
         var capturedHashes: [String: String]?
 
-        await SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
             capturedHashes = SharedGranularCacheStorage.cache?.nodeHashes(for: "fileA")
         }
 
         XCTAssertEqual(capturedHashes?["1:1"], "hash1")
     }
 
-    func testStorageIsIsolatedBetweenTasks() async {
+    func testStorageIsIsolatedBetweenTasks() {
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "fileA", version: "v1")
         cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "hash1"])
@@ -180,7 +180,7 @@ final class SharedGranularCacheStorageTests: XCTestCase {
         var insideValue: SharedGranularCache?
         var outsideValue: SharedGranularCache?
 
-        await SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
             insideValue = SharedGranularCacheStorage.cache
         }
 

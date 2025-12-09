@@ -19,9 +19,35 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
     let cachePath: String?
     let experimentalGranularCache: Bool
     let concurrentDownloads: Int
+    /// Shared download queue for cross-config pipelining (optional, nil in standalone mode).
+    let downloadQueue: SharedDownloadQueue?
+    /// Priority for this config's downloads (lower = higher priority).
+    let configPriority: Int
 
     // swiftlint:disable:next function_body_length
     func export(
+        configFile: ConfigFile,
+        options: ExFigOptions,
+        client: Client,
+        ui: TerminalUI
+    ) async throws -> ExportStats {
+        // Inject download queue for pipelined downloads (if available)
+        try await SharedDownloadQueueStorage.$queue.withValue(downloadQueue) {
+            try await SharedDownloadQueueStorage.$configId.withValue(configFile.name) {
+                try await SharedDownloadQueueStorage.$configPriority.withValue(configPriority) {
+                    try await exportWithInjectedClient(
+                        configFile: configFile,
+                        options: options,
+                        client: client,
+                        ui: ui
+                    )
+                }
+            }
+        }
+    }
+
+    // swiftlint:disable:next function_body_length
+    private func exportWithInjectedClient(
         configFile: ConfigFile,
         options: ExFigOptions,
         client: Client,
@@ -187,6 +213,10 @@ struct BatchConfigRunner: Sendable {
     let concurrentDownloads: Int
     /// CLI timeout override (in seconds). When set, overrides per-config YAML timeout.
     let cliTimeout: Int?
+    /// Shared download queue for cross-config pipelining.
+    let downloadQueue: SharedDownloadQueue?
+    /// Priority for this config's downloads (lower = higher priority, based on submission order).
+    let configPriority: Int
     let exporter: any ConfigExportPerforming
 
     init(
@@ -202,6 +232,8 @@ struct BatchConfigRunner: Sendable {
         experimentalGranularCache: Bool = false,
         concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads,
         cliTimeout: Int? = nil,
+        downloadQueue: SharedDownloadQueue? = nil,
+        configPriority: Int = 0,
         exporter: ConfigExportPerforming? = nil
     ) {
         self.rateLimiter = rateLimiter
@@ -216,6 +248,8 @@ struct BatchConfigRunner: Sendable {
         self.experimentalGranularCache = experimentalGranularCache
         self.concurrentDownloads = concurrentDownloads
         self.cliTimeout = cliTimeout
+        self.downloadQueue = downloadQueue
+        self.configPriority = configPriority
         self.exporter = exporter ?? SubcommandConfigExporter(
             globalOptions: globalOptions,
             resume: resume,
@@ -224,7 +258,9 @@ struct BatchConfigRunner: Sendable {
             force: force,
             cachePath: cachePath,
             experimentalGranularCache: experimentalGranularCache,
-            concurrentDownloads: concurrentDownloads
+            concurrentDownloads: concurrentDownloads,
+            downloadQueue: downloadQueue,
+            configPriority: configPriority
         )
     }
 

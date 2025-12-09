@@ -83,7 +83,9 @@ Sources/ExFig/
 ├── Input/           # Config & CLI options (ExFigOptions, DownloadOptions, etc.)
 ├── Output/          # File writers (FileWriter, WebpConverter, etc.)
 ├── TerminalUI/      # Progress bars, spinners, logging, output coordination
-└── Cache/           # Version tracking for incremental exports
+├── Cache/           # Version tracking for incremental exports
+├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
+└── Batch/           # Batch processing (executor, runner, checkpoint)
 
 Sources/*/Resources/ # Stencil templates for code generation
 Tests/               # Test targets mirror source structure
@@ -314,6 +316,47 @@ if let preFetched = PreFetchedVersionsStorage.versions,
 }
 // ... fall back to API request
 ```
+
+### Pipelined Downloads (Batch Mode)
+
+In batch mode, downloads from all configs are coordinated through a shared queue to enable cross-config pipelining.
+While one config is fetching from Figma API, another can be downloading from CDN simultaneously.
+
+**Key files:**
+
+- `Sources/ExFig/Pipeline/SharedDownloadQueue.swift` - Actor coordinating downloads across configs
+- `Sources/ExFig/Pipeline/SharedDownloadQueueStorage.swift` - `@TaskLocal` injection for queue
+- `Sources/ExFig/Pipeline/PipelinedDownloader.swift` - Helper that uses queue when available
+- `Sources/ExFig/Pipeline/DownloadJob.swift` - Represents a batch of files to download
+
+**How it works:**
+
+1. `Batch.swift` creates `SharedDownloadQueue` with `concurrentDownloads × parallel` capacity
+2. Each config runner gets queue + priority injected via `SharedDownloadQueueStorage` TaskLocal
+3. `ExportIcons`/`ExportImages` call `PipelinedDownloader.download()` which checks for injected queue
+4. Downloads from all configs compete for slots in the shared queue (earlier configs get higher priority)
+5. In standalone mode (no batch), falls back to direct `FileDownloader`
+
+**Pattern:**
+
+```swift
+// Queue is injected via @TaskLocal (same pattern as InjectedClientStorage)
+try await SharedDownloadQueueStorage.$queue.withValue(downloadQueue) {
+    try await SharedDownloadQueueStorage.$configId.withValue(configFile.name) {
+        try await export(...)  // PipelinedDownloader checks SharedDownloadQueueStorage
+    }
+}
+
+// PipelinedDownloader uses queue when available, otherwise direct download
+if let queue = SharedDownloadQueueStorage.queue,
+   let configId = SharedDownloadQueueStorage.configId {
+    return try await downloadWithQueue(...)  // Pipelined
+} else {
+    return try await fileDownloader.fetch(...)  // Direct
+}
+```
+
+**Expected performance:** ~45% improvement in batch mode with multiple configs.
 
 ### Granular Node-Level Cache (Experimental)
 

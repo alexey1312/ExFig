@@ -221,35 +221,30 @@ extension ExFigCommand {
             // Pre-load granular cache if enabled
             let sharedGranularCache: SharedGranularCache? = prepareSharedGranularCache()
 
-            let runner = BatchConfigRunner(
+            // Create shared download queue for cross-config pipelining
+            let downloadQueue = SharedDownloadQueue(
+                maxConcurrentDownloads: concurrentDownloads * parallel
+            )
+
+            // Create priority map: configs submitted first get higher priority (lower number)
+            let priorityMap = Dictionary(
+                uniqueKeysWithValues: configs.enumerated().map { ($0.element.name, $0.offset) }
+            )
+
+            displayBatchStartInfo(
+                configCount: configs.count,
+                sharedGranularCache: sharedGranularCache,
+                ui: ui
+            )
+
+            let executor = BatchExecutor(maxParallel: parallel, failFast: failFast)
+            let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
+            let runnerFactory = makeRunnerFactory(
                 rateLimiter: rateLimiter,
                 retryPolicy: retryPolicy,
-                globalOptions: globalOptions,
-                maxRetries: maxRetries,
-                resume: resume,
-                cache: cache,
-                noCache: noCache,
-                force: force,
-                cachePath: cachePath,
-                experimentalGranularCache: experimentalGranularCache,
-                concurrentDownloads: concurrentDownloads,
-                cliTimeout: timeout
+                downloadQueue: downloadQueue,
+                priorityMap: priorityMap
             )
-
-            ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers...")
-            if globalOptions.verbose {
-                ui.info("Rate limit: \(rateLimit) req/min, max retries: \(maxRetries)")
-                if sharedGranularCache != nil {
-                    ui.info("Granular cache: shared across workers")
-                }
-            }
-
-            let executor = BatchExecutor(
-                maxParallel: parallel,
-                failFast: failFast
-            )
-
-            let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
 
             // Wrap execution with both pre-fetched versions and shared granular cache
             let result: BatchResult = await withBatchContext(
@@ -257,6 +252,7 @@ extension ExFigCommand {
                 sharedGranularCache: sharedGranularCache
             ) {
                 await executor.execute(configs: configs) { configFile in
+                    let runner = runnerFactory(configFile)
                     let configResult = await runner.process(configFile: configFile, ui: ui)
                     await checkpointManager.update(for: configFile, result: configResult)
                     return configResult
@@ -269,6 +265,61 @@ extension ExFigCommand {
             }
 
             return (result, rateLimiter)
+        }
+
+        /// Creates a factory function for BatchConfigRunner instances.
+        private func makeRunnerFactory(
+            rateLimiter: SharedRateLimiter,
+            retryPolicy: RetryPolicy,
+            downloadQueue: SharedDownloadQueue,
+            priorityMap: [String: Int]
+        ) -> @Sendable (ConfigFile) -> BatchConfigRunner {
+            // Capture all values needed for runner creation
+            let globalOptions = globalOptions
+            let maxRetries = maxRetries
+            let resume = resume
+            let cache = cache
+            let noCache = noCache
+            let force = force
+            let cachePath = cachePath
+            let experimentalGranularCache = experimentalGranularCache
+            let concurrentDownloads = concurrentDownloads
+            let timeout = timeout
+
+            return { configFile in
+                BatchConfigRunner(
+                    rateLimiter: rateLimiter,
+                    retryPolicy: retryPolicy,
+                    globalOptions: globalOptions,
+                    maxRetries: maxRetries,
+                    resume: resume,
+                    cache: cache,
+                    noCache: noCache,
+                    force: force,
+                    cachePath: cachePath,
+                    experimentalGranularCache: experimentalGranularCache,
+                    concurrentDownloads: concurrentDownloads,
+                    cliTimeout: timeout,
+                    downloadQueue: downloadQueue,
+                    configPriority: priorityMap[configFile.name] ?? 0
+                )
+            }
+        }
+
+        /// Displays batch start information.
+        private func displayBatchStartInfo(
+            configCount: Int,
+            sharedGranularCache: SharedGranularCache?,
+            ui: TerminalUI
+        ) {
+            ui.info("Processing \(configCount) config(s) with up to \(parallel) parallel workers...")
+            if globalOptions.verbose {
+                ui.info("Rate limit: \(rateLimit) req/min, max retries: \(maxRetries)")
+                if sharedGranularCache != nil {
+                    ui.info("Granular cache: shared across workers")
+                }
+                ui.info("Download queue: shared with \(concurrentDownloads * parallel) concurrent slots")
+            }
         }
 
         /// Prepares shared granular cache for batch mode.
