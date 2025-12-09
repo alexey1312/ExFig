@@ -4,6 +4,7 @@
 [![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
+[![Docs](https://github.com/alexey1312/ExFig/actions/workflows/deploy-docc.yml/badge.svg)](https://alexey1312.github.io/ExFig/documentation/exfig)
 ![Coverage](https://img.shields.io/badge/coverage-54.40%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
@@ -57,6 +58,7 @@ and Flutter.
 ### Developer Experience
 
 - 🤖 CI/CD ready (quiet mode, exit codes, JSON reports)
+- 🔄 [GitHub Action](https://github.com/alexey1312/exfig-action) for automated exports
 - 📊 Rich progress indicators with ETA
 - 🔇 Verbose, normal, and quiet output modes
 - 🚀 Swift 6 / Strict Concurrency
@@ -135,6 +137,20 @@ exfig colors -v
 # Export silently (errors only, suitable for CI/scripts)
 exfig icons -q
 ```
+
+## GitHub Action
+
+Use [exfig-action](https://github.com/alexey1312/exfig-action) to automate design exports in your CI/CD pipeline:
+
+```yaml
+- uses: alexey1312/exfig-action@v1
+  with:
+    figma_token: ${{ secrets.FIGMA_TOKEN }}
+    command: icons
+    cache: true
+```
+
+See the [action repository](https://github.com/alexey1312/exfig-action) for full documentation and examples.
 
 ## Output Modes
 
@@ -471,19 +487,24 @@ If an export is interrupted (Ctrl+C, crash, etc.):
 
 ## Documentation
 
-**Complete documentation is available at [.github/docs/](.github/docs/index.md)**
+**Complete documentation is available at
+[alexey1312.github.io/ExFig](https://alexey1312.github.io/ExFig/documentation/exfig)**
 
 ### Quick Links
 
-- **[Getting Started](.github/docs/getting-started.md)** - Installation and first export
-- **[Usage Guide](.github/docs/usage.md)** - CLI commands and workflows
-- **[iOS Export](.github/docs/ios/index.md)** - Xcode, SwiftUI, and UIKit
-- **[Android Export](.github/docs/android/index.md)** - Android Studio and Jetpack Compose
-- **[Flutter Export](.github/docs/flutter/index.md)** - Flutter and Dart
-- **[Design Requirements](.github/docs/design-requirements.md)** - How to structure Figma files
+- **[Getting Started](https://alexey1312.github.io/ExFig/documentation/exfig/gettingstarted)** - Installation and first
+  export
+- **[Usage Guide](https://alexey1312.github.io/ExFig/documentation/exfig/usage)** - CLI commands and workflows
+- **[iOS Export](https://alexey1312.github.io/ExFig/documentation/exfig/ios)** - Xcode, SwiftUI, and UIKit
+- **[Android Export](https://alexey1312.github.io/ExFig/documentation/exfig/android)** - Android Studio and Jetpack
+  Compose
+- **[Flutter Export](https://alexey1312.github.io/ExFig/documentation/exfig/flutter)** - Flutter and Dart
+- **[Design Requirements](https://alexey1312.github.io/ExFig/documentation/exfig/designrequirements)** - How to
+  structure Figma files
 - **[Configuration Reference](CONFIG.md)** - All available options
-- **[Custom Templates](.github/docs/custom-templates.md)** - Customize generated code
-- **[Development Guide](.github/docs/development.md)** - Contributing to ExFig
+- **[Custom Templates](https://alexey1312.github.io/ExFig/documentation/exfig/customtemplates)** - Customize generated
+  code
+- **[Development Guide](https://alexey1312.github.io/ExFig/documentation/exfig/development)** - Contributing to ExFig
 
 ## What Gets Generated
 
@@ -548,7 +569,8 @@ flutter_project/
 
 ## Contributing
 
-We welcome contributions! See the [Development Guide](.github/docs/development.md) for:
+We welcome contributions! See the
+[Development Guide](https://alexey1312.github.io/ExFig/documentation/exfig/development) for:
 
 - Setting up your development environment
 - Running tests
@@ -567,11 +589,11 @@ ExFig is available under the MIT License. See [LICENSE](LICENSE) for details.
 ## Feedback
 
 Have questions or feedback? Open an issue on [GitHub](https://github.com/alexey1312/ExFig/issues) or check out the
-[documentation](.github/docs/index.md).
+[documentation](https://alexey1312.github.io/ExFig/documentation/exfig).
 
 ______________________________________________________________________
 
-**[📖 Read the full documentation](.github/docs/index.md)**
+**[📖 Read the full documentation](https://alexey1312.github.io/ExFig/documentation/exfig)**
 
 ______________________________________________________________________
 

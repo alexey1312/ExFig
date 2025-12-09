@@ -90,6 +90,24 @@ run = "pre-commit run mdformat --all-files || true"
 description = "Check markdown formatting (CI)"
 run = "pre-commit run mdformat --all-files"
 
+[tasks.docs]
+description = "Generate DocC documentation"
+run = """
+swift package --allow-writing-to-directory docs \
+    generate-documentation --target ExFig \
+    --disable-indexing \
+    --transform-for-static-hosting \
+    --hosting-base-path ExFig \
+    --output-path docs
+echo '<script>window.location.href += "/documentation/exfig"</script>' > docs/index.html
+"""
+
+[tasks."docs:preview"]
+description = "Generate and preview DocC documentation"
+run = """
+swift package --disable-sandbox preview-documentation --target ExFig
+"""
+
 [tasks.changelog]
 description = "Generate CHANGELOG.md from git history"
 run = "git-cliff -o CHANGELOG.md"

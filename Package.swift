@@ -23,6 +23,7 @@ let package = Package(
         .package(url: "https://github.com/the-swift-collective/libwebp.git", from: "1.4.1"),
         .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
         .package(url: "https://github.com/toon-format/toon-swift", from: "0.3.0"),
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
     ],
     targets: [
         // Main target

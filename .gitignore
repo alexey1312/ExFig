@@ -94,3 +94,6 @@ iOSInjectionProject/
 # LLVM profiling
 *.profraw
 *.profdata
+
+# DocC generated documentation
+docs/
