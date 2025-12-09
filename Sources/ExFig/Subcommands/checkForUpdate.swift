@@ -17,8 +17,7 @@ func checkForUpdate(logger: Logger) async {
         ----------------------------------------------------------------------------
         exfig \(latestVersion) is available. You are on \(ExFigCommand.version).
         You should use the latest version.
-        Please update using `mint install alexey1312/ExFig` or build from source.
-        To see what's new, open https://github.com/alexey1312/ExFig/releases
+        To update, visit https://github.com/alexey1312/ExFig/releases
         ----------------------------------------------------------------------------
         """)
     }

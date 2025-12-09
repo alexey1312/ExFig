@@ -70,12 +70,13 @@ extension ExFigCommand {
             return result.count
         }
 
+        // swiftlint:disable function_body_length cyclomatic_complexity
         /// Performs export and returns full result with hashes for batch mode.
         /// - Parameters:
         ///   - client: The Figma API client to use.
         ///   - ui: The terminal UI for progress and messages.
         /// - Returns: Export result including count, hashes, and granular cache stats.
-        func performExportWithResult( // swiftlint:disable:this function_body_length
+        func performExportWithResult(
             client: Client,
             ui: TerminalUI
         ) async throws -> IconsExportResult {
@@ -129,7 +130,10 @@ extension ExFigCommand {
             var allComputedHashes: [String: [NodeId: String]] = [:]
 
             if options.params.ios != nil {
-                ui.info("Using ExFig \(ExFigCommand.version) to export icons to Xcode project.")
+                // Suppress version message in batch mode
+                if BatchProgressViewStorage.progressView == nil {
+                    ui.info("Using ExFig \(ExFigCommand.version) to export icons to Xcode project.")
+                }
                 let result = try await exportiOSIcons(
                     client: client,
                     params: options.params,
@@ -142,7 +146,10 @@ extension ExFigCommand {
             }
 
             if options.params.android != nil {
-                ui.info("Using ExFig \(ExFigCommand.version) to export icons to Android Studio project.")
+                // Suppress version message in batch mode
+                if BatchProgressViewStorage.progressView == nil {
+                    ui.info("Using ExFig \(ExFigCommand.version) to export icons to Android Studio project.")
+                }
                 let result = try await exportAndroidIcons(
                     client: client,
                     params: options.params,
@@ -155,7 +162,10 @@ extension ExFigCommand {
             }
 
             if options.params.flutter != nil {
-                ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
+                // Suppress version message in batch mode
+                if BatchProgressViewStorage.progressView == nil {
+                    ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
+                }
                 let result = try await exportFlutterIcons(
                     client: client,
                     params: options.params,
@@ -197,6 +207,8 @@ extension ExFigCommand {
             )
         }
 
+        // swiftlint:enable function_body_length cyclomatic_complexity
+
         /// Result of exporting icons for a single platform.
         private struct PlatformExportResult {
             let count: Int
@@ -225,7 +237,7 @@ extension ExFigCommand {
             }
         }
 
-        // swiftlint:disable:next function_body_length
+        // swiftlint:disable function_body_length cyclomatic_complexity
         private func exportiOSIcons(
             client: Client,
             params: Params,
@@ -315,10 +327,13 @@ extension ExFigCommand {
             let remoteFilesCount = localAndRemoteFiles.filter { $0.sourceURL != nil }.count
             let fileDownloader = faultToleranceOptions.createFileDownloader()
 
-            // Download with progress bar
+            // Download with progress bar (uses SharedDownloadQueue in batch mode)
             let localFiles: [FileContents] = if remoteFilesCount > 0 {
                 try await ui.withProgress("Downloading icons", total: remoteFilesCount) { progress in
-                    try await fileDownloader.fetch(files: localAndRemoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: localAndRemoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }
@@ -336,7 +351,10 @@ extension ExFigCommand {
                 : 0
 
             guard params.ios?.xcassetsInSwiftPackage == false else {
-                await checkForUpdate(logger: logger)
+                // Suppress update check in batch mode (will be shown once at the end)
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
                 ui.success("Done! Exported \(icons.count) icons.")
                 return PlatformExportResult(
                     count: icons.count,
@@ -357,7 +375,10 @@ extension ExFigCommand {
                 ui.warning(.xcodeProjectUpdateFailed)
             }
 
-            await checkForUpdate(logger: logger)
+            // Suppress update check in batch mode (will be shown once at the end)
+            if BatchProgressViewStorage.progressView == nil {
+                await checkForUpdate(logger: logger)
+            }
 
             ui.success("Done! Exported \(icons.count) icons.")
             return PlatformExportResult(
@@ -366,6 +387,8 @@ extension ExFigCommand {
                 skippedCount: skippedCount
             )
         }
+
+        // swiftlint:enable function_body_length cyclomatic_complexity
 
         // swiftlint:disable:next function_body_length
         private func exportAndroidIcons(
@@ -465,7 +488,10 @@ extension ExFigCommand {
             let fileDownloader = faultToleranceOptions.createFileDownloader()
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading SVG files", total: remoteFiles.count) { progress in
-                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }
@@ -551,7 +577,10 @@ extension ExFigCommand {
             try? FileManager.default.removeItem(at: tempDirectoryLightURL)
             try? FileManager.default.removeItem(at: tempDirectoryDarkURL)
 
-            await checkForUpdate(logger: logger)
+            // Suppress update check in batch mode (will be shown once at the end)
+            if BatchProgressViewStorage.progressView == nil {
+                await checkForUpdate(logger: logger)
+            }
 
             ui.success("Done! Exported \(icons.count) icons.")
             return PlatformExportResult(
@@ -645,7 +674,10 @@ extension ExFigCommand {
             let fileDownloader = faultToleranceOptions.createFileDownloader()
             let localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading SVG files", total: remoteFiles.count) { progress in
-                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }
@@ -793,7 +825,10 @@ extension ExFigCommand {
 
             var localFiles: [FileContents] = if !remoteFiles.isEmpty {
                 try await ui.withProgress("Downloading SVG files", total: remoteFiles.count) { progress in
-                    try await fileDownloader.fetch(files: remoteFiles) { current, _ in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
                         progress.update(current: current)
                     }
                 }

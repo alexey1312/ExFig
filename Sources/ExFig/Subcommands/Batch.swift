@@ -195,6 +195,7 @@ extension ExFigCommand {
             return existing
         }
 
+        // swiftlint:disable:next function_body_length
         private func executeBatch(
             configs: [ConfigFile],
             checkpoint: BatchCheckpoint,
@@ -221,47 +222,65 @@ extension ExFigCommand {
             // Pre-load granular cache if enabled
             let sharedGranularCache: SharedGranularCache? = prepareSharedGranularCache()
 
-            let runner = BatchConfigRunner(
+            // Create shared download queue for cross-config pipelining
+            let downloadQueue = SharedDownloadQueue(
+                maxConcurrentDownloads: concurrentDownloads * parallel
+            )
+
+            // Create priority map: configs submitted first get higher priority (lower number)
+            let priorityMap = Dictionary(
+                uniqueKeysWithValues: configs.enumerated().map { ($0.element.name, $0.offset) }
+            )
+
+            displayBatchStartInfo(
+                configCount: configs.count,
+                sharedGranularCache: sharedGranularCache,
+                ui: ui
+            )
+
+            // Create batch progress view for rich per-config progress display
+            let progressView = BatchProgressView(
+                useColors: !globalOptions.quiet,
+                useAnimations: !globalOptions.quiet && TTYDetector.isTTY
+            )
+
+            // Register all configs upfront
+            for config in configs {
+                await progressView.registerConfig(name: config.name)
+            }
+
+            let executor = BatchExecutor(maxParallel: parallel, failFast: failFast)
+            let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
+            let runnerFactory = makeRunnerFactory(
                 rateLimiter: rateLimiter,
                 retryPolicy: retryPolicy,
-                globalOptions: globalOptions,
-                maxRetries: maxRetries,
-                resume: resume,
-                cache: cache,
-                noCache: noCache,
-                force: force,
-                cachePath: cachePath,
-                experimentalGranularCache: experimentalGranularCache,
-                concurrentDownloads: concurrentDownloads,
-                cliTimeout: timeout
+                downloadQueue: downloadQueue,
+                priorityMap: priorityMap
             )
 
-            ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers...")
-            if globalOptions.verbose {
-                ui.info("Rate limit: \(rateLimit) req/min, max retries: \(maxRetries)")
-                if sharedGranularCache != nil {
-                    ui.info("Granular cache: shared across workers")
+            // Wrap execution with batch progress view and batch context injection
+            let result: BatchResult = await BatchProgressViewStorage.$progressView.withValue(progressView) {
+                await withBatchContext(
+                    preFetchedVersions: preFetchedVersions,
+                    sharedGranularCache: sharedGranularCache
+                ) {
+                    await executeWithProgressUpdates(
+                        executor: executor,
+                        configs: configs,
+                        checkpointManager: checkpointManager,
+                        runnerFactory: runnerFactory,
+                        progressView: progressView,
+                        rateLimiter: rateLimiter,
+                        ui: ui
+                    )
                 }
             }
 
-            let executor = BatchExecutor(
-                maxParallel: parallel,
-                failFast: failFast
-            )
+            // Clear progress view after batch completes
+            await progressView.clear()
 
-            let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
-
-            // Wrap execution with both pre-fetched versions and shared granular cache
-            let result: BatchResult = await withBatchContext(
-                preFetchedVersions: preFetchedVersions,
-                sharedGranularCache: sharedGranularCache
-            ) {
-                await executor.execute(configs: configs) { configFile in
-                    let configResult = await runner.process(configFile: configFile, ui: ui)
-                    await checkpointManager.update(for: configFile, result: configResult)
-                    return configResult
-                }
-            }
+            // Check for updates once at the end (suppressed during individual exports)
+            await checkForUpdate(logger: logger)
 
             // After batch: merge all computed hashes and save once
             if let sharedCache = sharedGranularCache {
@@ -269,6 +288,100 @@ extension ExFigCommand {
             }
 
             return (result, rateLimiter)
+        }
+
+        // swiftlint:disable function_parameter_count
+        /// Execute batch with progress view updates and rate limiter status.
+        private func executeWithProgressUpdates(
+            executor: BatchExecutor,
+            configs: [ConfigFile],
+            checkpointManager: CheckpointManager,
+            runnerFactory: @escaping @Sendable (ConfigFile) -> BatchConfigRunner,
+            progressView: BatchProgressView,
+            rateLimiter: SharedRateLimiter,
+            ui: TerminalUI
+        ) async -> BatchResult {
+            // swiftlint:enable function_parameter_count
+            // Start rate limiter status updates (every 500ms)
+            let rateLimiterTask = Task {
+                while !Task.isCancelled {
+                    let status = await rateLimiter.status()
+                    await progressView.updateRateLimiterStatus(status)
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 500ms
+                }
+            }
+
+            // Execute batch with progress view
+            let result = await executor.execute(configs: configs) { configFile in
+                let runner = runnerFactory(configFile)
+                let configResult = await runner.process(
+                    configFile: configFile,
+                    ui: ui,
+                    progressView: progressView
+                )
+                await checkpointManager.update(for: configFile, result: configResult)
+                return configResult
+            }
+
+            // Stop rate limiter updates
+            rateLimiterTask.cancel()
+
+            return result
+        }
+
+        /// Creates a factory function for BatchConfigRunner instances.
+        private func makeRunnerFactory(
+            rateLimiter: SharedRateLimiter,
+            retryPolicy: RetryPolicy,
+            downloadQueue: SharedDownloadQueue,
+            priorityMap: [String: Int]
+        ) -> @Sendable (ConfigFile) -> BatchConfigRunner {
+            // Capture all values needed for runner creation
+            let globalOptions = globalOptions
+            let maxRetries = maxRetries
+            let resume = resume
+            let cache = cache
+            let noCache = noCache
+            let force = force
+            let cachePath = cachePath
+            let experimentalGranularCache = experimentalGranularCache
+            let concurrentDownloads = concurrentDownloads
+            let timeout = timeout
+
+            return { configFile in
+                BatchConfigRunner(
+                    rateLimiter: rateLimiter,
+                    retryPolicy: retryPolicy,
+                    globalOptions: globalOptions,
+                    maxRetries: maxRetries,
+                    resume: resume,
+                    cache: cache,
+                    noCache: noCache,
+                    force: force,
+                    cachePath: cachePath,
+                    experimentalGranularCache: experimentalGranularCache,
+                    concurrentDownloads: concurrentDownloads,
+                    cliTimeout: timeout,
+                    downloadQueue: downloadQueue,
+                    configPriority: priorityMap[configFile.name] ?? 0
+                )
+            }
+        }
+
+        /// Displays batch start information.
+        private func displayBatchStartInfo(
+            configCount: Int,
+            sharedGranularCache: SharedGranularCache?,
+            ui: TerminalUI
+        ) {
+            ui.info("Processing \(configCount) config(s) with up to \(parallel) parallel workers...")
+            if globalOptions.verbose {
+                ui.info("Rate limit: \(rateLimit) req/min, max retries: \(maxRetries)")
+                if sharedGranularCache != nil {
+                    ui.info("Granular cache: shared across workers")
+                }
+                ui.info("Download queue: shared with \(concurrentDownloads * parallel) concurrent slots")
+            }
         }
 
         /// Prepares shared granular cache for batch mode.
