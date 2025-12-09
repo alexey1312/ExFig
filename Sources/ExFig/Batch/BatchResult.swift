@@ -27,13 +27,17 @@ struct ExportStats: Sendable {
     /// Granular cache statistics (batch mode only).
     let granularCacheStats: GranularCacheStats?
 
+    /// File version information for cache update (batch mode only).
+    let fileVersions: [FileVersionInfo]?
+
     init(
         colors: Int = 0,
         icons: Int = 0,
         images: Int = 0,
         typography: Int = 0,
         computedNodeHashes: [String: [String: String]] = [:],
-        granularCacheStats: GranularCacheStats? = nil
+        granularCacheStats: GranularCacheStats? = nil,
+        fileVersions: [FileVersionInfo]? = nil
     ) {
         self.colors = colors
         self.icons = icons
@@ -41,6 +45,7 @@ struct ExportStats: Sendable {
         self.typography = typography
         self.computedNodeHashes = computedNodeHashes
         self.granularCacheStats = granularCacheStats
+        self.fileVersions = fileVersions
     }
 
     static let zero = ExportStats()
@@ -52,7 +57,8 @@ struct ExportStats: Sendable {
             images: lhs.images + rhs.images,
             typography: lhs.typography + rhs.typography,
             computedNodeHashes: mergeHashes(lhs.computedNodeHashes, rhs.computedNodeHashes),
-            granularCacheStats: GranularCacheStats.merge(lhs.granularCacheStats, rhs.granularCacheStats)
+            granularCacheStats: GranularCacheStats.merge(lhs.granularCacheStats, rhs.granularCacheStats),
+            fileVersions: mergeFileVersions(lhs.fileVersions, rhs.fileVersions)
         )
     }
 
@@ -70,6 +76,31 @@ struct ExportStats: Sendable {
             }
         }
         return result
+    }
+
+    /// Merges file version arrays, preferring newer (rhs) versions for duplicate fileIds.
+    private static func mergeFileVersions(
+        _ lhs: [FileVersionInfo]?,
+        _ rhs: [FileVersionInfo]?
+    ) -> [FileVersionInfo]? {
+        switch (lhs, rhs) {
+        case let (l?, r?):
+            // Merge arrays, preferring rhs for duplicate fileIds
+            var merged: [String: FileVersionInfo] = [:]
+            for version in l {
+                merged[version.fileId] = version
+            }
+            for version in r {
+                merged[version.fileId] = version // Overwrite with newer version
+            }
+            return Array(merged.values)
+        case let (l?, nil):
+            return l
+        case let (nil, r?):
+            return r
+        case (nil, nil):
+            return nil
+        }
     }
 }
 

@@ -142,7 +142,8 @@ final class ImageTrackingManager: @unchecked Sendable {
     /// Updates cache after successful export.
     /// - Parameters:
     ///   - fileInfos: File version information to cache.
-    func updateCache(with fileInfos: [FileVersionInfo]) throws {
+    ///   - batchMode: If true, defers saving to disk (batch orchestrator handles final save).
+    func updateCache(with fileInfos: [FileVersionInfo], batchMode: Bool = false) throws {
         for info in fileInfos {
             cache.updateFileVersion(
                 fileId: info.fileId,
@@ -150,14 +151,27 @@ final class ImageTrackingManager: @unchecked Sendable {
                 fileName: info.fileName
             )
         }
-        try cache.save(to: cachePath)
-        logger.info("Cache updated at \(cachePath.path)")
+
+        if !batchMode {
+            try cache.save(to: cachePath)
+            logger.info("Cache updated at \(cachePath.path)")
+        } else {
+            logger.debug("Cache update deferred (batch mode, \(fileInfos.count) files)")
+        }
     }
 
     /// Updates cache for a single file after successful export.
-    func updateCache(fileId: String, version: String, fileName: String? = nil) throws {
+    /// - Parameters:
+    ///   - fileId: The Figma file ID.
+    ///   - version: The file version.
+    ///   - fileName: Optional file name.
+    ///   - batchMode: If true, defers saving to disk (batch orchestrator handles final save).
+    func updateCache(fileId: String, version: String, fileName: String? = nil, batchMode: Bool = false) throws {
         cache.updateFileVersion(fileId: fileId, version: version, fileName: fileName)
-        try cache.save(to: cachePath)
+
+        if !batchMode {
+            try cache.save(to: cachePath)
+        }
     }
 
     /// Clears all cached data.

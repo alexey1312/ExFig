@@ -39,6 +39,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
             var typographyCount = 0
             var allComputedHashes: [String: [String: String]] = [:]
             var allGranularStats: GranularCacheStats?
+            var allFileVersions: [String: FileVersionInfo] = [:]
 
             // Only run exports for configured asset types
             if hasColorsConfig(params) {
@@ -60,6 +61,12 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                 iconsCount = result.count
                 allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
                 allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
+                // Collect file versions
+                if let versions = result.fileVersions {
+                    for version in versions {
+                        allFileVersions[version.fileId] = version
+                    }
+                }
             }
 
             if hasImagesConfig(params) {
@@ -72,6 +79,12 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                 imagesCount = result.count
                 allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
                 allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
+                // Collect file versions
+                if let versions = result.fileVersions {
+                    for version in versions {
+                        allFileVersions[version.fileId] = version
+                    }
+                }
             }
 
             if hasTypographyConfig(params) {
@@ -89,7 +102,8 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                 images: imagesCount,
                 typography: typographyCount,
                 computedNodeHashes: allComputedHashes,
-                granularCacheStats: allGranularStats
+                granularCacheStats: allGranularStats,
+                fileVersions: allFileVersions.isEmpty ? nil : Array(allFileVersions.values)
             )
         }
     }

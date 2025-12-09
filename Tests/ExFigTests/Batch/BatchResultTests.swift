@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 @testable import ExFig
 import XCTest
 
@@ -13,6 +14,7 @@ final class BatchResultTests: XCTestCase {
         XCTAssertEqual(stats.typography, 0)
         XCTAssertTrue(stats.computedNodeHashes.isEmpty)
         XCTAssertNil(stats.granularCacheStats)
+        XCTAssertNil(stats.fileVersions)
     }
 
     func testExportStatsInitWithValues() {
@@ -299,6 +301,129 @@ final class BatchResultTests: XCTestCase {
         let successes = batchResult.successes
         XCTAssertEqual(successes.count, 1)
         XCTAssertEqual(successes.first?.stats.computedNodeHashes["fileA"]?["1:1"], "hash1")
+    }
+
+    // MARK: - FileVersions Tests
+
+    func testExportStatsAdditionMergesFileVersions() {
+        let version1 = FileVersionInfo(
+            fileId: "fileA",
+            fileName: "FileA",
+            currentVersion: "v1",
+            cachedVersion: nil,
+            needsExport: true
+        )
+        let version2 = FileVersionInfo(
+            fileId: "fileB",
+            fileName: "FileB",
+            currentVersion: "v1",
+            cachedVersion: nil,
+            needsExport: true
+        )
+
+        let stats1 = ExportStats(fileVersions: [version1])
+        let stats2 = ExportStats(fileVersions: [version2])
+
+        let combined = stats1 + stats2
+
+        XCTAssertEqual(combined.fileVersions?.count, 2)
+        XCTAssertTrue(combined.fileVersions?.contains { $0.fileId == "fileA" } ?? false)
+        XCTAssertTrue(combined.fileVersions?.contains { $0.fileId == "fileB" } ?? false)
+    }
+
+    func testExportStatsAdditionFileVersionsPreferNewerVersion() {
+        let version1 = FileVersionInfo(
+            fileId: "fileA",
+            fileName: "FileA",
+            currentVersion: "v1",
+            cachedVersion: nil,
+            needsExport: true
+        )
+        let version2 = FileVersionInfo(
+            fileId: "fileA",
+            fileName: "FileA",
+            currentVersion: "v2",
+            cachedVersion: "v1",
+            needsExport: true
+        )
+
+        let stats1 = ExportStats(fileVersions: [version1])
+        let stats2 = ExportStats(fileVersions: [version2])
+
+        let combined = stats1 + stats2
+
+        XCTAssertEqual(combined.fileVersions?.count, 1)
+        XCTAssertEqual(combined.fileVersions?.first?.fileId, "fileA")
+        // Newer version (v2) from rhs should overwrite older (v1)
+        XCTAssertEqual(combined.fileVersions?.first?.currentVersion, "v2")
+    }
+
+    func testExportStatsAdditionWithNilFileVersions() {
+        let version1 = FileVersionInfo(
+            fileId: "fileA",
+            fileName: "FileA",
+            currentVersion: "v1",
+            cachedVersion: nil,
+            needsExport: true
+        )
+        let stats1 = ExportStats(fileVersions: [version1])
+        let stats2 = ExportStats(fileVersions: nil)
+
+        let combined = stats1 + stats2
+
+        XCTAssertEqual(combined.fileVersions?.count, 1)
+        XCTAssertEqual(combined.fileVersions?.first?.fileId, "fileA")
+    }
+
+    func testExportStatsAdditionBothNilFileVersions() {
+        let stats1 = ExportStats(fileVersions: nil)
+        let stats2 = ExportStats(fileVersions: nil)
+
+        let combined = stats1 + stats2
+
+        XCTAssertNil(combined.fileVersions)
+    }
+
+    func testBatchResultTotalStatsAggregatesFileVersions() {
+        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.yaml"), name: "config1")
+        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.yaml"), name: "config2")
+
+        let version1 = FileVersionInfo(
+            fileId: "fileA",
+            fileName: "FileA",
+            currentVersion: "v1",
+            cachedVersion: nil,
+            needsExport: true
+        )
+        let version2 = FileVersionInfo(
+            fileId: "fileB",
+            fileName: "FileB",
+            currentVersion: "v1",
+            cachedVersion: nil,
+            needsExport: true
+        )
+
+        let stats1 = ExportStats(icons: 5, fileVersions: [version1])
+        let stats2 = ExportStats(icons: 3, fileVersions: [version2])
+
+        let results: [ConfigResult] = [
+            .success(config: config1, stats: stats1),
+            .success(config: config2, stats: stats2),
+        ]
+
+        let batchResult = BatchResult(
+            results: results,
+            duration: 1.0,
+            startTime: Date(),
+            endTime: Date()
+        )
+
+        let totalStats = batchResult.totalStats
+
+        XCTAssertEqual(totalStats.icons, 8)
+        XCTAssertEqual(totalStats.fileVersions?.count, 2)
+        XCTAssertTrue(totalStats.fileVersions?.contains { $0.fileId == "fileA" } ?? false)
+        XCTAssertTrue(totalStats.fileVersions?.contains { $0.fileId == "fileB" } ?? false)
     }
 }
 

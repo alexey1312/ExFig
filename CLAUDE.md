@@ -362,11 +362,17 @@ across all parallel config workers to avoid race conditions:
 
 1. Cache is loaded once before batch execution and shared via `@TaskLocal`
 2. Workers read from shared cache (no disk I/O during parallel execution)
-3. Workers return computed hashes in `ExportStats.computedNodeHashes`
-4. After batch completes, all hashes are merged and saved once to disk
-5. Batch summary shows aggregated granular cache stats: `Granular cache: N nodes skipped, M nodes exported`
+3. Workers defer cache saves by passing `batchMode: true` to `ImageTrackingManager.updateCache()`
+4. Workers return both `fileVersions` and computed hashes in `ExportStats`
+5. After batch completes, file versions are merged first, then all hashes are merged and saved once to disk
+6. Batch summary shows aggregated granular cache stats: `Granular cache: N nodes skipped, M nodes exported`
 
-This pattern ensures multiple configs referencing the same Figma file all benefit from granular cache tracking.
+This pattern ensures:
+
+- No race conditions from parallel cache writes during execution
+- File version updates don't overwrite nodeHashes prematurely
+- Multiple configs referencing the same Figma file all benefit from granular cache tracking
+- Single atomic save at the end contains both file versions AND nodeHashes
 
 **Known limitations:**
 

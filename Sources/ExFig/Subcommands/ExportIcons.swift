@@ -54,6 +54,7 @@ extension ExFigCommand {
             let count: Int
             let computedHashes: [String: [String: String]]
             let granularCacheStats: GranularCacheStats?
+            let fileVersions: [FileVersionInfo]?
         }
 
         /// Performs the actual export and returns the number of exported icons.
@@ -97,7 +98,7 @@ extension ExFigCommand {
             )
 
             guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
-                return IconsExportResult(count: 0, computedHashes: [:], granularCacheStats: nil)
+                return IconsExportResult(count: 0, computedHashes: [:], granularCacheStats: nil, fileVersions: nil)
             }
 
             // Check for granular cache warning
@@ -191,7 +192,8 @@ extension ExFigCommand {
             return IconsExportResult(
                 count: totalIcons,
                 computedHashes: stringHashes,
-                granularCacheStats: stats
+                granularCacheStats: stats,
+                fileVersions: batchMode ? fileVersions : nil
             )
         }
 
