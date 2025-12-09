@@ -20,7 +20,7 @@ repos:
       - id: mdformat
         name: Markdown Format
         types: [markdown]
-        exclude: ^(\.github/ISSUE_TEMPLATE/|CHANGELOG\.md)
+        exclude: ^(\.github/ISSUE_TEMPLATE/|CHANGELOG\.md|Sources/.*\.docc/)
         additional_dependencies:
           - mdformat-gfm
           - mdformat-tables

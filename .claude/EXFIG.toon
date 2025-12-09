@@ -125,6 +125,7 @@ keyDirectories:
   batch: Sources/ExFig/Batch/
   terminalUI: Sources/ExFig/TerminalUI/
   templates: Sources/*/Resources/
+  docc: Sources/ExFig/ExFig.docc/
   tests: Tests/
 
 keyFiles:
@@ -231,9 +232,11 @@ buildCommands:
   lint: mise run lint
   format: mise run format
   formatMd: mise run format-md
+  docs: mise run docs
+  docsPreview: mise run docs:preview
   run: .build/debug/exfig
 
-dependencies[10]{name,version,purpose}:
+dependencies[11]{name,version,purpose}:
   swift-argument-parser,1.5.0+,CLI framework
   Yams,5.3.0+,YAML parsing
   Stencil,0.15.1+,Template engine
@@ -244,6 +247,7 @@ dependencies[10]{name,version,purpose}:
   libwebp,1.4.1+,WebP encoding
   libpng,1.6.45+,PNG decoding
   swift-custom-dump,1.3.0+,Test assertions
+  swift-docc-plugin,1.4.5+,DocC documentation generator
 
 figmaAPI:
   endpoints:

@@ -1,13 +1,13 @@
 # Android Images Export
 
-Export raster images from Figma to Android drawable resources in PNG or WebP format with multiple density variants.
+Export raster images from Figma to Android drawable resources in PNG or WebP format.
 
 ## Overview
 
 ExFig exports images as:
 
-- **PNG or WebP**: Raster images with multiple DPI variants
-- **Vector images**: SVG to VectorDrawable conversion
+- **PNG or WebP** files with multiple density variants
+- **VectorDrawable** for SVG-compatible images
 - **Multiple densities**: mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi
 
 ## Configuration
@@ -17,13 +17,16 @@ android:
   mainRes: "./app/src/main/res"
 
   images:
-    # Image format: png or webp
-    format: webp
-
     # Output directory (relative to mainRes)
     output: "exfig-images"
 
-    # Density scales (optional, defaults to [1, 1.5, 2, 3, 4])
+    # Image format: png or webp
+    format: webp
+
+    # Naming style
+    nameStyle: snake_case
+
+    # Density scales (default: [1, 1.5, 2, 3, 4])
     scales: [1, 1.5, 2, 3, 4]
 
     # WebP options (for webp format only)
@@ -46,7 +49,19 @@ android {
 
 ## Export Process
 
-Run the export command:
+### 1. Design in Figma
+
+Create image components in a frame:
+
+```
+Images frame
+├── img-hero           (component)
+├── img-splash         (component)
+├── img-background     (component)
+└── img-onboarding     (component)
+```
+
+### 2. Run Export Command
 
 ```bash
 exfig images
@@ -59,7 +74,7 @@ exfig-images/
 ├── drawable/
 │   └── img_logo.xml                # Vector (if applicable)
 ├── drawable-night/
-│   └── img_logo.xml                # Dark vector (if applicable)
+│   └── img_logo.xml                # Dark vector
 ├── drawable-mdpi/
 │   ├── img_splash.webp             # @1x (160 dpi)
 │   └── img_background.webp
@@ -79,9 +94,13 @@ exfig-images/
 
 ## Density Mapping
 
-| Scale | Android Density | DPI | Use Case | |-------|-----------------|------|-------------------| | 1 | mdpi | 160 |
-Low-res devices | | 1.5 | hdpi | 240 | Medium-res | | 2 | xhdpi | 320 | High-res (common) | | 3 | xxhdpi | 480 | Extra
-high-res | | 4 | xxxhdpi | 640 | Highest density |
+| Scale | Density | DPI | Use Case          |
+| ----- | ------- | --- | ----------------- |
+| 1     | mdpi    | 160 | Low-res devices   |
+| 1.5   | hdpi    | 240 | Medium-res        |
+| 2     | xhdpi   | 320 | High-res (common) |
+| 3     | xxhdpi  | 480 | Extra high-res    |
+| 4     | xxxhdpi | 640 | Highest density   |
 
 Configure scales:
 
@@ -91,7 +110,7 @@ android:
     scales: [2, 3, 4]  # Skip mdpi and hdpi
 ```
 
-## Usage
+## Usage in Code
 
 ### XML Views
 
@@ -100,13 +119,13 @@ android:
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:src="@drawable/img_splash"
-    android:scaleType="centerCrop" />
+    android:scaleType="centerCrop"/>
 
 <ImageView
     android:layout_width="200dp"
     android:layout_height="200dp"
     android:src="@drawable/img_logo"
-    android:scaleType="fitCenter" />
+    android:scaleType="fitCenter"/>
 ```
 
 ### Jetpack Compose
@@ -144,14 +163,14 @@ android:
 
 **Advantages:**
 
-- Smaller file size (25-35% smaller than PNG)
+- 25-35% smaller than PNG
 - Supported on Android 4.0+
-- Lossless and lossy compression
+- Lossy and lossless compression
 
-**WebP Encoding:**
+**Encoding options:**
 
 - **Lossy**: Better compression, slight quality loss
-- **Lossless**: Perfect quality, larger than lossy
+- **Lossless**: Perfect quality, larger files
 
 ### PNG
 
@@ -164,7 +183,6 @@ android:
 **Advantages:**
 
 - Universal format
-- No additional tools required
 - Lossless compression
 
 ## Dark Mode Images
@@ -181,9 +199,9 @@ Generated structure:
 
 ```
 drawable-mdpi/
-  img_hero.webp         # Light mode
+  img_hero.webp           # Light mode
 drawable-night-mdpi/
-  img_hero.webp         # Dark mode
+  img_hero.webp           # Dark mode
 ```
 
 ### Single File Mode
@@ -202,56 +220,31 @@ img-hero
 img-hero_dark
 ```
 
-## Vector Images
-
-For SVG exports, ExFig converts to VectorDrawable XML:
-
-```xml
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="200dp"
-    android:height="200dp"
-    android:viewportWidth="200"
-    android:viewportHeight="200">
-    <path
-        android:fillColor="#FF6200"
-        android:pathData="M100,50 L150,150 L50,150 Z"/>
-</vector>
-```
-
-**When to use vectors:**
-
-- Simple illustrations
-- Logos and icons
-- Graphics that need perfect scaling
-
 ## Tips
 
-1. Use WebP for better app size optimization
-2. Provide appropriate density variants (usually xhdpi, xxhdpi, xxxhdpi)
-3. Use vectors for simple graphics instead of rasters
-4. Compress images in Figma before export
-5. Provide dark mode variants for better UX
-6. Use `drawable-nodpi` for images that shouldn't scale
-7. **Post-export optimization**: For PNG format, use oxipng (`ubi:shssoichiro/oxipng@9.1.5`) to further compress:
+1. **Use WebP** for smaller APK size
+2. **Skip low densities**: Use `scales: [2, 3, 4]` for modern devices
+3. **Use vectors** for simple graphics instead of rasters
+4. **Compress in Figma** before export
+5. **Provide dark mode** variants for better UX
+6. **Post-export optimization** for PNG format:
    ```bash
-   mise use -g ubi:shssoichiro/oxipng@9.1.5
    oxipng -o max -Z ./app/src/main/res/exfig-images/**/*.png
    ```
 
 ## Troubleshooting
 
-### "WebP conversion failed for file"
+### WebP conversion failed
 
-- Check if the source PNG is corrupted
-- Verify sufficient disk space
-- Check file permissions
-- Try PNG format as fallback: `format: png`
+- Check if source PNG is corrupted
+- Verify disk space
+- Try PNG format as fallback
 
 ### Images are low quality
 
 - Increase WebP quality: `quality: 95`
 - Use lossless encoding
-- Check source image resolution in Figma
+- Check source resolution in Figma
 
 ### App size too large
 
@@ -261,10 +254,6 @@ For SVG exports, ExFig converts to VectorDrawable XML:
 
 ## See Also
 
-- [Android Overview](index.md)
-- [Icons Export](icons.md)
-- [Configuration Reference](../../../CONFIG.md)
-
-______________________________________________________________________
-
-[← Back: Icons](icons.md) | [Up: Android Guide](index.md) | [Next: Typography →](typography.md)
+- <doc:Android>
+- <doc:AndroidIcons>
+- <doc:DesignRequirements>
