@@ -13,6 +13,7 @@ struct ExFigWarningFormatter {
         case .configMissing, .composeRequirementMissing, .noConfigsFound,
              .noValidConfigs, .xcodeProjectUpdateFailed, .checkpointExpired,
              .checkpointPathMismatch, .retrying, .preFetchPartialFailure,
+             .preFetchComponentsPartialFailure, .preFetchNodesPartialFailure,
              .granularCacheWithoutCache:
             formatCompact(warning)
 
@@ -56,6 +57,12 @@ struct ExFigWarningFormatter {
 
         case let .preFetchPartialFailure(failed, total):
             "Pre-fetch partial failure: \(failed)/\(total) files failed, using fallback"
+
+        case let .preFetchComponentsPartialFailure(failed, total):
+            "Pre-fetch components partial failure: \(failed)/\(total) files failed, using fallback"
+
+        case let .preFetchNodesPartialFailure(error):
+            "Pre-fetch nodes failed: \(error), using fallback"
 
         case .granularCacheWithoutCache:
             "--experimental-granular-cache ignored: requires --cache flag"

@@ -9,12 +9,8 @@
 # NO global mise installation required - ./bin/mise is self-contained!
 #
 # To update mise version:
-#   Option 1 (Recommended): bin/mise self-update
-#
-#   Option 2 (Manual regeneration):
-#     1. Install new mise temporarily: curl https://mise.run | sh
-#     2. Regenerate bootstrap: mise generate bootstrap > ./bin/mise
-#     3. Make executable: chmod +x ./bin/mise
+#   1. Regenerate bootstrap: mise generate bootstrap > ./bin/mise
+#   2. Make executable: chmod +x ./bin/mise
 # =============================================================================
 
 [settings]
