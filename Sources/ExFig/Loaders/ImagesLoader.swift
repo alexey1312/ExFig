@@ -4,6 +4,47 @@ import FigmaAPI
 import Foundation
 import Logging
 
+/// Configuration for loading images from a specific Figma frame.
+struct ImagesLoaderConfig: Sendable {
+    /// Figma frame name to load images from.
+    let frameName: String
+
+    /// Custom scales for raster images.
+    let scales: [Double]?
+
+    /// Creates config for a specific iOS images entry.
+    static func forIOS(entry: Params.iOS.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+        ImagesLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            scales: entry.scales
+        )
+    }
+
+    /// Creates config for a specific Android images entry.
+    static func forAndroid(entry: Params.Android.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+        ImagesLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            scales: entry.scales
+        )
+    }
+
+    /// Creates config for a specific Flutter images entry.
+    static func forFlutter(entry: Params.Flutter.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+        ImagesLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            scales: entry.scales
+        )
+    }
+
+    /// Creates default config from params (for backward compatibility).
+    static func defaultConfig(params: Params) -> ImagesLoaderConfig {
+        ImagesLoaderConfig(
+            frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
+            scales: nil
+        )
+    }
+}
+
 /// Output type for images loading operations.
 typealias ImagesLoaderOutput = (light: [ImagePack], dark: [ImagePack]?)
 
@@ -21,8 +62,26 @@ struct ImagesLoaderResultWithHashes {
 
 /// Loads images (illustrations) from Figma files.
 final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:disable:this type_body_length
+    private let config: ImagesLoaderConfig
+
+    init(
+        client: Client,
+        params: Params,
+        platform: Platform,
+        logger: Logger,
+        config: ImagesLoaderConfig? = nil
+    ) {
+        self.config = config ?? ImagesLoaderConfig.defaultConfig(params: params)
+        super.init(client: client, params: params, platform: platform, logger: logger)
+    }
+
     private var frameName: String {
-        params.common?.images?.figmaFrameName ?? "Illustrations"
+        config.frameName
+    }
+
+    /// Custom scales from config, or nil to use defaults.
+    private var configScales: [Double]? {
+        config.scales
     }
 
     /// Loads images from Figma, supporting both single-file and separate light/dark file modes.
@@ -69,11 +128,9 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
     ) async throws -> ImagesLoaderOutput {
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
-        switch (platform, params.android?.images?.format) {
+        switch (platform, params.android?.images?.entries.first?.format) {
         case (.android, .png), (.android, .webp), (.ios, _):
-            let scales = getScales(customScales: platform == .android
-                ? params.android?.images?.scales
-                : params.ios?.images?.scales)
+            let scales = getScales(customScales: configScales)
 
             let images = try await loadPNGImages(
                 fileId: params.figma.lightFileId,
@@ -110,7 +167,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             filesToLoad.append(("dark", darkFileId))
         }
 
-        switch (platform, params.android?.images?.format) {
+        switch (platform, params.android?.images?.entries.first?.format) {
         case (.android, .png), (.android, .webp), (.ios, _):
             return try await loadRasterImagesFromMultipleFiles(
                 filesToLoad: filesToLoad,
@@ -131,9 +188,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         filter: String?,
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderOutput {
-        let scales = getScales(customScales: platform == .android
-            ? params.android?.images?.scales
-            : params.ios?.images?.scales)
+        let scales = getScales(customScales: configScales)
 
         // Load all files in parallel for PNG/WebP
         let results = try await withThrowingTaskGroup(
@@ -211,12 +266,10 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         let fileId = params.figma.lightFileId
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
-        switch (platform, params.android?.images?.format) {
+        switch (platform, params.android?.images?.entries.first?.format) {
         case (.android, .png), (.android, .webp), (.ios, _):
             // Raster images (PNG/WebP) with granular cache
-            let scales = getScales(customScales: platform == .android
-                ? params.android?.images?.scales
-                : params.ios?.images?.scales)
+            let scales = getScales(customScales: configScales)
 
             let result = try await loadPNGImagesWithGranularCache(
                 fileId: fileId,
@@ -308,12 +361,10 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         let isRasterFormat: Bool
         let scales: [Double]
 
-        switch (platform, params.android?.images?.format) {
+        switch (platform, params.android?.images?.entries.first?.format) {
         case (.android, .png), (.android, .webp), (.ios, _):
             isRasterFormat = true
-            scales = getScales(customScales: platform == .android
-                ? params.android?.images?.scales
-                : params.ios?.images?.scales)
+            scales = getScales(customScales: configScales)
         default:
             isRasterFormat = false
             scales = []
