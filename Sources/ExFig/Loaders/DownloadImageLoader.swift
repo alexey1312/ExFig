@@ -127,6 +127,14 @@ final class DownloadImageLoader: @unchecked Sendable {
     }
 
     private func loadComponents(fileId: String) async throws -> [Component] {
+        // Check pre-fetched components first (batch optimization)
+        if let preFetched = PreFetchedComponentsStorage.components,
+           let components = preFetched.components(for: fileId)
+        {
+            return components
+        }
+
+        // Fall back to API request (standalone mode)
         let endpoint = ComponentsEndpoint(fileId: fileId)
         return try await client.request(endpoint)
     }

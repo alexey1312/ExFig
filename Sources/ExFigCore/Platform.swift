@@ -12,4 +12,8 @@ public enum Platform: String, Sendable {
     /// Android platform (Android Studio projects).
     /// Generates XML resources, vector drawables, and Kotlin code for Jetpack Compose.
     case android
+
+    /// Flutter platform (Flutter projects).
+    /// Generates Dart code and SVG/PNG/WebP assets.
+    case flutter
 }

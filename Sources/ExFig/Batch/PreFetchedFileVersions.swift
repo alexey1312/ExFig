@@ -33,6 +33,11 @@ struct PreFetchedFileVersions: Sendable {
     var count: Int {
         versions.count
     }
+
+    /// All file IDs that have been pre-fetched.
+    var allFileIds: [String] {
+        Array(versions.keys)
+    }
 }
 
 /// TaskLocal storage for pre-fetched file versions.

@@ -128,6 +128,25 @@ keyDirectories:
   docc: Sources/ExFig/ExFig.docc/
   tests: Tests/
 
+configTypes:
+  IconsConfiguration:
+    purpose: Enum for backward-compatible icons config parsing
+    cases: [single(Icons), multiple([IconsEntry])]
+    platforms: [iOS, Android, Flutter]
+    properties:
+      entries: "[IconsEntry] - unified access to all entries"
+      isMultiple: "Bool - true if array format"
+    decoding: "Try array first, fallback to single object"
+  IconsEntry:
+    purpose: Per-frame icons configuration
+    requiredFields: [format/output (platform-specific)]
+    optionalFields: [figmaFrameName]
+    fallback: "figmaFrameName defaults to common.icons.figmaFrameName or 'Icons'"
+  IconsLoaderConfig:
+    purpose: Sendable struct for IconsLoader frame settings
+    file: Sources/ExFig/Loaders/IconsLoader.swift
+    factoryMethods: [forIOS, forAndroid, forFlutter, defaultConfig]
+
 keyFiles:
   cli: Sources/ExFig/ExFigCommand.swift
   config: Sources/ExFig/Input/Params.swift
