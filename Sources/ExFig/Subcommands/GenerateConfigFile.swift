@@ -33,6 +33,8 @@ extension ExFigCommand {
                 androidConfigFileContents
             case .ios:
                 iosConfigFileContents
+            case .flutter:
+                flutterConfigFileContents
             }
 
             let destination = FileManager.default.currentDirectoryPath + "/" + ExFigOptions.defaultConfigFilename

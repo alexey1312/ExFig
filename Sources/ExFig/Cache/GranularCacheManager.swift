@@ -29,6 +29,10 @@ final class GranularCacheManager: @unchecked Sendable {
 
     /// Filters components to only those that have changed since last export.
     ///
+    /// In batch mode with `--cache` and `--experimental-granular-cache`, nodes are
+    /// pre-fetched before parallel config processing. This method checks the pre-fetched
+    /// storage first to avoid redundant API calls.
+    ///
     /// - Parameters:
     ///   - fileId: The Figma file ID.
     ///   - components: All components to potentially export.
@@ -41,9 +45,9 @@ final class GranularCacheManager: @unchecked Sendable {
             return GranularCacheResult(changedComponents: [:], computedHashes: [:])
         }
 
-        // Fetch node documents and compute hashes
+        // Fetch node documents - check pre-fetched storage first
         let nodeIds = Array(components.keys)
-        let nodes = try await fetchNodeDocuments(fileId: fileId, nodeIds: nodeIds)
+        let nodes = try await fetchNodeDocumentsWithPreFetchCheck(fileId: fileId, nodeIds: nodeIds)
 
         // Compute hashes for all nodes
         var computedHashes: [NodeId: String] = [:]
@@ -68,6 +72,40 @@ final class GranularCacheManager: @unchecked Sendable {
             changedComponents: changedComponents,
             computedHashes: computedHashes
         )
+    }
+
+    /// Fetches node documents, checking pre-fetched storage first.
+    ///
+    /// In batch mode, nodes are pre-fetched before parallel config processing.
+    /// This method uses pre-fetched nodes when available, falling back to API.
+    private func fetchNodeDocumentsWithPreFetchCheck(
+        fileId: String,
+        nodeIds: [NodeId]
+    ) async throws -> [NodeId: Node] {
+        // Check pre-fetched nodes first (batch optimization)
+        if let preFetched = PreFetchedNodesStorage.nodes,
+           let preFetchedNodes = preFetched.nodes(for: fileId)
+        {
+            // Filter to only requested nodeIds
+            let filteredNodes = preFetchedNodes.filter { nodeIds.contains($0.key) }
+
+            // If we have all requested nodes, use pre-fetched
+            if filteredNodes.count == nodeIds.count {
+                return filteredNodes
+            }
+
+            // If some nodes are missing, fetch only the missing ones
+            let missingNodeIds = nodeIds.filter { preFetchedNodes[$0] == nil }
+            if !missingNodeIds.isEmpty {
+                let fetchedNodes = try await fetchNodeDocuments(fileId: fileId, nodeIds: missingNodeIds)
+                return filteredNodes.merging(fetchedNodes) { _, new in new }
+            }
+
+            return filteredNodes
+        }
+
+        // Fall back to API request (standalone mode or missing pre-fetch)
+        return try await fetchNodeDocuments(fileId: fileId, nodeIds: nodeIds)
     }
 
     /// Fetches node documents from Figma API in batches.

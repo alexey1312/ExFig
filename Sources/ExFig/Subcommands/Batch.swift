@@ -205,22 +205,41 @@ extension ExFigCommand {
             let rateLimiter = SharedRateLimiter(requestsPerMinute: Double(rateLimit))
             let retryPolicy = RetryPolicy(maxRetries: maxRetries)
 
-            // Pre-fetch file versions if cache is enabled (optimization)
+            // Load cache for smart pre-fetch optimization (version checking)
+            // This allows skipping heavy Components API calls when file version is unchanged
+            let cacheForVersionCheck = loadCacheForVersionCheck()
+
+            // Pre-fetch file versions and components if cache is enabled (optimization)
+            // Smart two-phase pre-fetch:
+            // 1. Fetch FileMetadata only (fast, lightweight)
+            // 2. Compare versions with cache
+            // 3. Only fetch Components for files with changed versions
             let preFetchConfig = PreFetchConfiguration(
                 configs: configs,
                 cacheEnabled: cache,
                 noCacheFlag: noCache,
                 verbose: globalOptions.verbose,
                 rateLimiter: rateLimiter,
-                retryPolicy: retryPolicy
+                retryPolicy: retryPolicy,
+                cache: cacheForVersionCheck
             )
-            let preFetchedVersions = await FileVersionPreFetcher.preFetchIfNeeded(
+            let preFetchResult = await FileVersionPreFetcher.preFetchWithComponents(
                 configuration: preFetchConfig,
                 ui: ui
             )
+            let preFetchedVersions = preFetchResult.versions
+            let preFetchedComponents = preFetchResult.components
 
-            // Pre-load granular cache if enabled
+            // Pre-load granular cache if enabled (uses same cache data if already loaded)
             let sharedGranularCache: SharedGranularCache? = prepareSharedGranularCache()
+
+            // Phase 3: Pre-fetch nodes for granular cache if enabled
+            // This avoids redundant Nodes API calls when multiple configs reference same file
+            let preFetchedNodes = await preFetchNodesIfNeeded(
+                components: preFetchedComponents,
+                preFetchConfig: preFetchConfig,
+                ui: ui
+            )
 
             // Create shared download queue for cross-config pipelining
             let downloadQueue = SharedDownloadQueue(
@@ -259,20 +278,24 @@ extension ExFigCommand {
             )
 
             // Wrap execution with batch progress view and batch context injection
+            // Nodes are injected via separate TaskLocal (Phase 3 optimization)
             let result: BatchResult = await BatchProgressViewStorage.$progressView.withValue(progressView) {
-                await withBatchContext(
-                    preFetchedVersions: preFetchedVersions,
-                    sharedGranularCache: sharedGranularCache
-                ) {
-                    await executeWithProgressUpdates(
-                        executor: executor,
-                        configs: configs,
-                        checkpointManager: checkpointManager,
-                        runnerFactory: runnerFactory,
-                        progressView: progressView,
-                        rateLimiter: rateLimiter,
-                        ui: ui
-                    )
+                await PreFetchedNodesStorage.$nodes.withValue(preFetchedNodes) {
+                    await withBatchContext(
+                        preFetchedVersions: preFetchedVersions,
+                        preFetchedComponents: preFetchedComponents,
+                        sharedGranularCache: sharedGranularCache
+                    ) {
+                        await executeWithProgressUpdates(
+                            executor: executor,
+                            configs: configs,
+                            checkpointManager: checkpointManager,
+                            runnerFactory: runnerFactory,
+                            progressView: progressView,
+                            rateLimiter: rateLimiter,
+                            ui: ui
+                        )
+                    }
                 }
             }
 
@@ -395,32 +418,123 @@ extension ExFigCommand {
             return SharedGranularCache(cache: cacheData, cachePath: resolvedCachePath)
         }
 
-        /// Wraps execution with TaskLocal context for pre-fetched versions and shared granular cache.
+        /// Loads cache for smart pre-fetch optimization (version checking).
+        /// Returns cache data for version comparison, even when granular cache is disabled.
+        private func loadCacheForVersionCheck() -> ImageTrackingCache? {
+            guard cache, !noCache else { return nil }
+
+            let resolvedCachePath = ImageTrackingCache.resolvePath(customPath: cachePath)
+            return ImageTrackingCache.load(from: resolvedCachePath)
+        }
+
+        /// Pre-fetch nodes for granular cache optimization if enabled.
+        ///
+        /// Phase 3 of smart pre-fetch: collects ALL nodeIds from pre-fetched components
+        /// and fetches in 1 request per file. This avoids redundant Nodes API calls when
+        /// multiple configs reference the same Figma file.
+        private func preFetchNodesIfNeeded(
+            components: PreFetchedComponents?,
+            preFetchConfig: PreFetchConfiguration,
+            ui: TerminalUI
+        ) async -> PreFetchedNodes? {
+            // Only pre-fetch nodes when granular cache is enabled
+            guard experimentalGranularCache,
+                  cache,
+                  !noCache,
+                  let components
+            else {
+                return nil
+            }
+
+            // Get file IDs that have components (those that need nodes)
+            let changedFileIds = Set(components.allFileIds())
+
+            guard !changedFileIds.isEmpty else {
+                return nil
+            }
+
+            guard let preFetcher = FileVersionPreFetcher.createPreFetcher(
+                configuration: preFetchConfig,
+                ui: ui
+            ) else {
+                return nil
+            }
+
+            do {
+                return try await preFetcher.preFetchNodes(
+                    components: components,
+                    changedFileIds: changedFileIds
+                )
+            } catch {
+                // Log warning and continue without pre-fetched nodes (fallback to per-config fetch)
+                ui.warning(.preFetchNodesPartialFailure(error: error.localizedDescription))
+                return nil
+            }
+        }
+
+        /// Wraps execution with TaskLocal context for pre-fetched data and shared granular cache.
         private func withBatchContext<T>(
             preFetchedVersions: PreFetchedFileVersions?,
+            preFetchedComponents: PreFetchedComponents?,
             sharedGranularCache: SharedGranularCache?,
             operation: () async -> T
         ) async -> T {
-            switch (preFetchedVersions, sharedGranularCache) {
-            case let (versions?, cache?):
-                // Both contexts
+            // Nested TaskLocal injection based on what's available
+            switch (preFetchedVersions, preFetchedComponents, sharedGranularCache) {
+            // All three contexts
+            case let (versions?, components?, cache?):
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await PreFetchedComponentsStorage.$components.withValue(components) {
+                        await SharedGranularCacheStorage.$cache.withValue(cache) {
+                            await operation()
+                        }
+                    }
+                }
+
+            // Versions + components
+            case let (versions?, components?, nil):
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await PreFetchedComponentsStorage.$components.withValue(components) {
+                        await operation()
+                    }
+                }
+
+            // Versions + cache
+            case let (versions?, nil, cache?):
                 await PreFetchedVersionsStorage.$versions.withValue(versions) {
                     await SharedGranularCacheStorage.$cache.withValue(cache) {
                         await operation()
                     }
                 }
-            case let (versions?, nil):
-                // Only pre-fetched versions
+
+            // Components + cache
+            case let (nil, components?, cache?):
+                await PreFetchedComponentsStorage.$components.withValue(components) {
+                    await SharedGranularCacheStorage.$cache.withValue(cache) {
+                        await operation()
+                    }
+                }
+
+            // Only versions
+            case let (versions?, nil, nil):
                 await PreFetchedVersionsStorage.$versions.withValue(versions) {
                     await operation()
                 }
-            case let (nil, cache?):
-                // Only granular cache
+
+            // Only components
+            case let (nil, components?, nil):
+                await PreFetchedComponentsStorage.$components.withValue(components) {
+                    await operation()
+                }
+
+            // Only cache
+            case let (nil, nil, cache?):
                 await SharedGranularCacheStorage.$cache.withValue(cache) {
                     await operation()
                 }
-            case (nil, nil):
-                // No context
+
+            // None
+            case (nil, nil, nil):
                 await operation()
             }
         }

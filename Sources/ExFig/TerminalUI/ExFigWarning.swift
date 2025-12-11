@@ -47,6 +47,12 @@ enum ExFigWarning: Sendable, Equatable {
     /// Pre-fetch failed for some files, falling back to per-config fetch.
     case preFetchPartialFailure(failed: Int, total: Int)
 
+    /// Pre-fetch components failed for some files, falling back to per-config fetch.
+    case preFetchComponentsPartialFailure(failed: Int, total: Int)
+
+    /// Pre-fetch nodes failed, falling back to per-config fetch.
+    case preFetchNodesPartialFailure(error: String)
+
     // MARK: - Granular Cache Warnings
 
     /// Granular cache flag used without --cache enabled.

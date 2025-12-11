@@ -682,6 +682,15 @@ class ImageLoaderBase: @unchecked Sendable {
     // MARK: - Private Figma API Methods
 
     private func loadComponents(fileId: String) async throws -> [Component] {
+        // Check pre-fetched components first (batch optimization)
+        if let preFetched = PreFetchedComponentsStorage.components,
+           let components = preFetched.components(for: fileId)
+        {
+            logger.debug("Using pre-fetched components for \(fileId) (\(components.count) components)")
+            return components
+        }
+
+        // Fall back to API request (standalone mode or missing pre-fetch)
         let endpoint = ComponentsEndpoint(fileId: fileId)
         return try await client.request(endpoint)
     }
@@ -831,7 +840,7 @@ extension String {
 
     func parseNameAndIdiom(platform: Platform) -> (name: String, idiom: String) {
         switch platform {
-        case .android:
+        case .android, .flutter:
             return (self, "")
         case .ios:
             guard let regex = Self.idiomRegex,

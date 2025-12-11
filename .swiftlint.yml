@@ -7,6 +7,7 @@ excluded:
   - Packages
   - Sources/ExFig/Resources/iOSConfig.swift
   - Sources/ExFig/Resources/androidConfig.swift
+  - Sources/ExFig/Resources/flutterConfig.swift
   - Tests/XcodeExportTests/XcodeIconsExporterTests.swift
 
 disabled_rules:

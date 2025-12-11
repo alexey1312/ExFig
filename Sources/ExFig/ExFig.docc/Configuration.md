@@ -70,7 +70,7 @@ common:
 ```yaml
 common:
   icons:
-    # Frame name containing icon components
+    # Default frame name for icon components (can be overridden per-entry)
     figmaFrameName: "Icons"
 
     # Regex to validate icon names
@@ -78,6 +78,12 @@ common:
 
     # Regex replacement for icon names
     nameReplaceRegexp: "ic_$1"
+
+    # Use single file for light/dark (default: false)
+    useSingleFile: false
+
+    # Suffix for dark mode variants (when useSingleFile: true)
+    darkModeSuffix: "_dark"
 ```
 
 ### Images
@@ -140,7 +146,11 @@ ios:
   # Path to Assets.xcassets
   xcassetsPath: "./Resources/Assets.xcassets"
 
+  # Colors - single object (legacy) or array format
   colors:
+    # Use color assets in xcassets
+    useColorAssets: true
+
     # Folder in xcassets for colors
     assetsFolder: "Colors"
 
@@ -148,14 +158,34 @@ ios:
     nameStyle: camelCase
 
     # Group colors in subfolders by prefix
-    groupByPrefix: true
+    groupUsingNamespace: true
 
     # UIKit extension output path
     colorSwift: "./Sources/Generated/UIColor+Colors.swift"
 
     # SwiftUI extension output path
-    swiftUIColorSwift: "./Sources/Generated/Color+Colors.swift"
+    swiftuiColorSwift: "./Sources/Generated/Color+Colors.swift"
 
+  # Colors - array format for multiple color collections
+  # colors:
+  #   - tokensFileId: "ABC123"
+  #     tokensCollectionName: "Base Palette"
+  #     lightModeName: "Light"
+  #     darkModeName: "Dark"
+  #     useColorAssets: true
+  #     assetsFolder: "BaseColors"
+  #     nameStyle: camelCase
+  #     colorSwift: "./Sources/Generated/BaseColors.swift"
+  #   - tokensFileId: "DEF456"
+  #     tokensCollectionName: "Theme Colors"
+  #     lightModeName: "Light"
+  #     darkModeName: "Dark"
+  #     useColorAssets: true
+  #     assetsFolder: "ThemeColors"
+  #     nameStyle: camelCase
+  #     colorSwift: "./Sources/Generated/ThemeColors.swift"
+
+  # Icons - single object (legacy) or array format
   icons:
     # Folder in xcassets for icons
     assetsFolder: "Icons"
@@ -178,6 +208,20 @@ ios:
     # SwiftUI extension output path
     swiftUIImageSwift: "./Sources/Generated/Image+Icons.swift"
 
+  # Icons - array format for multiple icon sets
+  # icons:
+  #   - figmaFrameName: "Actions"
+  #     format: svg
+  #     assetsFolder: "Actions"
+  #     nameStyle: camelCase
+  #     imageSwift: "./Sources/Generated/ActionsIcons.swift"
+  #   - figmaFrameName: "Navigation"
+  #     format: pdf
+  #     assetsFolder: "Navigation"
+  #     nameStyle: camelCase
+  #     imageSwift: "./Sources/Generated/NavIcons.swift"
+
+  # Images - single object (legacy) or array format
   images:
     # Folder in xcassets for images
     assetsFolder: "Images"
@@ -193,6 +237,19 @@ ios:
 
     # SwiftUI extension output path
     swiftUIImageSwift: "./Sources/Generated/Image+Images.swift"
+
+  # Images - array format for multiple image sets
+  # images:
+  #   - figmaFrameName: "Onboarding"
+  #     assetsFolder: "Onboarding"
+  #     nameStyle: camelCase
+  #     scales: [1, 2, 3]
+  #     imageSwift: "./Sources/Generated/OnboardingImages.swift"
+  #   - figmaFrameName: "Promo"
+  #     assetsFolder: "Promo"
+  #     nameStyle: camelCase
+  #     scales: [2, 3]
+  #     imageSwift: "./Sources/Generated/PromoImages.swift"
 
   typography:
     # Generate labels with predefined styles
@@ -224,16 +281,28 @@ android:
   # Path to main source directory (for Compose)
   mainSrc: "./app/src/main/java"
 
+  # Colors - single object (legacy) or array format
   colors:
     # Output filename
-    output: "colors.xml"
-
-    # Naming style
-    nameStyle: snake_case
+    xmlOutputFileName: "colors.xml"
 
     # Jetpack Compose package name
     composePackageName: "com.example.app.ui.theme"
 
+  # Colors - array format for multiple color collections
+  # colors:
+  #   - tokensFileId: "ABC123"
+  #     tokensCollectionName: "Base Palette"
+  #     lightModeName: "Light"
+  #     xmlOutputFileName: "base_colors.xml"
+  #   - tokensFileId: "DEF456"
+  #     tokensCollectionName: "Theme Colors"
+  #     lightModeName: "Light"
+  #     darkModeName: "Dark"
+  #     xmlOutputFileName: "theme_colors.xml"
+  #     composePackageName: "com.example.theme"
+
+  # Icons - single object (legacy) or array format
   icons:
     # Output directory (relative to mainRes)
     output: "exfig-icons"
@@ -247,14 +316,23 @@ android:
     # Use native VectorDrawable generator
     useNativeVectorDrawable: false
 
+  # Icons - array format for multiple icon sets
+  # icons:
+  #   - figmaFrameName: "Actions"
+  #     output: "drawable-actions"
+  #     composePackageName: "com.example.app.ui.actions"
+  #   - figmaFrameName: "Navigation"
+  #     output: "drawable-nav"
+  #     composePackageName: "com.example.app.ui.nav"
+  #     composeFormat: imageVector
+  #     composeExtensionTarget: "com.example.NavIcons"
+
+  # Images - single object (legacy) or array format
   images:
     # Output directory (relative to mainRes)
     output: "exfig-images"
 
-    # Naming style
-    nameStyle: snake_case
-
-    # Image format: png or webp
+    # Image format: svg, png, or webp
     format: webp
 
     # WebP encoding options
@@ -264,6 +342,19 @@ android:
 
     # Density scales (default: [1, 1.5, 2, 3, 4])
     scales: [1, 1.5, 2, 3, 4]
+
+  # Images - array format for multiple image sets
+  # images:
+  #   - figmaFrameName: "Illustrations"
+  #     output: "drawable-illustrations"
+  #     format: svg
+  #   - figmaFrameName: "Photos"
+  #     output: "drawable-photos"
+  #     format: webp
+  #     scales: [1, 1.5, 2, 3, 4]
+  #     webpOptions:
+  #       encoding: lossy
+  #       quality: 80
 
   typography:
     # Output filename
@@ -286,6 +377,7 @@ flutter:
   # Path to custom Stencil templates
   templatesPath: "./templates"
 
+  # Colors - single object (legacy) or array format
   colors:
     # Output filename
     output: "colors.dart"
@@ -293,6 +385,21 @@ flutter:
     # Class name for colors
     className: "AppColors"
 
+  # Colors - array format for multiple color collections
+  # colors:
+  #   - tokensFileId: "ABC123"
+  #     tokensCollectionName: "Base Palette"
+  #     lightModeName: "Light"
+  #     output: "base_colors.dart"
+  #     className: "BaseColors"
+  #   - tokensFileId: "DEF456"
+  #     tokensCollectionName: "Theme Colors"
+  #     lightModeName: "Light"
+  #     darkModeName: "Dark"
+  #     output: "theme_colors.dart"
+  #     className: "ThemeColors"
+
+  # Icons - single object (legacy) or array format
   icons:
     # Output directory for SVG files
     output: "assets/icons"
@@ -303,6 +410,18 @@ flutter:
     # Class name for icons
     className: "AppIcons"
 
+  # Icons - array format for multiple icon sets
+  # icons:
+  #   - figmaFrameName: "Actions"
+  #     output: "assets/icons/actions"
+  #     dartFile: "action_icons.dart"
+  #     className: "ActionIcons"
+  #   - figmaFrameName: "Navigation"
+  #     output: "assets/icons/nav"
+  #     dartFile: "nav_icons.dart"
+  #     className: "NavIcons"
+
+  # Images - single object (legacy) or array format
   images:
     # Output directory for images
     output: "assets/images"
@@ -323,6 +442,19 @@ flutter:
     webpOptions:
       encoding: lossy
       quality: 90
+
+  # Images - array format for multiple image sets
+  # images:
+  #   - figmaFrameName: "Illustrations"
+  #     output: "assets/images/illustrations"
+  #     dartFile: "illustrations.dart"
+  #     className: "Illustrations"
+  #   - figmaFrameName: "Promo"
+  #     output: "assets/images/promo"
+  #     dartFile: "promo_images.dart"
+  #     className: "PromoImages"
+  #     format: webp
+  #     scales: [1, 2, 3]
 ```
 
 ## Example Configurations
