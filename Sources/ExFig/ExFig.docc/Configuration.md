@@ -70,7 +70,7 @@ common:
 ```yaml
 common:
   icons:
-    # Frame name containing icon components
+    # Default frame name for icon components (can be overridden per-entry)
     figmaFrameName: "Icons"
 
     # Regex to validate icon names
@@ -78,6 +78,12 @@ common:
 
     # Regex replacement for icon names
     nameReplaceRegexp: "ic_$1"
+
+    # Use single file for light/dark (default: false)
+    useSingleFile: false
+
+    # Suffix for dark mode variants (when useSingleFile: true)
+    darkModeSuffix: "_dark"
 ```
 
 ### Images
@@ -156,6 +162,7 @@ ios:
     # SwiftUI extension output path
     swiftUIColorSwift: "./Sources/Generated/Color+Colors.swift"
 
+  # Icons - single object (legacy) or array format
   icons:
     # Folder in xcassets for icons
     assetsFolder: "Icons"
@@ -177,6 +184,19 @@ ios:
 
     # SwiftUI extension output path
     swiftUIImageSwift: "./Sources/Generated/Image+Icons.swift"
+
+  # Icons - array format for multiple icon sets
+  # icons:
+  #   - figmaFrameName: "Actions"
+  #     format: svg
+  #     assetsFolder: "Actions"
+  #     nameStyle: camelCase
+  #     imageSwift: "./Sources/Generated/ActionsIcons.swift"
+  #   - figmaFrameName: "Navigation"
+  #     format: pdf
+  #     assetsFolder: "Navigation"
+  #     nameStyle: camelCase
+  #     imageSwift: "./Sources/Generated/NavIcons.swift"
 
   images:
     # Folder in xcassets for images
@@ -234,6 +254,7 @@ android:
     # Jetpack Compose package name
     composePackageName: "com.example.app.ui.theme"
 
+  # Icons - single object (legacy) or array format
   icons:
     # Output directory (relative to mainRes)
     output: "exfig-icons"
@@ -246,6 +267,15 @@ android:
 
     # Use native VectorDrawable generator
     useNativeVectorDrawable: false
+
+  # Icons - array format for multiple icon sets
+  # icons:
+  #   - figmaFrameName: "Actions"
+  #     output: "drawable-actions"
+  #     composePackageName: "com.example.app.ui.actions"
+  #   - figmaFrameName: "Navigation"
+  #     output: "drawable-nav"
+  #     composePackageName: "com.example.app.ui.nav"
 
   images:
     # Output directory (relative to mainRes)
@@ -293,6 +323,7 @@ flutter:
     # Class name for colors
     className: "AppColors"
 
+  # Icons - single object (legacy) or array format
   icons:
     # Output directory for SVG files
     output: "assets/icons"
@@ -302,6 +333,17 @@ flutter:
 
     # Class name for icons
     className: "AppIcons"
+
+  # Icons - array format for multiple icon sets
+  # icons:
+  #   - figmaFrameName: "Actions"
+  #     output: "assets/icons/actions"
+  #     dartFile: "action_icons.dart"
+  #     className: "ActionIcons"
+  #   - figmaFrameName: "Navigation"
+  #     output: "assets/icons/nav"
+  #     dartFile: "nav_icons.dart"
+  #     className: "NavIcons"
 
   images:
     # Output directory for images

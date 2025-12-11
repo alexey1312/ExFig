@@ -245,14 +245,123 @@ extension ExFigCommand {
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
             guard let ios = params.ios,
-                  let iconsParams = ios.icons
+                  let iconsConfig = ios.icons
             else {
                 ui.warning(.configMissing(platform: "ios", assetType: "icons"))
                 return PlatformExportResult(count: 0, hashes: [:], skippedCount: 0)
             }
 
+            // Get all entries from config (supports both single and multiple formats)
+            let entries = iconsConfig.entries
+
+            // Single entry - use direct processing (legacy behavior)
+            if entries.count == 1 {
+                return try await exportiOSIconsEntry(
+                    entry: entries[0],
+                    ios: ios,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+
+            // Multiple entries - pre-fetch Components once for all entries
+            // This avoids redundant API calls when processing multiple figmaFrameNames
+            // Check if we're already in batch mode with pre-fetched components
+            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
+
+            if needsLocalPreFetch {
+                // Pre-fetch Components for all file IDs
+                var componentsMap: [String: [Component]] = [:]
+                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
+
+                for fileId in fileIds {
+                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
+                    componentsMap[fileId] = components
+                }
+
+                let preFetched = PreFetchedComponents(components: componentsMap)
+
+                // Inject via TaskLocal - IconsLoader will use pre-fetched components
+                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
+                    try await processIOSIconsEntries(
+                        entries: entries,
+                        ios: ios,
+                        client: client,
+                        params: params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
+            } else {
+                // Already have pre-fetched components (batch mode)
+                return try await processIOSIconsEntries(
+                    entries: entries,
+                    ios: ios,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+        }
+
+        // Helper to process multiple iOS icon entries sequentially.
+        // swiftlint:disable:next function_parameter_count
+        private func processIOSIconsEntries(
+            entries: [Params.iOS.IconsEntry],
+            ios: Params.iOS,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            var totalCount = 0
+            var totalSkipped = 0
+            var allHashes: [String: [NodeId: String]] = [:]
+
+            for entry in entries {
+                let result = try await exportiOSIconsEntry(
+                    entry: entry,
+                    ios: ios,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalCount += result.count
+                totalSkipped += result.skippedCount
+                mergeHashes(&allHashes, result.hashes)
+            }
+
+            return PlatformExportResult(
+                count: totalCount,
+                hashes: allHashes,
+                skippedCount: totalSkipped
+            )
+        }
+
+        // Exports icons for a single iOS icons entry.
+        // swiftlint:disable:next function_body_length cyclomatic_complexity function_parameter_count
+        private func exportiOSIconsEntry(
+            entry: Params.iOS.IconsEntry,
+            ios: Params.iOS,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            let loaderConfig = IconsLoaderConfig.forIOS(entry: entry, params: params)
+
             let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
-                let loader = IconsLoader(client: client, params: params, platform: .ios, logger: logger)
+                let loader = IconsLoader(
+                    client: client,
+                    params: params,
+                    platform: .ios,
+                    logger: logger,
+                    config: loaderConfig
+                )
                 if let manager = granularCacheManager {
                     loader.granularCacheManager = manager
                     return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
@@ -284,7 +393,7 @@ extension ExFigCommand {
                 platform: .ios,
                 nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
                 nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                nameStyle: iconsParams.nameStyle
+                nameStyle: entry.nameStyle
             )
 
             let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
@@ -296,7 +405,7 @@ extension ExFigCommand {
                 ui.warning(iconsWarning)
             }
 
-            let assetsURL = ios.xcassetsPath.appendingPathComponent(iconsParams.assetsFolder)
+            let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
 
             let output = XcodeImagesOutput(
                 assetsFolderURL: assetsURL,
@@ -304,9 +413,9 @@ extension ExFigCommand {
                 assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
                 resourceBundleNames: ios.resourceBundleNames,
                 addObjcAttribute: ios.addObjcAttribute,
-                preservesVectorRepresentation: iconsParams.preservesVectorRepresentation,
-                uiKitImageExtensionURL: iconsParams.imageSwift,
-                swiftUIImageExtensionURL: iconsParams.swiftUIImageSwift,
+                preservesVectorRepresentation: entry.preservesVectorRepresentation,
+                uiKitImageExtensionURL: entry.imageSwift,
+                swiftUIImageExtensionURL: entry.swiftUIImageSwift,
                 templatesPath: ios.templatesPath
             )
 
@@ -397,16 +506,19 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            guard let android = params.android, let androidIcons = android.icons else {
+            guard let android = params.android, let iconsConfig = android.icons else {
                 ui.warning(.configMissing(platform: "android", assetType: "icons"))
                 return PlatformExportResult(count: 0, hashes: [:])
             }
 
-            // Check if ImageVector format is requested
-            let composeFormat = androidIcons.composeFormat ?? .resourceReference
+            // Get all entries from config (supports both single and multiple formats)
+            let entries = iconsConfig.entries
 
-            if composeFormat == .imageVector {
-                return try await exportAndroidIconsAsImageVector(
+            // Single entry - use direct processing (legacy behavior)
+            if entries.count == 1 {
+                return try await exportAndroidIconsEntry(
+                    entry: entries[0],
+                    android: android,
                     client: client,
                     params: params,
                     ui: ui,
@@ -414,9 +526,112 @@ extension ExFigCommand {
                 )
             }
 
+            // Multiple entries - pre-fetch Components once for all entries
+            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
+
+            if needsLocalPreFetch {
+                var componentsMap: [String: [Component]] = [:]
+                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
+
+                for fileId in fileIds {
+                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
+                    componentsMap[fileId] = components
+                }
+
+                let preFetched = PreFetchedComponents(components: componentsMap)
+
+                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
+                    try await processAndroidIconsEntries(
+                        entries: entries,
+                        android: android,
+                        client: client,
+                        params: params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
+            } else {
+                return try await processAndroidIconsEntries(
+                    entries: entries,
+                    android: android,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+        }
+
+        // Helper to process multiple Android icon entries sequentially.
+        // swiftlint:disable:next function_parameter_count
+        private func processAndroidIconsEntries(
+            entries: [Params.Android.IconsEntry],
+            android: Params.Android,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            var totalCount = 0
+            var totalSkipped = 0
+            var allHashes: [String: [NodeId: String]] = [:]
+
+            for entry in entries {
+                let result = try await exportAndroidIconsEntry(
+                    entry: entry,
+                    android: android,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalCount += result.count
+                totalSkipped += result.skippedCount
+                mergeHashes(&allHashes, result.hashes)
+            }
+
+            return PlatformExportResult(
+                count: totalCount,
+                hashes: allHashes,
+                skippedCount: totalSkipped
+            )
+        }
+
+        // Exports icons for a single Android icons entry.
+        // swiftlint:disable:next function_body_length function_parameter_count
+        private func exportAndroidIconsEntry(
+            entry: Params.Android.IconsEntry,
+            android: Params.Android,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            // Check if ImageVector format is requested
+            let composeFormat = entry.composeFormat ?? .resourceReference
+
+            if composeFormat == .imageVector {
+                return try await exportAndroidIconsAsImageVectorEntry(
+                    entry: entry,
+                    android: android,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+
+            let loaderConfig = IconsLoaderConfig.forAndroid(entry: entry, params: params)
+
             // 1. Get Icons info
             let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
-                let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
+                let loader = IconsLoader(
+                    client: client,
+                    params: params,
+                    platform: .android,
+                    logger: logger,
+                    config: loaderConfig
+                )
                 if let manager = granularCacheManager {
                     loader.granularCacheManager = manager
                     return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
@@ -514,11 +729,11 @@ extension ExFigCommand {
 
             // Create output directory main/res/custom-directory/drawable/
             let lightDirectory = URL(fileURLWithPath: android.mainRes
-                .appendingPathComponent(androidIcons.output)
+                .appendingPathComponent(entry.output)
                 .appendingPathComponent("drawable", isDirectory: true).path)
 
             let darkDirectory = URL(fileURLWithPath: android.mainRes
-                .appendingPathComponent(androidIcons.output)
+                .appendingPathComponent(entry.output)
                 .appendingPathComponent("drawable-night", isDirectory: true).path)
 
             if filter == nil, granularCacheManager == nil {
@@ -550,7 +765,7 @@ extension ExFigCommand {
                 xmlOutputDirectory: android.mainRes,
                 xmlResourcePackage: android.resourcePackage,
                 srcDirectory: android.mainSrc,
-                packageName: android.icons?.composePackageName,
+                packageName: entry.composePackageName,
                 templatesPath: android.templatesPath
             )
             let composeExporter = AndroidComposeIconExporter(output: output)
@@ -591,18 +806,16 @@ extension ExFigCommand {
         }
 
         // Exports Android icons as Jetpack Compose ImageVector Kotlin files
-        // swiftlint:disable:next function_body_length cyclomatic_complexity
-        private func exportAndroidIconsAsImageVector(
+        // swiftlint:disable:next function_body_length cyclomatic_complexity function_parameter_count
+        private func exportAndroidIconsAsImageVectorEntry(
+            entry: Params.Android.IconsEntry,
+            android: Params.Android,
             client: Client,
             params: Params,
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            guard let android = params.android, let androidIcons = android.icons else {
-                return PlatformExportResult(count: 0, hashes: [:])
-            }
-
-            guard let packageName = androidIcons.composePackageName else {
+            guard let packageName = entry.composePackageName else {
                 ui.warning(.composeRequirementMissing(requirement: "composePackageName"))
                 return PlatformExportResult(count: 0, hashes: [:])
             }
@@ -612,9 +825,17 @@ extension ExFigCommand {
                 return PlatformExportResult(count: 0, hashes: [:])
             }
 
+            let loaderConfig = IconsLoaderConfig.forAndroid(entry: entry, params: params)
+
             // 1. Get Icons info
             let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
-                let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
+                let loader = IconsLoader(
+                    client: client,
+                    params: params,
+                    platform: .android,
+                    logger: logger,
+                    config: loaderConfig
+                )
                 if let manager = granularCacheManager {
                     loader.granularCacheManager = manager
                     return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
@@ -697,7 +918,7 @@ extension ExFigCommand {
                     outputDirectory: outputDirectory,
                     config: .init(
                         packageName: packageName,
-                        extensionTarget: androidIcons.composeExtensionTarget,
+                        extensionTarget: entry.composeExtensionTarget,
                         generatePreview: true,
                         colorMappings: [:]
                     )
@@ -751,14 +972,118 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            guard let flutter = params.flutter, let flutterIcons = flutter.icons else {
+            guard let flutter = params.flutter, let iconsConfig = flutter.icons else {
                 ui.warning(.configMissing(platform: "flutter", assetType: "icons"))
                 return PlatformExportResult(count: 0, hashes: [:])
             }
 
+            // Get all entries from config (supports both single and multiple formats)
+            let entries = iconsConfig.entries
+
+            // Single entry - use direct processing (legacy behavior)
+            if entries.count == 1 {
+                return try await exportFlutterIconsEntry(
+                    entry: entries[0],
+                    flutter: flutter,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+
+            // Multiple entries - pre-fetch Components once for all entries
+            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
+
+            if needsLocalPreFetch {
+                var componentsMap: [String: [Component]] = [:]
+                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
+
+                for fileId in fileIds {
+                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
+                    componentsMap[fileId] = components
+                }
+
+                let preFetched = PreFetchedComponents(components: componentsMap)
+
+                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
+                    try await processFlutterIconsEntries(
+                        entries: entries,
+                        flutter: flutter,
+                        client: client,
+                        params: params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
+            } else {
+                return try await processFlutterIconsEntries(
+                    entries: entries,
+                    flutter: flutter,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+        }
+
+        // Helper to process multiple Flutter icon entries sequentially.
+        // swiftlint:disable:next function_parameter_count
+        private func processFlutterIconsEntries(
+            entries: [Params.Flutter.IconsEntry],
+            flutter: Params.Flutter,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            var totalCount = 0
+            var totalSkipped = 0
+            var allHashes: [String: [NodeId: String]] = [:]
+
+            for entry in entries {
+                let result = try await exportFlutterIconsEntry(
+                    entry: entry,
+                    flutter: flutter,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalCount += result.count
+                totalSkipped += result.skippedCount
+                mergeHashes(&allHashes, result.hashes)
+            }
+
+            return PlatformExportResult(
+                count: totalCount,
+                hashes: allHashes,
+                skippedCount: totalSkipped
+            )
+        }
+
+        // Exports icons for a single Flutter icons entry.
+        // swiftlint:disable:next function_body_length function_parameter_count
+        private func exportFlutterIconsEntry(
+            entry: Params.Flutter.IconsEntry,
+            flutter: Params.Flutter,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            let loaderConfig = IconsLoaderConfig.forFlutter(entry: entry, params: params)
+
             // 1. Get Icons info
             let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
-                let loader = IconsLoader(client: client, params: params, platform: .android, logger: logger)
+                let loader = IconsLoader(
+                    client: client,
+                    params: params,
+                    platform: .android,
+                    logger: logger,
+                    config: loaderConfig
+                )
                 if let manager = granularCacheManager {
                     loader.granularCacheManager = manager
                     return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
@@ -804,15 +1129,15 @@ extension ExFigCommand {
             }
 
             // 3. Export icons
-            let assetsDirectory = URL(fileURLWithPath: flutterIcons.output)
+            let assetsDirectory = URL(fileURLWithPath: entry.output)
             let output = FlutterOutput(
                 outputDirectory: flutter.output,
                 iconsAssetsDirectory: assetsDirectory,
                 templatesPath: flutter.templatesPath,
-                iconsClassName: flutterIcons.className
+                iconsClassName: entry.className
             )
 
-            let exporter = FlutterIconsExporter(output: output, outputFileName: flutterIcons.dartFile)
+            let exporter = FlutterIconsExporter(output: output, outputFileName: entry.dartFile)
             // Process allNames with the same transformations applied to icons
             let allIconNames = granularCacheManager != nil
                 ? processor.processNames(loaderResult.allNames)

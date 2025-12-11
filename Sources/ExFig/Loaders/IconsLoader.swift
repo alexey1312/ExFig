@@ -18,10 +18,86 @@ struct IconsLoaderResultWithHashes {
     let allNames: [String]
 }
 
+/// Configuration for loading icons, supporting both single-entry and multi-entry modes.
+struct IconsLoaderConfig: Sendable {
+    /// Figma frame name to load icons from.
+    let frameName: String
+
+    /// Icon format for iOS (pdf or svg). Android always uses svg.
+    let format: Params.VectorFormat?
+
+    /// Render mode for iOS icons.
+    let renderMode: XcodeRenderMode?
+    let renderModeDefaultSuffix: String?
+    let renderModeOriginalSuffix: String?
+    let renderModeTemplateSuffix: String?
+
+    /// Creates config for a specific iOS icons entry.
+    static func forIOS(entry: Params.iOS.IconsEntry, params: Params) -> IconsLoaderConfig {
+        IconsLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            format: entry.format,
+            renderMode: entry.renderMode,
+            renderModeDefaultSuffix: entry.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: entry.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: entry.renderModeTemplateSuffix
+        )
+    }
+
+    /// Creates config for Android (no iOS-specific fields needed).
+    static func forAndroid(entry: Params.Android.IconsEntry, params: Params) -> IconsLoaderConfig {
+        IconsLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            format: nil,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+    }
+
+    /// Creates config for Flutter (no iOS-specific fields needed).
+    static func forFlutter(entry: Params.Flutter.IconsEntry, params: Params) -> IconsLoaderConfig {
+        IconsLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            format: nil,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+    }
+
+    /// Creates default config using common.icons.figmaFrameName or "Icons".
+    static func defaultConfig(params: Params) -> IconsLoaderConfig {
+        IconsLoaderConfig(
+            frameName: params.common?.icons?.figmaFrameName ?? "Icons",
+            format: nil,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+    }
+}
+
 /// Loads icons from Figma files.
 final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
+    private let config: IconsLoaderConfig
+
+    init(
+        client: Client,
+        params: Params,
+        platform: Platform,
+        logger: Logger,
+        config: IconsLoaderConfig? = nil
+    ) {
+        self.config = config ?? IconsLoaderConfig.defaultConfig(params: params)
+        super.init(client: client, params: params, platform: platform, logger: logger)
+    }
+
     private var frameName: String {
-        params.common?.icons?.figmaFrameName ?? "Icons"
+        config.frameName
     }
 
     /// Loads icons from Figma, supporting both single-file and separate light/dark file modes.
@@ -130,7 +206,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
     // MARK: - Helpers
 
     private func makeFormatParams() -> FormatParams {
-        switch (platform, params.ios?.icons?.format) {
+        switch (platform, config.format) {
         case (.android, _), (.ios, .svg):
             SVGParams()
         case (.ios, _):
@@ -140,10 +216,10 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
 
     private func updateRenderMode(_ icon: ImagePack) -> ImagePack {
         // Filtering at suffixes
-        var renderMode = params.ios?.icons?.renderMode ?? .template
-        let defaultSuffix = renderMode == .template ? params.ios?.icons?.renderModeDefaultSuffix : nil
-        let originalSuffix = renderMode == .template ? params.ios?.icons?.renderModeOriginalSuffix : nil
-        let templateSuffix = renderMode != .template ? params.ios?.icons?.renderModeTemplateSuffix : nil
+        var renderMode = config.renderMode ?? .template
+        let defaultSuffix = renderMode == .template ? config.renderModeDefaultSuffix : nil
+        let originalSuffix = renderMode == .template ? config.renderModeOriginalSuffix : nil
+        let templateSuffix = renderMode != .template ? config.renderModeTemplateSuffix : nil
         var suffix: String?
 
         if let defaultSuffix, icon.name.hasSuffix(defaultSuffix) {

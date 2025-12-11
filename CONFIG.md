@@ -138,6 +138,8 @@ ios:
     groupUsingNamespace: true
 
   # [optional] Parameters for exporting icons
+  # Can be a single object (legacy format) or an array of objects (new format)
+  # Legacy format (single icons configuration):
   icons:
     # Image file format: pdf or svg
     format: pdf
@@ -150,21 +152,36 @@ ios:
     - ic24TabBarMain
     - ic24TabBarEvents
     - ic24TabBarProfile
-    # [optional] Absolute or relative path to swift file where to export icons (SwiftUI’s Image) for accessing from the code (e.g. Image.illZeroNoInternet)
+    # [optional] Absolute or relative path to swift file where to export icons (SwiftUI's Image) for accessing from the code (e.g. Image.illZeroNoInternet)
     swiftUIImageSwift: "./Source/Image+extension_icons.swift"
     # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing icons from the code (e.g. UIImage.ic24ArrowRight)
     imageSwift: "./Example/Source/UIImage+extension_icons.swift"
     # Asset render mode: "template", "original" or "default". Default value is "template".
     renderMode: default
-    # Configure the suffix for filtering Icons and to denote a asset render mode: "default". 
+    # Configure the suffix for filtering Icons and to denote a asset render mode: "default".
     # It will work when renderMode value is "template". Defaults to nil.
     renderModeDefaultSuffix: '_default'
-    # Configure the suffix for filtering Icons and to denote a asset render mode: "original". 
+    # Configure the suffix for filtering Icons and to denote a asset render mode: "original".
     # It will work when renderMode value is "template". Defaults to nil.
     renderModeOriginalSuffix: '_original'
-    # Configure the suffix for filtering Icons and to denote a asset render mode: "template". 
+    # Configure the suffix for filtering Icons and to denote a asset render mode: "template".
     # It will work when renderMode value isn't "template". Defaults to nil.
     renderModeTemplateSuffix: '_template'
+
+  # New format (multiple icons configurations from different Figma frames):
+  # icons:
+  #   - figmaFrameName: Actions     # Export icons from "Actions" frame
+  #     format: svg
+  #     assetsFolder: Actions
+  #     nameStyle: camelCase
+  #     preservesVectorRepresentation: ["*"]
+  #     imageSwift: "./Generated/ActionsIcons.swift"
+  #   - figmaFrameName: Navigation  # Export icons from "Navigation" frame
+  #     format: svg
+  #     assetsFolder: Navigation
+  #     nameStyle: camelCase
+  #     preservesVectorRepresentation: ["*"]
+  #     imageSwift: "./Generated/NavigationIcons.swift"
 
   # [optional] Parameters for exporting images
   images:
@@ -210,11 +227,29 @@ android:
     # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
     composePackageName: "com.example"
   # Parameters for exporting icons
+  # Can be a single object (legacy format) or an array of objects (new format)
+  # Legacy format (single icons configuration):
   icons:
     # Where to place icons relative to `mainRes`? ExFig clears this directory every time your execute `exfig icons` command
     output: "figma-import-icons"
-    # [optional] The package to export the Jetpack Compose icon code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
+    # [optional] The package to export the Jetpack Compose icon code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"
+    # [optional] Icon format: resourceReference (uses painterResource) or imageVector (generates ImageVector code). Default: resourceReference
+    composeFormat: resourceReference
+    # [optional] Extension target for ImageVector (e.g., "com.example.app.ui.AppIcons")
+    composeExtensionTarget: "com.example.app.ui.AppIcons"
+
+  # New format (multiple icons configurations from different Figma frames):
+  # icons:
+  #   - figmaFrameName: Actions     # Export icons from "Actions" frame
+  #     output: "drawable-actions"
+  #     composePackageName: "com.example.icons.actions"
+  #   - figmaFrameName: Navigation  # Export icons from "Navigation" frame
+  #     output: "drawable-nav"
+  #     composePackageName: "com.example.icons.nav"
+  #     composeFormat: imageVector
+  #     composeExtensionTarget: "com.example.NavIcons"
+
   # Parameters for exporting images
   images:
     # Image file format: svg, png, or webp
@@ -251,6 +286,8 @@ flutter:
     className: "AppColors"
 
   # Parameters for exporting icons
+  # Can be a single object (legacy format) or an array of objects (new format)
+  # Legacy format (single icons configuration):
   icons:
     # Where to place SVG icon assets (relative path from project root)
     output: "assets/icons"
@@ -258,6 +295,17 @@ flutter:
     dartFile: "app_icons.dart"
     # [optional] Class name for generated icon constants. Defaults to "AppIcons"
     className: "AppIcons"
+
+  # New format (multiple icons configurations from different Figma frames):
+  # icons:
+  #   - figmaFrameName: Actions     # Export icons from "Actions" frame
+  #     output: "assets/icons/actions"
+  #     dartFile: "action_icons.dart"
+  #     className: "ActionIcons"
+  #   - figmaFrameName: Navigation  # Export icons from "Navigation" frame
+  #     output: "assets/icons/nav"
+  #     dartFile: "nav_icons.dart"
+  #     className: "NavIcons"
 
   # Parameters for exporting images
   images:
@@ -278,6 +326,71 @@ flutter:
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
 ```
+
+## Multiple Icons Configuration
+
+ExFig supports exporting icons from multiple Figma frames in a single config file. This is useful when your design
+system organizes icons into different categories (e.g., Actions, Navigation, Chart) each in its own Figma frame.
+
+### Benefits
+
+- **Single config file** instead of multiple separate configs
+- **Optimized API calls** — Components are fetched once per Figma file, then filtered locally by frame name
+- **Shared settings** — Common settings like `nameValidateRegexp` and `darkModeSuffix` from `common.icons` apply to all
+  entries
+- **Backward compatible** — Existing single-object configs continue to work
+
+### Format
+
+The `icons` section can be either a single object (legacy) or an array of objects (new):
+
+```yaml
+# Legacy format (single configuration)
+ios:
+  icons:
+    format: svg
+    assetsFolder: Icons
+    nameStyle: camelCase
+
+# New format (multiple configurations)
+ios:
+  icons:
+    - figmaFrameName: Actions
+      format: svg
+      assetsFolder: Actions
+      nameStyle: camelCase
+      imageSwift: "./Generated/ActionsIcons.swift"
+    - figmaFrameName: Navigation
+      format: svg
+      assetsFolder: Navigation
+      nameStyle: camelCase
+      imageSwift: "./Generated/NavigationIcons.swift"
+```
+
+### Per-Entry Fields
+
+Each entry in the array supports all the same fields as the legacy format, plus:
+
+| Field            | Description                                                                    |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `figmaFrameName` | Figma frame name to export icons from. Overrides `common.icons.figmaFrameName` |
+
+### Fallback Behavior
+
+If `figmaFrameName` is not specified in an entry, it falls back to:
+
+1. `common.icons.figmaFrameName` (if defined)
+2. `"Icons"` (default)
+
+### Performance
+
+When using multiple entries with the same Figma file:
+
+- **Batch mode**: Components are pre-fetched once per unique file ID across all configs
+- **Standalone mode**: Components are fetched once and cached locally for all entries in the same config
+
+This means 17 icon entries with the same `lightFileId` result in only 1 Components API call (plus 1 Images API call per
+unique frame), not 17 separate calls.
 
 ## CLI Options for Version Tracking
 

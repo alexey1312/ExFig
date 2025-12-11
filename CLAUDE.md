@@ -110,6 +110,35 @@ Tests/               # Test targets mirror source structure
 
 Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after changes.
 
+### Multiple Icons Configuration
+
+Icons can be configured as a single object (legacy) or array (new format) in `Params.swift`:
+
+```swift
+// IconsConfiguration enum handles both formats via custom Decodable
+enum IconsConfiguration: Decodable {
+    case single(Icons)      // Legacy: icons: { format: svg, ... }
+    case multiple([IconsEntry])  // New: icons: [{ figmaFrameName: "Actions", ... }]
+
+    var entries: [IconsEntry]  // Unified access to all entries
+    var isMultiple: Bool       // Check format type
+}
+
+// IconsLoaderConfig passes frame-specific settings to loader
+let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
+let loader = IconsLoader(client: client, params: params, platform: .ios, logger: logger, config: config)
+```
+
+**Key types:**
+
+| Type                 | Purpose                                                  |
+| -------------------- | -------------------------------------------------------- |
+| `IconsConfiguration` | Enum with `.single`/`.multiple` for backward compat      |
+| `IconsEntry`         | Per-frame config (figmaFrameName, format, assetsFolder)  |
+| `IconsLoaderConfig`  | Sendable struct passed to IconsLoader for frame settings |
+
+**Frame name resolution:** `entry.figmaFrameName` → `params.common?.icons?.figmaFrameName` → `"Icons"`
+
 ### TerminalUI Usage
 
 ```swift

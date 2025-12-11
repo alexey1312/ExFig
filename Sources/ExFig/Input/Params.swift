@@ -1,7 +1,7 @@
 import ExFigCore
 import Foundation
 
-// swiftlint:disable:this nesting type_name
+// swiftlint:disable nesting type_name type_body_length
 struct Params: Decodable {
     struct Figma: Decodable {
         let lightFileId: String
@@ -94,6 +94,7 @@ struct Params: Decodable {
             let swiftuiColorSwift: URL?
         }
 
+        /// Single icons configuration (legacy format).
         struct Icons: Decodable {
             let format: VectorFormat
             let assetsFolder: String
@@ -107,6 +108,70 @@ struct Params: Decodable {
             let renderModeDefaultSuffix: String?
             let renderModeOriginalSuffix: String?
             let renderModeTemplateSuffix: String?
+        }
+
+        /// Icons entry with figmaFrameName for multiple icons configuration.
+        struct IconsEntry: Decodable {
+            /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
+            let figmaFrameName: String?
+            let format: VectorFormat
+            let assetsFolder: String
+            let preservesVectorRepresentation: [String]?
+            let nameStyle: NameStyle
+
+            let imageSwift: URL?
+            let swiftUIImageSwift: URL?
+
+            let renderMode: XcodeRenderMode?
+            let renderModeDefaultSuffix: String?
+            let renderModeOriginalSuffix: String?
+            let renderModeTemplateSuffix: String?
+        }
+
+        /// Icons configuration supporting both single object and array formats.
+        enum IconsConfiguration: Decodable {
+            case single(Icons)
+            case multiple([IconsEntry])
+
+            init(from decoder: Decoder) throws {
+                // Try decoding as array first (new format)
+                if let array = try? [IconsEntry](from: decoder) {
+                    self = .multiple(array)
+                    return
+                }
+                // Fallback to single object (legacy format)
+                let single = try Icons(from: decoder)
+                self = .single(single)
+            }
+
+            /// Returns all icon entries for iteration.
+            var entries: [IconsEntry] {
+                switch self {
+                case let .single(icons):
+                    // Convert legacy format to entry
+                    [IconsEntry(
+                        figmaFrameName: nil,
+                        format: icons.format,
+                        assetsFolder: icons.assetsFolder,
+                        preservesVectorRepresentation: icons.preservesVectorRepresentation,
+                        nameStyle: icons.nameStyle,
+                        imageSwift: icons.imageSwift,
+                        swiftUIImageSwift: icons.swiftUIImageSwift,
+                        renderMode: icons.renderMode,
+                        renderModeDefaultSuffix: icons.renderModeDefaultSuffix,
+                        renderModeOriginalSuffix: icons.renderModeOriginalSuffix,
+                        renderModeTemplateSuffix: icons.renderModeTemplateSuffix
+                    )]
+                case let .multiple(entries):
+                    entries
+                }
+            }
+
+            /// Returns true if using new multi-entry format.
+            var isMultiple: Bool {
+                if case .multiple = self { return true }
+                return false
+            }
         }
 
         struct Images: Decodable {
@@ -137,7 +202,7 @@ struct Params: Decodable {
         let templatesPath: URL?
 
         let colors: Colors?
-        let icons: Icons?
+        let icons: IconsConfiguration?
         let images: Images?
         let typography: Typography?
     }
@@ -150,12 +215,58 @@ struct Params: Decodable {
             case imageVector
         }
 
+        /// Single icons configuration (legacy format).
         struct Icons: Decodable {
             let output: String
             let composePackageName: String?
             let composeFormat: ComposeIconFormat?
             /// Extension target for ImageVector (e.g., "com.example.app.ui.AppIcons")
             let composeExtensionTarget: String?
+        }
+
+        /// Icons entry with figmaFrameName for multiple icons configuration.
+        struct IconsEntry: Decodable {
+            /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
+            let figmaFrameName: String?
+            let output: String
+            let composePackageName: String?
+            let composeFormat: ComposeIconFormat?
+            let composeExtensionTarget: String?
+        }
+
+        /// Icons configuration supporting both single object and array formats.
+        enum IconsConfiguration: Decodable {
+            case single(Icons)
+            case multiple([IconsEntry])
+
+            init(from decoder: Decoder) throws {
+                if let array = try? [IconsEntry](from: decoder) {
+                    self = .multiple(array)
+                    return
+                }
+                let single = try Icons(from: decoder)
+                self = .single(single)
+            }
+
+            var entries: [IconsEntry] {
+                switch self {
+                case let .single(icons):
+                    [IconsEntry(
+                        figmaFrameName: nil,
+                        output: icons.output,
+                        composePackageName: icons.composePackageName,
+                        composeFormat: icons.composeFormat,
+                        composeExtensionTarget: icons.composeExtensionTarget
+                    )]
+                case let .multiple(entries):
+                    entries
+                }
+            }
+
+            var isMultiple: Bool {
+                if case .multiple = self { return true }
+                return false
+            }
         }
 
         struct Colors: Decodable {
@@ -195,7 +306,7 @@ struct Params: Decodable {
         let resourcePackage: String?
         let mainSrc: URL?
         let colors: Colors?
-        let icons: Icons?
+        let icons: IconsConfiguration?
         let images: Images?
         let typography: Typography?
         let templatesPath: URL?
@@ -213,10 +324,54 @@ struct Params: Decodable {
             let className: String?
         }
 
+        /// Single icons configuration (legacy format).
         struct Icons: Decodable {
             let output: String
             let dartFile: String?
             let className: String?
+        }
+
+        /// Icons entry with figmaFrameName for multiple icons configuration.
+        struct IconsEntry: Decodable {
+            /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
+            let figmaFrameName: String?
+            let output: String
+            let dartFile: String?
+            let className: String?
+        }
+
+        /// Icons configuration supporting both single object and array formats.
+        enum IconsConfiguration: Decodable {
+            case single(Icons)
+            case multiple([IconsEntry])
+
+            init(from decoder: Decoder) throws {
+                if let array = try? [IconsEntry](from: decoder) {
+                    self = .multiple(array)
+                    return
+                }
+                let single = try Icons(from: decoder)
+                self = .single(single)
+            }
+
+            var entries: [IconsEntry] {
+                switch self {
+                case let .single(icons):
+                    [IconsEntry(
+                        figmaFrameName: nil,
+                        output: icons.output,
+                        dartFile: icons.dartFile,
+                        className: icons.className
+                    )]
+                case let .multiple(entries):
+                    entries
+                }
+            }
+
+            var isMultiple: Bool {
+                if case .multiple = self { return true }
+                return false
+            }
         }
 
         struct Images: Decodable {
@@ -230,7 +385,7 @@ struct Params: Decodable {
 
         let output: URL
         let colors: Colors?
-        let icons: Icons?
+        let icons: IconsConfiguration?
         let images: Images?
         let templatesPath: URL?
     }
