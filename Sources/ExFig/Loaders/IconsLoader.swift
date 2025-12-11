@@ -207,7 +207,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
 
     private func makeFormatParams() -> FormatParams {
         switch (platform, config.format) {
-        case (.android, _), (.ios, .svg):
+        case (.android, _), (.flutter, _), (.ios, .svg):
             SVGParams()
         case (.ios, _):
             PDFParams()

@@ -427,7 +427,7 @@ extension ExFigCommand {
 
                 let colorPairs = try await ui.withSpinner("Processing colors for Flutter...") {
                     let processor = ColorsProcessor(
-                        platform: .android,
+                        platform: .flutter,
                         nameValidateRegexp: entry.nameValidateRegexp,
                         nameReplaceRegexp: entry.nameReplaceRegexp,
                         nameStyle: .camelCase
@@ -471,7 +471,7 @@ extension ExFigCommand {
 
             let colorPairs = try await config.ui.withSpinner("Processing colors for Flutter...") {
                 let processor = ColorsProcessor(
-                    platform: .android,
+                    platform: .flutter,
                     nameValidateRegexp: finalNameValidateRegexp,
                     nameReplaceRegexp: finalNameReplaceRegexp,
                     nameStyle: .camelCase

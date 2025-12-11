@@ -1080,7 +1080,7 @@ extension ExFigCommand {
                 let loader = IconsLoader(
                     client: client,
                     params: params,
-                    platform: .android,
+                    platform: .flutter,
                     logger: logger,
                     config: loaderConfig
                 )
@@ -1113,7 +1113,7 @@ extension ExFigCommand {
 
             // 2. Process images
             let processor = ImagesProcessor(
-                platform: .android, // Flutter uses similar naming to Android
+                platform: .flutter,
                 nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
                 nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
                 nameStyle: .snakeCase

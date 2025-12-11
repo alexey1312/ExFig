@@ -125,11 +125,11 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         case (.ios, _):
             // iOS always uses raster (PNG)
             true
-        case (.android, .png), (.android, .webp):
+        case (.android, .png), (.android, .webp), (.flutter, .png), (.flutter, .webp):
             true
-        case (.android, .svg):
+        case (.android, .svg), (.flutter, .svg):
             false
-        case (.android, nil):
+        case (.android, nil), (.flutter, nil):
             // Default to raster for backward compatibility
             true
         }

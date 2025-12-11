@@ -986,7 +986,7 @@ extension ExFigCommand {
             let loader = ImagesLoader(
                 client: client,
                 params: params,
-                platform: .android,
+                platform: .flutter,
                 logger: logger,
                 config: loaderConfig
             )
@@ -1019,7 +1019,7 @@ extension ExFigCommand {
             let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
 
             let processor = ImagesProcessor(
-                platform: .android,
+                platform: .flutter,
                 nameValidateRegexp: params.common?.images?.nameValidateRegexp,
                 nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
                 nameStyle: .snakeCase
