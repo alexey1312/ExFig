@@ -4,6 +4,13 @@ import FigmaAPI
 import Foundation
 import Logging
 
+/// Image format for loader configuration.
+enum ImagesLoaderFormat: Sendable {
+    case svg
+    case png
+    case webp
+}
+
 /// Configuration for loading images from a specific Figma frame.
 struct ImagesLoaderConfig: Sendable {
     /// Figma frame name to load images from.
@@ -12,11 +19,15 @@ struct ImagesLoaderConfig: Sendable {
     /// Custom scales for raster images.
     let scales: [Double]?
 
+    /// Image format (for Android/Flutter). iOS always uses PNG.
+    let format: ImagesLoaderFormat?
+
     /// Creates config for a specific iOS images entry.
     static func forIOS(entry: Params.iOS.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
-            scales: entry.scales
+            scales: entry.scales,
+            format: nil // iOS always uses PNG
         )
     }
 
@@ -24,7 +35,8 @@ struct ImagesLoaderConfig: Sendable {
     static func forAndroid(entry: Params.Android.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
-            scales: entry.scales
+            scales: entry.scales,
+            format: convertAndroidFormat(entry.format)
         )
     }
 
@@ -32,7 +44,8 @@ struct ImagesLoaderConfig: Sendable {
     static func forFlutter(entry: Params.Flutter.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
-            scales: entry.scales
+            scales: entry.scales,
+            format: entry.format.flatMap { convertFlutterFormat($0) }
         )
     }
 
@@ -40,8 +53,25 @@ struct ImagesLoaderConfig: Sendable {
     static func defaultConfig(params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
-            scales: nil
+            scales: nil,
+            format: nil
         )
+    }
+
+    private static func convertAndroidFormat(_ format: Params.Android.Images.Format) -> ImagesLoaderFormat {
+        switch format {
+        case .svg: .svg
+        case .png: .png
+        case .webp: .webp
+        }
+    }
+
+    private static func convertFlutterFormat(_ format: Params.Flutter.ImageFormat) -> ImagesLoaderFormat {
+        switch format {
+        case .svg: .svg
+        case .png: .png
+        case .webp: .webp
+        }
     }
 }
 
@@ -82,6 +112,27 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
     /// Custom scales from config, or nil to use defaults.
     private var configScales: [Double]? {
         config.scales
+    }
+
+    /// Image format from config, determines raster vs vector loading.
+    private var configFormat: ImagesLoaderFormat? {
+        config.format
+    }
+
+    /// Whether the configured format is raster (PNG/WebP) or vector (SVG).
+    private var isRasterFormat: Bool {
+        switch (platform, configFormat) {
+        case (.ios, _):
+            // iOS always uses raster (PNG)
+            true
+        case (.android, .png), (.android, .webp):
+            true
+        case (.android, .svg):
+            false
+        case (.android, nil):
+            // Default to raster for backward compatibility
+            true
+        }
     }
 
     /// Loads images from Figma, supporting both single-file and separate light/dark file modes.
@@ -128,8 +179,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
     ) async throws -> ImagesLoaderOutput {
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
-        switch (platform, params.android?.images?.entries.first?.format) {
-        case (.android, .png), (.android, .webp), (.ios, _):
+        if isRasterFormat {
             let scales = getScales(customScales: configScales)
 
             let images = try await loadPNGImages(
@@ -141,8 +191,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             )
             let (lightImages, darkImages) = splitByDarkMode(images, darkSuffix: darkSuffix)
             return (lightImages, darkImages)
-
-        default:
+        } else {
             let pack = try await loadVectorImages(
                 fileId: params.figma.lightFileId,
                 frameName: frameName,
@@ -167,14 +216,13 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             filesToLoad.append(("dark", darkFileId))
         }
 
-        switch (platform, params.android?.images?.entries.first?.format) {
-        case (.android, .png), (.android, .webp), (.ios, _):
+        if isRasterFormat {
             return try await loadRasterImagesFromMultipleFiles(
                 filesToLoad: filesToLoad,
                 filter: filter,
                 onBatchProgress: onBatchProgress
             )
-        default:
+        } else {
             return try await loadVectorImagesFromMultipleFiles(
                 filesToLoad: filesToLoad,
                 filter: filter,
@@ -266,8 +314,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         let fileId = params.figma.lightFileId
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
-        switch (platform, params.android?.images?.entries.first?.format) {
-        case (.android, .png), (.android, .webp), (.ios, _):
+        if isRasterFormat {
             // Raster images (PNG/WebP) with granular cache
             let scales = getScales(customScales: configScales)
 
@@ -300,8 +347,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 allSkipped: false,
                 allNames: lightOnlyNames
             )
-
-        default:
+        } else {
             // Vector images (SVG) with granular cache
             let result = try await loadVectorImagesWithGranularCache(
                 fileId: fileId,
@@ -358,23 +404,14 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         // Determine format and scales once (same for all files)
-        let isRasterFormat: Bool
-        let scales: [Double]
-
-        switch (platform, params.android?.images?.entries.first?.format) {
-        case (.android, .png), (.android, .webp), (.ios, _):
-            isRasterFormat = true
-            scales = getScales(customScales: configScales)
-        default:
-            isRasterFormat = false
-            scales = []
-        }
+        let useRasterFormat = isRasterFormat
+        let scales = useRasterFormat ? getScales(customScales: configScales) : []
 
         // Load all files in parallel
         let results = try await withThrowingTaskGroup(of: FileGranularResult.self) { [self] group in
             for (key, fileId) in filesToLoad {
-                group.addTask { [key, fileId, filter, onBatchProgress, isRasterFormat, scales] in
-                    if isRasterFormat {
+                group.addTask { [key, fileId, filter, onBatchProgress, useRasterFormat, scales] in
+                    if useRasterFormat {
                         // Raster images (PNG/WebP)
                         let result = try await self.loadPNGImagesWithGranularCache(
                             fileId: fileId,
