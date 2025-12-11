@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2025-12-11
+
+### Documentation
+
+- **docc**: Migrate documentation from GitHub docs to DocC by @alexey1312
+
+
+### Features
+
+- **batch**: Add nodes and components pre-fetch for granular cache by @alexey1312
+
+
 ## [1.1.2] - 2025-12-09
 
 ### Bug Fixes
