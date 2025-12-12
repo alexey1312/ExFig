@@ -55,13 +55,34 @@ run = "swift test --filter {{arg(name='filter')}} 2>&1 | xcsift -w -f toon --too
 description = "Run SwiftLint"
 run = "swiftlint lint --strict Sources Tests 2>&1 | xcsift -f toon --toon-key-folding safe"
 
-[tasks.format]
-description = "Format code with SwiftFormat"
+[tasks."format:swift"]
+description = "Format Swift code"
 run = "swiftformat Sources Tests"
 
-[tasks.format-check]
+[tasks."format-check:swift"]
 description = "Check code formatting (CI)"
 run = "swiftformat Sources Tests --lint"
+
+[tasks."format:md"]
+description = "Format markdown files"
+run = "pre-commit run mdformat --all-files || true"
+
+[tasks."format-check:md"]
+description = "Check markdown formatting (CI)"
+run = "pre-commit run mdformat --all-files"
+
+[tasks.format]
+description = "Format code and markdown in parallel, then lint"
+run = [
+  { tasks = ["format:swift", "format:md"] },
+  { tasks = ["format-check:swift", "format-check:md"] }
+]
+
+[tasks.format-check]
+description = "Check code and markdown in parallel"
+run = [
+  { tasks = ["format-check:swift", "format-check:md"] }
+]
 
 [tasks.setup]
 description = "Install tools and configure pre-commit hooks"
@@ -77,14 +98,6 @@ pre-commit install-hooks
 [tasks.pre-commit]
 description = "Run pre-commit on all files"
 run = "pre-commit run --all-files"
-
-[tasks.format-md]
-description = "Format markdown files"
-run = "pre-commit run mdformat --all-files || true"
-
-[tasks.format-md-check]
-description = "Check markdown formatting (CI)"
-run = "pre-commit run mdformat --all-files"
 
 [tasks.docs]
 description = "Generate DocC documentation"
