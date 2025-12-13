@@ -57,4 +57,12 @@ enum ExFigWarning: Sendable, Equatable {
 
     /// Granular cache flag used without --cache enabled.
     case granularCacheWithoutCache
+
+    // MARK: - Web Export Warnings
+
+    /// Some icons were skipped because SVG data was not found.
+    case webIconsMissingSVGData(count: Int, names: [String])
+
+    /// Some icons failed JSX conversion.
+    case webIconsConversionFailed(count: Int, names: [String])
 }

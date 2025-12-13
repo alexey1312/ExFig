@@ -23,6 +23,12 @@ struct ExFigWarningFormatter {
 
         case let .invalidConfigsSkipped(count):
             formatInvalidConfigsSkipped(count: count)
+
+        case let .webIconsMissingSVGData(count, names):
+            formatWebIconsMissingSVGData(count: count, names: names)
+
+        case let .webIconsConversionFailed(count, names):
+            formatWebIconsConversionFailed(count: count, names: names)
         }
     }
 
@@ -68,7 +74,7 @@ struct ExFigWarningFormatter {
             "--experimental-granular-cache ignored: requires --cache flag"
 
         // Multiline cases handled in main format() method
-        case .noAssetsFound, .invalidConfigsSkipped:
+        case .noAssetsFound, .invalidConfigsSkipped, .webIconsMissingSVGData, .webIconsConversionFailed:
             fatalError("Multiline warnings should not reach formatCompact")
         }
     }
@@ -89,5 +95,33 @@ struct ExFigWarningFormatter {
         Invalid configs skipped:
           count: \(count) \(noun)
         """
+    }
+
+    private func formatWebIconsMissingSVGData(count: Int, names: [String]) -> String {
+        let preview = formatNamePreview(names)
+        return """
+        TSX components skipped (missing SVG data):
+          count: \(count)
+          icons: \(preview)
+        """
+    }
+
+    private func formatWebIconsConversionFailed(count: Int, names: [String]) -> String {
+        let preview = formatNamePreview(names)
+        return """
+        TSX components skipped (JSX conversion failed):
+          count: \(count)
+          icons: \(preview)
+        """
+    }
+
+    /// Formats a list of names as a preview string, truncating if too long.
+    private func formatNamePreview(_ names: [String], maxNames: Int = 3) -> String {
+        if names.count <= maxNames {
+            return names.joined(separator: ", ")
+        }
+        let preview = names.prefix(maxNames).joined(separator: ", ")
+        let remaining = names.count - maxNames
+        return "\(preview), +\(remaining) more"
     }
 }

@@ -100,7 +100,85 @@ public final class WebIconsExporter: WebExporter {
 
     // MARK: - React Components
 
+    /// Result of React component generation with diagnostic info.
+    public struct ComponentGenerationResult {
+        /// Successfully generated component files.
+        public let files: [FileContents]
+        /// Icon names that were skipped because SVG data was not found.
+        public let missingDataIcons: [String]
+        /// Icon names that failed JSX conversion with their error messages.
+        public let conversionFailedIcons: [(name: String, error: String)]
+    }
+
+    /// Generates React TSX components from downloaded SVG data.
+    ///
+    /// - Parameters:
+    ///   - icons: Icon asset pairs to export.
+    ///   - svgDataMap: Dictionary mapping icon names (snake_case) to downloaded SVG data.
+    /// - Returns: ComponentGenerationResult with files and diagnostic info.
+    public func generateReactComponentsFromSVGData(
+        icons: [AssetPair<ImagePack>],
+        svgDataMap: [String: Data]
+    ) throws -> ComponentGenerationResult {
+        guard generateReactComponents else {
+            return ComponentGenerationResult(files: [], missingDataIcons: [], conversionFailedIcons: [])
+        }
+
+        var files: [FileContents] = []
+        var missingDataIcons: [String] = []
+        var conversionFailedIcons: [(name: String, error: String)] = []
+
+        for iconPair in icons {
+            let componentName = iconPair.light.name.camelCased()
+            let snakeName = iconPair.light.name.snakeCased()
+            let fileName = componentName
+
+            // Get SVG data for this icon
+            guard let svgData = svgDataMap[snakeName] else {
+                missingDataIcons.append(snakeName)
+                continue
+            }
+
+            // Convert SVG to JSX
+            let conversion: SVGToJSXConverter.ConversionResult
+            do {
+                conversion = try SVGToJSXConverter.convert(svgData: svgData)
+            } catch {
+                conversionFailedIcons.append((name: snakeName, error: error.localizedDescription))
+                continue
+            }
+
+            let context: [String: Any] = [
+                "componentName": componentName,
+                "viewBox": conversion.viewBox,
+                "svgContent": conversion.jsxContent,
+            ]
+
+            let env = makeEnvironment()
+            let content = try env.renderTemplate(name: "Icon.tsx.stencil", context: context)
+
+            guard let fileURL = URL(string: "\(fileName).tsx") else {
+                continue
+            }
+
+            let file = try makeFileContents(
+                for: content,
+                directory: output.outputDirectory,
+                file: fileURL
+            )
+            files.append(file)
+        }
+
+        return ComponentGenerationResult(
+            files: files,
+            missingDataIcons: missingDataIcons,
+            conversionFailedIcons: conversionFailedIcons
+        )
+    }
+
     private func makeReactComponents(icons: [AssetPair<ImagePack>]) throws -> [FileContents] {
+        // Note: This method generates placeholder components.
+        // For production use, call generateReactComponentsFromSVGData after downloading SVGs.
         var files: [FileContents] = []
 
         for iconPair in icons {
@@ -110,7 +188,7 @@ public final class WebIconsExporter: WebExporter {
             let context: [String: Any] = [
                 "componentName": componentName,
                 "viewBox": "0 0 \(iconSize) \(iconSize)",
-                "svgContent": "{/* SVG content will be filled after download */}",
+                "svgContent": "{/* SVG content placeholder */}",
             ]
 
             let env = makeEnvironment()

@@ -1308,7 +1308,7 @@ extension ExFigCommand {
         }
 
         // Exports icons for a single Web icons entry.
-        // swiftlint:disable:next function_body_length function_parameter_count
+        // swiftlint:disable:next function_body_length function_parameter_count cyclomatic_complexity
         private func exportWebIconsEntry(
             entry: Params.Web.IconsEntry,
             web: Params.Web,
@@ -1402,22 +1402,13 @@ extension ExFigCommand {
             let allIconNames = granularCacheManager != nil ? loaderResult.allNames : nil
             let result = try exporter.export(icons: icons, allIconNames: allIconNames)
 
-            // 4. Collect all files to write
-            var localFiles: [FileContents] = result.assetFiles
-            localFiles.append(contentsOf: result.componentFiles)
-            if let typesFile = result.typesFile {
-                localFiles.append(typesFile)
-            }
-            if let barrelFile = result.barrelFile {
-                localFiles.append(barrelFile)
-            }
-
-            // Download SVGs if needed
+            // 4. Download SVGs first (needed for TSX component generation)
             let remoteFiles = result.assetFiles.filter { $0.sourceURL != nil }
             let fileDownloader = faultToleranceOptions.createFileDownloader()
 
+            var downloadedFiles: [FileContents] = []
             if !remoteFiles.isEmpty {
-                let downloadedFiles = try await ui.withProgress(
+                downloadedFiles = try await ui.withProgress(
                     "Downloading SVG files",
                     total: remoteFiles.count
                 ) { progress in
@@ -1428,9 +1419,48 @@ extension ExFigCommand {
                         progress.update(current: current)
                     }
                 }
-                // Replace asset files with downloaded versions
-                localFiles = localFiles.filter { $0.sourceURL == nil }
-                localFiles.append(contentsOf: downloadedFiles)
+            }
+
+            // 5. Build SVG data map for TSX component generation
+            var svgDataMap: [String: Data] = [:]
+            for file in downloadedFiles where !file.dark {
+                // Extract icon name from destination file (e.g., "arrow_left.svg" -> "arrow_left")
+                let fileName = file.destination.file.deletingPathExtension().lastPathComponent
+                if let data = file.data {
+                    svgDataMap[fileName] = data
+                }
+            }
+
+            // 6. Generate React TSX components with real SVG content
+            let componentResult = try exporter.generateReactComponentsFromSVGData(
+                icons: icons,
+                svgDataMap: svgDataMap
+            )
+
+            // Log warnings for skipped icons
+            if !componentResult.missingDataIcons.isEmpty {
+                ui.warning(.webIconsMissingSVGData(
+                    count: componentResult.missingDataIcons.count,
+                    names: componentResult.missingDataIcons
+                ))
+            }
+            if !componentResult.conversionFailedIcons.isEmpty {
+                ui.warning(.webIconsConversionFailed(
+                    count: componentResult.conversionFailedIcons.count,
+                    names: componentResult.conversionFailedIcons.map(\.name)
+                ))
+            }
+
+            // 7. Collect all files to write
+            // Include both downloaded files and any local asset files (without sourceURL)
+            let localAssetFiles = result.assetFiles.filter { $0.sourceURL == nil }
+            var localFiles: [FileContents] = downloadedFiles + localAssetFiles
+            localFiles.append(contentsOf: componentResult.files)
+            if let typesFile = result.typesFile {
+                localFiles.append(typesFile)
+            }
+            if let barrelFile = result.barrelFile {
+                localFiles.append(barrelFile)
             }
 
             // Clear output directory if not filtering
