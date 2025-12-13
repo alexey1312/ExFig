@@ -1,0 +1,10 @@
+/* {% include "header.stencil" %} */
+
+.theme-light {
+{% for color in lightColors %}  --{{ color.cssName }}: {{ color.value }};
+{% endfor %}}
+{% if hasDarkColors %}
+.theme-dark {
+{% for color in darkColors %}  --{{ color.cssName }}: {{ color.value }};
+{% endfor %}}
+{% endif %}

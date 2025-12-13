@@ -1,0 +1,7 @@
+// {% include "header.stencil" %}
+
+export const variables = {
+{% for color in colors %}  {{ color.camelName }}: 'var(--{{ color.cssName }})',
+{% endfor %}} as const;
+
+export type ColorVariable = keyof typeof variables;

@@ -731,9 +731,197 @@ struct Params: Decodable {
         let templatesPath: URL?
     }
 
+    // MARK: - Web
+
+    struct Web: Decodable {
+        /// Single colors configuration (legacy format).
+        /// Uses common.variablesColors for Figma Variables source.
+        struct Colors: Decodable {
+            let outputDirectory: String?
+            let cssFileName: String?
+            let tsFileName: String?
+            let jsonFileName: String?
+        }
+
+        /// Colors entry with Figma Variables source for multiple colors configuration.
+        struct ColorsEntry: Decodable {
+            // Source (Figma Variables)
+            let tokensFileId: String
+            let tokensCollectionName: String
+            let lightModeName: String
+            let darkModeName: String?
+            let lightHCModeName: String?
+            let darkHCModeName: String?
+            let primitivesModeName: String?
+            let nameValidateRegexp: String?
+            let nameReplaceRegexp: String?
+
+            // Output (Web-specific)
+            let outputDirectory: String?
+            let cssFileName: String?
+            let tsFileName: String?
+            let jsonFileName: String?
+        }
+
+        /// Colors configuration supporting both single object and array formats.
+        enum ColorsConfiguration: Decodable {
+            case single(Colors)
+            case multiple([ColorsEntry])
+
+            init(from decoder: Decoder) throws {
+                if let array = try? [ColorsEntry](from: decoder) {
+                    self = .multiple(array)
+                    return
+                }
+                let single = try Colors(from: decoder)
+                self = .single(single)
+            }
+
+            var entries: [ColorsEntry] {
+                switch self {
+                case let .single(colors):
+                    [ColorsEntry(
+                        tokensFileId: "",
+                        tokensCollectionName: "",
+                        lightModeName: "",
+                        darkModeName: nil,
+                        lightHCModeName: nil,
+                        darkHCModeName: nil,
+                        primitivesModeName: nil,
+                        nameValidateRegexp: nil,
+                        nameReplaceRegexp: nil,
+                        outputDirectory: colors.outputDirectory,
+                        cssFileName: colors.cssFileName,
+                        tsFileName: colors.tsFileName,
+                        jsonFileName: colors.jsonFileName
+                    )]
+                case let .multiple(entries):
+                    entries
+                }
+            }
+
+            var isMultiple: Bool {
+                if case .multiple = self { return true }
+                return false
+            }
+        }
+
+        /// Single icons configuration (legacy format).
+        struct Icons: Decodable {
+            let outputDirectory: String
+            let svgDirectory: String?
+            let generateReactComponents: Bool?
+            /// Icon size in pixels for viewBox. Defaults to 24.
+            let iconSize: Int?
+        }
+
+        /// Icons entry with figmaFrameName for multiple icons configuration.
+        struct IconsEntry: Decodable {
+            /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
+            let figmaFrameName: String?
+            let outputDirectory: String
+            let svgDirectory: String?
+            let generateReactComponents: Bool?
+            /// Icon size in pixels for viewBox. Defaults to 24.
+            let iconSize: Int?
+        }
+
+        /// Icons configuration supporting both single object and array formats.
+        enum IconsConfiguration: Decodable {
+            case single(Icons)
+            case multiple([IconsEntry])
+
+            init(from decoder: Decoder) throws {
+                if let array = try? [IconsEntry](from: decoder) {
+                    self = .multiple(array)
+                    return
+                }
+                let single = try Icons(from: decoder)
+                self = .single(single)
+            }
+
+            var entries: [IconsEntry] {
+                switch self {
+                case let .single(icons):
+                    [IconsEntry(
+                        figmaFrameName: nil,
+                        outputDirectory: icons.outputDirectory,
+                        svgDirectory: icons.svgDirectory,
+                        generateReactComponents: icons.generateReactComponents,
+                        iconSize: icons.iconSize
+                    )]
+                case let .multiple(entries):
+                    entries
+                }
+            }
+
+            var isMultiple: Bool {
+                if case .multiple = self { return true }
+                return false
+            }
+        }
+
+        /// Single images configuration (legacy format).
+        struct Images: Decodable {
+            let outputDirectory: String
+            let assetsDirectory: String?
+            let generateReactComponents: Bool?
+        }
+
+        /// Images entry with figmaFrameName for multiple images configuration.
+        struct ImagesEntry: Decodable {
+            /// Figma frame name to export images from. Overrides common.images.figmaFrameName.
+            let figmaFrameName: String?
+            let outputDirectory: String
+            let assetsDirectory: String?
+            let generateReactComponents: Bool?
+        }
+
+        /// Images configuration supporting both single object and array formats.
+        enum ImagesConfiguration: Decodable {
+            case single(Images)
+            case multiple([ImagesEntry])
+
+            init(from decoder: Decoder) throws {
+                if let array = try? [ImagesEntry](from: decoder) {
+                    self = .multiple(array)
+                    return
+                }
+                let single = try Images(from: decoder)
+                self = .single(single)
+            }
+
+            var entries: [ImagesEntry] {
+                switch self {
+                case let .single(images):
+                    [ImagesEntry(
+                        figmaFrameName: nil,
+                        outputDirectory: images.outputDirectory,
+                        assetsDirectory: images.assetsDirectory,
+                        generateReactComponents: images.generateReactComponents
+                    )]
+                case let .multiple(entries):
+                    entries
+                }
+            }
+
+            var isMultiple: Bool {
+                if case .multiple = self { return true }
+                return false
+            }
+        }
+
+        let output: URL
+        let colors: ColorsConfiguration?
+        let icons: IconsConfiguration?
+        let images: ImagesConfiguration?
+        let templatesPath: URL?
+    }
+
     let figma: Figma
     let common: Common?
     let ios: iOS?
     let android: Android?
     let flutter: Flutter?
+    let web: Web?
 }
