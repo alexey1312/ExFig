@@ -20,11 +20,8 @@ jobs:
         run: source Scripts/environment.sh
         shell: bash
 
-      - name: Check formatting (SwiftFormat)
+      - name: Check formatting (Swift + Markdown)
         run: bin/mise run format-check
-
-      - name: Check markdown formatting (mdformat)
-        run: bin/mise run format-md-check
 
       - name: Lint (SwiftLint)
         run: bin/mise run lint
