@@ -840,7 +840,7 @@ extension String {
 
     func parseNameAndIdiom(platform: Platform) -> (name: String, idiom: String) {
         switch platform {
-        case .android, .flutter:
+        case .android, .flutter, .web:
             return (self, "")
         case .ios:
             guard let regex = Self.idiomRegex,

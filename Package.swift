@@ -35,6 +35,7 @@ let package = Package(
                 "XcodeExport",
                 "AndroidExport",
                 "FlutterExport",
+                "WebExport",
                 "SVGKit",
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
@@ -95,6 +96,15 @@ let package = Package(
             ]
         ),
 
+        // Exports resources to Web/React project
+        .target(
+            name: "WebExport",
+            dependencies: ["ExFigCore", "Stencil", "StencilSwiftKit"],
+            resources: [
+                .copy("Resources/"),
+            ]
+        ),
+
         // MARK: - Tests
 
         .testTarget(
@@ -140,6 +150,12 @@ let package = Package(
             name: "FlutterExportTests",
             dependencies: [
                 "FlutterExport", .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "WebExportTests",
+            dependencies: [
+                "WebExport", .product(name: "CustomDump", package: "swift-custom-dump"),
             ]
         ),
         .testTarget(

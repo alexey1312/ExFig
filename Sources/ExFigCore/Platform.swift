@@ -16,4 +16,8 @@ public enum Platform: String, Sendable {
     /// Flutter platform (Flutter projects).
     /// Generates Dart code and SVG/PNG/WebP assets.
     case flutter
+
+    /// Web platform (React/TypeScript projects).
+    /// Generates CSS variables, TypeScript constants, and React TSX components.
+    case web
 }

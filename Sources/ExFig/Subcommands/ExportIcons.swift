@@ -6,6 +6,7 @@ import FigmaAPI
 import FlutterExport
 import Foundation
 import SVGKit
+import WebExport
 import XcodeExport
 
 extension ExFigCommand {
@@ -167,6 +168,22 @@ extension ExFigCommand {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
                 }
                 let result = try await exportFlutterIcons(
+                    client: client,
+                    params: options.params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalIcons += result.count
+                totalSkipped += result.skippedCount
+                mergeHashes(&allComputedHashes, result.hashes)
+            }
+
+            if options.params.web != nil {
+                // Suppress version message in batch mode
+                if BatchProgressViewStorage.progressView == nil {
+                    ui.info("Using ExFig \(ExFigCommand.version) to export icons to Web project.")
+                }
+                let result = try await exportWebIcons(
                     client: client,
                     params: options.params,
                     ui: ui,
@@ -1182,6 +1199,258 @@ extension ExFigCommand {
                 : 0
 
             ui.success("Done! Exported \(icons.count) icons to Flutter project.")
+            return PlatformExportResult(
+                count: icons.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
+        }
+
+        // MARK: - Web Icons Export
+
+        private func exportWebIcons(
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            guard let web = params.web, let iconsConfig = web.icons else {
+                ui.warning(.configMissing(platform: "web", assetType: "icons"))
+                return PlatformExportResult(count: 0, hashes: [:], skippedCount: 0)
+            }
+
+            // Get all entries from config (supports both single and multiple formats)
+            let entries = iconsConfig.entries
+
+            // Single entry - use direct processing (legacy behavior)
+            if entries.count == 1 {
+                return try await exportWebIconsEntry(
+                    entry: entries[0],
+                    web: web,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+
+            // Multiple entries - need to pre-fetch components if not already done
+            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
+
+            if needsLocalPreFetch {
+                var componentsMap: [String: [Component]] = [:]
+                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
+
+                for fileId in fileIds {
+                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
+                    componentsMap[fileId] = components
+                }
+
+                let preFetched = PreFetchedComponents(components: componentsMap)
+
+                // Inject via TaskLocal - IconsLoader will use pre-fetched components
+                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
+                    try await processWebIconsEntries(
+                        entries: entries,
+                        web: web,
+                        client: client,
+                        params: params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
+            } else {
+                // Already have pre-fetched components (batch mode)
+                return try await processWebIconsEntries(
+                    entries: entries,
+                    web: web,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+        }
+
+        // Helper to process multiple Web icon entries sequentially.
+        // swiftlint:disable:next function_parameter_count
+        private func processWebIconsEntries(
+            entries: [Params.Web.IconsEntry],
+            web: Params.Web,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            var totalCount = 0
+            var totalSkipped = 0
+            var allHashes: [String: [NodeId: String]] = [:]
+
+            for entry in entries {
+                let result = try await exportWebIconsEntry(
+                    entry: entry,
+                    web: web,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+                totalCount += result.count
+                totalSkipped += result.skippedCount
+                mergeHashes(&allHashes, result.hashes)
+            }
+
+            return PlatformExportResult(
+                count: totalCount,
+                hashes: allHashes,
+                skippedCount: totalSkipped
+            )
+        }
+
+        // Exports icons for a single Web icons entry.
+        // swiftlint:disable:next function_body_length function_parameter_count
+        private func exportWebIconsEntry(
+            entry: Params.Web.IconsEntry,
+            web: Params.Web,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            let loaderConfig = IconsLoaderConfig.forWeb(entry: entry, params: params)
+
+            // 1. Get Icons info
+            let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
+                let loader = IconsLoader(
+                    client: client,
+                    params: params,
+                    platform: .web,
+                    logger: logger,
+                    config: loaderConfig
+                )
+                if let manager = granularCacheManager {
+                    loader.granularCacheManager = manager
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let output = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return IconsLoaderResultWithHashes(
+                        light: output.light,
+                        dark: output.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: [] // Not needed when not using granular cache
+                    )
+                }
+            }
+
+            // If granular cache skipped all icons, return early
+            if loaderResult.allSkipped {
+                ui.success("All icons unchanged (granular cache). Skipping export.")
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
+            // 2. Process images
+            let processor = ImagesProcessor(
+                platform: .web,
+                nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+                nameStyle: .snakeCase
+            )
+
+            let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing icons...") {
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
+                }
+            if let iconsWarning {
+                ui.warning(iconsWarning)
+            }
+
+            if icons.isEmpty, loaderResult.computedHashes.isEmpty {
+                ui.warning(.noAssetsFound(
+                    assetType: "icons",
+                    frameName: loaderConfig.frameName
+                ))
+                return PlatformExportResult(count: 0, hashes: [:], skippedCount: 0)
+            }
+
+            // 3. Get download URLs and generate export result
+            let svgDir = entry.svgDirectory.map { web.output.appendingPathComponent($0) }
+                ?? web.output.appendingPathComponent("assets/icons")
+            let outputDir = web.output.appendingPathComponent(entry.outputDirectory)
+
+            let output = WebOutput(
+                outputDirectory: outputDir,
+                iconsAssetsDirectory: svgDir,
+                templatesPath: web.templatesPath
+            )
+            let generateReactComponents = entry.generateReactComponents ?? true
+            let iconSize = entry.iconSize ?? 24
+            let exporter = WebIconsExporter(
+                output: output,
+                generateReactComponents: generateReactComponents,
+                iconSize: iconSize
+            )
+
+            // Use allNames for barrel file if granular cache is active
+            let allIconNames = granularCacheManager != nil ? loaderResult.allNames : nil
+            let result = try exporter.export(icons: icons, allIconNames: allIconNames)
+
+            // 4. Collect all files to write
+            var localFiles: [FileContents] = result.assetFiles
+            localFiles.append(contentsOf: result.componentFiles)
+            if let typesFile = result.typesFile {
+                localFiles.append(typesFile)
+            }
+            if let barrelFile = result.barrelFile {
+                localFiles.append(barrelFile)
+            }
+
+            // Download SVGs if needed
+            let remoteFiles = result.assetFiles.filter { $0.sourceURL != nil }
+            let fileDownloader = faultToleranceOptions.createFileDownloader()
+
+            if !remoteFiles.isEmpty {
+                let downloadedFiles = try await ui.withProgress(
+                    "Downloading SVG files",
+                    total: remoteFiles.count
+                ) { progress in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
+                        progress.update(current: current)
+                    }
+                }
+                // Replace asset files with downloaded versions
+                localFiles = localFiles.filter { $0.sourceURL == nil }
+                localFiles.append(contentsOf: downloadedFiles)
+            }
+
+            // Clear output directory if not filtering
+            if filter == nil, granularCacheManager == nil {
+                try? FileManager.default.removeItem(atPath: svgDir.path)
+            }
+
+            let filesToWriteFinal = localFiles
+            try await ui.withSpinner("Writing files to Web project...") {
+                try fileWriter.write(files: filesToWriteFinal)
+            }
+
+            await checkForUpdate(logger: logger)
+
+            // Calculate skipped count for granular cache stats
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - icons.count
+                : 0
+
+            ui.success("Done! Exported \(icons.count) icons to Web project.")
             return PlatformExportResult(
                 count: icons.count,
                 hashes: loaderResult.computedHashes,

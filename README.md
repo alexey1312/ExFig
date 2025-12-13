@@ -8,11 +8,11 @@
 ![Coverage](https://img.shields.io/badge/coverage-51.30%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
-Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, and Flutter
-projects.
+Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and
+Web (React/TypeScript) projects.
 
 Automatically sync your design system from Figma to code with support for Dark Mode, SwiftUI, UIKit, Jetpack Compose,
-and Flutter.
+Flutter, and React/TypeScript.
 
 ## Why ExFig?
 
@@ -38,6 +38,7 @@ and Flutter.
 - 📱 SwiftUI and UIKit (iOS/macOS)
 - 🤖 Jetpack Compose and XML resources (Android)
 - 🦋 Flutter / Dart
+- 🌐 React / TypeScript (CSS variables, TSX components)
 - 🔧 Customizable code templates (Stencil)
 
 ### Export Formats

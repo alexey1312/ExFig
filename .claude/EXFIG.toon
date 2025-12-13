@@ -1,7 +1,7 @@
 meta:
   name: ExFig
   version: current
-  description: CLI tool for exporting Figma assets to iOS, Android, Flutter
+  description: CLI tool for exporting Figma assets to iOS, Android, Flutter, Web
   swift: 6.0
   platforms: macOS 12.0+, Linux
   license: MIT
@@ -54,7 +54,7 @@ commands:
   init:
     purpose: Generate starter config file
     options:
-      platform: -p/--platform ios|android (required)
+      platform: -p/--platform ios|android|flutter|web (required)
 
   batch:
     purpose: Process multiple configs in parallel
@@ -107,13 +107,14 @@ commands:
       failFast: --fail-fast
       resume: --resume
 
-modules[7]{name,path,purpose}:
+modules[8]{name,path,purpose}:
   ExFig,Sources/ExFig,CLI commands and orchestration
   ExFigCore,Sources/ExFigCore,Domain models and processors
   FigmaAPI,Sources/FigmaAPI,HTTP client with rate limiting
   XcodeExport,Sources/XcodeExport,iOS xcassets and Swift extensions
   AndroidExport,Sources/AndroidExport,Android XML and Compose code
   FlutterExport,Sources/FlutterExport,Flutter Dart code
+  WebExport,Sources/WebExport,Web CSS variables and React/TypeScript
   SVGKit,Sources/SVGKit,SVG parsing and vector generation
 
 keyDirectories:
@@ -132,7 +133,7 @@ configTypes:
   IconsConfiguration:
     purpose: Enum for backward-compatible icons config parsing
     cases: [single(Icons), multiple([IconsEntry])]
-    platforms: [iOS, Android, Flutter]
+    platforms: [iOS, Android, Flutter, Web]
     properties:
       entries: "[IconsEntry] - unified access to all entries"
       isMultiple: "Bool - true if array format"
@@ -145,7 +146,7 @@ configTypes:
   IconsLoaderConfig:
     purpose: Sendable struct for IconsLoader frame settings
     file: Sources/ExFig/Loaders/IconsLoader.swift
-    factoryMethods: [forIOS, forAndroid, forFlutter, defaultConfig]
+    factoryMethods: [forIOS, forAndroid, forFlutter, forWeb, defaultConfig]
 
 keyFiles:
   cli: Sources/ExFig/ExFigCommand.swift
@@ -237,11 +238,12 @@ templates:
   ios[10]: UIColor+extension, Color+extension, UIFont+extension, Font+extension, UIImage+extension, Image+extension, Label, LabelStyle, LabelStyle+extension, header
   android[6]: colors.xml, Colors.kt, typography.xml, Typography.kt, Icons.kt, header
   flutter[4]: colors.dart, icons.dart, images.dart, header
+  web[8]: theme.css, variables.ts, theme.json, Icon.tsx, types.ts, IconIndex.ts, Image.tsx, ImageIndex.ts, header
 
 config:
   files: exfig.yaml, figma-export.yaml
   envVar: FIGMA_PERSONAL_TOKEN
-  sections: figma, common, ios, android, flutter
+  sections: figma, common, ios, android, flutter, web
   reference: CONFIG.md
 
 buildCommands:
@@ -281,11 +283,12 @@ figmaAPI:
     tier3: 50-150 req/min
   docs: https://www.figma.com/developers/api
 
-testTargets[7]{name,tests}:
+testTargets[8]{name,tests}:
   ExFigTests,CLI commands and loaders
   ExFigCoreTests,Domain models and processors
   XcodeExportTests,iOS export output
   AndroidExportTests,Android export output
   FlutterExportTests,Flutter export output
+  WebExportTests,Web CSS and React/TypeScript output
   FigmaAPITests,API client and endpoints
   SVGKitTests,SVG parsing and code generation
