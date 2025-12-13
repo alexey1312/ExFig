@@ -49,6 +49,15 @@ struct ImagesLoaderConfig: Sendable {
         )
     }
 
+    /// Creates config for a specific Web images entry.
+    static func forWeb(entry: Params.Web.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+        ImagesLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            scales: nil,
+            format: .svg // Web uses SVG by default
+        )
+    }
+
     /// Creates default config from params (for backward compatibility).
     static func defaultConfig(params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
@@ -131,6 +140,11 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             false
         case (.android, nil), (.flutter, nil):
             // Default to raster for backward compatibility
+            true
+        case (.web, .svg), (.web, nil):
+            // Web uses SVG by default
+            false
+        case (.web, .png), (.web, .webp):
             true
         }
     }

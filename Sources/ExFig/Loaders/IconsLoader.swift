@@ -68,6 +68,18 @@ struct IconsLoaderConfig: Sendable {
         )
     }
 
+    /// Creates config for Web (no iOS-specific fields needed).
+    static func forWeb(entry: Params.Web.IconsEntry, params: Params) -> IconsLoaderConfig {
+        IconsLoaderConfig(
+            frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            format: nil,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+    }
+
     /// Creates default config using common.icons.figmaFrameName or "Icons".
     static func defaultConfig(params: Params) -> IconsLoaderConfig {
         IconsLoaderConfig(
@@ -207,7 +219,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
 
     private func makeFormatParams() -> FormatParams {
         switch (platform, config.format) {
-        case (.android, _), (.flutter, _), (.ios, .svg):
+        case (.android, _), (.flutter, _), (.web, _), (.ios, .svg):
             SVGParams()
         case (.ios, _):
             PDFParams()

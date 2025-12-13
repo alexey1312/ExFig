@@ -1,0 +1,12 @@
+// {% include "header.stencil" %}
+
+import type { ImgHTMLAttributes, SVGAttributes } from 'react';
+
+export interface IconProps extends SVGAttributes<SVGElement> {
+  color?: string;
+  size?: number | string;
+}
+
+export interface ImageProps extends ImgHTMLAttributes<HTMLImageElement> {
+  alt?: string;
+}

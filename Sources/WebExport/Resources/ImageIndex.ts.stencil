@@ -1,0 +1,5 @@
+// {% include "header.stencil" %}
+
+{% for image in images %}export { {{ image.componentName }} } from './{{ image.fileName }}';
+{% endfor %}
+export type { ImageProps } from './types';

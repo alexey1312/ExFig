@@ -325,6 +325,64 @@ flutter:
       encoding: lossy
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
+
+# [optional] Web export parameters (React/TypeScript)
+web:
+  # Relative or absolute path to the output directory for generated files
+  output: "./src/generated"
+  # [optional] Path to the Stencil templates used to generate code
+  templatesPath: "./templates"
+
+  # Parameters for exporting colors
+  colors:
+    # [optional] Output file name for CSS variables. Defaults to "theme.css"
+    cssFile: "theme.css"
+    # [optional] Output file name for TypeScript constants. Defaults to "variables.ts"
+    tsFile: "variables.ts"
+    # [optional] Output file name for JSON tokens. When specified, exports colors as JSON
+    jsonFile: "tokens.json"
+
+  # Parameters for exporting icons
+  # Can be a single object (legacy format) or an array of objects (new format)
+  # Legacy format (single icons configuration):
+  icons:
+    # [optional] Where to place SVG icon assets (relative path)
+    assetsDirectory: "assets/icons"
+    # [optional] Generate React TSX components for each icon. Defaults to true
+    generateReactComponents: true
+    # [optional] Export types.ts with TypeScript interfaces. Defaults to true
+    exportTypes: true
+    # [optional] Icon size in pixels for viewBox. Defaults to 24
+    iconSize: 24
+
+  # New format (multiple icons configurations from different Figma frames):
+  # icons:
+  #   - figmaFrameName: Actions     # Export icons from "Actions" frame
+  #     assetsDirectory: "assets/icons/actions"
+  #     generateReactComponents: true
+  #     iconSize: 24                # Icon size for viewBox
+  #   - figmaFrameName: Navigation  # Export icons from "Navigation" frame
+  #     assetsDirectory: "assets/icons/nav"
+  #     generateReactComponents: true
+  #     iconSize: 20                # Different icon size for navigation
+
+  # Parameters for exporting images
+  # Can be a single object (legacy format) or an array of objects (new format)
+  # Legacy format (single images configuration):
+  images:
+    # [optional] Where to place image assets (relative path)
+    assetsDirectory: "assets/images"
+    # [optional] Generate React TSX components for each image. Defaults to true
+    generateReactComponents: true
+
+  # New format (multiple images configurations from different Figma frames):
+  # images:
+  #   - figmaFrameName: Illustrations
+  #     assetsDirectory: "assets/images/illustrations"
+  #     generateReactComponents: true
+  #   - figmaFrameName: Promo
+  #     assetsDirectory: "assets/images/promo"
+  #     generateReactComponents: true
 ```
 
 ## Multiple Icons Configuration
@@ -391,6 +449,22 @@ When using multiple entries with the same Figma file:
 
 This means 17 icon entries with the same `lightFileId` result in only 1 Components API call (plus 1 Images API call per
 unique frame), not 17 separate calls.
+
+### Web Icons Array Format
+
+```yaml
+web:
+  icons:
+    - figmaFrameName: Actions
+      assetsDirectory: assets/icons/actions
+      generateReactComponents: true
+      iconSize: 24
+    - figmaFrameName: Navigation
+      assetsDirectory: assets/icons/nav
+      generateReactComponents: true
+      exportTypes: true
+      iconSize: 20
+```
 
 ## Multiple Colors Configuration
 
@@ -493,6 +567,25 @@ flutter:
       className: ThemeColors
 ```
 
+### Web Colors Array Format
+
+```yaml
+web:
+  colors:
+    - tokensFileId: abc123
+      tokensCollectionName: Base Palette
+      lightModeName: Light
+      cssFile: base-theme.css
+      tsFile: base-variables.ts
+    - tokensFileId: def456
+      tokensCollectionName: Theme Colors
+      lightModeName: Light
+      darkModeName: Dark
+      cssFile: theme.css
+      tsFile: theme-variables.ts
+      jsonFile: theme-tokens.json
+```
+
 ## Multiple Images Configuration
 
 ExFig supports exporting images from multiple Figma frames in a single config file. This is useful when your design
@@ -573,6 +666,19 @@ flutter:
       className: PromoImages
       format: webp
       scales: [1, 2, 3]
+```
+
+### Web Images Array Format
+
+```yaml
+web:
+  images:
+    - figmaFrameName: Illustrations
+      assetsDirectory: assets/images/illustrations
+      generateReactComponents: true
+    - figmaFrameName: Promo
+      assetsDirectory: assets/images/promo
+      generateReactComponents: true
 ```
 
 ### Fallback Behavior
