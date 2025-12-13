@@ -20,6 +20,10 @@ backend = "aqua:pre-commit/pre-commit"
 version = "3.13.0"
 backend = "core:python"
 
+[[tools.python]]
+version = "3.13.11"
+backend = "core:python"
+
 [[tools.swiftformat]]
 version = "0.58.7"
 backend = "asdf:swiftformat"
@@ -40,3 +44,12 @@ backend = "github:ldomaradzki/xcsift"
 "platforms.macos-arm64" = { checksum = "sha256:fc53837a760e74c7e12c07eb761f44a11fd733064361b9bbebbaf83beb34de8b", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.14/xcsift-v1.0.14-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/322977965"}
 "platforms.macos-x64" = { checksum = "sha256:fc53837a760e74c7e12c07eb761f44a11fd733064361b9bbebbaf83beb34de8b", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.14/xcsift-v1.0.14-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/322977965"}
 "platforms.windows-x64" = { checksum = "sha256:76f4f2ebc1b017d8ebaf27d2c8a840c10e3a9abc7429ea3f4fd6cf9acce62132", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.14/xcsift-v1.0.14-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/322977966"}
+
+[[tools.xcsift]]
+version = "1.0.15"
+backend = "github:ldomaradzki/xcsift"
+"platforms.linux-arm64" = { checksum = "sha256:94297b1d0209b520c321f5c687e5e23a71873736a9896bd5e3a2d1bc1b08bb07", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.15/xcsift-v1.0.15-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/327265706"}
+"platforms.linux-x64" = { checksum = "sha256:94297b1d0209b520c321f5c687e5e23a71873736a9896bd5e3a2d1bc1b08bb07", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.15/xcsift-v1.0.15-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/327265706"}
+"platforms.macos-arm64" = { checksum = "sha256:271ddaecfd8baee6573474b6653c0cdbcccc532514c42e2fc93760c31b5dc213", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.15/xcsift-v1.0.15-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/327265707"}
+"platforms.macos-x64" = { checksum = "sha256:271ddaecfd8baee6573474b6653c0cdbcccc532514c42e2fc93760c31b5dc213", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.15/xcsift-v1.0.15-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/327265707"}
+"platforms.windows-x64" = { checksum = "sha256:94297b1d0209b520c321f5c687e5e23a71873736a9896bd5e3a2d1bc1b08bb07", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.15/xcsift-v1.0.15-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/327265706"}
