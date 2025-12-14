@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-12-14
+
+### Features
+
+- **cli**: Add migrate command for figma-export configs by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **tooling**: Reorganize format tasks with parallel execution by @alexey1312
+
+- **tooling**: Migrate from pre-commit to hk for git hooks by @alexey1312
+
+
+### Other
+
+- Modify CI workflow for Swift and Markdown formatting
+
+Updated CI workflow to check formatting for Swift and Markdown, removed separate markdown formatting check. by @alexey1312
+
+- Add web 
+
+* feat(openspec): add web platform export proposal
+
+Proposal to extend ExFig with native Web/React support:
+- CSS variables and TypeScript constants for colors
+- React TSX components via SVGR pattern for icons
+- Raw SVG/PNG asset export with barrel index files
+- New WebExport module following FlutterExport patterns
+
+* feat(web): add web platform export support
+
+* feat(web): add SVG to JSX converter for React components
+
+* feat(web): add SVG to JSX converter for React components by @alexey1312 in [#12](https://github.com/alexey1312/ExFig/pull/12)
+
+
 ## [1.1.3] - 2025-12-11
 
 ### Documentation
@@ -37,7 +74,7 @@ All notable changes to this project will be documented in this file.
 
 ### Other
 
-- Update batch
+- Update batch 
 
 * feat(batch): add pipelined download queue for parallelism
 
