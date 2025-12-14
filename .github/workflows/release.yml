@@ -67,6 +67,8 @@ jobs:
           cp .build/${{ matrix.build-path }}/exfig dist/ExFig
           cp -r .build/${{ matrix.build-path }}/exfig_AndroidExport.bundle dist/
           cp -r .build/${{ matrix.build-path }}/exfig_XcodeExport.bundle dist/
+          cp -r .build/${{ matrix.build-path }}/exfig_FlutterExport.bundle dist/
+          cp -r .build/${{ matrix.build-path }}/exfig_WebExport.bundle dist/
           cp LICENSE dist/
           cd dist && zip -r ../${{ matrix.archive-name }}.zip .
 
@@ -77,6 +79,8 @@ jobs:
           cp .build/${{ matrix.build-path }}/exfig dist/ExFig
           cp -r .build/${{ matrix.build-path }}/exfig_AndroidExport.resources dist/
           cp -r .build/${{ matrix.build-path }}/exfig_XcodeExport.resources dist/
+          cp -r .build/${{ matrix.build-path }}/exfig_FlutterExport.resources dist/
+          cp -r .build/${{ matrix.build-path }}/exfig_WebExport.resources dist/
           cp LICENSE dist/
           tar -czf ${{ matrix.archive-name }}.tar.gz -C dist .
 
@@ -152,3 +156,55 @@ jobs:
           files: |
             artifacts/exfig-macos/exfig-macos.zip
             artifacts/exfig-linux-x64/exfig-linux-x64.tar.gz
+
+  update-homebrew:
+    name: Update Homebrew Tap
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Download release assets and calculate SHA256
+        id: sha
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          curl -sL "https://github.com/alexey1312/ExFig/releases/download/v${VERSION}/exfig-macos.zip" -o exfig-macos.zip
+          MACOS_SHA=$(sha256sum exfig-macos.zip | cut -d' ' -f1)
+          echo "macos=${MACOS_SHA}" >> $GITHUB_OUTPUT
+
+          curl -sL "https://github.com/alexey1312/ExFig/releases/download/v${VERSION}/exfig-linux-x64.tar.gz" -o exfig-linux.tar.gz
+          LINUX_SHA=$(sha256sum exfig-linux.tar.gz | cut -d' ' -f1)
+          echo "linux=${LINUX_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v5
+        with:
+          repository: alexey1312/homebrew-exfig
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-exfig
+
+      - name: Update formula
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MACOS_SHA="${{ steps.sha.outputs.macos }}"
+          LINUX_SHA="${{ steps.sha.outputs.linux }}"
+
+          FORMULA="homebrew-exfig/Formula/exfig.rb"
+
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" "$FORMULA"
+          sed -i "0,/sha256 \"[a-f0-9]*\"/s//sha256 \"${MACOS_SHA}\"/" "$FORMULA"
+          sed -i "0,/sha256 \"${MACOS_SHA}\"/! {0,/sha256 \"[a-f0-9]*\"/s//sha256 \"${LINUX_SHA}\"/}" "$FORMULA"
+
+          cat "$FORMULA"
+
+      - name: Commit and push
+        working-directory: homebrew-exfig
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/exfig.rb
+          git diff --staged --quiet || git commit -m "chore: bump to v${{ steps.version.outputs.version }}"
+          git push
