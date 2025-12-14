@@ -133,8 +133,8 @@ children[23]:
 | `constraints`          | ❌ No (layout only)       | ❌ No               |
 | `interactions`         | ❌ No                     | ❌ No               |
 | `pluginData`           | ❌ No                     | ❌ No               |
-| `name`                 | ⚠️ Partial                | ✅ Yes (for naming) |
-| `type`                 | ⚠️ Indirect               | ✅ Yes (structure)  |
+| `name`                 | ⚠️ Partial                 | ✅ Yes (for naming) |
+| `type`                 | ⚠️ Indirect                | ✅ Yes (structure)  |
 
 ## Reliability Analysis
 

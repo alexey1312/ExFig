@@ -121,7 +121,7 @@ ios:
   addObjcAttribute: false
   # [optional] Path to the Stencil templates used to generate code
   templatesPath: "./Resources/Templates"
-  
+
   # [optional] Parameters for exporting colors
   colors:
     # How to export colors? Use .xcassets and UIColor/Color extension (useColorAssets = true) or UIColor/Color extension only (useColorAssets = false)
@@ -221,10 +221,10 @@ android:
   mainSrc: "./main/src/java"
   # [optional] Path to the Stencil templates used to generate code
   templatesPath: "./Resources/Templates"
-  
+
   # Parameters for exporting colors
   colors:
-    # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
+    # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"
   # Parameters for exporting icons
   # Can be a single object (legacy format) or an array of objects (new format)

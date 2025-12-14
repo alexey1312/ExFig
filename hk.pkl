@@ -1,0 +1,104 @@
+amends "package://github.com/jdx/hk/releases/download/v1.27.0/hk@1.27.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.27.0/hk@1.27.0#/Builtins.pkl"
+
+// =============================================================================
+// hk Configuration for ExFig
+// =============================================================================
+// Migrated from pre-commit
+// All hooks run in parallel for maximum performance
+// =============================================================================
+
+// Excludes for generated/binary files
+local generated_excludes = List(".build/**", "docs/**")
+
+// =============================================================================
+// Swift Linters (parallel, check_first optimization)
+// =============================================================================
+
+local swift_linters = new Mapping<String, Step> {
+    ["swiftformat"] {
+        glob = List("*.swift")
+        check = "swiftformat --lint {{files}}"
+        fix = "swiftformat {{files}}"
+        batch = true
+        stage = List("*.swift")
+        check_first = true
+    }
+    ["swiftlint"] {
+        glob = List("*.swift")
+        check = "swiftlint lint --strict --quiet {{files}}"
+        fix = "swiftlint --fix {{files}}"
+        batch = true
+    }
+}
+
+// =============================================================================
+// dprint Formatter (Markdown) - Rust-based, fast
+// =============================================================================
+
+local dprint_checks = new Mapping<String, Step> {
+    ["dprint"] {
+        glob = List("*.md")
+        exclude = List("CHANGELOG.md", "Sources/**/*.docc/**", ".claude/**", ".github/ISSUE_TEMPLATE/**")
+        check = "dprint check {{files}}"
+        fix = "dprint fmt {{files}}"
+        stage = List("*.md")
+        batch = true
+        check_first = true
+    }
+}
+
+// =============================================================================
+// Builtin Checks (fast, parallel)
+// =============================================================================
+
+local builtin_checks = new Mapping<String, Step> {
+    ["trailing-whitespace"] = (Builtins.trailing_whitespace) {
+        exclude = generated_excludes
+    }
+    ["check-merge-conflict"] = Builtins.check_merge_conflict
+    ["newlines"] = (Builtins.newlines) {
+        exclude = generated_excludes
+    }
+}
+
+// =============================================================================
+// Combined Linters
+// =============================================================================
+
+local all_linters = new Mapping<String, Step> {
+    ...swift_linters
+    ...dprint_checks
+    ...builtin_checks
+}
+
+// =============================================================================
+// Hooks Configuration
+// =============================================================================
+
+hooks {
+    // Pre-commit: runs all linters with auto-fix
+    ["pre-commit"] {
+        fix = true
+        stash = "git"
+        steps = all_linters
+    }
+
+    // Commit-msg: validate conventional commits format
+    ["commit-msg"] {
+        steps {
+            ["conventional-commit"] = Builtins.check_conventional_commit
+        }
+    }
+
+    // Helper: run all linters with fix
+    ["fix"] {
+        fix = true
+        steps = all_linters
+    }
+
+    // Helper: run all linters without fix
+    ["check"] {
+        steps = all_linters
+    }
+}

@@ -162,7 +162,7 @@ openspec/
 ```
 New request?
 ├─ Bug fix restoring spec behavior? → Fix directly
-├─ Typo/format/comment? → Fix directly  
+├─ Typo/format/comment? → Fix directly
 ├─ New feature/capability? → Create proposal
 ├─ Breaking change? → Create proposal
 ├─ Architecture change? → Create proposal
@@ -179,13 +179,16 @@ New request?
 # Change: [Brief description of change]
 
 ## Why
+
 [1-2 sentences on problem/opportunity]
 
 ## What Changes
+
 - [Bullet list of changes]
 - [Mark breaking changes with **BREAKING**]
 
 ## Impact
+
 - Affected specs: [list capabilities]
 - Affected code: [key files/systems]
 ```
@@ -194,19 +197,26 @@ New request?
 
 ```markdown
 ## ADDED Requirements
+
 ### Requirement: New Feature
+
 The system SHALL provide...
 
 #### Scenario: Success case
+
 - **WHEN** user performs action
 - **THEN** expected result
 
 ## MODIFIED Requirements
+
 ### Requirement: Existing Feature
+
 [Complete modified requirement]
 
 ## REMOVED Requirements
+
 ### Requirement: Old Feature
+
 **Reason**: [Why removing]
 **Migration**: [How to handle]
 ```
@@ -218,6 +228,7 @@ If multiple capabilities are affected, create multiple delta files under
 
 ```markdown
 ## 1. Implementation
+
 - [ ] 1.1 Create database schema
 - [ ] 1.2 Implement API endpoint
 - [ ] 1.3 Add frontend component
@@ -235,23 +246,29 @@ Minimal `design.md` skeleton:
 
 ```markdown
 ## Context
+
 [Background, constraints, stakeholders]
 
 ## Goals / Non-Goals
+
 - Goals: [...]
 - Non-Goals: [...]
 
 ## Decisions
+
 - Decision: [What and why]
 - Alternatives considered: [Options + rationale]
 
 ## Risks / Trade-offs
+
 - [Risk] → Mitigation
 
 ## Migration Plan
+
 [Steps, rollback]
 
 ## Open Questions
+
 - [...]
 ```
 
@@ -263,6 +280,7 @@ Minimal `design.md` skeleton:
 
 ```markdown
 #### Scenario: User login success
+
 - **WHEN** valid credentials provided
 - **THEN** return JWT token
 ```
@@ -270,9 +288,10 @@ Minimal `design.md` skeleton:
 **WRONG** (don't use bullets or bold):
 
 ```markdown
-- **Scenario: User login**  ❌
-**Scenario**: User login     ❌
-### Scenario: User login      ❌
+- **Scenario: User login** ❌
+  **Scenario**: User login ❌
+
+### Scenario: User login ❌
 ```
 
 Every requirement MUST have at least one scenario.
@@ -315,6 +334,7 @@ Example for RENAMED:
 
 ```markdown
 ## RENAMED Requirements
+
 - FROM: `### Requirement: Login`
 - TO: `### Requirement: User Authentication`
 ```
@@ -399,7 +419,9 @@ auth/spec.md
 
 ```markdown
 ## ADDED Requirements
+
 ### Requirement: Two-Factor Authentication
+
 ...
 ```
 
@@ -407,7 +429,9 @@ notifications/spec.md
 
 ```markdown
 ## ADDED Requirements
+
 ### Requirement: OTP Email Notification
+
 ...
 ```
 

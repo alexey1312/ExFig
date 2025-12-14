@@ -592,10 +592,10 @@ ExFig is available under the MIT License. See [LICENSE](LICENSE) for details.
 Have questions or feedback? Open an issue on [GitHub](https://github.com/alexey1312/ExFig/issues) or check out the
 [documentation](https://alexey1312.github.io/ExFig/documentation/exfig).
 
-______________________________________________________________________
+---
 
 **[📖 Read the full documentation](https://alexey1312.github.io/ExFig/documentation/exfig)**
 
-______________________________________________________________________
+---
 
 <sub>Originally inspired by [figma-export](https://github.com/RedMadRobot/figma-export).</sub>

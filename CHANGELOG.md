@@ -37,7 +37,7 @@ All notable changes to this project will be documented in this file.
 
 ### Other
 
-- Update batch 
+- Update batch
 
 * feat(batch): add pipelined download queue for parallelism
 
