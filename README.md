@@ -5,7 +5,7 @@
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
 [![Docs](https://github.com/alexey1312/ExFig/actions/workflows/deploy-docc.yml/badge.svg)](https://alexey1312.github.io/ExFig/documentation/exfig)
-![Coverage](https://img.shields.io/badge/coverage-50.19%25-yellow)
+![Coverage](https://img.shields.io/badge/coverage-49.56%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and
@@ -74,6 +74,9 @@ Flutter, and React/TypeScript.
 ### 1. Install ExFig
 
 ```bash
+# Using Homebrew (recommended)
+brew install alexey1312/exfig/exfig
+
 # Using Mint
 mint install alexey1312/ExFig
 
@@ -120,6 +123,9 @@ figma:
 ### 5. Export Resources
 
 ```bash
+# Migrate from figma-export (optional)
+exfig migrate figma-export.yaml -o exfig.yaml
+
 # Export colors
 exfig colors
 

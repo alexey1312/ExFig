@@ -99,8 +99,13 @@ fi
 
 xcrun llvm-profdata merge -sparse "$PROFDATA_DIR"/*.profraw -o "$PROFDATA_FILE" 2>/dev/null
 
-# Find test binary
-TEST_BUNDLE=$(find .build -name "*.xctest" -type d 2>/dev/null | head -1)
+# Find test binary for native architecture
+ARCH=$(uname -m)
+TEST_BUNDLE=$(find .build -path "*/${ARCH}-apple-macosx/*" -name "*.xctest" -type d 2>/dev/null | head -1)
+if [[ -z "$TEST_BUNDLE" ]]; then
+    # Fallback: try any .xctest bundle
+    TEST_BUNDLE=$(find .build -name "*.xctest" -type d 2>/dev/null | head -1)
+fi
 if [[ -z "$TEST_BUNDLE" ]]; then
     echo "Error: No .xctest bundle found. Run tests first." >&2
     exit 1

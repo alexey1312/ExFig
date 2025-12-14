@@ -88,6 +88,16 @@ commands:
       assetFormat: --asset-format svg|png|pdf|jpg
       scale: --scale N (default 3)
 
+  migrate:
+    purpose: Migrate figma-export config to ExFig format
+    args: [INPUT]
+    options:
+      output: -o/--output PATH (default exfig.yaml)
+      force: -f/--force
+      verbose: -v/--verbose
+      quiet: -q/--quiet
+    behavior: Adds common.cache section, shows diff, asks confirmation
+
   fetch:
     purpose: Quick download without config file
     options:
