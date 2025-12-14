@@ -101,23 +101,19 @@ if [ -n "$GITHUB_PATH" ]; then
 fi
 
 #
-# V. VERIFICATION
+# V. GIT HOOKS SETUP (hk)
 # -----------------------------------------------------------------------------
 #
 
-# Verify key tools are installed and from mise
-echo 'Verifying installed tools...'
-for tool in swiftformat swiftlint xcsift pre-commit; do
-    tool_path=$(command -v "$tool" 2>/dev/null)
-    if [ -n "$tool_path" ]; then
-        if [[ "$tool_path" == *"/mise/"* ]]; then
-            echo "  $tool: $tool_path"
-        else
-            echo "  $tool: $tool_path (not from mise)"
-        fi
-    else
-        echo "  $tool: not found"
-    fi
-done
+./Scripts/install-hooks.sh
 
-echo 'Project environment setup done!'
+#
+# VI. VERIFICATION
+# -----------------------------------------------------------------------------
+#
+
+# Show installed tools
+echo 'Installed tools:'
+mise ls --current
+
+echo '✅ Project environment setup done!'

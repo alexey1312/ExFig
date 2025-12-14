@@ -74,7 +74,7 @@ common:
     nameValidateRegexp: '^[a-zA-Z0-9_]+$' # RegExp pattern for: h1_regular, h1_medium
     # [optional] RegExp pattern for replacing. Supports only $n
     nameReplaceRegexp: 'font_$1'
-                                
+
 # [optional] Android export parameters
 android:
   # Relative or absolute path to the `main/res` folder including it. The colors/icons/images will be exported to this folder
@@ -88,7 +88,7 @@ android:
 
   # Parameters for exporting colors
   colors:
-    # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
+    # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"
     # [optional] File name for XML file with exported colors (default is "colors.xml")
     xmlOutputFileName: "colors.xml"
@@ -120,7 +120,7 @@ android:
   typography:
     # Typography name style: camelCase or snake_case
     nameStyle: camelCase
-    # [optional] The package to export the Jetpack Compose typography code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set 
+    # [optional] The package to export the Jetpack Compose typography code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"
 
 """#

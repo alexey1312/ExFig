@@ -23,13 +23,20 @@ legacy_version_file = false
 # =============================================================================
 
 [tools]
-python = "3.13"
-pre-commit = "4.5.0"
-swiftformat = "0.58.7"
-swiftlint = "0.62.2"
-xcsift = "1.0.15"
-git-cliff = "2.10.1"
-# Note: mdformat is managed by pre-commit with plugins (mdformat-tables, etc.)
+# --- Swift Development ---
+swiftformat = "0.58.7"  # Swift code formatting
+swiftlint = "0.62.2"    # Swift linting
+xcsift = "1.0.15"       # xcodebuild output filtering
+
+# --- Documentation & Formatting ---
+dprint = "0.50.2"       # MD/JSON/YAML formatting (Rust, fast)
+
+# --- Git & CI ---
+hk = "1.27.0"           # Git hooks manager
+git-cliff = "2.10.1"    # Changelog generation
+
+# --- Configuration ---
+pkl = "0.28.2"          # Configuration language (for hk.pkl)
 
 # =============================================================================
 # Tasks
@@ -65,39 +72,27 @@ run = "swiftformat Sources Tests --lint"
 
 [tasks."format:md"]
 description = "Format markdown files"
-run = "pre-commit run mdformat --all-files || true"
+run = "dprint fmt"
 
 [tasks."format-check:md"]
 description = "Check markdown formatting (CI)"
-run = "pre-commit run mdformat --all-files"
+run = "dprint check"
 
 [tasks.format]
-description = "Format code and markdown in parallel, then lint"
-run = [
-  { tasks = ["format:swift", "format:md"] },
-  { tasks = ["format-check:swift", "format-check:md"] }
-]
+description = "Format all files (Swift + Markdown)"
+run = "hk fix --all"
 
 [tasks.format-check]
-description = "Check code and markdown in parallel"
-run = [
-  { tasks = ["format-check:swift", "format-check:md"] }
-]
+description = "Check all formatting (CI)"
+run = "hk check --all"
 
 [tasks.setup]
-description = "Install tools and configure pre-commit hooks"
-run = """
-# Install pre-commit hooks (both pre-commit and commit-msg stages)
-pre-commit install
-pre-commit install --hook-type commit-msg
-
-# Pre-install mdformat hook to avoid delay on first commit
-pre-commit install-hooks
-"""
+description = "Install git hooks (hk)"
+run = "./Scripts/install-hooks.sh"
 
 [tasks.pre-commit]
-description = "Run pre-commit on all files"
-run = "pre-commit run --all-files"
+description = "Run all pre-commit checks"
+run = "hk check --all"
 
 [tasks.docs]
 description = "Generate DocC documentation"

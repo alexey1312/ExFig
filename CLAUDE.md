@@ -712,8 +712,8 @@ docs: update naming style documentation
 **Pre-commit requirements:**
 
 ```bash
-mise run format      # Must pass
-mise run format-md   # Must pass
+mise run setup       # Install hk git hooks (one-time)
+mise run format      # Run all formatters (hk fix --all)
 mise run lint        # Must pass (may have issues on Linux)
 ```
 
