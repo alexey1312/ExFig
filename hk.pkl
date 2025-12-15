@@ -11,6 +11,9 @@ import "package://github.com/jdx/hk/releases/download/v1.27.0/hk@1.27.0#/Builtin
 // Excludes for generated/binary files
 local generated_excludes = List(".build/**", "docs/**")
 
+// Excludes for template files (stencil templates require specific formatting)
+local template_excludes = List("**/*.stencil", "**/*.stencil.include")
+
 // =============================================================================
 // Swift Linters (parallel, check_first optimization)
 // =============================================================================
@@ -54,11 +57,11 @@ local dprint_checks = new Mapping<String, Step> {
 
 local builtin_checks = new Mapping<String, Step> {
     ["trailing-whitespace"] = (Builtins.trailing_whitespace) {
-        exclude = generated_excludes
+        exclude = generated_excludes + template_excludes
     }
     ["check-merge-conflict"] = Builtins.check_merge_conflict
     ["newlines"] = (Builtins.newlines) {
-        exclude = generated_excludes
+        exclude = generated_excludes + template_excludes
     }
 }
 

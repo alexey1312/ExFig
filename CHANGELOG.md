@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 Updated CI workflow to check formatting for Swift and Markdown, removed separate markdown formatting check. by @alexey1312
 
-- Add web 
+- Add web
 
 * feat(openspec): add web platform export proposal
 
@@ -74,7 +74,7 @@ Proposal to extend ExFig with native Web/React support:
 
 ### Other
 
-- Update batch 
+- Update batch
 
 * feat(batch): add pipelined download queue for parallelism
 
