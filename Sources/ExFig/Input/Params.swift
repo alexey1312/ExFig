@@ -392,11 +392,66 @@ struct Params: Decodable {
             }
         }
 
+        /// Theme attributes configuration for generating attrs.xml and styles.xml.
+        struct ThemeAttributes: Decodable, Sendable {
+            /// Whether theme attributes generation is enabled.
+            let enabled: Bool?
+
+            /// Path to attrs.xml relative to mainRes (e.g., "../../../values/attrs.xml").
+            let attrsFile: String?
+
+            /// Path to styles.xml relative to mainRes (e.g., "../../../values/styles.xml").
+            let stylesFile: String?
+
+            /// Path to styles-night.xml relative to mainRes.
+            let stylesNightFile: String?
+
+            /// Theme name used in markers (e.g., "Theme.BaseTheme.inDrive").
+            let themeName: String
+
+            /// Custom marker start text (default: "FIGMA COLORS MARKER START").
+            let markerStart: String?
+
+            /// Custom marker end text (default: "FIGMA COLORS MARKER END").
+            let markerEnd: String?
+
+            /// Name transformation configuration.
+            let nameTransform: NameTransform?
+
+            /// If true, create file with markers if missing.
+            let autoCreateMarkers: Bool?
+
+            var isEnabled: Bool { enabled ?? false }
+            var resolvedMarkerStart: String { markerStart ?? "FIGMA COLORS MARKER START" }
+            var resolvedMarkerEnd: String { markerEnd ?? "FIGMA COLORS MARKER END" }
+            var shouldAutoCreateMarkers: Bool { autoCreateMarkers ?? false }
+            var resolvedAttrsFile: String { attrsFile ?? "values/attrs.xml" }
+            var resolvedStylesFile: String { stylesFile ?? "values/styles.xml" }
+            var resolvedStylesNightFile: String { stylesNightFile ?? "values-night/styles.xml" }
+
+            /// Name transformation options.
+            struct NameTransform: Decodable, Sendable {
+                /// Target case style for attribute names (default: PascalCase).
+                let style: NameStyle?
+
+                /// Prefix to add to attribute names (default: "color").
+                let prefix: String?
+
+                /// Prefixes to strip from color names before transformation.
+                let stripPrefixes: [String]?
+
+                var resolvedStyle: NameStyle { style ?? .pascalCase }
+                var resolvedPrefix: String { prefix ?? "color" }
+                var resolvedStripPrefixes: [String] { stripPrefixes ?? [] }
+            }
+        }
+
         /// Single colors configuration (legacy format).
         /// Uses common.variablesColors for Figma Variables source.
         struct Colors: Decodable {
             let xmlOutputFileName: String?
             let composePackageName: String?
+            let themeAttributes: ThemeAttributes?
         }
 
         /// Colors entry with Figma Variables source for multiple colors configuration.
@@ -415,6 +470,9 @@ struct Params: Decodable {
             // Output (Android-specific)
             let xmlOutputFileName: String?
             let composePackageName: String?
+
+            // Theme attributes
+            let themeAttributes: ThemeAttributes?
         }
 
         /// Colors configuration supporting both single object and array formats.
@@ -445,7 +503,8 @@ struct Params: Decodable {
                         nameValidateRegexp: nil,
                         nameReplaceRegexp: nil,
                         xmlOutputFileName: colors.xmlOutputFileName,
-                        composePackageName: colors.composePackageName
+                        composePackageName: colors.composePackageName,
+                        themeAttributes: colors.themeAttributes
                     )]
                 case let .multiple(entries):
                     entries

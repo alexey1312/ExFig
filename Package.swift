@@ -12,6 +12,7 @@ let package = Package(
         .executable(name: "exfig", targets: ["ExFig"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
         .package(url: "https://github.com/jpsim/Yams.git", from: "5.3.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
@@ -81,7 +82,13 @@ let package = Package(
         // Exports resources to Android project
         .target(
             name: "AndroidExport",
-            dependencies: ["ExFigCore", "SVGKit", "Stencil", "StencilSwiftKit"],
+            dependencies: [
+                "ExFigCore",
+                "SVGKit",
+                "Stencil",
+                "StencilSwiftKit",
+                .product(name: "OrderedCollections", package: "swift-collections"),
+            ],
             resources: [
                 .copy("Resources/"),
             ]
@@ -143,7 +150,9 @@ let package = Package(
         .testTarget(
             name: "AndroidExportTests",
             dependencies: [
-                "AndroidExport", .product(name: "CustomDump", package: "swift-custom-dump"),
+                "AndroidExport",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+                .product(name: "OrderedCollections", package: "swift-collections"),
             ]
         ),
         .testTarget(

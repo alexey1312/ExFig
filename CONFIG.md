@@ -226,6 +226,32 @@ android:
   colors:
     # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"
+    # [optional] Theme attributes configuration for generating attrs.xml and styles.xml
+    themeAttributes:
+      # Enable theme attributes export
+      enabled: true
+      # Path to attrs.xml (relative to mainRes)
+      attrsFile: "../../../values/attrs.xml"
+      # Path to styles.xml for light mode (relative to mainRes)
+      stylesFile: "../../../values/styles.xml"
+      # [optional] Path to styles-night.xml for dark mode (relative to mainRes)
+      stylesNightFile: "../../../values-night/styles.xml"
+      # Theme name used in markers (e.g., "Theme.BaseTheme.inDrive")
+      themeName: "Theme.BaseTheme.inDrive"
+      # [optional] Custom marker start text. Default: "FIGMA COLORS MARKER START"
+      markerStart: "FIGMA COLORS MARKER START"
+      # [optional] Custom marker end text. Default: "FIGMA COLORS MARKER END"
+      markerEnd: "FIGMA COLORS MARKER END"
+      # [optional] Auto-create files with markers if missing. Default: false
+      autoCreateMarkers: false
+      # [optional] Name transformation settings
+      nameTransform:
+        # Target case style: camelCase, PascalCase, snake_case, etc. Default: PascalCase
+        style: PascalCase
+        # Prefix to add to attribute names. Default: "color"
+        prefix: "color"
+        # [optional] Prefixes to strip from color names before transformation
+        stripPrefixes: ["extensions_", "information_", "statement_", "additional_"]
   # Parameters for exporting icons
   # Can be a single object (legacy format) or an array of objects (new format)
   # Legacy format (single icons configuration):
@@ -687,6 +713,156 @@ If `figmaFrameName` is not specified in an entry, it falls back to:
 
 1. `common.images.figmaFrameName` (if defined)
 2. `"Illustrations"` (default)
+
+## Android Theme Attributes
+
+ExFig supports generating Android theme attributes (`attrs.xml` and `styles.xml`) that reference exported color
+resources. This is useful for creating theme-aware apps where colors are accessed via theme attributes rather than direct
+resource references.
+
+### Overview
+
+Theme attributes allow your app to reference colors like `?attr/colorBackgroundPrimary` instead of
+`@color/background_primary`. This enables:
+
+- Theme switching at runtime
+- Centralized color management through themes
+- Separation between design tokens and theme-specific values
+
+### Generated Output
+
+**attrs.xml** (attribute declarations):
+
+```xml
+<resources>
+    <!-- FIGMA COLORS MARKER START: Theme.BaseTheme.inDrive -->
+    <attr name="colorBackgroundPrimary" format="color" />
+    <attr name="colorBackgroundSecondary" format="color" />
+    <attr name="colorTextPrimary" format="color" />
+    <!-- FIGMA COLORS MARKER END: Theme.BaseTheme.inDrive -->
+</resources>
+```
+
+**styles.xml** (theme values):
+
+```xml
+<resources>
+    <style name="Theme.BaseTheme.inDrive" parent="Theme.MaterialComponents.DayNight">
+        <!-- FIGMA COLORS MARKER START: Theme.BaseTheme.inDrive -->
+        <item name="colorBackgroundPrimary">@color/background_primary</item>
+        <item name="colorBackgroundSecondary">@color/background_secondary</item>
+        <item name="colorTextPrimary">@color/text_primary</item>
+        <!-- FIGMA COLORS MARKER END: Theme.BaseTheme.inDrive -->
+    </style>
+</resources>
+```
+
+### Configuration
+
+```yaml
+android:
+  mainRes: "./main/res/figma/color/base"
+  colors:
+    themeAttributes:
+      enabled: true
+      attrsFile: "../../../values/attrs.xml"
+      stylesFile: "../../../values/styles.xml"
+      stylesNightFile: "../../../values-night/styles.xml"
+      themeName: "Theme.BaseTheme.inDrive"
+      markerStart: "FIGMA COLORS MARKER START"
+      markerEnd: "FIGMA COLORS MARKER END"
+      autoCreateMarkers: false
+      nameTransform:
+        style: PascalCase
+        prefix: "color"
+        stripPrefixes: ["extensions_", "information_", "statement_", "additional_"]
+```
+
+### Configuration Options
+
+| Field               | Required | Default                       | Description                                |
+| ------------------- | -------- | ----------------------------- | ------------------------------------------ |
+| `enabled`           | No       | `false`                       | Enable theme attributes export             |
+| `attrsFile`         | Yes\*    | —                             | Path to attrs.xml (relative to `mainRes`)  |
+| `stylesFile`        | Yes\*    | —                             | Path to styles.xml (relative to `mainRes`) |
+| `stylesNightFile`   | No       | —                             | Path to styles-night.xml for dark mode     |
+| `themeName`         | Yes      | —                             | Theme name used in markers                 |
+| `markerStart`       | No       | `"FIGMA COLORS MARKER START"` | Custom marker start text                   |
+| `markerEnd`         | No       | `"FIGMA COLORS MARKER END"`   | Custom marker end text                     |
+| `autoCreateMarkers` | No       | `false`                       | Auto-create files with markers if missing  |
+| `nameTransform`     | No       | —                             | Name transformation settings               |
+
+\* Required when `enabled: true`
+
+### Name Transformation
+
+The `nameTransform` section controls how color names are converted to theme attribute names:
+
+| Setting         | Default      | Description                                     |
+| --------------- | ------------ | ----------------------------------------------- |
+| `style`         | `PascalCase` | Target case style (camelCase, PascalCase, etc.) |
+| `prefix`        | `"color"`    | Prefix added to all attribute names             |
+| `stripPrefixes` | `[]`         | Prefixes to remove from color names             |
+
+**Examples:**
+
+| Original Name                 | With `stripPrefixes: ["extensions_"]` | Result                    |
+| ----------------------------- | ------------------------------------- | ------------------------- |
+| `background_primary`          | No strip                              | `colorBackgroundPrimary`  |
+| `extensions_background_error` | Strips `extensions_`                  | `colorBackgroundError`    |
+| `text_and_icon_primary`       | No strip                              | `colorTextAndIconPrimary` |
+
+### Marker-Based Updates
+
+ExFig uses XML comment markers to update only specific sections of your files. This allows you to:
+
+- Keep manual content outside markers
+- Have multiple themes in the same file (each with its own markers)
+- Safely run exports without losing custom code
+
+**Marker format:**
+
+```xml
+<!-- MARKER_START: ThemeName -->
+... generated content ...
+<!-- MARKER_END: ThemeName -->
+```
+
+**Multiple themes in one file:**
+
+```xml
+<resources>
+    <!-- FIGMA COLORS MARKER START: Theme.Light -->
+    <attr name="colorBackground" format="color" />
+    <!-- FIGMA COLORS MARKER END: Theme.Light -->
+
+    <!-- FIGMA COLORS MARKER START: Theme.Dark -->
+    <attr name="colorBackground" format="color" />
+    <!-- FIGMA COLORS MARKER END: Theme.Dark -->
+</resources>
+```
+
+### Batch Mode
+
+When running `exfig batch`, theme attributes from multiple configs can target the same `attrs.xml` and `styles.xml`
+files. ExFig automatically:
+
+1. Collects all theme attributes during batch processing
+2. Groups by target file
+3. Updates each theme's marker section separately
+4. Writes merged results after all configs complete
+
+This ensures no race conditions and proper merging of contributions from different configs.
+
+### Error Handling
+
+| Error                | Cause                                  | Solution                                        |
+| -------------------- | -------------------------------------- | ----------------------------------------------- |
+| File not found       | Target file doesn't exist              | Create file manually or use `autoCreateMarkers` |
+| Marker not found     | Markers missing in target file         | Add markers manually or use `autoCreateMarkers` |
+| Markers out of order | End marker appears before start marker | Fix marker order in file                        |
+
+When `autoCreateMarkers: true`, ExFig creates missing files with a minimal template containing the markers.
 
 ## CLI Options for Version Tracking
 

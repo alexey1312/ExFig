@@ -362,7 +362,7 @@ extension ExFigCommand {
                 }
 
                 try await ui.withSpinner("Exporting colors to Android Studio project...") {
-                    try exportAndroidColorsEntry(colorPairs: colorPairs, entry: entry, android: android)
+                    try await exportAndroidColorsEntry(colorPairs: colorPairs, entry: entry, android: android, ui: ui)
                 }
 
                 totalCount += colorPairs.count
@@ -406,7 +406,9 @@ extension ExFigCommand {
             }
 
             try await config.ui.withSpinner("Exporting colors to Android Studio project...") {
-                try exportAndroidColorsEntry(colorPairs: colorPairs, entry: entry, android: android)
+                try await exportAndroidColorsEntry(
+                    colorPairs: colorPairs, entry: entry, android: android, ui: config.ui
+                )
             }
 
             if BatchProgressViewStorage.progressView == nil {
@@ -627,8 +629,9 @@ extension ExFigCommand {
         private func exportAndroidColorsEntry(
             colorPairs: [AssetPair<Color>],
             entry: Params.Android.ColorsEntry,
-            android: Params.Android
-        ) throws {
+            android: Params.Android,
+            ui: TerminalUI
+        ) async throws {
             let output = AndroidOutput(
                 xmlOutputDirectory: android.mainRes,
                 xmlResourcePackage: android.resourcePackage,
@@ -653,6 +656,161 @@ extension ExFigCommand {
             try? FileManager.default.removeItem(atPath: darkColorsFileURL.path)
 
             try fileWriter.write(files: files)
+
+            // Theme attributes export
+            if let themeConfig = entry.themeAttributes, themeConfig.isEnabled {
+                try await exportThemeAttributes(
+                    colorPairs: colorPairs,
+                    config: themeConfig,
+                    android: android,
+                    ui: ui
+                )
+            }
+        }
+
+        // MARK: - Theme Attributes Export
+
+        private func exportThemeAttributes(
+            colorPairs: [AssetPair<Color>],
+            config: Params.Android.ThemeAttributes,
+            android: Params.Android,
+            ui: TerminalUI
+        ) async throws {
+            let nameTransform = config.nameTransform
+
+            // Create exporter with name transformation config
+            let exporter = AndroidThemeAttributesExporter(
+                stripPrefixes: nameTransform?.resolvedStripPrefixes ?? [],
+                style: nameTransform?.resolvedStyle ?? .pascalCase,
+                prefix: nameTransform?.resolvedPrefix ?? "color"
+            )
+
+            // Export theme attributes content
+            let result = exporter.export(colorPairs: colorPairs)
+
+            // Warn about collisions
+            if result.hasCollisions {
+                let collisionInfos = result.collisions.map {
+                    ThemeAttributeCollisionInfo(
+                        attr: $0.attributeName,
+                        kept: $0.keptXmlName,
+                        discarded: $0.discardedXmlName
+                    )
+                }
+                ui.warning(.themeAttributesNameCollision(count: result.collisions.count, collisions: collisionInfos))
+            }
+
+            // Skip if no attributes generated
+            guard !result.attributeMap.isEmpty else { return }
+
+            // Resolve file paths relative to mainRes
+            let attrsURL = android.mainRes.appendingPathComponent(config.resolvedAttrsFile)
+            let stylesURL = android.mainRes.appendingPathComponent(config.resolvedStylesFile)
+            let stylesNightURL = android.mainRes.appendingPathComponent(config.resolvedStylesNightFile)
+
+            // Check if we're in batch mode
+            if let collector = SharedThemeAttributesStorage.collector {
+                // Batch mode: collect for later merge
+                let collection = ThemeAttributesCollection(
+                    themeName: config.themeName,
+                    markerStart: config.resolvedMarkerStart,
+                    markerEnd: config.resolvedMarkerEnd,
+                    attrsContent: result.attrsContent,
+                    stylesContent: result.stylesContent,
+                    attrsFile: attrsURL,
+                    stylesFile: stylesURL,
+                    stylesNightFile: FileManager.default.fileExists(atPath: stylesNightURL.path) ? stylesNightURL : nil,
+                    autoCreateMarkers: config.shouldAutoCreateMarkers
+                )
+                await collector.add(collection)
+            } else {
+                // Standalone mode: write immediately
+                try writeThemeAttributesImmediately(
+                    config: config,
+                    result: result,
+                    attrsURL: attrsURL,
+                    stylesURL: stylesURL,
+                    stylesNightURL: stylesNightURL
+                )
+            }
+        }
+
+        private func writeThemeAttributesImmediately(
+            config: Params.Android.ThemeAttributes,
+            result: ThemeAttributesExportResult,
+            attrsURL: URL,
+            stylesURL: URL,
+            stylesNightURL: URL
+        ) throws {
+            // Create marker updater
+            let updater = MarkerFileUpdater(
+                markerStart: config.resolvedMarkerStart,
+                markerEnd: config.resolvedMarkerEnd,
+                themeName: config.themeName
+            )
+
+            // Update attrs.xml
+            try updateThemeAttributesFile(
+                url: attrsURL,
+                content: result.attrsContent,
+                updater: updater,
+                autoCreate: config.shouldAutoCreateMarkers,
+                template: attrsXMLTemplate(updater: updater)
+            )
+
+            // Update styles.xml (light)
+            try updateThemeAttributesFile(
+                url: stylesURL,
+                content: result.stylesContent,
+                updater: updater,
+                autoCreate: config.shouldAutoCreateMarkers,
+                template: nil // No auto-create for styles.xml - requires manual theme setup
+            )
+
+            // Update styles-night.xml (dark) if file exists
+            if FileManager.default.fileExists(atPath: stylesNightURL.path) {
+                try updateThemeAttributesFile(
+                    url: stylesNightURL,
+                    content: result.stylesContent,
+                    updater: updater,
+                    autoCreate: false,
+                    template: nil
+                )
+            }
+        }
+
+        private func updateThemeAttributesFile(
+            url: URL,
+            content: String,
+            updater: MarkerFileUpdater,
+            autoCreate: Bool,
+            template: String?
+        ) throws {
+            // Ensure parent directory exists
+            let directory = url.deletingLastPathComponent()
+            try FileManager.default.createDirectory(
+                at: directory,
+                withIntermediateDirectories: true
+            )
+
+            let updatedContent = try updater.update(
+                content: content,
+                in: url,
+                autoCreate: autoCreate,
+                templateContent: template
+            )
+
+            try Data(updatedContent.utf8).write(to: url, options: .atomic)
+        }
+
+        private func attrsXMLTemplate(updater: MarkerFileUpdater) -> String {
+            """
+            <?xml version="1.0" encoding="utf-8"?>
+            <resources>
+                \(updater.fullStartMarker)
+                \(updater.fullEndMarker)
+            </resources>
+            """
         }
 
         private func exportFlutterColorsEntry(
