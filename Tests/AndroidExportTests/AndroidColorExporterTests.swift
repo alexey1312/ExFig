@@ -1,5 +1,5 @@
 // swiftlint:disable force_unwrapping function_body_length
-import AndroidExport
+@testable import AndroidExport
 import CustomDump
 import ExFigCore
 import XCTest
@@ -101,5 +101,29 @@ final class AndroidColorExporterTests: XCTestCase {
 
         """
         expectNoDifference(generatedComposedCode, referenceComposeCode)
+    }
+
+    // MARK: - Kotlin Hex Tests
+
+    func testKotlinHex_opaqueColor() {
+        let color = Color(name: "white", red: 1, green: 1, blue: 1, alpha: 1)
+        XCTAssertEqual(color.kotlinHex, "0xFFFFFFFF")
+    }
+
+    func testKotlinHex_opaqueColorWithComponents() {
+        // RGB: 119, 3, 255 = #7703FF
+        let color = Color(name: "purple", red: 119.0 / 255.0, green: 3.0 / 255.0, blue: 1.0, alpha: 1)
+        XCTAssertEqual(color.kotlinHex, "0xFF7703FF")
+    }
+
+    func testKotlinHex_colorWithAlpha() {
+        // RGB: 119, 3, 255 with 50% alpha
+        let color = Color(name: "purple_50", red: 119.0 / 255.0, green: 3.0 / 255.0, blue: 1.0, alpha: 0.5)
+        XCTAssertEqual(color.kotlinHex, "0x807703FF")
+    }
+
+    func testKotlinHex_blackColor() {
+        let color = Color(name: "black", red: 0, green: 0, blue: 0, alpha: 1)
+        XCTAssertEqual(color.kotlinHex, "0xFF000000")
     }
 }

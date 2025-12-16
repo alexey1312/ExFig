@@ -73,10 +73,16 @@ public final class AndroidColorExporter: AndroidExporter {
         xmlResourcePackage: String,
         outputDirectory: URL
     ) throws -> FileContents {
-        let colors: [[String: String]] = colorPairs.map {
-            [
-                "functionName": $0.light.name.lowerCamelCased(),
-                "name": $0.light.name,
+        let colors: [[String: String]] = colorPairs.map { colorPair in
+            let lightKotlinHex = colorPair.light.kotlinHex
+            let darkKotlinHex = colorPair.dark?.kotlinHex ?? lightKotlinHex
+            return [
+                "functionName": colorPair.light.name.lowerCamelCased(),
+                "name": colorPair.light.name,
+                "lightHex": lightKotlinHex,
+                "darkHex": darkKotlinHex,
+                "lightHexRaw": String(lightKotlinHex.dropFirst(2)),
+                "darkHexRaw": String(darkKotlinHex.dropFirst(2)),
             ]
         }
 
@@ -96,7 +102,7 @@ public final class AndroidColorExporter: AndroidExporter {
     }
 }
 
-private extension Color {
+extension Color {
     func doubleToHex(_ double: Double) -> String {
         String(format: "%02X", arguments: [Int((double * 255).rounded())])
     }
@@ -111,5 +117,17 @@ private extension Color {
             result = "#\(aa)\(rr)\(gg)\(bb)"
         }
         return result
+    }
+
+    /// Hex color value in Kotlin format (0xAARRGGBB).
+    var kotlinHex: String {
+        let rr = doubleToHex(red)
+        let gg = doubleToHex(green)
+        let bb = doubleToHex(blue)
+        if alpha != 1.0 {
+            let aa = doubleToHex(alpha)
+            return "0x\(aa)\(rr)\(gg)\(bb)"
+        }
+        return "0xFF\(rr)\(gg)\(bb)"
     }
 }
