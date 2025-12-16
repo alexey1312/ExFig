@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2025-12-16
+
+### Features
+
+- **android**: Expose Kotlin hex values in Compose color template by @alexey1312
+
+
 ## [1.2.1] - 2025-12-16
 
 ### Features
