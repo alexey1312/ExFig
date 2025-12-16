@@ -9,7 +9,7 @@ import "package://github.com/jdx/hk/releases/download/v1.27.0/hk@1.27.0#/Builtin
 // =============================================================================
 
 // Excludes for generated/binary files
-local generated_excludes = List(".build/**", "docs/**")
+local generated_excludes = List(".build/**", "docs/**", "CHANGELOG.md")
 
 // Excludes for template files (stencil templates require specific formatting)
 local template_excludes = List("**/*.stencil", "**/*.stencil.include")

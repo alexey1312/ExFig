@@ -129,7 +129,7 @@ final class SharedThemeAttributesTests: XCTestCase {
         let collector = SharedThemeAttributesCollector()
 
         // Run with collector in TaskLocal
-        await SharedThemeAttributesStorage.$collector.withValue(collector) {
+        SharedThemeAttributesStorage.$collector.withValue(collector) {
             // Inside this scope, collector should be accessible
             let stored = SharedThemeAttributesStorage.collector
             XCTAssertNotNil(stored)
