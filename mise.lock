@@ -1,3 +1,11 @@
+[[tools.dprint]]
+version = "0.50.2"
+backend = "aqua:dprint/dprint"
+"platforms.linux-x64" = { checksum = "sha256:4b0e7911262049ccb8e1ac5968bf7a66dc490968fe1552a123bb2d6dadf2ad95", url = "https://github.com/dprint/dprint/releases/download/0.50.2/dprint-x86_64-unknown-linux-musl.zip"}
+"platforms.macos-arm64" = { checksum = "sha256:f534bcc054947ab2a42c069b5f6027914d252729bd15c1109812313b35a662a5", url = "https://github.com/dprint/dprint/releases/download/0.50.2/dprint-aarch64-apple-darwin.zip"}
+"platforms.macos-x64" = { checksum = "sha256:61becbf8d1b16540e364a4f00be704266ae322ee0ff3ba66a4a21033f66a8d55", url = "https://github.com/dprint/dprint/releases/download/0.50.2/dprint-x86_64-apple-darwin.zip"}
+"platforms.windows-x64" = { checksum = "sha256:2dbdb57106818acd930a00bc0c2c33370bd4c7265f78a6cda000e3621f2d3c1c", url = "https://github.com/dprint/dprint/releases/download/0.50.2/dprint-x86_64-pc-windows-msvc.zip"}
+
 [[tools.git-cliff]]
 version = "2.10.1"
 backend = "aqua:orhun/git-cliff"
@@ -6,6 +14,23 @@ backend = "aqua:orhun/git-cliff"
 "platforms.macos-arm64" = { checksum = "sha256:98cf636ca6a66d84e0ba6202a990028ac45cf0dde331d18169397ae59cc6e41b", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-aarch64-apple-darwin.tar.gz"}
 "platforms.macos-x64" = { checksum = "sha256:c3111dddaf866a986085f22ff22fa3003645fc69a3b9302c4e1352c4676c398a", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-apple-darwin.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:073c8027da2e055ec83c3609c4195284bd10b2771fcbd806ff0f94e48c310c77", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-pc-windows-msvc.zip"}
+
+[[tools.hk]]
+version = "1.27.0"
+backend = "aqua:jdx/hk"
+"platforms.linux-arm64" = { checksum = "sha256:956cac63f0a19306c9173b817a9728376251b16dd89caeb61e96904ef04d6061", url = "https://github.com/jdx/hk/releases/download/v1.27.0/hk-aarch64-unknown-linux-gnu.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:f5761586c544c6f43b4f3526876661710d22dbc48af9ec48985813ce1f1b7f98", url = "https://github.com/jdx/hk/releases/download/v1.27.0/hk-x86_64-unknown-linux-gnu.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:c1b9d6483842204f78f4e51a1b9006bf40d7369b20a6f35b0c9214aa673f1acb", url = "https://github.com/jdx/hk/releases/download/v1.27.0/hk-aarch64-apple-darwin.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:2a664cb5c85569124f1978a845f3715c73f0926e39f4cbdcdffe2923bfa067e6", url = "https://github.com/jdx/hk/releases/download/v1.27.0/hk-x86_64-pc-windows-msvc.zip"}
+
+[[tools.pkl]]
+version = "0.28.2"
+backend = "aqua:apple/pkl"
+"platforms.linux-arm64" = { url = "https://github.com/apple/pkl/releases/download/0.28.2/pkl-linux-aarch64"}
+"platforms.linux-x64" = { url = "https://github.com/apple/pkl/releases/download/0.28.2/pkl-linux-amd64"}
+"platforms.macos-arm64" = { url = "https://github.com/apple/pkl/releases/download/0.28.2/pkl-macos-aarch64"}
+"platforms.macos-x64" = { url = "https://github.com/apple/pkl/releases/download/0.28.2/pkl-macos-amd64"}
+"platforms.windows-x64" = { url = "https://github.com/apple/pkl/releases/download/0.28.2/pkl-windows-amd64.exe"}
 
 [[tools.pre-commit]]
 version = "4.5.0"

@@ -703,10 +703,10 @@ extension ExFigCommand {
             // Skip if no attributes generated
             guard !result.attributeMap.isEmpty else { return }
 
-            // Resolve file paths relative to mainRes
-            let attrsURL = android.mainRes.appendingPathComponent(config.resolvedAttrsFile)
-            let stylesURL = android.mainRes.appendingPathComponent(config.resolvedStylesFile)
-            let stylesNightURL = android.mainRes.appendingPathComponent(config.resolvedStylesNightFile)
+            // Resolve file paths relative to mainRes (standardized to handle .. in paths)
+            let attrsURL = android.mainRes.appendingPathComponent(config.resolvedAttrsFile).standardized
+            let stylesURL = android.mainRes.appendingPathComponent(config.resolvedStylesFile).standardized
+            let stylesNightURL = android.mainRes.appendingPathComponent(config.resolvedStylesNightFile).standardized
 
             // Check if we're in batch mode
             if let collector = SharedThemeAttributesStorage.collector {
