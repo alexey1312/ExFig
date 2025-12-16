@@ -52,7 +52,7 @@ enum ExFigError: LocalizedError {
 
 @main
 struct ExFigCommand: AsyncParsableCommand {
-    static let version = "v1.2.2"
+    static let version = "v1.2.3"
 
     static let svgFileConverter = NativeVectorDrawableConverter()
     static let fileWriter = FileWriter()
