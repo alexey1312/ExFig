@@ -277,24 +277,31 @@ extension ExFigCommand {
                 priorityMap: priorityMap
             )
 
+            // Create shared theme attributes collector for batch mode
+            let themeAttributesCollector = SharedThemeAttributesCollector()
+
             // Wrap execution with batch progress view and batch context injection
             // Nodes are injected via separate TaskLocal (Phase 3 optimization)
-            let result: BatchResult = await BatchProgressViewStorage.$progressView.withValue(progressView) {
-                await PreFetchedNodesStorage.$nodes.withValue(preFetchedNodes) {
-                    await withBatchContext(
-                        preFetchedVersions: preFetchedVersions,
-                        preFetchedComponents: preFetchedComponents,
-                        sharedGranularCache: sharedGranularCache
-                    ) {
-                        await executeWithProgressUpdates(
-                            executor: executor,
-                            configs: configs,
-                            checkpointManager: checkpointManager,
-                            runnerFactory: runnerFactory,
-                            progressView: progressView,
-                            rateLimiter: rateLimiter,
-                            ui: ui
-                        )
+            // Theme attributes collector is always injected for batch mode
+            let collector = themeAttributesCollector
+            let result: BatchResult = await SharedThemeAttributesStorage.$collector.withValue(collector) {
+                await BatchProgressViewStorage.$progressView.withValue(progressView) {
+                    await PreFetchedNodesStorage.$nodes.withValue(preFetchedNodes) {
+                        await withBatchContext(
+                            preFetchedVersions: preFetchedVersions,
+                            preFetchedComponents: preFetchedComponents,
+                            sharedGranularCache: sharedGranularCache
+                        ) {
+                            await executeWithProgressUpdates(
+                                executor: executor,
+                                configs: configs,
+                                checkpointManager: checkpointManager,
+                                runnerFactory: runnerFactory,
+                                progressView: progressView,
+                                rateLimiter: rateLimiter,
+                                ui: ui
+                            )
+                        }
                     }
                 }
             }
@@ -309,6 +316,9 @@ extension ExFigCommand {
             if let sharedCache = sharedGranularCache {
                 saveGranularCacheAfterBatch(result: result, sharedCache: sharedCache, ui: ui)
             }
+
+            // After batch: merge theme attributes from all configs into shared files
+            await mergeThemeAttributesAfterBatch(collector: themeAttributesCollector, ui: ui)
 
             return (result, rateLimiter)
         }
@@ -579,6 +589,144 @@ extension ExFigCommand {
                 }
             } catch {
                 ui.warning("Failed to save granular cache: \(error.localizedDescription)")
+            }
+        }
+
+        /// Merges theme attributes from all configs into shared files after batch completes.
+        ///
+        /// Multiple configs may export to the same attrs.xml and styles.xml files.
+        /// This function updates each file once with content from all configs,
+        /// where each config's content goes into its own marker section (identified by themeName).
+        private func mergeThemeAttributesAfterBatch(
+            collector: SharedThemeAttributesCollector,
+            ui: TerminalUI
+        ) async {
+            let collections = await collector.getAll()
+            guard !collections.isEmpty else { return }
+
+            // Group collections by target file URL
+            var attrsByFile: [URL: [ThemeAttributesCollection]] = [:]
+            var stylesByFile: [URL: [ThemeAttributesCollection]] = [:]
+            var stylesNightByFile: [URL: [ThemeAttributesCollection]] = [:]
+
+            for collection in collections {
+                attrsByFile[collection.attrsFile, default: []].append(collection)
+                stylesByFile[collection.stylesFile, default: []].append(collection)
+                if let nightFile = collection.stylesNightFile {
+                    stylesNightByFile[nightFile, default: []].append(collection)
+                }
+            }
+
+            // Update each file with all its theme sections
+            for (fileURL, fileCollections) in attrsByFile {
+                updateSharedThemeAttributesFile(
+                    url: fileURL,
+                    collections: fileCollections,
+                    contentKeyPath: \.attrsContent,
+                    isAttrsFile: true,
+                    ui: ui
+                )
+            }
+
+            for (fileURL, fileCollections) in stylesByFile {
+                updateSharedThemeAttributesFile(
+                    url: fileURL,
+                    collections: fileCollections,
+                    contentKeyPath: \.stylesContent,
+                    isAttrsFile: false,
+                    ui: ui
+                )
+            }
+
+            for (fileURL, fileCollections) in stylesNightByFile {
+                updateSharedThemeAttributesFile(
+                    url: fileURL,
+                    collections: fileCollections,
+                    contentKeyPath: \.stylesContent,
+                    isAttrsFile: false,
+                    ui: ui
+                )
+            }
+
+            if globalOptions.verbose {
+                let uniqueFiles = Set(attrsByFile.keys).union(stylesByFile.keys).union(stylesNightByFile.keys)
+                ui.info("Theme attributes: merged \(collections.count) configs into \(uniqueFiles.count) files")
+            }
+        }
+
+        /// Updates a single shared theme attributes file with multiple theme sections.
+        private func updateSharedThemeAttributesFile(
+            url: URL,
+            collections: [ThemeAttributesCollection],
+            contentKeyPath: KeyPath<ThemeAttributesCollection, String>,
+            isAttrsFile: Bool,
+            ui: TerminalUI
+        ) {
+            // Ensure directory exists
+            let directory = url.deletingLastPathComponent()
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+            // Read existing file content (or create if needed)
+            var fileContent: String
+            if FileManager.default.fileExists(atPath: url.path) {
+                do {
+                    fileContent = try String(contentsOf: url, encoding: .utf8)
+                } catch {
+                    ui.warning("Failed to read \(url.lastPathComponent): \(error.localizedDescription)")
+                    return
+                }
+            } else {
+                // Check if any collection allows auto-create
+                guard let firstAutoCreate = collections.first(where: { $0.autoCreateMarkers }), isAttrsFile else {
+                    ui.warning(
+                        .themeAttributesFileNotFound(file: url.lastPathComponent)
+                    )
+                    return
+                }
+                // Create minimal attrs.xml with markers
+                let updater = MarkerFileUpdater(
+                    markerStart: firstAutoCreate.markerStart,
+                    markerEnd: firstAutoCreate.markerEnd,
+                    themeName: firstAutoCreate.themeName
+                )
+                fileContent = """
+                <?xml version="1.0" encoding="utf-8"?>
+                <resources>
+                    \(updater.fullStartMarker)
+                    \(updater.fullEndMarker)
+                </resources>
+                """
+            }
+
+            // Update each theme section in sequence
+            for collection in collections {
+                let updater = MarkerFileUpdater(
+                    markerStart: collection.markerStart,
+                    markerEnd: collection.markerEnd,
+                    themeName: collection.themeName
+                )
+
+                do {
+                    fileContent = try updater.update(
+                        content: collection[keyPath: contentKeyPath],
+                        in: fileContent,
+                        fileName: url.lastPathComponent
+                    )
+                } catch {
+                    ui.warning(
+                        .themeAttributesMarkerNotFound(
+                            file: url.lastPathComponent,
+                            marker: updater.fullStartMarker
+                        )
+                    )
+                }
+            }
+
+            // Write updated file
+            do {
+                try Data(fileContent.utf8).write(to: url, options: .atomic)
+            } catch {
+                ui.warning("Failed to write \(url.lastPathComponent): \(error.localizedDescription)")
             }
         }
 

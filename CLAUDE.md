@@ -306,6 +306,7 @@ RetryLogger.formatRetryMessage(context)
 | Asset Discovery | `noAssetsFound`                                                                                                                      |
 | Xcode           | `xcodeProjectUpdateFailed`                                                                                                           |
 | Batch           | `noConfigsFound`, `invalidConfigsSkipped`, `noValidConfigs`, `checkpointExpired`, `checkpointPathMismatch`, `preFetchPartialFailure` |
+| Theme Attrs     | `themeAttributesFileNotFound`, `themeAttributesMarkerNotFound`, `themeAttributesNameCollision`                                       |
 | Retry           | `retrying(attempt:maxAttempts:error:delay:)`                                                                                         |
 
 **Adding new warnings:**
@@ -733,6 +734,7 @@ exfig init -p android
 | Package               | Version | Purpose                    |
 | --------------------- | ------- | -------------------------- |
 | swift-argument-parser | 1.5.0+  | CLI framework              |
+| swift-collections     | 1.2.x   | Ordered collections        |
 | Yams                  | 5.3.0+  | YAML parsing               |
 | Stencil               | 0.15.1+ | Template engine            |
 | StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions   |

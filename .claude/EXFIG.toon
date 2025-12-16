@@ -267,8 +267,9 @@ buildCommands:
   docsPreview: mise run docs:preview
   run: .build/debug/exfig
 
-dependencies[11]{name,version,purpose}:
+dependencies[12]{name,version,purpose}:
   swift-argument-parser,1.5.0+,CLI framework
+  swift-collections,1.2.x,Ordered collections
   Yams,5.3.0+,YAML parsing
   Stencil,0.15.1+,Template engine
   StencilSwiftKit,2.10.1+,Swift Stencil extensions

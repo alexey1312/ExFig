@@ -14,7 +14,8 @@ struct ExFigWarningFormatter {
              .noValidConfigs, .xcodeProjectUpdateFailed, .checkpointExpired,
              .checkpointPathMismatch, .retrying, .preFetchPartialFailure,
              .preFetchComponentsPartialFailure, .preFetchNodesPartialFailure,
-             .granularCacheWithoutCache:
+             .granularCacheWithoutCache, .themeAttributesFileNotFound,
+             .themeAttributesMarkerNotFound, .themeAttributesNameCollision:
             formatCompact(warning)
 
         // Multiline format warnings
@@ -73,6 +74,15 @@ struct ExFigWarningFormatter {
         case .granularCacheWithoutCache:
             "--experimental-granular-cache ignored: requires --cache flag"
 
+        case let .themeAttributesFileNotFound(file):
+            "Theme attributes skipped: file not found, path=\(file)"
+
+        case let .themeAttributesMarkerNotFound(file, marker):
+            "Theme attributes skipped: marker not found, file=\(file), marker=\(marker)"
+
+        case let .themeAttributesNameCollision(count, collisions):
+            formatThemeAttributesCollision(count: count, collisions: collisions)
+
         // Multiline cases handled in main format() method
         case .noAssetsFound, .invalidConfigsSkipped, .webIconsMissingSVGData, .webIconsConversionFailed:
             fatalError("Multiline warnings should not reach formatCompact")
@@ -123,5 +133,14 @@ struct ExFigWarningFormatter {
         let preview = names.prefix(maxNames).joined(separator: ", ")
         let remaining = names.count - maxNames
         return "\(preview), +\(remaining) more"
+    }
+
+    private func formatThemeAttributesCollision(
+        count: Int,
+        collisions: [ThemeAttributeCollisionInfo]
+    ) -> String {
+        let preview = collisions.prefix(3).map { "\($0.discarded)→\($0.attr)" }.joined(separator: ", ")
+        let suffix = count > 3 ? ", +\(count - 3) more" : ""
+        return "Theme attributes collision: \(count) skipped, \(preview)\(suffix)"
     }
 }

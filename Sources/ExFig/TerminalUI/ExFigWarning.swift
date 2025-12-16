@@ -1,3 +1,10 @@
+/// Info about a theme attribute name collision for warning display.
+struct ThemeAttributeCollisionInfo: Sendable, Equatable {
+    let attr: String
+    let kept: String
+    let discarded: String
+}
+
 /// Unified warning types for ExFig CLI output with TOON formatting support.
 enum ExFigWarning: Sendable, Equatable {
     // MARK: - Configuration Warnings
@@ -57,6 +64,17 @@ enum ExFigWarning: Sendable, Equatable {
 
     /// Granular cache flag used without --cache enabled.
     case granularCacheWithoutCache
+
+    // MARK: - Theme Attributes Warnings
+
+    /// Target file for theme attributes not found and autoCreateMarkers is disabled.
+    case themeAttributesFileNotFound(file: String)
+
+    /// Markers not found in theme attributes target file.
+    case themeAttributesMarkerNotFound(file: String, marker: String)
+
+    /// Multiple XML color names map to the same theme attribute name.
+    case themeAttributesNameCollision(count: Int, collisions: [ThemeAttributeCollisionInfo])
 
     // MARK: - Web Export Warnings
 
