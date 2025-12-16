@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2025-12-16
+
+### Features
+
+- **android**: Add theme attributes export for colors by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **templates**: Remove trailing newlines from stencil files by @alexey1312
+
+
 ## [1.2.0] - 2025-12-14
 
 ### Features
@@ -22,7 +34,7 @@ All notable changes to this project will be documented in this file.
 
 Updated CI workflow to check formatting for Swift and Markdown, removed separate markdown formatting check. by @alexey1312
 
-- Add web
+- Add web 
 
 * feat(openspec): add web platform export proposal
 
@@ -74,7 +86,7 @@ Proposal to extend ExFig with native Web/React support:
 
 ### Other
 
-- Update batch
+- Update batch 
 
 * feat(batch): add pipelined download queue for parallelism
 
