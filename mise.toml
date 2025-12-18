@@ -17,6 +17,9 @@
 lockfile = false
 experimental = true
 legacy_version_file = false
+jobs = 6
+quiet = true
+terminal_progress = false
 
 # =============================================================================
 # Tools
@@ -80,11 +83,14 @@ run = "dprint check"
 
 [tasks.format]
 description = "Format all files (Swift + Markdown)"
-run = "hk fix --all"
+run = "hk fix --all 2>&1 | grep -E '^(✔|✗|hk )' || true"
 
 [tasks.format-check]
 description = "Check all formatting (CI)"
-run = "hk check --all"
+run = """
+set -o pipefail
+hk check --all 2>&1 | grep -E '^(✔|✗|hk )'
+"""
 
 [tasks.setup]
 description = "Install git hooks (hk)"
@@ -92,7 +98,10 @@ run = "./Scripts/install-hooks.sh"
 
 [tasks.pre-commit]
 description = "Run all pre-commit checks"
-run = "hk check --all"
+run = """
+set -o pipefail
+hk check --all 2>&1 | grep -E '^(✔|✗|hk )'
+"""
 
 [tasks.docs]
 description = "Generate DocC documentation"

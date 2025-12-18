@@ -58,4 +58,28 @@ final class StringCaseTests: XCTestCase {
         XCTAssertEqual("screaming_snake".screamingSnakeCased(), "SCREAMING_SNAKE")
         XCTAssertEqual("_this is*  not-Very%difficult".screamingSnakeCased(), "THIS_IS_NOT_VERY_DIFFICULT")
     }
+
+    func testNumbersInNames() throws {
+        // snake_case - numbers should stay with preceding letters
+        XCTAssertEqual("discount10".snakeCased(), "discount10")
+        XCTAssertEqual("discount10Color".snakeCased(), "discount10_color")
+        XCTAssertEqual("indrive-passenger-discount10-color".snakeCased(), "indrive_passenger_discount10_color")
+        XCTAssertEqual("icon24px".snakeCased(), "icon24px")
+        XCTAssertEqual("icon24pxBold".snakeCased(), "icon24px_bold")
+
+        // kebab-case
+        XCTAssertEqual("discount10Color".kebabCased(), "discount10-color")
+        XCTAssertEqual("icon24pxBold".kebabCased(), "icon24px-bold")
+
+        // SCREAMING_SNAKE_CASE
+        XCTAssertEqual("discount10Color".screamingSnakeCased(), "DISCOUNT10_COLOR")
+        XCTAssertEqual("icon24pxBold".screamingSnakeCased(), "ICON24PX_BOLD")
+
+        // camelCase - numbers from snake_case input
+        XCTAssertEqual("discount_10_color".lowerCamelCased(), "discount10Color")
+        XCTAssertEqual("discount-10-color".lowerCamelCased(), "discount10Color")
+
+        // PascalCase
+        XCTAssertEqual("discount_10_color".camelCased(), "Discount10Color")
+    }
 }

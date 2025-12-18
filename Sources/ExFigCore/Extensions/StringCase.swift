@@ -49,7 +49,9 @@ public extension String {
             if results.isEmpty && (character.isLetter || character.isNumber) {
                 results.append(String(character))
             } else if ((lastCharacter.isLetter || lastCharacter.isNumber) && character.isLowercase) ||
-                (lastCharacter.isNumber && character.isNumber) || (lastCharacter.isUppercase && character.isUppercase)
+                (lastCharacter.isNumber && character.isNumber) ||
+                (lastCharacter.isUppercase && character.isUppercase) ||
+                (lastCharacter.isLetter && character.isNumber)
             {
                 results[results.count - 1] += String(character)
             } else if character.isLetter || character.isNumber {
