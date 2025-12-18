@@ -511,11 +511,7 @@ extension ExFigCommand {
 
         // MARK: - iOS SVG Source Export
 
-        /// Exports iOS images using SVG source format with local rasterization.
-        ///
-        /// Downloads SVG from Figma, rasterizes locally with resvg at 1x/2x/3x scales,
-        /// and saves as PNG to xcassets.
-        // swiftlint:disable:next function_body_length function_parameter_count
+        // swiftlint:disable:next function_body_length function_parameter_count cyclomatic_complexity
         private func exportiOSSVGSourceImagesEntry(
             entry: Params.iOS.ImagesEntry,
             ios: Params.iOS,
@@ -1202,12 +1198,6 @@ extension ExFigCommand {
             try? FileManager.default.removeItem(at: tempDirectoryURL)
         }
 
-        /// Exports Android images using SVG source with local resvg rasterization to WebP.
-        ///
-        /// This method:
-        /// 1. Downloads SVG files from Figma CDN
-        /// 2. Rasterizes each SVG at the required scales using resvg
-        /// 3. Encodes to WebP and writes to drawable directories
         // swiftlint:disable:next function_body_length function_parameter_count
         private func exportAndroidSVGSourceWebpImagesEntry(
             images: [AssetPair<ImagesProcessor.AssetType>],

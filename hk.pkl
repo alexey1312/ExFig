@@ -35,6 +35,13 @@ local swift_linters = new Mapping<String, Step> {
         batch = true
         output_summary = "hide"
     }
+    // Full project swiftlint check (catches issues in unchanged files affected by changes)
+    ["swiftlint-all"] {
+        glob = List("*.swift")
+        check = "swiftlint lint --strict --quiet"
+        batch = true
+        output_summary = "hide"
+    }
 }
 
 // =============================================================================
