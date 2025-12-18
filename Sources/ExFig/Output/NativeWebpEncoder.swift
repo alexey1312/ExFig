@@ -1,4 +1,5 @@
 import Foundation
+import libwebp
 import WebP
 
 /// Errors that can occur during WebP encoding
@@ -70,20 +71,40 @@ struct NativeWebpEncoder: Sendable {
             throw NativeWebpEncoderError.invalidRgbaData(expected: expectedSize, actual: rgba.count)
         }
 
-        // Create WebP instance
-        let webp = WebP(width: width, height: height, rgba: rgba)
-
-        // Encode to WebP format
-        do {
-            if lossless {
-                // Use quality 100 for lossless (best compression while lossless)
-                return try webp.encode(quality: 100.0)
-            } else {
+        if lossless {
+            // Use native libwebp lossless encoding
+            return try encodeLossless(rgba: rgba, width: width, height: height)
+        } else {
+            // Use WebP wrapper for lossy encoding
+            let webp = WebP(width: width, height: height, rgba: rgba)
+            do {
                 return try webp.encode(quality: Float(quality))
+            } catch {
+                throw NativeWebpEncoderError.encodingFailed
             }
-        } catch {
+        }
+    }
+
+    /// Encodes RGBA pixel data to lossless WebP using native libwebp API.
+    private func encodeLossless(rgba: [UInt8], width: Int, height: Int) throws -> [UInt8] {
+        var output: UnsafeMutablePointer<UInt8>?
+        let stride = Int32(width * 4)
+
+        let size = WebPEncodeLosslessRGBA(
+            rgba,
+            Int32(width),
+            Int32(height),
+            stride,
+            &output
+        )
+
+        guard size > 0, let outputData = output else {
             throw NativeWebpEncoderError.encodingFailed
         }
+
+        let result = [UInt8](Data(bytes: outputData, count: Int(size)))
+        WebPFree(outputData)
+        return result
     }
 
     /// Encodes RGBA pixel data to WebP file

@@ -814,18 +814,8 @@ extension ExFigCommand {
 
             try fileWriter.write(files: localFiles)
 
-            if entry.format == .webp, let options = entry.webpOptions {
-                let converter: WebpConverter
-                switch (options.encoding, options.quality) {
-                case (.lossless, _):
-                    converter = WebpConverter(encoding: .lossless)
-                case let (.lossy, quality?):
-                    converter = WebpConverter(encoding: .lossy(quality: quality))
-                case (.lossy, .none):
-                    throw ExFigError.configurationError(
-                        "WebP encoding quality not specified. Set android.images.webpOptions.quality in YAML file."
-                    )
-                }
+            if entry.format == .webp {
+                let converter = createWebpConverter(from: entry.webpOptions)
                 let filesToConvert = localFiles.map(\.destination.url)
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
                     try await converter.convertBatch(files: filesToConvert) { current, _ in
@@ -1086,18 +1076,8 @@ extension ExFigCommand {
                 []
             }
 
-            if entry.format == .webp, let options = entry.webpOptions {
-                let converter: WebpConverter
-                switch (options.encoding, options.quality) {
-                case (.lossless, _):
-                    converter = WebpConverter(encoding: .lossless)
-                case let (.lossy, quality?):
-                    converter = WebpConverter(encoding: .lossy(quality: quality))
-                case (.lossy, .none):
-                    throw ExFigError.configurationError(
-                        "WebP encoding quality not specified. Set flutter.images.webpOptions.quality in YAML file."
-                    )
-                }
+            if entry.format == .webp {
+                let converter = createWebpConverter(from: entry.webpOptions)
                 let filesToConvert = localFiles.map(\.destination.url)
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
                     try await converter.convertBatch(files: filesToConvert) { current, _ in
@@ -1362,6 +1342,26 @@ extension ExFigCommand {
                 hashes: loaderResult.computedHashes,
                 skippedCount: skippedCount
             )
+        }
+
+        // MARK: - WebP Converter Helpers
+
+        /// Creates a WebP converter from Android format options, using defaults if not specified.
+        private func createWebpConverter(from options: Params.Android.Images.FormatOptions?) -> WebpConverter {
+            guard let options else {
+                // Default: lossy with quality 80
+                return WebpConverter(encoding: .lossy(quality: 80))
+            }
+
+            switch (options.encoding, options.quality) {
+            case (.lossless, _):
+                return WebpConverter(encoding: .lossless)
+            case let (.lossy, quality?):
+                return WebpConverter(encoding: .lossy(quality: quality))
+            case (.lossy, .none):
+                // Lossy without quality specified - use default 80
+                return WebpConverter(encoding: .lossy(quality: 80))
+            }
         }
     }
 }
