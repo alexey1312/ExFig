@@ -198,6 +198,51 @@ let loader = ImagesLoader(client: client, params: params, platform: .ios, logger
 
 **Frame name resolution:** `entry.figmaFrameName` → `params.common?.images?.figmaFrameName` → `"Illustrations"`
 
+### SVG Source Format
+
+Images can use SVG as the source format from Figma API, with local rasterization using resvg for higher quality results:
+
+```yaml
+# iOS example - SVG source with PNG output
+ios:
+  images:
+    - figmaFrameName: "Illustrations"
+      assetsFolder: "Illustrations"
+      sourceFormat: svg  # Fetch SVG, rasterize locally to PNG
+      scales: [1, 2, 3]
+
+# Android example - SVG source with WebP output
+android:
+  images:
+    - figmaFrameName: "Illustrations"
+      output: "src/main/res/"
+      format: webp
+      sourceFormat: svg  # Fetch SVG, rasterize locally to WebP
+      webpOptions:
+        encoding: lossless
+```
+
+**How it works:**
+
+1. Figma API returns SVG instead of PNG
+2. ExFig uses resvg (Rust library) to rasterize SVG locally
+3. Output is encoded to PNG (iOS) or WebP (Android) at configured scales
+
+**Benefits:**
+
+- Higher quality than Figma's server-side PNG rendering
+- Consistent results across all scales
+- Smaller file sizes with lossless WebP
+
+**Key files:**
+
+| File                                            | Purpose                          |
+| ----------------------------------------------- | -------------------------------- |
+| `Sources/Resvg/SvgRasterizer.swift`             | Swift wrapper for resvg C API    |
+| `Sources/ExFig/Output/SvgToWebpConverter.swift` | SVG → WebP conversion            |
+| `Sources/ExFig/Output/SvgToPngConverter.swift`  | SVG → PNG conversion             |
+| `Libraries/macos/libresvg.dylib`                | Pre-built resvg universal binary |
+
 ### TerminalUI Usage
 
 ```swift

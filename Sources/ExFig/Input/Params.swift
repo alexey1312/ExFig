@@ -83,6 +83,14 @@ struct Params: Decodable {
         case svg
     }
 
+    /// Source format for fetching images from Figma API.
+    /// - `png`: Download raster PNG from Figma (default, legacy behavior)
+    /// - `svg`: Download SVG and rasterize locally with resvg (higher quality)
+    enum SourceFormat: String, Decodable {
+        case png
+        case svg
+    }
+
     struct iOS: Decodable {
         /// Single colors configuration (legacy format).
         /// Uses common.variablesColors for Figma Variables source.
@@ -268,6 +276,8 @@ struct Params: Decodable {
             let scales: [Double]?
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
+            /// Source format for fetching from Figma API. Default: png
+            let sourceFormat: SourceFormat?
         }
 
         /// Images configuration supporting both single object and array formats.
@@ -293,7 +303,8 @@ struct Params: Decodable {
                         nameStyle: images.nameStyle,
                         scales: images.scales,
                         imageSwift: images.imageSwift,
-                        swiftUIImageSwift: images.swiftUIImageSwift
+                        swiftUIImageSwift: images.swiftUIImageSwift,
+                        sourceFormat: nil
                     )]
                 case let .multiple(entries):
                     entries
@@ -539,6 +550,8 @@ struct Params: Decodable {
             let output: String
             let format: Format
             let webpOptions: FormatOptions?
+            /// Source format for fetching from Figma API. Default: png
+            let sourceFormat: SourceFormat?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
@@ -549,6 +562,8 @@ struct Params: Decodable {
             let output: String
             let format: Images.Format
             let webpOptions: Images.FormatOptions?
+            /// Source format for fetching from Figma API. Default: png
+            let sourceFormat: SourceFormat?
         }
 
         /// Images configuration supporting both single object and array formats.
@@ -573,7 +588,8 @@ struct Params: Decodable {
                         scales: images.scales,
                         output: images.output,
                         format: images.format,
-                        webpOptions: images.webpOptions
+                        webpOptions: images.webpOptions,
+                        sourceFormat: images.sourceFormat
                     )]
                 case let .multiple(entries):
                     entries
@@ -732,6 +748,8 @@ struct Params: Decodable {
             let scales: [Double]?
             let format: ImageFormat?
             let webpOptions: Android.Images.FormatOptions?
+            /// Source format for fetching from Figma API. Default: png
+            let sourceFormat: SourceFormat?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
@@ -744,6 +762,8 @@ struct Params: Decodable {
             let scales: [Double]?
             let format: ImageFormat?
             let webpOptions: Android.Images.FormatOptions?
+            /// Source format for fetching from Figma API. Default: png
+            let sourceFormat: SourceFormat?
         }
 
         /// Images configuration supporting both single object and array formats.
@@ -770,7 +790,8 @@ struct Params: Decodable {
                         className: images.className,
                         scales: images.scales,
                         format: images.format,
-                        webpOptions: images.webpOptions
+                        webpOptions: images.webpOptions,
+                        sourceFormat: images.sourceFormat
                     )]
                 case let .multiple(entries):
                     entries

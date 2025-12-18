@@ -11,6 +11,12 @@ enum ImagesLoaderFormat: Sendable {
     case webp
 }
 
+/// Source format for fetching from Figma API.
+enum ImagesSourceFormat: Sendable {
+    case png // Download PNG from Figma API (default)
+    case svg // Download SVG and rasterize locally with resvg
+}
+
 /// Configuration for loading images from a specific Figma frame.
 struct ImagesLoaderConfig: Sendable {
     /// Figma frame name to load images from.
@@ -22,12 +28,17 @@ struct ImagesLoaderConfig: Sendable {
     /// Image format (for Android/Flutter). iOS always uses PNG.
     let format: ImagesLoaderFormat?
 
+    /// Source format for fetching from Figma API.
+    /// When .svg, downloads SVG and rasterizes locally with resvg.
+    let sourceFormat: ImagesSourceFormat
+
     /// Creates config for a specific iOS images entry.
     static func forIOS(entry: Params.iOS.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
-            format: nil // iOS always uses PNG
+            format: nil, // iOS always uses PNG output
+            sourceFormat: convertSourceFormat(entry.sourceFormat)
         )
     }
 
@@ -36,7 +47,8 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
-            format: convertAndroidFormat(entry.format)
+            format: convertAndroidFormat(entry.format),
+            sourceFormat: convertSourceFormat(entry.sourceFormat)
         )
     }
 
@@ -45,7 +57,8 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
-            format: entry.format.flatMap { convertFlutterFormat($0) }
+            format: entry.format.flatMap { convertFlutterFormat($0) },
+            sourceFormat: convertSourceFormat(entry.sourceFormat)
         )
     }
 
@@ -54,7 +67,8 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
-            format: .svg // Web uses SVG by default
+            format: .svg, // Web uses SVG by default
+            sourceFormat: .svg // Web always uses SVG source
         )
     }
 
@@ -63,7 +77,8 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
-            format: nil
+            format: nil,
+            sourceFormat: .png
         )
     }
 
@@ -80,6 +95,13 @@ struct ImagesLoaderConfig: Sendable {
         case .svg: .svg
         case .png: .png
         case .webp: .webp
+        }
+    }
+
+    private static func convertSourceFormat(_ sourceFormat: Params.SourceFormat?) -> ImagesSourceFormat {
+        switch sourceFormat {
+        case .svg: .svg
+        case .png, nil: .png
         }
     }
 }
@@ -149,6 +171,17 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
     }
 
+    /// Whether to use SVG as source format from Figma API.
+    /// When true, SVG is fetched from Figma and rasterized locally with resvg.
+    private var useSVGSource: Bool {
+        config.sourceFormat == .svg
+    }
+
+    /// The source format to use when fetching from Figma API.
+    var sourceFormat: ImagesSourceFormat {
+        config.sourceFormat
+    }
+
     /// Loads images from Figma, supporting both single-file and separate light/dark file modes.
     func load(
         filter: String? = nil,
@@ -193,7 +226,8 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
     ) async throws -> ImagesLoaderOutput {
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
-        if isRasterFormat {
+        if isRasterFormat, !useSVGSource {
+            // PNG source: fetch PNG at multiple scales from Figma
             let scales = getScales(customScales: configScales)
 
             let images = try await loadPNGImages(
@@ -206,6 +240,8 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             let (lightImages, darkImages) = splitByDarkMode(images, darkSuffix: darkSuffix)
             return (lightImages, darkImages)
         } else {
+            // SVG source or vector output: fetch SVG from Figma
+            // For SVG source with raster output, export code will rasterize locally
             let pack = try await loadVectorImages(
                 fileId: params.figma.lightFileId,
                 frameName: frameName,
@@ -230,13 +266,15 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             filesToLoad.append(("dark", darkFileId))
         }
 
-        if isRasterFormat {
+        if isRasterFormat, !useSVGSource {
+            // PNG source: fetch PNG at multiple scales from Figma
             return try await loadRasterImagesFromMultipleFiles(
                 filesToLoad: filesToLoad,
                 filter: filter,
                 onBatchProgress: onBatchProgress
             )
         } else {
+            // SVG source or vector output: fetch SVG from Figma
             return try await loadVectorImagesFromMultipleFiles(
                 filesToLoad: filesToLoad,
                 filter: filter,
@@ -328,8 +366,8 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         let fileId = params.figma.lightFileId
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
-        if isRasterFormat {
-            // Raster images (PNG/WebP) with granular cache
+        if isRasterFormat, !useSVGSource {
+            // PNG source: Raster images (PNG/WebP) with granular cache
             let scales = getScales(customScales: configScales)
 
             let result = try await loadPNGImagesWithGranularCache(
@@ -362,7 +400,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 allNames: lightOnlyNames
             )
         } else {
-            // Vector images (SVG) with granular cache
+            // SVG source or vector output: fetch SVG with granular cache
             let result = try await loadVectorImagesWithGranularCache(
                 fileId: fileId,
                 frameName: frameName,
@@ -418,15 +456,16 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         // Determine format and scales once (same for all files)
-        let useRasterFormat = isRasterFormat
-        let scales = useRasterFormat ? getScales(customScales: configScales) : []
+        // Use PNG loading only when raster format AND PNG source
+        let usePNGLoading = isRasterFormat && !useSVGSource
+        let scales = usePNGLoading ? getScales(customScales: configScales) : []
 
         // Load all files in parallel
         let results = try await withThrowingTaskGroup(of: FileGranularResult.self) { [self] group in
             for (key, fileId) in filesToLoad {
-                group.addTask { [key, fileId, filter, onBatchProgress, useRasterFormat, scales] in
-                    if useRasterFormat {
-                        // Raster images (PNG/WebP)
+                group.addTask { [key, fileId, filter, onBatchProgress, usePNGLoading, scales] in
+                    if usePNGLoading {
+                        // PNG source: Raster images (PNG/WebP)
                         let result = try await self.loadPNGImagesWithGranularCache(
                             fileId: fileId,
                             frameName: self.frameName,
@@ -443,7 +482,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                             allNames: result.allNames
                         )
                     } else {
-                        // Vector images (SVG)
+                        // SVG source or vector output: fetch SVG
                         let result = try await self.loadVectorImagesWithGranularCache(
                             fileId: fileId,
                             frameName: self.frameName,

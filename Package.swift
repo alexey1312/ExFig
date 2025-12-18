@@ -38,6 +38,7 @@ let package = Package(
                 "FlutterExport",
                 "WebExport",
                 "SVGKit",
+                "Resvg",
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Yams", package: "Yams"),
@@ -47,6 +48,51 @@ let package = Package(
                 .product(name: "LibPNG", package: "libpng"),
                 .product(name: "ToonFormat", package: "toon-swift"),
             ]
+        ),
+
+        // resvg C API bindings
+        .target(
+            name: "CResvg",
+            path: "Sources/CResvg",
+            publicHeadersPath: "include",
+            linkerSettings: [
+                // macOS: dynamic library with rpath
+                .unsafeFlags(
+                    ["-L", "Libraries/macos", "-lresvg"],
+                    .when(platforms: [.macOS])
+                ),
+                // rpath for debug build: .build/debug/exfig -> ../../Libraries/macos
+                .unsafeFlags(
+                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../../Libraries/macos"],
+                    .when(platforms: [.macOS])
+                ),
+                // rpath for release build: .build/apple/Products/Release/exfig -> ../../../../Libraries/macos
+                .unsafeFlags(
+                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../../../../Libraries/macos"],
+                    .when(platforms: [.macOS])
+                ),
+                // rpath for release distribution: ExFig + Libraries/libresvg.dylib
+                .unsafeFlags(
+                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/Libraries"],
+                    .when(platforms: [.macOS])
+                ),
+                // rpath for test bundle: .build/*/debug/*.xctest/Contents/MacOS/*
+                .unsafeFlags(
+                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../../../../../../Libraries/macos"],
+                    .when(platforms: [.macOS])
+                ),
+                // Linux: static library (no rpath needed)
+                .unsafeFlags(
+                    ["-L", "Libraries/linux", "-lresvg"],
+                    .when(platforms: [.linux])
+                ),
+            ]
+        ),
+
+        // Swift wrapper for resvg
+        .target(
+            name: "Resvg",
+            dependencies: ["CResvg"]
         ),
 
         // Shared target
