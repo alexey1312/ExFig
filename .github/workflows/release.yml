@@ -45,18 +45,7 @@ jobs:
         if: matrix.platform == 'linux-x64'
         run: |
           apt-get update
-          apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev curl
-
-      - name: Install Rust and build resvg (Linux)
-        if: matrix.platform == 'linux-x64'
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          . "$HOME/.cargo/env"
-          git clone --depth 1 --branch v0.45.1 https://github.com/linebender/resvg.git /tmp/resvg
-          cd /tmp/resvg
-          cargo build --release -p resvg-capi
-          mkdir -p $GITHUB_WORKSPACE/Libraries/linux
-          cp target/release/libresvg.a $GITHUB_WORKSPACE/Libraries/linux/
+          apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev
 
       - name: Set version from tag
         run: |
