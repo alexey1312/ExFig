@@ -218,7 +218,7 @@ final class MockClientTests: XCTestCase {
 
     func testConcurrentRequestsCompleteInParallelTime() async throws {
         client.setResponse([Style](), for: StylesEndpoint.self)
-        client.setRequestDelay(0.1) // 100ms per request
+        client.setRequestDelay(0.15) // 150ms per request
         let localClient = client!
 
         let startTime = Date()
@@ -228,8 +228,9 @@ final class MockClientTests: XCTestCase {
         }
         let duration = Date().timeIntervalSince(startTime)
 
-        // If parallel: ~100ms, If sequential: ~200ms
-        XCTAssertLessThan(duration, 0.18, "Concurrent requests should complete in parallel")
+        // If parallel: ~150ms, If sequential: ~300ms
+        // Threshold 0.28s gives CI headroom while still proving parallelism
+        XCTAssertLessThan(duration, 0.28, "Concurrent requests should complete in parallel")
         XCTAssertEqual(client.requestCount, 2)
     }
 

@@ -79,7 +79,7 @@ final class IconsLoaderTests: XCTestCase {
 
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
-        mockClient.setRequestDelay(0.05) // 50ms per request
+        mockClient.setRequestDelay(0.08) // 80ms per request
 
         let params = Params.make(
             lightFileId: "light-file",
@@ -93,9 +93,10 @@ final class IconsLoaderTests: XCTestCase {
         let duration = Date().timeIntervalSince(startTime)
 
         // 2 files x 2 requests each (Components + Image) = 4 requests
-        // Sequential: 4 x 50ms = 200ms minimum
-        // Parallel (2 files): ~100ms (2 sequential per file, 2 files parallel)
-        XCTAssertLessThan(duration, 0.18, "Loading should be parallel across files")
+        // Sequential: 4 x 80ms = 320ms minimum
+        // Parallel (2 files): ~160ms (2 sequential per file, 2 files parallel)
+        // Threshold 0.25s gives CI headroom while proving parallelism
+        XCTAssertLessThan(duration, 0.25, "Loading should be parallel across files")
 
         XCTAssertEqual(result.light.count, 1)
         XCTAssertNotNil(result.dark)

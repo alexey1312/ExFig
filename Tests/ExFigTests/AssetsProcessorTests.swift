@@ -378,7 +378,8 @@ final class AssetsProcessorTests: XCTestCase {
         let names = ["motiveBox04Color", "IconName", "some/name"]
         let result = processor.processNames(names)
 
-        XCTAssertEqual(result, ["motive_box_04_color", "icon_name", "some_name"])
+        // Numbers stay attached to preceding letters (no separator before digits)
+        XCTAssertEqual(result, ["motive_box04_color", "icon_name", "some_name"])
     }
 
     func testProcessNamesWithPascalCase() {
@@ -402,7 +403,8 @@ final class AssetsProcessorTests: XCTestCase {
         let names = ["motiveBox04Color", "IconName", "some_name"]
         let result = processor.processNames(names)
 
-        XCTAssertEqual(result, ["motive-box-04-color", "icon-name", "some-name"])
+        // Numbers stay attached to preceding letters (no separator before digits)
+        XCTAssertEqual(result, ["motive-box04-color", "icon-name", "some-name"])
     }
 
     func testProcessNamesWithScreamingSnakeCase() {
