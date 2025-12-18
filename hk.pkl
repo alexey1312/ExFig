@@ -26,12 +26,14 @@ local swift_linters = new Mapping<String, Step> {
         batch = true
         stage = List("*.swift")
         check_first = true
+        output_summary = "hide"
     }
     ["swiftlint"] {
         glob = List("*.swift")
         check = "swiftlint lint --strict --quiet {{files}}"
         fix = "swiftlint --fix {{files}}"
         batch = true
+        output_summary = "hide"
     }
 }
 
@@ -48,6 +50,7 @@ local dprint_checks = new Mapping<String, Step> {
         stage = List("*.md")
         batch = true
         check_first = true
+        output_summary = "hide"
     }
 }
 
@@ -58,10 +61,14 @@ local dprint_checks = new Mapping<String, Step> {
 local builtin_checks = new Mapping<String, Step> {
     ["trailing-whitespace"] = (Builtins.trailing_whitespace) {
         exclude = generated_excludes + template_excludes
+        hide = true
     }
-    ["check-merge-conflict"] = Builtins.check_merge_conflict
+    ["check-merge-conflict"] = (Builtins.check_merge_conflict) {
+        hide = true
+    }
     ["newlines"] = (Builtins.newlines) {
         exclude = generated_excludes + template_excludes
+        hide = true
     }
 }
 
