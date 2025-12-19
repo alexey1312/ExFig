@@ -56,32 +56,12 @@ let package = Package(
             path: "Sources/CResvg",
             publicHeadersPath: "include",
             linkerSettings: [
-                // macOS: dynamic library with rpath
+                // macOS: static library (universal arm64 + x86_64)
                 .unsafeFlags(
-                    ["-L", "Libraries/macos", "-lresvg"],
+                    ["-L", "Libraries/macos", "-lresvg", "-liconv"],
                     .when(platforms: [.macOS])
                 ),
-                // rpath for debug build: .build/debug/exfig -> ../../Libraries/macos
-                .unsafeFlags(
-                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../../Libraries/macos"],
-                    .when(platforms: [.macOS])
-                ),
-                // rpath for release build: .build/apple/Products/Release/exfig -> ../../../../Libraries/macos
-                .unsafeFlags(
-                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../../../../Libraries/macos"],
-                    .when(platforms: [.macOS])
-                ),
-                // rpath for release distribution: ExFig + Libraries/libresvg.dylib
-                .unsafeFlags(
-                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/Libraries"],
-                    .when(platforms: [.macOS])
-                ),
-                // rpath for test bundle: .build/*/debug/*.xctest/Contents/MacOS/*
-                .unsafeFlags(
-                    ["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../../../../../../Libraries/macos"],
-                    .when(platforms: [.macOS])
-                ),
-                // Linux: static library (no rpath needed)
+                // Linux: static library
                 .unsafeFlags(
                     ["-L", "Libraries/linux", "-lresvg"],
                     .when(platforms: [.linux])

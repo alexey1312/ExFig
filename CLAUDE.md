@@ -236,12 +236,25 @@ android:
 
 **Key files:**
 
-| File                                            | Purpose                          |
-| ----------------------------------------------- | -------------------------------- |
-| `Sources/Resvg/SvgRasterizer.swift`             | Swift wrapper for resvg C API    |
-| `Sources/ExFig/Output/SvgToWebpConverter.swift` | SVG → WebP conversion            |
-| `Sources/ExFig/Output/SvgToPngConverter.swift`  | SVG → PNG conversion             |
-| `Libraries/macos/libresvg.dylib`                | Pre-built resvg universal binary |
+| File                                            | Purpose                                       |
+| ----------------------------------------------- | --------------------------------------------- |
+| `Sources/Resvg/SvgRasterizer.swift`             | Swift wrapper for resvg C API                 |
+| `Sources/ExFig/Output/SvgToWebpConverter.swift` | SVG → WebP conversion                         |
+| `Sources/ExFig/Output/SvgToPngConverter.swift`  | SVG → PNG conversion                          |
+| `Libraries/macos/libresvg.a`                    | Static resvg library (universal arm64+x86_64) |
+| `Libraries/linux/libresvg.a`                    | Static resvg library (x86_64)                 |
+| `Scripts/build-resvg-static.sh`                 | Script to rebuild resvg from source           |
+
+**Updating resvg:**
+
+```bash
+# Build new version (requires Rust toolchain)
+./Scripts/build-resvg-static.sh 0.46.0
+
+# Commit changes
+git add Libraries/macos/libresvg.a Sources/CResvg/include/resvg.h
+git commit -m "chore(deps): update resvg to 0.46.0"
+```
 
 ### TerminalUI Usage
 

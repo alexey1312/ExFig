@@ -97,3 +97,6 @@ iOSInjectionProject/
 
 # DocC generated documentation
 docs/
+
+# resvg build artifacts
+.resvg-build/

@@ -72,13 +72,12 @@ jobs:
       - name: Create release archive (macOS)
         if: matrix.platform == 'macos'
         run: |
-          mkdir -p dist/Libraries
+          mkdir -p dist
           cp .build/${{ matrix.build-path }}/exfig dist/ExFig
           cp -r .build/${{ matrix.build-path }}/exfig_AndroidExport.bundle dist/
           cp -r .build/${{ matrix.build-path }}/exfig_XcodeExport.bundle dist/
           cp -r .build/${{ matrix.build-path }}/exfig_FlutterExport.bundle dist/
           cp -r .build/${{ matrix.build-path }}/exfig_WebExport.bundle dist/
-          cp Libraries/macos/libresvg.dylib dist/Libraries/
           cp LICENSE dist/
           cd dist && zip -r ../${{ matrix.archive-name }}.zip .
 
