@@ -18,11 +18,13 @@ jobs:
             --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" `
             --quiet --norestart
 
+      # Note: Swift 6.2 for Windows may not be available yet
+      # Check https://www.swift.org/download/ for latest Windows releases
       - name: Install Swift
         uses: compnerd/gha-setup-swift@main
         with:
-          branch: swift-6.0.2-release
-          tag: 6.0.2-RELEASE
+          branch: swift-6.2-release
+          tag: 6.2-RELEASE
 
       - name: Swift version
         run: swift --version

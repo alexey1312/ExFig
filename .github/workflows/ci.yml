@@ -33,7 +33,7 @@ jobs:
     runs-on: macos-15
     needs: lint
     env:
-      DEVELOPER_DIR: "/Applications/Xcode_16.3.app/Contents/Developer"
+      DEVELOPER_DIR: "/Applications/Xcode_26.1.1.app/Contents/Developer"
 
     steps:
       - uses: actions/checkout@v6
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     container:
-      image: swift:6.0
+      image: swift:6.2
     steps:
       - name: Install Git LFS
         run: |
