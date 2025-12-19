@@ -35,7 +35,9 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
 
       - name: Select Xcode 16.3 (macOS)
         if: matrix.platform == 'macos'
@@ -45,7 +47,9 @@ jobs:
         if: matrix.platform == 'linux-x64'
         run: |
           apt-get update
-          apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev
+          apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git-lfs
+          git lfs install
+          git lfs pull
 
       - name: Set version from tag
         run: |
@@ -99,7 +103,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
@@ -132,7 +136,7 @@ jobs:
     needs: [build, update-version]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -181,7 +185,7 @@ jobs:
           echo "linux=${LINUX_SHA}" >> $GITHUB_OUTPUT
 
       - name: Checkout Homebrew tap
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: alexey1312/homebrew-exfig
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
