@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
 
 permissions:
   contents: write
@@ -105,6 +106,7 @@ jobs:
   update-version:
     name: Update Version and Changelog
     needs: build
+    if: ${{ !contains(github.ref, '-') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -137,7 +139,7 @@ jobs:
 
   release:
     name: Create Release
-    needs: [build, update-version]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -162,6 +164,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ steps.changelog.outputs.content }}
+          prerelease: ${{ contains(github.ref, '-') }}
           files: |
             artifacts/exfig-macos/exfig-macos.zip
             artifacts/exfig-linux-x64/exfig-linux-x64.tar.gz
@@ -169,6 +172,7 @@ jobs:
   update-homebrew:
     name: Update Homebrew Tap
     needs: release
+    if: ${{ !contains(github.ref, '-') }}
     runs-on: ubuntu-latest
     steps:
       - name: Get version from tag
