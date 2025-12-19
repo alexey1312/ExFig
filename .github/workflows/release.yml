@@ -35,6 +35,13 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Install Git LFS (Linux)
+        if: matrix.platform == 'linux-x64'
+        run: |
+          apt-get update
+          apt-get install -y git-lfs
+          git lfs install
+
       - uses: actions/checkout@v6
         with:
           lfs: true
@@ -46,10 +53,7 @@ jobs:
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'linux-x64'
         run: |
-          apt-get update
-          apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git-lfs
-          git lfs install
-          git lfs pull
+          apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev
 
       - name: Set version from tag
         run: |
