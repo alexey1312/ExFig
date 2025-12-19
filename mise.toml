@@ -35,11 +35,11 @@ xcsift = "1.0.15"       # xcodebuild output filtering
 dprint = "0.50.2"       # MD/JSON/YAML formatting (Rust, fast)
 
 # --- Git & CI ---
-hk = "1.27.0"           # Git hooks manager
+hk = "1.28.0"           # Git hooks manager
 git-cliff = "2.10.1"    # Changelog generation
 
 # --- Configuration ---
-pkl = "0.28.2"          # Configuration language (for hk.pkl)
+pkl = "0.30.2"          # Configuration language (for hk.pkl)
 
 # =============================================================================
 # Tasks

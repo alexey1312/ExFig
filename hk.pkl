@@ -1,5 +1,5 @@
-amends "package://github.com/jdx/hk/releases/download/v1.27.0/hk@1.27.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.27.0/hk@1.27.0#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v1.28.0/hk@1.28.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.28.0/hk@1.28.0#/Builtins.pkl"
 
 // =============================================================================
 // hk Configuration for ExFig
@@ -26,21 +26,22 @@ local swift_linters = new Mapping<String, Step> {
         batch = true
         stage = List("*.swift")
         check_first = true
-        output_summary = "hide"
+        hide = true
     }
     ["swiftlint"] {
         glob = List("*.swift")
-        check = "swiftlint lint --strict --quiet {{files}}"
         fix = "swiftlint --fix {{files}}"
         batch = true
-        output_summary = "hide"
+        stage = List("*.swift")
+        hide = true
     }
-    // Full project swiftlint check (catches issues in unchanged files affected by changes)
-    ["swiftlint-all"] {
+    // Strict check after fix to catch unfixable errors
+    ["swiftlint-strict"] {
         glob = List("*.swift")
-        check = "swiftlint lint --strict --quiet"
+        check = "swiftlint lint --strict --quiet {{files}}"
         batch = true
-        output_summary = "hide"
+        depends = "swiftlint"
+        hide = true
     }
 }
 
@@ -49,15 +50,11 @@ local swift_linters = new Mapping<String, Step> {
 // =============================================================================
 
 local dprint_checks = new Mapping<String, Step> {
-    ["dprint"] {
-        glob = List("*.md")
+    ["dprint"] = (Builtins.dprint) {
         exclude = List("CHANGELOG.md", "Sources/**/*.docc/**", ".claude/**", ".github/ISSUE_TEMPLATE/**")
-        check = "dprint check {{files}}"
-        fix = "dprint fmt {{files}}"
         stage = List("*.md")
-        batch = true
         check_first = true
-        output_summary = "hide"
+        hide = true
     }
 }
 
@@ -95,9 +92,10 @@ local all_linters = new Mapping<String, Step> {
 
 hooks {
     // Pre-commit: runs all linters with auto-fix
+    // Using patch-file stash mode to properly handle untracked files
     ["pre-commit"] {
         fix = true
-        stash = "git"
+        stash = "patch-file"
         steps = all_linters
     }
 
