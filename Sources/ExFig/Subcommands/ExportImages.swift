@@ -639,7 +639,7 @@ extension ExFigCommand {
                             throw error
                         }
 
-                        await progress.increment()
+                        progress.increment()
                     }
                 }
 
