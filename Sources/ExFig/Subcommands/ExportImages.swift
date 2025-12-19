@@ -754,13 +754,13 @@ extension ExFigCommand {
                     ))
                 }
 
-                // Dark variant (if exists)
+                // Dark variant (if exists) - must use same imageset directory as light
                 if let dark = pair.dark, let image = dark.images.first {
-                    let imagesetDir = assetsURL.appendingPathComponent("\(dark.name).imageset")
+                    let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
                     files.append(FileContents(
                         destination: Destination(
                             directory: imagesetDir,
-                            file: URL(fileURLWithPath: "\(dark.name)_dark.svg")
+                            file: URL(fileURLWithPath: "\(pair.light.name)_dark.svg")
                         ),
                         sourceURL: image.url
                     ))
@@ -1045,13 +1045,13 @@ extension ExFigCommand {
             let tempDirectoryDarkURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
             let remoteFiles = images.flatMap { asset -> [FileContents] in
-                let lightFiles = asset.light.images.compactMap { image -> FileContents? in
-                    guard let fileURL = URL(string: "\(image.name).svg") else { return nil }
+                let lightFiles = asset.light.images.map { image -> FileContents in
+                    let fileURL = URL(fileURLWithPath: "\(image.name).svg")
                     let dest = Destination(directory: tempDirectoryLightURL, file: fileURL)
                     return FileContents(destination: dest, sourceURL: image.url)
                 }
-                let darkFiles = asset.dark?.images.compactMap { image -> FileContents? in
-                    guard let fileURL = URL(string: "\(image.name).svg") else { return nil }
+                let darkFiles = asset.dark?.images.map { image -> FileContents in
+                    let fileURL = URL(fileURLWithPath: "\(image.name).svg")
                     let dest = Destination(directory: tempDirectoryDarkURL, file: fileURL)
                     return FileContents(destination: dest, sourceURL: image.url, dark: true)
                 } ?? []
