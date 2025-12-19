@@ -137,9 +137,8 @@ ios:
     # [optional] If true and a color style name contains symbol "/" then "/" symbol indicates grouping by folders, and each folder will have the "Provides Namespace" property enabled. Defaults to `false`.
     groupUsingNamespace: true
 
-  # [optional] Parameters for exporting icons
-  # Can be a single object (legacy format) or an array of objects (new format)
-  # Legacy format (single icons configuration):
+  # [optional] Parameters for exporting icons (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Icons Configuration" section below.
   icons:
     # Image file format: pdf or svg
     format: pdf
@@ -168,7 +167,7 @@ ios:
     # It will work when renderMode value isn't "template". Defaults to nil.
     renderModeTemplateSuffix: '_template'
 
-  # New format (multiple icons configurations from different Figma frames):
+  # Array format (multiple icons configurations from different Figma frames):
   # icons:
   #   - figmaFrameName: Actions     # Export icons from "Actions" frame
   #     format: svg
@@ -183,7 +182,9 @@ ios:
   #     preservesVectorRepresentation: ["*"]
   #     imageSwift: "./Generated/NavigationIcons.swift"
 
-  # [optional] Parameters for exporting images
+  # [optional] Parameters for exporting images (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Images Configuration" section below.
+  # Note: sourceFormat option is only available in the array format.
   images:
     # Name of the folder inside Assets.xcassets where to place images (.imageset directories)
     assetsFolder: Illustrations
@@ -252,9 +253,8 @@ android:
         prefix: "color"
         # [optional] Prefixes to strip from color names before transformation
         stripPrefixes: ["extensions_", "information_", "statement_", "additional_"]
-  # Parameters for exporting icons
-  # Can be a single object (legacy format) or an array of objects (new format)
-  # Legacy format (single icons configuration):
+  # Parameters for exporting icons (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Icons Configuration" section below.
   icons:
     # Where to place icons relative to `mainRes`? ExFig clears this directory every time your execute `exfig icons` command
     output: "figma-import-icons"
@@ -265,7 +265,7 @@ android:
     # [optional] Extension target for ImageVector (e.g., "com.example.app.ui.AppIcons")
     composeExtensionTarget: "com.example.app.ui.AppIcons"
 
-  # New format (multiple icons configurations from different Figma frames):
+  # Array format (multiple icons configurations from different Figma frames):
   # icons:
   #   - figmaFrameName: Actions     # Export icons from "Actions" frame
   #     output: "drawable-actions"
@@ -276,7 +276,8 @@ android:
   #     composeFormat: imageVector
   #     composeExtensionTarget: "com.example.NavIcons"
 
-  # Parameters for exporting images
+  # Parameters for exporting images (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Images Configuration" section below.
   images:
     # Image file format: svg, png, or webp
     format: webp
@@ -290,6 +291,9 @@ android:
       encoding: lossy
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
+    # [optional] Source format for fetching from Figma API: png or svg. Default: png.
+    # When "svg" is specified, images are fetched as SVG and rasterized locally using resvg for higher quality.
+    # sourceFormat: svg
   # Parameters for exporting typography
   typography:
     # Typography name style: camelCase, snake_case, PascalCase, kebab-case, or SCREAMING_SNAKE_CASE
@@ -311,9 +315,8 @@ flutter:
     # [optional] Class name for generated colors. Defaults to "AppColors"
     className: "AppColors"
 
-  # Parameters for exporting icons
-  # Can be a single object (legacy format) or an array of objects (new format)
-  # Legacy format (single icons configuration):
+  # Parameters for exporting icons (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Icons Configuration" section below.
   icons:
     # Where to place SVG icon assets (relative path from project root)
     output: "assets/icons"
@@ -322,7 +325,7 @@ flutter:
     # [optional] Class name for generated icon constants. Defaults to "AppIcons"
     className: "AppIcons"
 
-  # New format (multiple icons configurations from different Figma frames):
+  # Array format (multiple icons configurations from different Figma frames):
   # icons:
   #   - figmaFrameName: Actions     # Export icons from "Actions" frame
   #     output: "assets/icons/actions"
@@ -333,7 +336,8 @@ flutter:
   #     dartFile: "nav_icons.dart"
   #     className: "NavIcons"
 
-  # Parameters for exporting images
+  # Parameters for exporting images (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Images Configuration" section below.
   images:
     # Where to place image assets (relative path from project root)
     output: "assets/images"
@@ -351,6 +355,9 @@ flutter:
       encoding: lossy
       # Encoding quality in percents. Only for lossy encoding.
       quality: 90
+    # [optional] Source format for fetching from Figma API: png or svg. Default: png.
+    # When "svg" is specified, images are fetched as SVG and rasterized locally using resvg for higher quality.
+    # sourceFormat: svg
 
 # [optional] Web export parameters (React/TypeScript)
 web:
@@ -368,9 +375,8 @@ web:
     # [optional] Output file name for JSON tokens. When specified, exports colors as JSON
     jsonFile: "tokens.json"
 
-  # Parameters for exporting icons
-  # Can be a single object (legacy format) or an array of objects (new format)
-  # Legacy format (single icons configuration):
+  # Parameters for exporting icons (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Icons Configuration" section below.
   icons:
     # [optional] Where to place SVG icon assets (relative path)
     assetsDirectory: "assets/icons"
@@ -381,7 +387,7 @@ web:
     # [optional] Icon size in pixels for viewBox. Defaults to 24
     iconSize: 24
 
-  # New format (multiple icons configurations from different Figma frames):
+  # Array format (multiple icons configurations from different Figma frames):
   # icons:
   #   - figmaFrameName: Actions     # Export icons from "Actions" frame
   #     assetsDirectory: "assets/icons/actions"
@@ -392,16 +398,15 @@ web:
   #     generateReactComponents: true
   #     iconSize: 20                # Different icon size for navigation
 
-  # Parameters for exporting images
-  # Can be a single object (legacy format) or an array of objects (new format)
-  # Legacy format (single images configuration):
+  # Parameters for exporting images (legacy single-object format)
+  # Can also be an array of objects — see "Multiple Images Configuration" section below.
   images:
     # [optional] Where to place image assets (relative path)
     assetsDirectory: "assets/images"
     # [optional] Generate React TSX components for each image. Defaults to true
     generateReactComponents: true
 
-  # New format (multiple images configurations from different Figma frames):
+  # Array format (multiple images configurations from different Figma frames):
   # images:
   #   - figmaFrameName: Illustrations
   #     assetsDirectory: "assets/images/illustrations"
@@ -429,14 +434,14 @@ system organizes icons into different categories (e.g., Actions, Navigation, Cha
 The `icons` section can be either a single object (legacy) or an array of objects (new):
 
 ```yaml
-# Legacy format (single configuration)
+# Legacy single-object format
 ios:
   icons:
     format: svg
     assetsFolder: Icons
     nameStyle: camelCase
 
-# New format (multiple configurations)
+# Array format
 ios:
   icons:
     - figmaFrameName: Actions
@@ -508,14 +513,14 @@ your design system has separate color collections (e.g., Base Palette, Theme Col
 The `colors` section can be either a single object (legacy) or an array of objects (new):
 
 ```yaml
-# Legacy format (uses common.variablesColors for source)
+# Legacy single-object format (uses common.variablesColors for source)
 ios:
   colors:
     useColorAssets: true
     assetsFolder: Colors
     nameStyle: camelCase
 
-# New format (multiple configurations with self-contained sources)
+# Array format (self-contained source per entry)
 ios:
   colors:
     - tokensFileId: abc123
@@ -629,13 +634,13 @@ system organizes illustrations into categories (e.g., Onboarding, Promo, Empty S
 The `images` section can be either a single object (legacy) or an array of objects (new):
 
 ```yaml
-# Legacy format (single images configuration)
+# Legacy single-object format
 ios:
   images:
     assetsFolder: Illustrations
     nameStyle: camelCase
 
-# New format (multiple images configurations from different Figma frames)
+# Array format
 ios:
   images:
     - figmaFrameName: Onboarding
@@ -713,6 +718,68 @@ If `figmaFrameName` is not specified in an entry, it falls back to:
 
 1. `common.images.figmaFrameName` (if defined)
 2. `"Illustrations"` (default)
+
+## SVG Source Format
+
+ExFig supports fetching images as SVG from Figma API and rasterizing them locally using the resvg library. This produces
+higher quality results compared to Figma's server-side PNG rendering.
+
+### Configuration
+
+Add `sourceFormat: svg` to your images configuration:
+
+```yaml
+# iOS (array format only)
+ios:
+  images:
+    - figmaFrameName: Illustrations
+      assetsFolder: Illustrations
+      nameStyle: camelCase
+      scales: [1, 2, 3]
+      sourceFormat: svg  # Fetch SVG, rasterize locally to PNG
+
+# Android (both formats)
+android:
+  images:
+    format: webp
+    output: "drawable-illustrations"
+    sourceFormat: svg  # Fetch SVG, rasterize locally to WebP
+    webpOptions:
+      encoding: lossless
+
+# Flutter (both formats)
+flutter:
+  images:
+    output: "assets/images"
+    format: png
+    sourceFormat: svg  # Fetch SVG, rasterize locally to PNG
+```
+
+### How It Works
+
+1. ExFig requests SVG format from Figma API instead of PNG
+2. SVG is rasterized locally using [resvg](https://github.com/RazrFalcon/resvg) (Rust library)
+3. Output is encoded to the target format (PNG for iOS, WebP/PNG for Android, PNG/WebP for Flutter) at configured scales
+
+### Benefits
+
+- **Higher quality** — resvg produces sharper results than Figma's server-side rendering
+- **Consistent output** — Same rendering across all scales
+- **Smaller file sizes** — Especially with lossless WebP encoding
+
+### Platform Support
+
+| Platform | Legacy Format | Array Format |
+| -------- | ------------- | ------------ |
+| iOS      | ❌            | ✅           |
+| Android  | ✅            | ✅           |
+| Flutter  | ✅            | ✅           |
+| Web      | ❌            | ❌           |
+
+### Requirements
+
+- resvg library is bundled with ExFig (no additional installation needed)
+- Works on macOS (arm64 + x86_64) and Linux (x86_64)
 
 ## Android Theme Attributes
 
