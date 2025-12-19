@@ -55,11 +55,21 @@ run = "swift build --configuration release 2>&1 | xcsift -w -f toon --toon-key-f
 
 [tasks.test]
 description = "Run all tests"
-run = "swift test 2>&1 | xcsift -w -f toon --toon-key-folding safe"
+run = """
+# Copy libresvg.dylib to build directory (workaround for rpath in test bundles)
+mkdir -p .build/arm64-apple-macosx/debug
+cp -f Libraries/macos/libresvg.dylib .build/arm64-apple-macosx/debug/libresvg.dylib 2>/dev/null || true
+swift test 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
 
 [tasks."test:filter"]
 description = "Run tests with filter (usage: mise run test:filter ExFigTests)"
-run = "swift test --filter {{arg(name='filter')}} 2>&1 | xcsift -w -f toon --toon-key-folding safe"
+run = """
+# Copy libresvg.dylib to build directory (workaround for rpath in test bundles)
+mkdir -p .build/arm64-apple-macosx/debug
+cp -f Libraries/macos/libresvg.dylib .build/arm64-apple-macosx/debug/libresvg.dylib 2>/dev/null || true
+swift test --filter {{arg(name='filter')}} 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
 
 [tasks.lint]
 description = "Run SwiftLint"

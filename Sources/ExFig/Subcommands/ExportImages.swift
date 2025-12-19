@@ -359,6 +359,18 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
+            // Branch based on source format
+            if entry.sourceFormat == .svg {
+                return try await exportiOSSVGSourceImagesEntry(
+                    entry: entry,
+                    ios: ios,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+
             let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
             let loader = ImagesLoader(
                 client: client,
@@ -495,6 +507,327 @@ extension ExFigCommand {
                 hashes: loaderResult.computedHashes,
                 skippedCount: skippedCount
             )
+        }
+
+        // MARK: - iOS SVG Source Export
+
+        // swiftlint:disable:next function_body_length function_parameter_count cyclomatic_complexity
+        private func exportiOSSVGSourceImagesEntry(
+            entry: Params.iOS.ImagesEntry,
+            ios: Params.iOS,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
+            let loader = ImagesLoader(
+                client: client,
+                params: params,
+                platform: .ios,
+                logger: logger,
+                config: loaderConfig
+            )
+            loader.granularCacheManager = granularCacheManager
+
+            let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+                if granularCacheManager != nil {
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return ImagesLoaderResultWithHashes(
+                        light: result.light,
+                        dark: result.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: []
+                    )
+                }
+            }
+
+            if loaderResult.allSkipped {
+                ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
+            let processor = ImagesProcessor(
+                platform: .ios,
+                nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
+            )
+
+            let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing images...") {
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
+                }
+            if let imagesWarning {
+                ui.warning(imagesWarning)
+            }
+
+            let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
+
+            // Collect SVG URLs for download
+            let svgRemoteFiles = makeSVGRemoteFilesForIOS(
+                images: images,
+                assetsURL: assetsURL
+            )
+
+            // Download SVG files
+            let fileDownloader = faultToleranceOptions.createFileDownloader()
+            let downloadedSVGs: [FileContents] = if !svgRemoteFiles.isEmpty {
+                try await ui.withProgress("Downloading SVGs from Figma", total: svgRemoteFiles.count) { progress in
+                    try await PipelinedDownloader.download(
+                        files: svgRemoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
+                        progress.update(current: current)
+                    }
+                }
+            } else {
+                []
+            }
+
+            // iOS uses 1x, 2x, 3x scales
+            let scales: [Double] = entry.scales ?? [1.0, 2.0, 3.0]
+            let converter = SvgToPngConverter()
+
+            // Clear existing assets if not filtering and not using granular cache
+            if filter == nil, granularCacheManager == nil {
+                try? FileManager.default.removeItem(atPath: assetsURL.path)
+            }
+
+            // Rasterize SVGs to PNG at each scale
+            let pngFiles: [FileContents] = try await ui.withProgress(
+                "Rasterizing SVGs to PNG",
+                total: downloadedSVGs.count * scales.count
+            ) { progress in
+                var results: [FileContents] = []
+
+                for fileContents in downloadedSVGs {
+                    guard let svgData = fileContents.data else { continue }
+                    let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
+                    let imagesetDir = fileContents.destination.file.deletingLastPathComponent()
+
+                    for scale in scales {
+                        let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
+                        let pngFileName = "\(baseName)\(scaleSuffix).png"
+
+                        do {
+                            let pngData = try converter.convert(
+                                svgData: svgData,
+                                scale: scale,
+                                fileName: baseName
+                            )
+
+                            results.append(FileContents(
+                                destination: Destination(
+                                    directory: imagesetDir,
+                                    file: URL(fileURLWithPath: pngFileName)
+                                ),
+                                data: pngData
+                            ))
+                        } catch {
+                            logger.error("Failed to rasterize \(baseName) at \(scale)x: \(error)")
+                            throw error
+                        }
+
+                        await progress.increment()
+                    }
+                }
+
+                return results
+            }
+
+            // Generate Contents.json for each imageset
+            let contentsJsonFiles = makeImagesetContentsJson(
+                for: images,
+                scales: scales,
+                assetsURL: assetsURL
+            )
+
+            // Generate folder Contents.json
+            let folderContentsFile = FileContents(
+                destination: Destination(
+                    directory: assetsURL,
+                    file: URL(fileURLWithPath: "Contents.json")
+                ),
+                data: Data(#"{"info":{"author":"xcode","version":1}}"#.utf8)
+            )
+
+            // Combine all files to write
+            var allFiles = pngFiles + contentsJsonFiles
+            allFiles.append(folderContentsFile)
+
+            // Generate Swift extensions
+            let output = XcodeImagesOutput(
+                assetsFolderURL: assetsURL,
+                assetsInMainBundle: ios.xcassetsInMainBundle,
+                assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
+                resourceBundleNames: ios.resourceBundleNames,
+                addObjcAttribute: ios.addObjcAttribute,
+                uiKitImageExtensionURL: entry.imageSwift,
+                swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+                templatesPath: ios.templatesPath
+            )
+
+            let exporter = XcodeImagesExporter(output: output)
+            let allAssetNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let extensionFiles = try exporter.exportSwiftExtensions(
+                assets: images,
+                allAssetNames: allAssetNames,
+                append: filter != nil
+            )
+            allFiles.append(contentsOf: extensionFiles)
+
+            let filesToWrite = allFiles
+            try await ui.withSpinner("Writing files to Xcode project...") {
+                try fileWriter.write(files: filesToWrite)
+            }
+
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - images.count
+                : 0
+
+            guard params.ios?.xcassetsInSwiftPackage == false else {
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
+                ui.success("Done! Exported \(images.count) images (SVG source).")
+                return PlatformExportResult(
+                    count: images.count,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: skippedCount
+                )
+            }
+
+            do {
+                let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
+                try allFiles.forEach { file in
+                    if file.destination.file.pathExtension == "swift" {
+                        try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
+                    }
+                }
+                try xcodeProject.save()
+            } catch {
+                ui.warning(.xcodeProjectUpdateFailed)
+            }
+
+            if BatchProgressViewStorage.progressView == nil {
+                await checkForUpdate(logger: logger)
+            }
+
+            ui.success("Done! Exported \(images.count) images (SVG source).")
+            return PlatformExportResult(
+                count: images.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
+        }
+
+        /// Creates remote file references for SVG downloads (iOS).
+        private func makeSVGRemoteFilesForIOS(
+            images: [AssetPair<ImagePack>],
+            assetsURL: URL
+        ) -> [FileContents] {
+            var files: [FileContents] = []
+
+            for pair in images {
+                // Light variant
+                if let image = pair.light.images.first {
+                    let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
+                    files.append(FileContents(
+                        destination: Destination(
+                            directory: imagesetDir,
+                            file: URL(fileURLWithPath: "\(pair.light.name).svg")
+                        ),
+                        sourceURL: image.url
+                    ))
+                }
+
+                // Dark variant (if exists) - must use same imageset directory as light
+                if let dark = pair.dark, let image = dark.images.first {
+                    let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
+                    files.append(FileContents(
+                        destination: Destination(
+                            directory: imagesetDir,
+                            file: URL(fileURLWithPath: "\(pair.light.name)_dark.svg")
+                        ),
+                        sourceURL: image.url
+                    ))
+                }
+            }
+
+            return files
+        }
+
+        /// Creates Contents.json files for each imageset.
+        private func makeImagesetContentsJson(
+            for images: [AssetPair<ImagePack>],
+            scales: [Double],
+            assetsURL: URL
+        ) -> [FileContents] {
+            var files: [FileContents] = []
+
+            for pair in images {
+                let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
+
+                var imagesArray: [[String: Any]] = []
+
+                // Add light variants at each scale
+                for scale in scales {
+                    let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
+                    let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
+                    imagesArray.append([
+                        "filename": "\(pair.light.name)\(scaleSuffix).png",
+                        "idiom": "universal",
+                        "scale": scaleString,
+                    ])
+                }
+
+                // Add dark variants if they exist
+                if pair.dark != nil {
+                    for scale in scales {
+                        let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
+                        let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
+                        imagesArray.append([
+                            "appearances": [["appearance": "luminosity", "value": "dark"]],
+                            "filename": "\(pair.light.name)_dark\(scaleSuffix).png",
+                            "idiom": "universal",
+                            "scale": scaleString,
+                        ])
+                    }
+                }
+
+                let contentsJson: [String: Any] = [
+                    "images": imagesArray,
+                    "info": ["author": "xcode", "version": 1],
+                ]
+
+                if let jsonData = try? JSONSerialization.data(
+                    withJSONObject: contentsJson,
+                    options: [.prettyPrinted, .sortedKeys]
+                ) {
+                    files.append(FileContents(
+                        destination: Destination(
+                            directory: imagesetDir,
+                            file: URL(fileURLWithPath: "Contents.json")
+                        ),
+                        data: jsonData
+                    ))
+                }
+            }
+
+            return files
         }
 
         private func exportAndroidImages(
@@ -654,6 +987,7 @@ extension ExFigCommand {
 
             switch entry.format {
             case .svg:
+                // SVG output format
                 try await exportAndroidSVGImagesEntry(
                     images: images,
                     entry: entry,
@@ -661,7 +995,18 @@ extension ExFigCommand {
                     granularCacheManager: granularCacheManager,
                     ui: ui
                 )
+            case .webp where entry.sourceFormat == .svg:
+                // WebP output with SVG source - rasterize locally with resvg
+                try await exportAndroidSVGSourceWebpImagesEntry(
+                    images: images,
+                    entry: entry,
+                    android: android,
+                    params: params,
+                    granularCacheManager: granularCacheManager,
+                    ui: ui
+                )
             case .png, .webp:
+                // PNG/WebP output with PNG source from Figma
                 try await exportAndroidRasterImagesEntry(
                     images: images,
                     entry: entry,
@@ -700,13 +1045,13 @@ extension ExFigCommand {
             let tempDirectoryDarkURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
             let remoteFiles = images.flatMap { asset -> [FileContents] in
-                let lightFiles = asset.light.images.compactMap { image -> FileContents? in
-                    guard let fileURL = URL(string: "\(image.name).svg") else { return nil }
+                let lightFiles = asset.light.images.map { image -> FileContents in
+                    let fileURL = URL(fileURLWithPath: "\(image.name).svg")
                     let dest = Destination(directory: tempDirectoryLightURL, file: fileURL)
                     return FileContents(destination: dest, sourceURL: image.url)
                 }
-                let darkFiles = asset.dark?.images.compactMap { image -> FileContents? in
-                    guard let fileURL = URL(string: "\(image.name).svg") else { return nil }
+                let darkFiles = asset.dark?.images.map { image -> FileContents in
+                    let fileURL = URL(fileURLWithPath: "\(image.name).svg")
                     let dest = Destination(directory: tempDirectoryDarkURL, file: fileURL)
                     return FileContents(destination: dest, sourceURL: image.url, dark: true)
                 } ?? []
@@ -851,6 +1196,178 @@ extension ExFigCommand {
             }
 
             try? FileManager.default.removeItem(at: tempDirectoryURL)
+        }
+
+        // swiftlint:disable:next function_body_length function_parameter_count
+        private func exportAndroidSVGSourceWebpImagesEntry(
+            images: [AssetPair<ImagesProcessor.AssetType>],
+            entry: Params.Android.ImagesEntry,
+            android: Params.Android,
+            params: Params,
+            granularCacheManager: GranularCacheManager?,
+            ui: TerminalUI
+        ) async throws {
+            let tempDirectoryURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+
+            // Create remote file list for SVG downloads (one SVG per image, no scales)
+            let remoteFiles = try images.flatMap { asset -> [FileContents] in
+                let lightFiles = try makeSVGRemoteFiles(
+                    images: asset.light.images,
+                    dark: false,
+                    outputDirectory: tempDirectoryURL
+                )
+                let darkFiles = try asset.dark.flatMap { darkImagePack -> [FileContents] in
+                    try makeSVGRemoteFiles(images: darkImagePack.images, dark: true, outputDirectory: tempDirectoryURL)
+                } ?? []
+                return lightFiles + darkFiles
+            }
+
+            // Download SVG files
+            let fileDownloader = faultToleranceOptions.createFileDownloader()
+            let localSVGFiles: [FileContents] = if !remoteFiles.isEmpty {
+                try await ui.withProgress("Downloading SVG files", total: remoteFiles.count) { progress in
+                    try await PipelinedDownloader.download(
+                        files: remoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
+                        progress.update(current: current)
+                    }
+                }
+            } else {
+                []
+            }
+
+            try fileWriter.write(files: localSVGFiles)
+
+            // Get scales for rasterization
+            let scales = getScalesForPlatform(entry.scales, platform: .android)
+
+            // Create WebP converter with appropriate encoding
+            let converter = createSvgToWebpConverter(from: entry.webpOptions)
+
+            // Rasterize SVGs to WebP at each scale
+            let totalConversions = localSVGFiles.count * scales.count
+            let webpFiles: [FileContents] = try await ui.withProgress(
+                "Rasterizing SVGs to WebP",
+                total: totalConversions
+            ) { progress in
+                var results: [FileContents] = []
+                var completed = 0
+
+                for svgFile in localSVGFiles {
+                    let svgData = try Data(contentsOf: svgFile.destination.url)
+                    let baseName = svgFile.destination.file.deletingPathExtension().lastPathComponent
+
+                    for scale in scales {
+                        let webpData = try converter.convert(
+                            svgData: svgData,
+                            scale: scale,
+                            fileName: baseName
+                        )
+
+                        // Create output file in temp directory
+                        let webpFileName = URL(string: "\(baseName).webp")!
+                        let scaleDir = tempDirectoryURL
+                            .appendingPathComponent(svgFile.dark ? "dark" : "light")
+                            .appendingPathComponent("webp")
+                            .appendingPathComponent(String(scale))
+                        try FileManager.default.createDirectory(at: scaleDir, withIntermediateDirectories: true)
+
+                        let webpPath = scaleDir.appendingPathComponent(webpFileName.lastPathComponent)
+                        try webpData.write(to: webpPath)
+
+                        let fileContents = FileContents(
+                            destination: Destination(directory: scaleDir, file: webpFileName),
+                            dataFile: webpPath,
+                            scale: scale,
+                            dark: svgFile.dark
+                        )
+                        results.append(fileContents)
+
+                        completed += 1
+                        progress.update(current: completed)
+                    }
+                }
+                return results
+            }
+
+            // Clear output directory if not filtering
+            if filter == nil, granularCacheManager == nil {
+                let outputDirectory = URL(fileURLWithPath: android.mainRes.appendingPathComponent(entry.output).path)
+                try? FileManager.default.removeItem(atPath: outputDirectory.path)
+            }
+
+            // Map to final output directories
+            let isSingleScale = scales.count == 1
+            let finalFiles = webpFiles.compactMap { fileContents -> FileContents? in
+                guard let dataFile = fileContents.dataFile else { return nil }
+                let directoryName = Drawable.scaleToDrawableName(
+                    fileContents.scale,
+                    dark: fileContents.dark,
+                    singleScale: isSingleScale
+                )
+                let directory = URL(fileURLWithPath: android.mainRes.appendingPathComponent(entry.output).path)
+                    .appendingPathComponent(directoryName, isDirectory: true)
+                return FileContents(
+                    destination: Destination(directory: directory, file: fileContents.destination.file),
+                    dataFile: dataFile
+                )
+            }
+
+            try await ui.withSpinner("Writing files to Android Studio project...") {
+                try fileWriter.write(files: finalFiles)
+            }
+
+            try? FileManager.default.removeItem(at: tempDirectoryURL)
+        }
+
+        /// Creates remote file list for SVG downloads (one per image, no scale).
+        private func makeSVGRemoteFiles(images: [Image], dark: Bool, outputDirectory: URL) throws -> [FileContents] {
+            // For SVG source, we only have one image per component (scale: .all)
+            // Take the first image from each unique name
+            var seenNames = Set<String>()
+            return try images.compactMap { image -> FileContents? in
+                guard !seenNames.contains(image.name) else { return nil }
+                seenNames.insert(image.name)
+
+                guard let name = image.name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+                      let fileURL = URL(string: "\(name).svg")
+                else {
+                    throw ExFigError.invalidFileName(image.name)
+                }
+
+                let dest = Destination(
+                    directory: outputDirectory.appendingPathComponent(dark ? "dark" : "light"),
+                    file: fileURL
+                )
+                return FileContents(destination: dest, sourceURL: image.url, dark: dark)
+            }
+        }
+
+        /// Gets valid scales for the given platform.
+        private func getScalesForPlatform(_ customScales: [Double]?, platform: Platform) -> [Double] {
+            let validScales: [Double] = platform == .android ? [1, 2, 3, 1.5, 4.0] : [1, 2, 3]
+            let filtered = customScales?.filter { validScales.contains($0) } ?? []
+            return filtered.isEmpty ? validScales : filtered
+        }
+
+        /// Creates an SVG to WebP converter from format options.
+        private func createSvgToWebpConverter(from options: Params.Android.Images
+            .FormatOptions?) -> SvgToWebpConverter
+        {
+            guard let options else {
+                // Default: lossy with quality 80
+                return SvgToWebpConverter(encoding: .lossy(quality: 80))
+            }
+
+            switch (options.encoding, options.quality) {
+            case (.lossless, _):
+                return SvgToWebpConverter(encoding: .lossless)
+            case let (.lossy, quality?):
+                return SvgToWebpConverter(encoding: .lossy(quality: quality))
+            case (.lossy, .none):
+                return SvgToWebpConverter(encoding: .lossy(quality: 80))
+            }
         }
 
         /// Make array of remote FileContents for downloading images

@@ -31,4 +31,23 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
 
         return [contentsFile] + imageAssetsFiles + extensionFiles
     }
+
+    /// Exports only Swift extensions without asset catalog files.
+    ///
+    /// Use this when you're generating asset catalogs manually (e.g., SVG source with local rasterization)
+    /// but still need the Swift UIImage/Image extensions.
+    ///
+    /// - Parameters:
+    ///   - assets: Image asset pairs (used for name extraction if allAssetNames not provided).
+    ///   - allAssetNames: Optional complete list of all asset names.
+    ///   - append: Whether to append to existing extension files.
+    /// - Returns: Swift extension file contents.
+    public func exportSwiftExtensions(
+        assets: [AssetPair<ImagePack>],
+        allAssetNames: [String]? = nil,
+        append: Bool
+    ) throws -> [FileContents] {
+        let imageNames = allAssetNames ?? assets.map { normalizeName($0.light.name) }
+        return try generateExtensions(names: imageNames, append: append)
+    }
 }
