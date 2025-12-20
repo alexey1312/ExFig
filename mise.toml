@@ -20,6 +20,7 @@ legacy_version_file = false
 jobs = 6
 quiet = true
 terminal_progress = false
+github_attestations = false
 
 # =============================================================================
 # Tools
