@@ -2,6 +2,98 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.6] - 2025-12-20
+
+### Documentation
+
+- **config**: Document SVG source format and clarify config formats by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **release**: Fix universal binary build for macOS by @alexey1312
+
+
+### Other
+
+- Replace vendored resvg with swift-resvg package 
+
+* build(swift): update to Swift 6.2.3
+
+- Bump swift-tools-version to 6.2
+- Add .swift-version file for tooling
+- Remove unnecessary await on actor-isolated method
+
+* ci: use swiftly-action for Swift toolchain management
+
+Replace hardcoded Xcode paths and manual Swift version selection with vapor/swiftly-action for consistent Swift 6.2.3 toolchain across macOS workflows. Update Linux container to swift:6.2.
+
+* build(deps): replace vendored resvg with swift-resvg package
+
+* ci: improve SPM cache and add clean tasks
+
+Add Package.swift to cache key for better invalidation when
+dependencies change. Add SPM cache step to Linux build job.
+Add mise tasks for cleaning build artifacts and all caches.
+
+* build(deps): update mise to 2025.12.12
+
+* Disable GitHub attestations in mise.toml by @alexey1312 in [#15](https://github.com/alexey1312/ExFig/pull/15)
+
+- Add HEIC output format for iOS images 
+
+* docs(images): add HEIC conversion research and implementation plan
+
+Research findings for iOS HEIC image export:
+- Xcode asset catalogs support HEIC since Xcode 10.1
+- Apple ImageIO provides native encoding on macOS (not Linux)
+- libheif is cross-platform but has GPL licensing (x265)
+- Recommended: Phase 1 with macOS-only ImageIO approach
+
+* docs(web): archive web spec
+
+* docs(images): add HEIC conversion research and implementation plan
+
+* docs(images): add HEIC conversion research and implementation plan
+
+* feat(images): add HEIC output format for iOS images
+
+Add HEIC encoding support for iOS image exports using native ImageIO.
+HEIC provides ~40-50% smaller file sizes than PNG while maintaining
+full transparency support.
+
+- Add NativeHeicEncoder for RGBA → HEIC encoding (macOS only)
+- Add SvgToHeicConverter for SVG → HEIC pipeline via resvg
+- Add HeicConverter for batch PNG → HEIC conversion
+- Support both lossy and lossless encoding modes with quality control
+- Gracefully fall back to PNG on Linux with warning
+- Update Xcode asset catalog export to reference .heic files
+- Add outputFormat and heicOptions config parameters for iOS images
+
+---------
+
+Co-authored-by: Claude <noreply@anthropic.com> by @alexey1312 in [#16](https://github.com/alexey1312/ExFig/pull/16)
+
+
+## [1.2.6-beta.2] - 2025-12-19
+
+### Other
+
+- **resvg**: Switch from dynamic to static library linking by @alexey1312
+
+
+## [1.2.6-beta.1] - 2025-12-19
+
+### Features
+
+- **images**: Add SVG source format with local rasterization via resvg  by @alexey1312 in [#13](https://github.com/alexey1312/ExFig/pull/13)
+
+
+### Miscellaneous Tasks
+
+- **release**: Add pre-release tag support by @alexey1312
+
+
 ## [1.2.5] - 2025-12-18
 
 ### Bug Fixes
@@ -83,7 +175,7 @@ Proposal to extend ExFig with native Web/React support:
 
 * feat(web): add SVG to JSX converter for React components
 
-* feat(web): add SVG to JSX converter for React components by @alexey1312 in [#12](https://github.com/alexey1312/ExFig/pull/12)
+* feat(web): add SVG to JSX converter for React components by @alexey1312
 
 
 ## [1.1.3] - 2025-12-11
@@ -151,7 +243,7 @@ throughput in multi-config batch runs, maintains FIFO ordering.
 * feat(batch): centralize update check to end of batch
 
 Suppress individual update checks during batch exports and check once
-after all configs complete. by @alexey1312 in [#10](https://github.com/alexey1312/ExFig/pull/10)
+after all configs complete. by @alexey1312
 
 
 ## [1.0.8] - 2025-12-09
@@ -181,7 +273,7 @@ after all configs complete. by @alexey1312 in [#10](https://github.com/alexey131
 
 - **cli**: Add --timeout flag for API request timeout override by @alexey1312
 
-- **cache**: Add granular node-level cache tracking  by @alexey1312 in [#9](https://github.com/alexey1312/ExFig/pull/9)
+- **cache**: Add granular node-level cache tracking  by @alexey1312
 
 
 ## [1.0.5] - 2025-12-07
