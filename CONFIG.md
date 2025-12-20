@@ -664,6 +664,37 @@ ios:
 | `scales`            | Array of scale factors [1, 2, 3] (optional)                                      |
 | `imageSwift`        | Path to UIImage extension file (optional)                                        |
 | `swiftUIImageSwift` | Path to SwiftUI Image extension file (optional)                                  |
+| `sourceFormat`      | Source format from Figma API: `png` (default) or `svg` (optional)                |
+| `outputFormat`      | Output format: `png` (default) or `heic` (optional, macOS only for encoding)     |
+| `heicOptions`       | HEIC encoding options (optional, see below)                                      |
+
+#### HEIC Options (iOS only)
+
+When `outputFormat: heic` is specified:
+
+| Field      | Description                                     |
+| ---------- | ----------------------------------------------- |
+| `encoding` | `lossy` (default) or `lossless`                 |
+| `quality`  | Quality for lossy encoding: 0-100 (default: 90) |
+
+```yaml
+# iOS example - HEIC output with SVG source (best quality)
+ios:
+  images:
+    - figmaFrameName: Illustrations
+      assetsFolder: Illustrations
+      sourceFormat: svg      # Fetch SVG from Figma
+      outputFormat: heic     # Rasterize to HEIC locally
+      heicOptions:
+        encoding: lossy
+        quality: 90
+```
+
+**Requirements:**
+
+- **macOS only** for encoding (uses ImageIO framework)
+- iOS 12+ for runtime support
+- On Linux: Falls back to PNG with warning
 
 ### Android Images Array Format
 

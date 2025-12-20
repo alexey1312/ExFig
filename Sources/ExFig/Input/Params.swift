@@ -91,6 +91,32 @@ struct Params: Decodable {
         case svg
     }
 
+    /// Output format for iOS images in asset catalogs.
+    /// - `png`: Standard PNG format (default, maximum compatibility)
+    /// - `heic`: HEIC format (~40-50% smaller, iOS 12+, macOS only for encoding)
+    enum ImageOutputFormat: String, Decodable {
+        case png
+        case heic
+    }
+
+    /// HEIC encoding options for iOS images.
+    struct HeicOptions: Decodable {
+        /// Encoding mode: lossy (default) or lossless.
+        enum Encoding: String, Decodable {
+            case lossy
+            case lossless
+        }
+
+        let encoding: Encoding?
+        let quality: Int?
+
+        /// Resolved encoding mode (default: lossy).
+        var resolvedEncoding: Encoding { encoding ?? .lossy }
+
+        /// Resolved quality (default: 90).
+        var resolvedQuality: Int { quality ?? 90 }
+    }
+
     struct iOS: Decodable {
         /// Single colors configuration (legacy format).
         /// Uses common.variablesColors for Figma Variables source.
@@ -278,6 +304,11 @@ struct Params: Decodable {
             let swiftUIImageSwift: URL?
             /// Source format for fetching from Figma API. Default: png
             let sourceFormat: SourceFormat?
+            /// Output format for asset catalog. Default: png
+            /// HEIC provides ~40-50% smaller files but requires iOS 12+ and macOS for encoding.
+            let outputFormat: ImageOutputFormat?
+            /// HEIC encoding options. Only used when outputFormat is heic.
+            let heicOptions: HeicOptions?
         }
 
         /// Images configuration supporting both single object and array formats.
@@ -304,7 +335,9 @@ struct Params: Decodable {
                         scales: images.scales,
                         imageSwift: images.imageSwift,
                         swiftUIImageSwift: images.swiftUIImageSwift,
-                        sourceFormat: nil
+                        sourceFormat: nil,
+                        outputFormat: nil,
+                        heicOptions: nil
                     )]
                 case let .multiple(entries):
                     entries

@@ -21,7 +21,7 @@ final class NativeWebpEncoderTests: XCTestCase {
 
     func testInitWithDefaultQuality() {
         let encoder = NativeWebpEncoder()
-        XCTAssertEqual(encoder.quality, 80)
+        XCTAssertEqual(encoder.quality, 90)
         XCTAssertFalse(encoder.lossless)
     }
 
