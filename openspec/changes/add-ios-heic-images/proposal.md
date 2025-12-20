@@ -8,19 +8,25 @@ Currently ExFig only outputs PNG for iOS images; adding HEIC would reduce app bu
 ## What Changes
 
 - Add `outputFormat: heic` option for iOS images configuration
-- Add `heicQuality` option (0.0-1.0, default 0.9)
-- Create `NativeHeicEncoder` using Apple ImageIO (macOS only)
-- Create `SvgToHeicConverter` following existing converter pattern
+- Add `heicOptions` with `encoding` (lossy/lossless) and `quality` (0-100, default 90)
+- Create `NativeHeicEncoder` using Apple ImageIO (macOS only, lossy + lossless)
+- Create `SvgToHeicConverter` following existing converter pattern (SVG source)
+- Create `HeicConverter` for PNG source → HEIC conversion (like WebpConverter)
 - Update XcodeImagesExporter to output `.heic` files with correct Contents.json
+- **Breaking change**: Update WebP default quality from 80 to 90
 - **macOS only** - Linux falls back to PNG with warning
 
 ## Impact
 
 - Affected specs: `ios-export`
 - Affected code:
-  - `Sources/ExFig/Input/Params.swift` - add outputFormat, heicQuality
+  - `Sources/ExFig/Input/Params.swift` - add outputFormat, heicOptions
   - `Sources/ExFig/Output/NativeHeicEncoder.swift` - new file
-  - `Sources/ExFig/Output/SvgToHeicConverter.swift` - new file
+  - `Sources/ExFig/Output/SvgToHeicConverter.swift` - new file (SVG source)
+  - `Sources/ExFig/Output/HeicConverter.swift` - new file (PNG source)
+  - `Sources/ExFig/Output/NativeWebpEncoder.swift` - change default quality 80 → 90
+  - `Sources/ExFig/Subcommands/ExportImages.swift` - HEIC export paths
+  - `Sources/ExFig/TerminalUI/ExFigWarning.swift` - add heicUnavailable warning
   - `Sources/XcodeExport/XcodeImagesExporter.swift` - HEIC support
   - `Sources/XcodeExport/XcodeImagesExporterBase.swift` - file extension
 
@@ -84,11 +90,13 @@ Use ImageIO on macOS, disable HEIC on Linux.
 
 ### 4. Known Limitations
 
-| Issue                      | Mitigation                     |
-| -------------------------- | ------------------------------ |
-| macOS 15.5 encoding bug    | Version check, fallback to PNG |
-| Odd dimensions truncated   | Auto-round to even dimensions  |
-| DeviceRGB colorspace fails | Force sRGB colorspace          |
+| Issue                      | Mitigation                         |
+| -------------------------- | ---------------------------------- |
+| macOS 15.5 encoding bug    | Defer - fix if users report issues |
+| Odd dimensions truncated   | Auto-round to even dimensions      |
+| DeviceRGB colorspace fails | Force sRGB colorspace              |
+| Linux unsupported          | Fallback to PNG with warning       |
+| x265 GPL licensing         | Use ImageIO only (no libheif)      |
 
 ### 5. Configuration Schema
 
@@ -97,11 +105,15 @@ ios:
   images:
     - figmaFrameName: "Illustrations"
       assetsFolder: "Illustrations"
-      sourceFormat: svg
-      outputFormat: heic  # NEW: png | heic
-      heicQuality: 0.9    # NEW: 0.0-1.0
+      sourceFormat: svg       # svg | png (default)
+      outputFormat: heic      # NEW: png | heic
+      heicOptions:            # NEW: like webpOptions
+        encoding: lossy       # lossy (default) | lossless
+        quality: 90           # 0-100, default: 90
       scales: [1, 2, 3]
 ```
+
+**Note:** WebP default quality also changes from 80 to 90 (breaking change for consistency).
 
 ### References
 
