@@ -25,6 +25,7 @@ let package = Package(
         .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
         .package(url: "https://github.com/toon-format/toon-swift", from: "0.3.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
+        .package(url: "https://github.com/alexey1312/swift-resvg.git", from: "0.45.1"),
     ],
     targets: [
         // Main target
@@ -38,7 +39,7 @@ let package = Package(
                 "FlutterExport",
                 "WebExport",
                 "SVGKit",
-                "Resvg",
+                .product(name: "Resvg", package: "swift-resvg"),
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Yams", package: "Yams"),
@@ -48,31 +49,6 @@ let package = Package(
                 .product(name: "LibPNG", package: "libpng"),
                 .product(name: "ToonFormat", package: "toon-swift"),
             ]
-        ),
-
-        // resvg C API bindings
-        .target(
-            name: "CResvg",
-            path: "Sources/CResvg",
-            publicHeadersPath: "include",
-            linkerSettings: [
-                // macOS: static library (universal arm64 + x86_64)
-                .unsafeFlags(
-                    ["-L", "Libraries/macos", "-lresvg", "-liconv"],
-                    .when(platforms: [.macOS])
-                ),
-                // Linux: static library
-                .unsafeFlags(
-                    ["-L", "Libraries/linux", "-lresvg"],
-                    .when(platforms: [.linux])
-                ),
-            ]
-        ),
-
-        // Swift wrapper for resvg
-        .target(
-            name: "Resvg",
-            dependencies: ["CResvg"]
         ),
 
         // Shared target
