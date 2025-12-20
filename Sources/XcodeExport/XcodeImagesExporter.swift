@@ -50,4 +50,36 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
         let imageNames = allAssetNames ?? assets.map { normalizeName($0.light.name) }
         return try generateExtensions(names: imageNames, append: append)
     }
+
+    /// Exports images for HEIC conversion (PNG source → HEIC output).
+    ///
+    /// Generates asset catalog structure with PNG file references (for downloading)
+    /// but Contents.json uses .heic extension (for final output after conversion).
+    ///
+    /// - Parameters:
+    ///   - assets: Image asset pairs to export.
+    ///   - allAssetNames: Optional complete list of all asset names for Swift extension generation.
+    ///   - append: Whether to append to existing extension files.
+    /// - Returns: File contents to write (PNGs to download, Contents.json with .heic references, extensions).
+    public func exportForHeic(
+        assets: [AssetPair<ImagePack>],
+        allAssetNames: [String]? = nil,
+        append: Bool
+    ) throws -> [FileContents] {
+        let assetsFolderURL = output.assetsFolderURL
+
+        // Generate folder metadata
+        let contentsFile = XcodeEmptyContents().makeFileContents(to: assetsFolderURL)
+
+        // Generate image assets with HEIC Contents.json
+        let imageAssetsFiles = try assets.flatMap { pair -> [FileContents] in
+            try pair.makeFileContentsForHeic(to: assetsFolderURL)
+        }
+
+        // Generate extensions
+        let imageNames = allAssetNames ?? assets.map { normalizeName($0.light.name) }
+        let extensionFiles = try generateExtensions(names: imageNames, append: append)
+
+        return [contentsFile] + imageAssetsFiles + extensionFiles
+    }
 }

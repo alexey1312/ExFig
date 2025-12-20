@@ -359,9 +359,34 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            // Branch based on source format
+            // Check if HEIC output requested but not available
+            let effectiveOutputFormat = resolveOutputFormat(entry: entry, ui: ui)
+
+            // Branch based on source format and output format
             if entry.sourceFormat == .svg {
+                if effectiveOutputFormat == .heic {
+                    return try await exportiOSSVGSourceHeicImagesEntry(
+                        entry: entry,
+                        ios: ios,
+                        client: client,
+                        params: params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
                 return try await exportiOSSVGSourceImagesEntry(
+                    entry: entry,
+                    ios: ios,
+                    client: client,
+                    params: params,
+                    ui: ui,
+                    granularCacheManager: granularCacheManager
+                )
+            }
+
+            // PNG source with HEIC output
+            if effectiveOutputFormat == .heic {
+                return try await exportiOSPngSourceHeicImagesEntry(
                     entry: entry,
                     ios: ios,
                     client: client,
@@ -828,6 +853,507 @@ extension ExFigCommand {
             }
 
             return files
+        }
+
+        // MARK: - iOS HEIC Export Helpers
+
+        /// Resolves the effective output format, falling back to PNG if HEIC is unavailable.
+        private func resolveOutputFormat(
+            entry: Params.iOS.ImagesEntry,
+            ui: TerminalUI
+        ) -> Params.ImageOutputFormat {
+            guard entry.outputFormat == .heic else {
+                return entry.outputFormat ?? .png
+            }
+
+            // Check if HEIC encoding is available on this platform
+            guard NativeHeicEncoder.isAvailable() else {
+                ui.warning(.heicUnavailableFallingBackToPng)
+                return .png
+            }
+
+            return .heic
+        }
+
+        /// Creates Contents.json files for each imageset with HEIC extension.
+        private func makeImagesetContentsJsonForHeic(
+            for images: [AssetPair<ImagePack>],
+            scales: [Double],
+            assetsURL: URL
+        ) -> [FileContents] {
+            var files: [FileContents] = []
+
+            for pair in images {
+                let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
+
+                var imagesArray: [[String: Any]] = []
+
+                // Add light variants at each scale
+                for scale in scales {
+                    let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
+                    let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
+                    imagesArray.append([
+                        "filename": "\(pair.light.name)\(scaleSuffix).heic",
+                        "idiom": "universal",
+                        "scale": scaleString,
+                    ])
+                }
+
+                // Add dark variants if they exist
+                if pair.dark != nil {
+                    for scale in scales {
+                        let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
+                        let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
+                        imagesArray.append([
+                            "appearances": [["appearance": "luminosity", "value": "dark"]],
+                            "filename": "\(pair.light.name)_dark\(scaleSuffix).heic",
+                            "idiom": "universal",
+                            "scale": scaleString,
+                        ])
+                    }
+                }
+
+                let contentsJson: [String: Any] = [
+                    "images": imagesArray,
+                    "info": ["author": "xcode", "version": 1],
+                ]
+
+                if let jsonData = try? JSONSerialization.data(
+                    withJSONObject: contentsJson,
+                    options: [.prettyPrinted, .sortedKeys]
+                ) {
+                    files.append(FileContents(
+                        destination: Destination(
+                            directory: imagesetDir,
+                            file: URL(fileURLWithPath: "Contents.json")
+                        ),
+                        data: jsonData
+                    ))
+                }
+            }
+
+            return files
+        }
+
+        /// Creates a HEIC converter from iOS images entry options.
+        private func createHeicConverter(from entry: Params.iOS.ImagesEntry) -> HeicConverter {
+            let options = entry.heicOptions
+            let quality = options?.resolvedQuality ?? 90
+            let isLossless = options?.resolvedEncoding == .lossless
+
+            if isLossless {
+                return HeicConverter(encoding: .lossless)
+            } else {
+                return HeicConverter(encoding: .lossy(quality: quality))
+            }
+        }
+
+        /// Creates an SVG to HEIC converter from iOS images entry options.
+        private func createSvgToHeicConverter(from entry: Params.iOS.ImagesEntry) -> SvgToHeicConverter {
+            let options = entry.heicOptions
+            let quality = options?.resolvedQuality ?? 90
+            let isLossless = options?.resolvedEncoding == .lossless
+
+            if isLossless {
+                return SvgToHeicConverter(encoding: .lossless)
+            } else {
+                return SvgToHeicConverter(encoding: .lossy(quality: quality))
+            }
+        }
+
+        // MARK: - iOS SVG Source + HEIC Output Export
+
+        // swiftlint:disable:next function_body_length function_parameter_count cyclomatic_complexity
+        private func exportiOSSVGSourceHeicImagesEntry(
+            entry: Params.iOS.ImagesEntry,
+            ios: Params.iOS,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
+            let loader = ImagesLoader(
+                client: client,
+                params: params,
+                platform: .ios,
+                logger: logger,
+                config: loaderConfig
+            )
+            loader.granularCacheManager = granularCacheManager
+
+            let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+                if granularCacheManager != nil {
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return ImagesLoaderResultWithHashes(
+                        light: result.light,
+                        dark: result.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: []
+                    )
+                }
+            }
+
+            if loaderResult.allSkipped {
+                ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
+            let processor = ImagesProcessor(
+                platform: .ios,
+                nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
+            )
+
+            let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing images...") {
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
+                }
+            if let imagesWarning {
+                ui.warning(imagesWarning)
+            }
+
+            let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
+
+            // Collect SVG URLs for download
+            let svgRemoteFiles = makeSVGRemoteFilesForIOS(
+                images: images,
+                assetsURL: assetsURL
+            )
+
+            // Download SVG files
+            let fileDownloader = faultToleranceOptions.createFileDownloader()
+            let downloadedSVGs: [FileContents] = if !svgRemoteFiles.isEmpty {
+                try await ui.withProgress("Downloading SVGs from Figma", total: svgRemoteFiles.count) { progress in
+                    try await PipelinedDownloader.download(
+                        files: svgRemoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
+                        progress.update(current: current)
+                    }
+                }
+            } else {
+                []
+            }
+
+            // iOS uses 1x, 2x, 3x scales
+            let scales: [Double] = entry.scales ?? [1.0, 2.0, 3.0]
+            let converter = createSvgToHeicConverter(from: entry)
+
+            // Clear existing assets if not filtering and not using granular cache
+            if filter == nil, granularCacheManager == nil {
+                try? FileManager.default.removeItem(atPath: assetsURL.path)
+            }
+
+            // Rasterize SVGs to HEIC at each scale
+            let heicFiles: [FileContents] = try await ui.withProgress(
+                "Rasterizing SVGs to HEIC",
+                total: downloadedSVGs.count * scales.count
+            ) { progress in
+                var results: [FileContents] = []
+
+                for fileContents in downloadedSVGs {
+                    guard let svgData = fileContents.data else { continue }
+                    let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
+                    let imagesetDir = fileContents.destination.file.deletingLastPathComponent()
+
+                    for scale in scales {
+                        let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
+                        let heicFileName = "\(baseName)\(scaleSuffix).heic"
+
+                        do {
+                            let heicData = try converter.convert(
+                                svgData: svgData,
+                                scale: scale,
+                                fileName: baseName
+                            )
+
+                            results.append(FileContents(
+                                destination: Destination(
+                                    directory: imagesetDir,
+                                    file: URL(fileURLWithPath: heicFileName)
+                                ),
+                                data: heicData
+                            ))
+                        } catch {
+                            logger.error("Failed to rasterize \(baseName) at \(scale)x: \(error)")
+                            throw error
+                        }
+
+                        progress.increment()
+                    }
+                }
+
+                return results
+            }
+
+            // Generate Contents.json for each imageset (with .heic extension)
+            let contentsJsonFiles = makeImagesetContentsJsonForHeic(
+                for: images,
+                scales: scales,
+                assetsURL: assetsURL
+            )
+
+            // Generate folder Contents.json
+            let folderContentsFile = FileContents(
+                destination: Destination(
+                    directory: assetsURL,
+                    file: URL(fileURLWithPath: "Contents.json")
+                ),
+                data: Data(#"{"info":{"author":"xcode","version":1}}"#.utf8)
+            )
+
+            // Combine all files to write
+            var allFiles = heicFiles + contentsJsonFiles
+            allFiles.append(folderContentsFile)
+
+            // Generate Swift extensions
+            let output = XcodeImagesOutput(
+                assetsFolderURL: assetsURL,
+                assetsInMainBundle: ios.xcassetsInMainBundle,
+                assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
+                resourceBundleNames: ios.resourceBundleNames,
+                addObjcAttribute: ios.addObjcAttribute,
+                uiKitImageExtensionURL: entry.imageSwift,
+                swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+                templatesPath: ios.templatesPath
+            )
+
+            let exporter = XcodeImagesExporter(output: output)
+            let allAssetNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let extensionFiles = try exporter.exportSwiftExtensions(
+                assets: images,
+                allAssetNames: allAssetNames,
+                append: filter != nil
+            )
+            allFiles.append(contentsOf: extensionFiles)
+
+            let filesToWrite = allFiles
+            try await ui.withSpinner("Writing files to Xcode project...") {
+                try fileWriter.write(files: filesToWrite)
+            }
+
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - images.count
+                : 0
+
+            guard params.ios?.xcassetsInSwiftPackage == false else {
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
+                ui.success("Done! Exported \(images.count) images (SVG source, HEIC output).")
+                return PlatformExportResult(
+                    count: images.count,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: skippedCount
+                )
+            }
+
+            do {
+                let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
+                try allFiles.forEach { file in
+                    if file.destination.file.pathExtension == "swift" {
+                        try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
+                    }
+                }
+                try xcodeProject.save()
+            } catch {
+                ui.warning(.xcodeProjectUpdateFailed)
+            }
+
+            if BatchProgressViewStorage.progressView == nil {
+                await checkForUpdate(logger: logger)
+            }
+
+            ui.success("Done! Exported \(images.count) images (SVG source, HEIC output).")
+            return PlatformExportResult(
+                count: images.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
+        }
+
+        // MARK: - iOS PNG Source + HEIC Output Export
+
+        // swiftlint:disable:next function_body_length function_parameter_count cyclomatic_complexity
+        private func exportiOSPngSourceHeicImagesEntry(
+            entry: Params.iOS.ImagesEntry,
+            ios: Params.iOS,
+            client: Client,
+            params: Params,
+            ui: TerminalUI,
+            granularCacheManager: GranularCacheManager?
+        ) async throws -> PlatformExportResult {
+            let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
+            let loader = ImagesLoader(
+                client: client,
+                params: params,
+                platform: .ios,
+                logger: logger,
+                config: loaderConfig
+            )
+            loader.granularCacheManager = granularCacheManager
+
+            let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+                if granularCacheManager != nil {
+                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+                } else {
+                    let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                    return ImagesLoaderResultWithHashes(
+                        light: result.light,
+                        dark: result.dark,
+                        computedHashes: [:],
+                        allSkipped: false,
+                        allNames: []
+                    )
+                }
+            }
+
+            if loaderResult.allSkipped {
+                ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
+                return PlatformExportResult(
+                    count: 0,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: loaderResult.allNames.count
+                )
+            }
+
+            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
+            let processor = ImagesProcessor(
+                platform: .ios,
+                nameValidateRegexp: params.common?.images?.nameValidateRegexp,
+                nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
+            )
+
+            let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+                try await ui.withSpinner("Processing images...") {
+                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                    return try (result.get(), result.warning)
+                }
+            if let imagesWarning {
+                ui.warning(imagesWarning)
+            }
+
+            let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
+
+            let output = XcodeImagesOutput(
+                assetsFolderURL: assetsURL,
+                assetsInMainBundle: ios.xcassetsInMainBundle,
+                assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
+                resourceBundleNames: ios.resourceBundleNames,
+                addObjcAttribute: ios.addObjcAttribute,
+                uiKitImageExtensionURL: entry.imageSwift,
+                swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+                templatesPath: ios.templatesPath
+            )
+
+            // Use HEIC-aware exporter
+            let exporter = XcodeImagesExporter(output: output)
+            let allAssetNames = granularCacheManager != nil
+                ? processor.processNames(loaderResult.allNames)
+                : nil
+            let localAndRemoteFiles = try exporter.exportForHeic(
+                assets: images,
+                allAssetNames: allAssetNames,
+                append: filter != nil
+            )
+            if filter == nil, granularCacheManager == nil {
+                try? FileManager.default.removeItem(atPath: assetsURL.path)
+            }
+
+            let remoteFilesCount = localAndRemoteFiles.filter { $0.sourceURL != nil }.count
+            let fileDownloader = faultToleranceOptions.createFileDownloader()
+
+            var localFiles: [FileContents] = if remoteFilesCount > 0 {
+                try await ui.withProgress("Downloading images", total: remoteFilesCount) { progress in
+                    try await PipelinedDownloader.download(
+                        files: localAndRemoteFiles,
+                        fileDownloader: fileDownloader
+                    ) { current, _ in
+                        progress.update(current: current)
+                    }
+                }
+            } else {
+                localAndRemoteFiles
+            }
+
+            // Convert PNGs to HEIC
+            let pngFiles = localFiles.filter { $0.destination.file.pathExtension == "png" }
+            if !pngFiles.isEmpty {
+                let converter = createHeicConverter(from: entry)
+                let filesToConvert = pngFiles.map(\.destination.url)
+                try await ui.withProgress("Converting to HEIC", total: filesToConvert.count) { progress in
+                    try await converter.convertBatch(files: filesToConvert) { current, _ in
+                        progress.update(current: current)
+                    }
+                }
+                // Update file references to use .heic extension
+                localFiles = localFiles.map { file in
+                    if file.destination.file.pathExtension == "png" {
+                        return file.changingExtension(newExtension: "heic")
+                    }
+                    return file
+                }
+            }
+
+            let filesToWrite = localFiles
+            try await ui.withSpinner("Writing files to Xcode project...") {
+                try fileWriter.write(files: filesToWrite)
+            }
+
+            let skippedCount = granularCacheManager != nil
+                ? loaderResult.allNames.count - images.count
+                : 0
+
+            guard params.ios?.xcassetsInSwiftPackage == false else {
+                if BatchProgressViewStorage.progressView == nil {
+                    await checkForUpdate(logger: logger)
+                }
+                ui.success("Done! Exported \(images.count) images (HEIC output).")
+                return PlatformExportResult(
+                    count: images.count,
+                    hashes: loaderResult.computedHashes,
+                    skippedCount: skippedCount
+                )
+            }
+
+            do {
+                let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
+                try filesToWrite.forEach { file in
+                    if file.destination.file.pathExtension == "swift" {
+                        try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
+                    }
+                }
+                try xcodeProject.save()
+            } catch {
+                ui.warning(.xcodeProjectUpdateFailed)
+            }
+
+            if BatchProgressViewStorage.progressView == nil {
+                await checkForUpdate(logger: logger)
+            }
+
+            ui.success("Done! Exported \(images.count) images (HEIC output).")
+            return PlatformExportResult(
+                count: images.count,
+                hashes: loaderResult.computedHashes,
+                skippedCount: skippedCount
+            )
         }
 
         private func exportAndroidImages(
@@ -1356,8 +1882,8 @@ extension ExFigCommand {
             .FormatOptions?) -> SvgToWebpConverter
         {
             guard let options else {
-                // Default: lossy with quality 80
-                return SvgToWebpConverter(encoding: .lossy(quality: 80))
+                // Default: lossy with quality 90
+                return SvgToWebpConverter(encoding: .lossy(quality: 90))
             }
 
             switch (options.encoding, options.quality) {
@@ -1366,7 +1892,7 @@ extension ExFigCommand {
             case let (.lossy, quality?):
                 return SvgToWebpConverter(encoding: .lossy(quality: quality))
             case (.lossy, .none):
-                return SvgToWebpConverter(encoding: .lossy(quality: 80))
+                return SvgToWebpConverter(encoding: .lossy(quality: 90))
             }
         }
 
@@ -1866,8 +2392,8 @@ extension ExFigCommand {
         /// Creates a WebP converter from Android format options, using defaults if not specified.
         private func createWebpConverter(from options: Params.Android.Images.FormatOptions?) -> WebpConverter {
             guard let options else {
-                // Default: lossy with quality 80
-                return WebpConverter(encoding: .lossy(quality: 80))
+                // Default: lossy with quality 90
+                return WebpConverter(encoding: .lossy(quality: 90))
             }
 
             switch (options.encoding, options.quality) {
@@ -1876,8 +2402,8 @@ extension ExFigCommand {
             case let (.lossy, quality?):
                 return WebpConverter(encoding: .lossy(quality: quality))
             case (.lossy, .none):
-                // Lossy without quality specified - use default 80
-                return WebpConverter(encoding: .lossy(quality: 80))
+                // Lossy without quality specified - use default 90
+                return WebpConverter(encoding: .lossy(quality: 90))
             }
         }
     }

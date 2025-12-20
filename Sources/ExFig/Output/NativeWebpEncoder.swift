@@ -47,7 +47,7 @@ struct NativeWebpEncoder: Sendable {
     /// - Parameters:
     ///   - quality: Encoding quality 0-100 (only used for lossy)
     ///   - lossless: If true, uses lossless encoding (ignores quality)
-    init(quality: Int = 80, lossless: Bool = false) {
+    init(quality: Int = 90, lossless: Bool = false) {
         self.quality = min(100, max(0, quality))
         self.lossless = lossless
     }

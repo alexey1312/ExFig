@@ -98,6 +98,20 @@ extension ImagePack {
     func makeXcodeAssetContentsImageData(appearance: Appearance? = nil) -> [XcodeAssetContents.ImageData] {
         images.map { $0.makeXcodeAssetContentsImageData(scale: $0.scale, appearance: appearance, isRTL: $0.isRTL) }
     }
+
+    func makeXcodeAssetContentsImageData(
+        appearance: Appearance? = nil,
+        overrideExtension: String
+    ) -> [XcodeAssetContents.ImageData] {
+        images.map {
+            $0.makeXcodeAssetContentsImageData(
+                scale: $0.scale,
+                appearance: appearance,
+                isRTL: $0.isRTL,
+                overrideExtension: overrideExtension
+            )
+        }
+    }
 }
 
 // MARK: AssetPair
@@ -138,6 +152,48 @@ extension AssetPair where AssetType == ImagePack {
 
         return [contentsFileContents] + lightFiles + darkFiles
     }
+
+    /// Creates file contents for HEIC export (PNG downloads + HEIC Contents.json).
+    ///
+    /// Downloads PNG files from Figma but generates Contents.json with .heic extension.
+    /// After download, caller converts PNGs to HEIC and updates file extensions.
+    func makeFileContentsForHeic(to directory: URL) throws -> [FileContents] {
+        let name = light.name
+        let dirURL = directory.appendingPathComponent("\(name).imageset")
+
+        var lightAssetContents: [XcodeAssetContents.ImageData] = []
+        var darkAssetContents: [XcodeAssetContents.ImageData] = []
+        var lightFiles: [FileContents] = []
+        var darkFiles: [FileContents] = []
+
+        let lightPack = light.packForXcode()
+        let darkPack = dark?.packForXcode()
+
+        if darkPack != nil {
+            // Asset contents with .heic extension for Contents.json
+            lightAssetContents = lightPack?.makeXcodeAssetContentsImageData(
+                appearance: .light,
+                overrideExtension: "heic"
+            ) ?? []
+            darkAssetContents = darkPack?.makeXcodeAssetContentsImageData(
+                appearance: .dark,
+                overrideExtension: "heic"
+            ) ?? []
+            // File downloads still use original extension (PNG)
+            lightFiles = lightPack?.makeImageFileContents(to: dirURL, appearance: .light) ?? []
+            darkFiles = darkPack?.makeImageFileContents(to: dirURL, appearance: .dark) ?? []
+        } else {
+            lightAssetContents = lightPack?.makeXcodeAssetContentsImageData(overrideExtension: "heic") ?? []
+            lightFiles = lightPack?.makeImageFileContents(to: dirURL) ?? []
+        }
+
+        let contentsFileContents = try XcodeAssetContents(
+            images: lightAssetContents + darkAssetContents,
+            properties: nil
+        ).makeFileContents(to: dirURL)
+
+        return [contentsFileContents] + lightFiles + darkFiles
+    }
 }
 
 // MARK: Image
@@ -153,6 +209,27 @@ extension Image {
         .ImageData
     {
         let filename = makeFileURL(scale: scale, appearance: appearance).absoluteString
+        let xcodeIdiom = idiom.flatMap { XcodeAssetIdiom(rawValue: $0) } ?? .universal
+        let appearances = appearance.flatMap { $0 == .dark ? [XcodeAssetContents.Appearance.dark] : nil }
+        let scaleString = scale.string
+
+        return XcodeAssetContents.ImageData(
+            appearances: appearances,
+            filename: filename,
+            idiom: xcodeIdiom,
+            isRTL: isRTL,
+            scale: scaleString
+        )
+    }
+
+    func makeXcodeAssetContentsImageData(
+        scale: Scale,
+        appearance: Appearance? = nil,
+        isRTL: Bool,
+        overrideExtension: String
+    ) -> XcodeAssetContents.ImageData {
+        let filename = makeFileURL(scale: scale, appearance: appearance, overrideExtension: overrideExtension)
+            .absoluteString
         let xcodeIdiom = idiom.flatMap { XcodeAssetIdiom(rawValue: $0) } ?? .universal
         let appearances = appearance.flatMap { $0 == .dark ? [XcodeAssetContents.Appearance.dark] : nil }
         let scaleString = scale.string
@@ -188,6 +265,30 @@ extension Image {
 
         // swiftlint:disable:next force_unwrapping
         return URL(string: urlString)!.appendingPathExtension(format)
+    }
+
+    private func makeFileURL(scale: Scale, appearance: Appearance? = nil, overrideExtension: String) -> URL {
+        var urlString = name
+
+        if let idiom, !idiom.isEmpty {
+            urlString.append("~\(idiom)")
+        }
+
+        switch appearance {
+        case .light:
+            urlString.append("L")
+        case .dark:
+            urlString.append("D")
+        default:
+            break
+        }
+
+        if let scaleString = scale.string {
+            urlString.append("@\(scaleString)")
+        }
+
+        // swiftlint:disable:next force_unwrapping
+        return URL(string: urlString)!.appendingPathExtension(overrideExtension)
     }
 
     fileprivate func isValidForXcode(scale: Scale) -> Bool {

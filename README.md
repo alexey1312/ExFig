@@ -43,7 +43,7 @@ Flutter, and React/TypeScript.
 
 ### Export Formats
 
-- 🖼️ PNG, SVG, PDF, JPEG, WebP (with quality control)
+- 🖼️ PNG, SVG, PDF, JPEG, WebP, HEIC (with quality control)
 - 📊 W3C Design Tokens (JSON export)
 - ⚡ Quick fetch mode (no config file needed)
 

@@ -15,7 +15,8 @@ struct ExFigWarningFormatter {
              .checkpointPathMismatch, .retrying, .preFetchPartialFailure,
              .preFetchComponentsPartialFailure, .preFetchNodesPartialFailure,
              .granularCacheWithoutCache, .themeAttributesFileNotFound,
-             .themeAttributesMarkerNotFound, .themeAttributesNameCollision:
+             .themeAttributesMarkerNotFound, .themeAttributesNameCollision,
+             .heicUnavailableFallingBackToPng:
             formatCompact(warning)
 
         // Multiline format warnings
@@ -82,6 +83,9 @@ struct ExFigWarningFormatter {
 
         case let .themeAttributesNameCollision(count, collisions):
             formatThemeAttributesCollision(count: count, collisions: collisions)
+
+        case .heicUnavailableFallingBackToPng:
+            "HEIC encoding unavailable on this platform, using PNG format instead"
 
         // Multiline cases handled in main format() method
         case .noAssetsFound, .invalidConfigsSkipped, .webIconsMissingSVGData, .webIconsConversionFailed:

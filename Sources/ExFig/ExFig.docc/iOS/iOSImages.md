@@ -1,12 +1,13 @@
 # iOS Images Export
 
-Export raster images from Figma to Xcode Image Sets as PNG files with multiple scales.
+Export raster images from Figma to Xcode Image Sets as PNG or HEIC files with multiple scales.
 
 ## Overview
 
 ExFig exports images as:
 
-- **PNG files** at multiple scales (@1x, @2x, @3x)
+- **PNG files** at multiple scales (@1x, @2x, @3x) - default
+- **HEIC files** for ~40-50% smaller file sizes (macOS only)
 - **Multi-idiom support** (iPhone, iPad, Mac)
 - **Dark Mode variants**
 - **Swift extensions** for UIImage (UIKit) and Image (SwiftUI)
@@ -28,6 +29,14 @@ ios:
 
     # Image scales to export (optional, defaults to [1, 2, 3])
     scales: [1, 2, 3]
+
+    # Output format: png (default) or heic
+    outputFormat: png
+
+    # HEIC options (only used when outputFormat: heic)
+    heicOptions:
+      encoding: lossy  # lossy or lossless
+      quality: 90      # 0-100, only for lossy encoding
 
     # Swift file paths (optional)
     imageSwift: "./Sources/Generated/UIImage+Images.swift"
@@ -169,6 +178,49 @@ struct ContentView: View {
 }
 ```
 
+## HEIC Output Format
+
+HEIC (High Efficiency Image Container) offers ~40-50% smaller file sizes compared to PNG while maintaining visual quality.
+
+### Configuration
+
+```yaml
+ios:
+  images:
+    outputFormat: heic
+    heicOptions:
+      encoding: lossy   # lossy or lossless
+      quality: 90       # 0-100, only for lossy encoding
+```
+
+### Encoding Options
+
+| Encoding   | Quality | File Size | Use Case                          |
+| ---------- | ------- | --------- | --------------------------------- |
+| `lossy`    | 90      | Smallest  | Photos, complex illustrations     |
+| `lossy`    | 100     | Small     | High-quality photos               |
+| `lossless` | N/A     | Medium    | Graphics requiring exact pixels   |
+
+### Platform Availability
+
+HEIC encoding requires macOS 10.13.4 or later. On Linux or older macOS:
+- ExFig shows a warning and automatically falls back to PNG
+- No configuration changes needed
+
+### With SVG Source
+
+HEIC works with both PNG source (default) and SVG source:
+
+```yaml
+ios:
+  images:
+    sourceFormat: svg    # Fetch SVG, rasterize locally
+    outputFormat: heic   # Encode as HEIC
+    heicOptions:
+      encoding: lossy
+      quality: 90
+```
+
 ## Image Scales
 
 Configure which scales to export:
@@ -265,9 +317,10 @@ img-empty-state_dark
 2. **Design at 3x**: Create at highest resolution, ExFig scales down
 3. **Provide dark variants**: Better UX in dark mode
 4. **Use idiom suffixes**: For device-specific designs
-5. **Optimize file sizes**: Compress in Figma before export
+5. **Optimize file sizes**: Use HEIC format for ~40-50% smaller files
 6. **Consider vectors**: For simple graphics, use Icons instead
-7. **Post-export optimization**: Use oxipng for further compression:
+7. **Use HEIC for photos**: Best compression for photographic content
+8. **Post-export optimization**: For PNG, use oxipng for further compression:
    ```bash
    oxipng -o max -Z ./Resources/Assets.xcassets/**/*.png
    ```

@@ -83,4 +83,9 @@ enum ExFigWarning: Sendable, Equatable {
 
     /// Some icons failed JSX conversion.
     case webIconsConversionFailed(count: Int, names: [String])
+
+    // MARK: - HEIC Export Warnings
+
+    /// HEIC encoding is not available on this platform, falling back to PNG.
+    case heicUnavailableFallingBackToPng
 }

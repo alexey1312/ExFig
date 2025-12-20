@@ -256,6 +256,59 @@ git add Libraries/macos/libresvg.a Sources/CResvg/include/resvg.h
 git commit -m "chore(deps): update resvg to 0.46.0"
 ```
 
+### HEIC Output Format (iOS)
+
+iOS images can be exported in HEIC format for ~40-50% smaller file sizes compared to PNG:
+
+```yaml
+# iOS example - PNG source with HEIC output
+ios:
+  images:
+    - figmaFrameName: "Illustrations"
+      assetsFolder: "Illustrations"
+      outputFormat: heic  # Convert to HEIC after download
+      heicOptions:
+        encoding: lossy   # or lossless
+        quality: 90       # 0-100, only used for lossy
+
+# iOS example - SVG source with HEIC output (best quality)
+ios:
+  images:
+    - figmaFrameName: "Illustrations"
+      assetsFolder: "Illustrations"
+      sourceFormat: svg   # Fetch SVG from Figma
+      outputFormat: heic  # Rasterize to HEIC locally
+      heicOptions:
+        encoding: lossless
+```
+
+**How it works:**
+
+1. For PNG source: Download PNGs from Figma, decode to RGBA, encode to HEIC
+2. For SVG source: Download SVGs, rasterize with resvg, encode directly to HEIC
+3. Asset catalog Contents.json references .heic files
+
+**Requirements:**
+
+- **macOS only** for encoding (uses ImageIO framework)
+- iOS 12+ for runtime support (UIKit automatically handles HEIC in asset catalogs)
+- On Linux: Falls back to PNG with warning
+
+**Key files:**
+
+| File                                            | Purpose                            |
+| ----------------------------------------------- | ---------------------------------- |
+| `Sources/ExFig/Output/NativeHeicEncoder.swift`  | RGBA → HEIC encoding using ImageIO |
+| `Sources/ExFig/Output/SvgToHeicConverter.swift` | SVG → HEIC conversion              |
+| `Sources/ExFig/Output/HeicConverter.swift`      | PNG → HEIC batch conversion        |
+
+**Configuration types:**
+
+| Type                       | Purpose                                            |
+| -------------------------- | -------------------------------------------------- |
+| `Params.ImageOutputFormat` | Enum: `.png` (default), `.heic`                    |
+| `Params.HeicOptions`       | Encoding mode (lossy/lossless) and quality (0-100) |
+
 ### TerminalUI Usage
 
 ```swift

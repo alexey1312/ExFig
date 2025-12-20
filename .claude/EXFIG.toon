@@ -178,6 +178,9 @@ keyFiles:
   fnv1aHasher: Sources/ExFig/Cache/FNV1aHasher.swift
   nodeHashableProperties: Sources/FigmaAPI/Model/NodeHashableProperties.swift
   floatNormalization: Sources/FigmaAPI/Model/FloatNormalization.swift
+  heicEncoder: Sources/ExFig/Output/NativeHeicEncoder.swift
+  svgToHeicConverter: Sources/ExFig/Output/SvgToHeicConverter.swift
+  heicConverter: Sources/ExFig/Output/HeicConverter.swift
 
 faultTolerance:
   defaults:
