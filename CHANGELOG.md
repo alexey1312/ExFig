@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.7] - 2025-12-20
+
+### Bug Fixes
+
+- **ios**: Write PNG files before HEIC conversion by @alexey1312
+
+- **android**: Delete source PNGs after WebP/HEIC conversion by @alexey1312
+
+- **core**: Handle URL type differences in Destination.url by @alexey1312
+
+
+### Refactor
+
+- **ios**: Use destination.directory for imageset path by @alexey1312
+
+
 ## [1.2.6] - 2025-12-20
 
 ### Documentation
