@@ -183,11 +183,10 @@ struct NativeHeicEncoder: Sendable {
             }
 
             // Set encoding options
+            // For lossless, don't set quality key - ImageIO defaults to lossless for HEIC
             var options: [CFString: Any] = [:]
 
-            if lossless {
-                options[kCGImageDestinationLossyCompressionQuality] = 1.0
-            } else {
+            if !lossless {
                 // Convert 0-100 to 0.0-1.0
                 let normalizedQuality = Double(quality) / 100.0
                 options[kCGImageDestinationLossyCompressionQuality] = normalizedQuality

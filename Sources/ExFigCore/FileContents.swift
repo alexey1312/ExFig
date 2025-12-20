@@ -85,8 +85,11 @@ public struct FileContents: Equatable, Sendable {
 
         if let sourceURL { // Remote file
             return FileContents(destination: newDestination, sourceURL: sourceURL, scale: scale, dark: dark)
-        } else if let dataFile { // On-disk file
-            return FileContents(destination: newDestination, dataFile: dataFile, scale: scale, dark: dark)
+        } else if let dataFile { // On-disk file - also update dataFile extension
+            let newDataFileURL = dataFile
+                .deletingPathExtension()
+                .appendingPathExtension(newExtension)
+            return FileContents(destination: newDestination, dataFile: newDataFileURL, scale: scale, dark: dark)
         } else if let data { // In-memory file
             return FileContents(destination: newDestination, data: data, scale: scale, dark: dark)
         } else {

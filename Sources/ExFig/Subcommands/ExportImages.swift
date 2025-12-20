@@ -637,7 +637,15 @@ extension ExFigCommand {
                 var results: [FileContents] = []
 
                 for fileContents in downloadedSVGs {
-                    guard let svgData = fileContents.data else { continue }
+                    // Read SVG data from memory or temp file
+                    let svgData: Data
+                    if let data = fileContents.data {
+                        svgData = data
+                    } else if let dataFile = fileContents.dataFile {
+                        svgData = try Data(contentsOf: dataFile)
+                    } else {
+                        continue
+                    }
                     let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
                     let imagesetDir = fileContents.destination.directory
 
@@ -780,14 +788,16 @@ extension ExFigCommand {
                 }
 
                 // Dark variant (if exists) - must use same imageset directory as light
+                // Use "D" suffix to match standard iOS naming convention (XcodeExportExtensions.swift)
                 if let dark = pair.dark, let image = dark.images.first {
                     let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
                     files.append(FileContents(
                         destination: Destination(
                             directory: imagesetDir,
-                            file: URL(fileURLWithPath: "\(pair.light.name)_dark.svg")
+                            file: URL(fileURLWithPath: "\(pair.light.name)D.svg")
                         ),
-                        sourceURL: image.url
+                        sourceURL: image.url,
+                        dark: true
                     ))
                 }
             }
@@ -820,13 +830,14 @@ extension ExFigCommand {
                 }
 
                 // Add dark variants if they exist
+                // Use "D" suffix to match standard iOS naming convention
                 if pair.dark != nil {
                     for scale in scales {
                         let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
                         let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
                         imagesArray.append([
                             "appearances": [["appearance": "luminosity", "value": "dark"]],
-                            "filename": "\(pair.light.name)_dark\(scaleSuffix).png",
+                            "filename": "\(pair.light.name)D\(scaleSuffix).png",
                             "idiom": "universal",
                             "scale": scaleString,
                         ])
@@ -900,13 +911,14 @@ extension ExFigCommand {
                 }
 
                 // Add dark variants if they exist
+                // Use "D" suffix to match standard iOS naming convention
                 if pair.dark != nil {
                     for scale in scales {
                         let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
                         let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
                         imagesArray.append([
                             "appearances": [["appearance": "luminosity", "value": "dark"]],
-                            "filename": "\(pair.light.name)_dark\(scaleSuffix).heic",
+                            "filename": "\(pair.light.name)D\(scaleSuffix).heic",
                             "idiom": "universal",
                             "scale": scaleString,
                         ])
@@ -1064,7 +1076,15 @@ extension ExFigCommand {
                 var results: [FileContents] = []
 
                 for fileContents in downloadedSVGs {
-                    guard let svgData = fileContents.data else { continue }
+                    // Read SVG data from memory or temp file
+                    let svgData: Data
+                    if let data = fileContents.data {
+                        svgData = data
+                    } else if let dataFile = fileContents.dataFile {
+                        svgData = try Data(contentsOf: dataFile)
+                    } else {
+                        continue
+                    }
                     let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
                     let imagesetDir = fileContents.destination.directory
 
@@ -1294,6 +1314,9 @@ extension ExFigCommand {
 
             // Convert PNGs to HEIC
             let pngFiles = localFiles.filter { $0.destination.file.pathExtension == "png" }
+            // Track converted PNG paths to exclude from final write
+            let convertedPngPaths = Set(pngFiles.map(\.destination.url.path))
+
             if !pngFiles.isEmpty {
                 // Write PNG files to disk first (HEIC converter reads from disk)
                 try fileWriter.write(files: pngFiles)
@@ -1310,7 +1333,7 @@ extension ExFigCommand {
                 for pngFile in filesToConvert {
                     try? FileManager.default.removeItem(at: pngFile)
                 }
-                // Update file references to use .heic extension
+                // Update file references to use .heic extension (for stats/logging)
                 localFiles = localFiles.map { file in
                     if file.destination.file.pathExtension == "png" {
                         return file.changingExtension(newExtension: "heic")
@@ -1319,8 +1342,12 @@ extension ExFigCommand {
                 }
             }
 
-            // Write remaining files (Contents.json, Swift extensions, non-PNG images)
-            let filesToWrite = localFiles.filter { $0.destination.file.pathExtension != "png" }
+            // Write remaining files (Contents.json, Swift extensions)
+            // Exclude converted images - HEIC files were already created by converter
+            let filesToWrite = localFiles.filter { file in
+                let originalPath = file.destination.url.path.replacingOccurrences(of: ".heic", with: ".png")
+                return !convertedPngPaths.contains(originalPath)
+            }
             try await ui.withSpinner("Writing files to Xcode project...") {
                 try fileWriter.write(files: filesToWrite)
             }
@@ -2133,7 +2160,14 @@ extension ExFigCommand {
                 []
             }
 
+            // Track which files were converted to WebP (to exclude from final write)
+            var convertedPngPaths: Set<String> = []
+
             if entry.format == .webp {
+                // Write PNG files to disk first (WebP converter reads from disk)
+                try fileWriter.write(files: localFiles)
+                convertedPngPaths = Set(localFiles.map(\.destination.url.path))
+
                 let converter = createWebpConverter(from: entry.webpOptions)
                 // Convert to proper file:// URLs (YAML-decoded URLs lack scheme)
                 let filesToConvert = localFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
@@ -2155,7 +2189,11 @@ extension ExFigCommand {
 
             localFiles.append(dartFile)
 
-            let filesToWrite = localFiles
+            // Exclude converted images - WebP files were already created by converter
+            let filesToWrite = localFiles.filter { file in
+                let originalPath = file.destination.url.path.replacingOccurrences(of: ".webp", with: ".png")
+                return !convertedPngPaths.contains(originalPath)
+            }
             try await ui.withSpinner("Writing files to Flutter project...") {
                 try fileWriter.write(files: filesToWrite)
             }
