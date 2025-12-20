@@ -727,6 +727,13 @@ extension ExFigCommand {
                 try fileWriter.write(files: filesToWrite)
             }
 
+            // Clean up old HEIC files in imagesets (when switching from HEIC to PNG format)
+            for pngFile in pngFiles {
+                let heicPath = pngFile.destination.url.path
+                    .replacingOccurrences(of: ".png", with: ".heic")
+                try? FileManager.default.removeItem(atPath: heicPath)
+            }
+
             let skippedCount = granularCacheManager != nil
                 ? loaderResult.allNames.count - images.count
                 : 0
@@ -1164,6 +1171,13 @@ extension ExFigCommand {
             let filesToWrite = allFiles
             try await ui.withSpinner("Writing files to Xcode project...") {
                 try fileWriter.write(files: filesToWrite)
+            }
+
+            // Clean up old PNG files in imagesets (when switching from PNG to HEIC format)
+            for heicFile in heicFiles {
+                let pngPath = heicFile.destination.url.path
+                    .replacingOccurrences(of: ".heic", with: ".png")
+                try? FileManager.default.removeItem(atPath: pngPath)
             }
 
             let skippedCount = granularCacheManager != nil
