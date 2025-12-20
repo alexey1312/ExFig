@@ -20,6 +20,7 @@ legacy_version_file = false
 jobs = 6
 quiet = true
 terminal_progress = false
+github_attestations = false
 
 # =============================================================================
 # Tools
@@ -129,6 +130,28 @@ echo '<script>window.location.href += "/documentation/exfig"</script>' > docs/in
 description = "Generate and preview DocC documentation"
 run = """
 swift package --disable-sandbox preview-documentation --target ExFig
+"""
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "swift package clean && rm -rf .build"
+
+[tasks."clean:all"]
+description = "Clean all caches (SPM, DerivedData, build)"
+run = """
+#!/bin/bash
+echo "Cleaning SPM caches..."
+rm -rf ~/Library/Caches/org.swift.swiftpm
+rm -rf ~/Library/org.swift.swiftpm
+rm -rf ~/.swiftpm
+rm -rf .build
+rm -f Package.resolved
+swift package purge-cache 2>/dev/null || true
+
+echo "Cleaning DerivedData..."
+rm -rf ~/Library/Developer/Xcode/DerivedData
+
+echo "✓ All caches cleaned"
 """
 
 [tasks.changelog]

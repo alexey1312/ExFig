@@ -28,7 +28,7 @@ jobs:
             arch: x86_64
             build-path: x86_64-unknown-linux-gnu/release
             archive-name: exfig-linux-x64
-            container: swift:6.0
+            container: swift:6.2
             extra-flags: --static-swift-stdlib -Xlinker -lcurl -Xlinker -lxml2 -Xlinker -lssl -Xlinker -lcrypto -Xlinker -lz
 
 
@@ -47,9 +47,9 @@ jobs:
         with:
           lfs: true
 
-      - name: Select Xcode 16.3 (macOS)
+      - name: Select Xcode 26.1 (macOS)
         if: matrix.platform == 'macos'
-        run: sudo xcode-select -s /Applications/Xcode_16.3.app/Contents/Developer
+        run: sudo xcode-select -s /Applications/Xcode_26.1.1.app/Contents/Developer
 
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'linux-x64'
