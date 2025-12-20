@@ -5,7 +5,7 @@
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
 [![Docs](https://github.com/alexey1312/ExFig/actions/workflows/deploy-docc.yml/badge.svg)](https://alexey1312.github.io/ExFig/documentation/exfig)
-![Coverage](https://img.shields.io/badge/coverage-47.72%25-yellow)
+![Coverage](https://img.shields.io/badge/coverage-45.91%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and

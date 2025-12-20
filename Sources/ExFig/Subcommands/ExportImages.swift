@@ -1295,8 +1295,12 @@ extension ExFigCommand {
             // Convert PNGs to HEIC
             let pngFiles = localFiles.filter { $0.destination.file.pathExtension == "png" }
             if !pngFiles.isEmpty {
+                // Write PNG files to disk first (HEIC converter reads from disk)
+                try fileWriter.write(files: pngFiles)
+
                 let converter = createHeicConverter(from: entry)
-                let filesToConvert = pngFiles.map(\.destination.url)
+                // Convert to proper file:// URLs (YAML-decoded URLs lack scheme)
+                let filesToConvert = pngFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
                 try await ui.withProgress("Converting to HEIC", total: filesToConvert.count) { progress in
                     try await converter.convertBatch(files: filesToConvert) { current, _ in
                         progress.update(current: current)
@@ -1311,7 +1315,8 @@ extension ExFigCommand {
                 }
             }
 
-            let filesToWrite = localFiles
+            // Write remaining files (Contents.json, Swift extensions, non-PNG images)
+            let filesToWrite = localFiles.filter { $0.destination.file.pathExtension != "png" }
             try await ui.withSpinner("Writing files to Xcode project...") {
                 try fileWriter.write(files: filesToWrite)
             }
