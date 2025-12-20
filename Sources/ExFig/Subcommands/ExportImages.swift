@@ -639,7 +639,7 @@ extension ExFigCommand {
                 for fileContents in downloadedSVGs {
                     guard let svgData = fileContents.data else { continue }
                     let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
-                    let imagesetDir = fileContents.destination.file.deletingLastPathComponent()
+                    let imagesetDir = fileContents.destination.directory
 
                     for scale in scales {
                         let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
@@ -1066,7 +1066,7 @@ extension ExFigCommand {
                 for fileContents in downloadedSVGs {
                     guard let svgData = fileContents.data else { continue }
                     let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
-                    let imagesetDir = fileContents.destination.file.deletingLastPathComponent()
+                    let imagesetDir = fileContents.destination.directory
 
                     for scale in scales {
                         let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
