@@ -20,12 +20,10 @@ jobs:
         include:
           - os: macos-15
             platform: macos
-            arch: "arm64 --arch x86_64"
             build-path: apple/Products/Release
             archive-name: exfig-macos
           - os: ubuntu-latest
             platform: linux-x64
-            arch: x86_64
             build-path: x86_64-unknown-linux-gnu/release
             archive-name: exfig-linux-x64
             container: swift:6.2
@@ -66,8 +64,24 @@ jobs:
             sed -i "s/static let version = \".*\"/static let version = \"$VERSION\"/" "$FILE"
           fi
 
-      - name: Build release binary
-        run: swift build -c release --arch ${{ matrix.arch }} ${{ matrix.extra-flags }}
+      - name: Build release binary (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          # Build each architecture separately to avoid xcodebuild issues with binary targets
+          swift build -c release --arch arm64
+          swift build -c release --arch x86_64
+          # Create universal binary
+          mkdir -p .build/apple/Products/Release
+          lipo -create \
+            .build/arm64-apple-macosx/release/exfig \
+            .build/x86_64-apple-macosx/release/exfig \
+            -output .build/apple/Products/Release/exfig
+          # Copy resource bundles from arm64 build (they're arch-independent)
+          cp -r .build/arm64-apple-macosx/release/*.bundle .build/apple/Products/Release/
+
+      - name: Build release binary (Linux)
+        if: matrix.platform == 'linux-x64'
+        run: swift build -c release ${{ matrix.extra-flags }}
 
       - name: Create release archive (macOS)
         if: matrix.platform == 'macos'
