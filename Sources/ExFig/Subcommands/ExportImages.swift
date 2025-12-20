@@ -1306,6 +1306,10 @@ extension ExFigCommand {
                         progress.update(current: current)
                     }
                 }
+                // Delete source PNG files after successful conversion
+                for pngFile in filesToConvert {
+                    try? FileManager.default.removeItem(at: pngFile)
+                }
                 // Update file references to use .heic extension
                 localFiles = localFiles.map { file in
                     if file.destination.file.pathExtension == "png" {
@@ -1692,11 +1696,16 @@ extension ExFigCommand {
 
             if entry.format == .webp {
                 let converter = createWebpConverter(from: entry.webpOptions)
-                let filesToConvert = localFiles.map(\.destination.url)
+                // Convert to proper file:// URLs (YAML-decoded URLs lack scheme)
+                let filesToConvert = localFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
                     try await converter.convertBatch(files: filesToConvert) { current, _ in
                         progress.update(current: current)
                     }
+                }
+                // Delete source PNG files after successful conversion
+                for pngFile in filesToConvert {
+                    try? FileManager.default.removeItem(at: pngFile)
                 }
                 localFiles = localFiles.map { $0.changingExtension(newExtension: "webp") }
             }
@@ -2126,11 +2135,16 @@ extension ExFigCommand {
 
             if entry.format == .webp {
                 let converter = createWebpConverter(from: entry.webpOptions)
-                let filesToConvert = localFiles.map(\.destination.url)
+                // Convert to proper file:// URLs (YAML-decoded URLs lack scheme)
+                let filesToConvert = localFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
                 try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
                     try await converter.convertBatch(files: filesToConvert) { current, _ in
                         progress.update(current: current)
                     }
+                }
+                // Delete source PNG files after successful conversion
+                for pngFile in filesToConvert {
+                    try? FileManager.default.removeItem(at: pngFile)
                 }
                 localFiles = localFiles.map { $0.changingExtension(newExtension: "webp") }
             }
