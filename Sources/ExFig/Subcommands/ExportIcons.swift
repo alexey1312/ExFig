@@ -103,28 +103,17 @@ extension ExFigCommand {
                 return IconsExportResult(count: 0, computedHashes: [:], granularCacheStats: nil, fileVersions: nil)
             }
 
-            // Check for granular cache warning
+            // Setup granular cache
             let configCacheEnabled = options.params.common?.cache?.isEnabled ?? false
-            if let warning = cacheOptions.granularCacheWarning(configEnabled: configCacheEnabled) {
-                ui.warning(warning)
-            }
-
-            // Determine if granular cache is enabled
-            let granularCacheEnabled = cacheOptions.isGranularCacheEnabled(configEnabled: configCacheEnabled)
-
-            // Clear node hashes if --force flag is set
-            if cacheOptions.force, granularCacheEnabled {
-                let fileIds = [options.params.figma.lightFileId] +
-                    (options.params.figma.darkFileId.map { [$0] } ?? [])
-                for fileId in fileIds {
-                    try trackingManager.clearNodeHashes(fileId: fileId)
-                }
-            }
-
-            // Create granular cache manager if enabled
-            let granularCacheManager: GranularCacheManager? = granularCacheEnabled
-                ? trackingManager.createGranularCacheManager()
-                : nil
+            let granularCacheSetup = try GranularCacheHelper.setup(
+                trackingManager: trackingManager,
+                cacheOptions: cacheOptions,
+                configCacheEnabled: configCacheEnabled,
+                params: options.params,
+                ui: ui
+            )
+            let granularCacheEnabled = granularCacheSetup.enabled
+            let granularCacheManager = granularCacheSetup.manager
 
             var totalIcons = 0
             var totalSkipped = 0
@@ -143,7 +132,7 @@ extension ExFigCommand {
                 )
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
-                mergeHashes(&allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             if options.params.android != nil {
@@ -159,7 +148,7 @@ extension ExFigCommand {
                 )
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
-                mergeHashes(&allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             if options.params.flutter != nil {
@@ -175,7 +164,7 @@ extension ExFigCommand {
                 )
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
-                mergeHashes(&allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             if options.params.web != nil {
@@ -191,7 +180,7 @@ extension ExFigCommand {
                 )
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
-                mergeHashes(&allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             // Update file version cache after successful export
@@ -205,11 +194,7 @@ extension ExFigCommand {
             }
 
             // Convert NodeId keys to String for batch result
-            let stringHashes = allComputedHashes.mapValues { nodeHashes in
-                nodeHashes.reduce(into: [String: String]()) { result, pair in
-                    result[pair.key] = pair.value
-                }
-            }
+            let stringHashes = HashMerger.convertToStringKeys(allComputedHashes)
 
             // Build granular cache stats if granular cache was used
             let stats: GranularCacheStats? = granularCacheEnabled && (totalIcons > 0 || totalSkipped > 0)
@@ -221,296 +206,6 @@ extension ExFigCommand {
                 computedHashes: stringHashes,
                 granularCacheStats: stats,
                 fileVersions: batchMode ? fileVersions : nil
-            )
-        }
-
-        // swiftlint:enable function_body_length cyclomatic_complexity
-
-        /// Result of exporting icons for a single platform.
-        private struct PlatformExportResult {
-            let count: Int
-            let hashes: [String: [NodeId: String]]
-            /// Number of icons skipped by granular cache.
-            let skippedCount: Int
-
-            init(count: Int, hashes: [String: [NodeId: String]], skippedCount: Int = 0) {
-                self.count = count
-                self.hashes = hashes
-                self.skippedCount = skippedCount
-            }
-        }
-
-        /// Merges computed hashes from one result into the accumulator.
-        private func mergeHashes(
-            _ accumulator: inout [String: [NodeId: String]],
-            _ newHashes: [String: [NodeId: String]]
-        ) {
-            for (fileId, hashes) in newHashes {
-                if accumulator[fileId] != nil {
-                    accumulator[fileId]!.merge(hashes) { _, new in new }
-                } else {
-                    accumulator[fileId] = hashes
-                }
-            }
-        }
-
-        // swiftlint:disable function_body_length cyclomatic_complexity
-        private func exportiOSIcons(
-            client: Client,
-            params: Params,
-            ui: TerminalUI,
-            granularCacheManager: GranularCacheManager?
-        ) async throws -> PlatformExportResult {
-            guard let ios = params.ios,
-                  let iconsConfig = ios.icons
-            else {
-                ui.warning(.configMissing(platform: "ios", assetType: "icons"))
-                return PlatformExportResult(count: 0, hashes: [:], skippedCount: 0)
-            }
-
-            // Get all entries from config (supports both single and multiple formats)
-            let entries = iconsConfig.entries
-
-            // Single entry - use direct processing (legacy behavior)
-            if entries.count == 1 {
-                return try await exportiOSIconsEntry(
-                    entry: entries[0],
-                    ios: ios,
-                    client: client,
-                    params: params,
-                    ui: ui,
-                    granularCacheManager: granularCacheManager
-                )
-            }
-
-            // Multiple entries - pre-fetch Components once for all entries
-            // This avoids redundant API calls when processing multiple figmaFrameNames
-            // Check if we're already in batch mode with pre-fetched components
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                // Pre-fetch Components for all file IDs
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                // Inject via TaskLocal - IconsLoader will use pre-fetched components
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processIOSIconsEntries(
-                        entries: entries,
-                        ios: ios,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                // Already have pre-fetched components (batch mode)
-                return try await processIOSIconsEntries(
-                    entries: entries,
-                    ios: ios,
-                    client: client,
-                    params: params,
-                    ui: ui,
-                    granularCacheManager: granularCacheManager
-                )
-            }
-        }
-
-        // Helper to process multiple iOS icon entries sequentially.
-        // swiftlint:disable:next function_parameter_count
-        private func processIOSIconsEntries(
-            entries: [Params.iOS.IconsEntry],
-            ios: Params.iOS,
-            client: Client,
-            params: Params,
-            ui: TerminalUI,
-            granularCacheManager: GranularCacheManager?
-        ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportiOSIconsEntry(
-                    entry: entry,
-                    ios: ios,
-                    client: client,
-                    params: params,
-                    ui: ui,
-                    granularCacheManager: granularCacheManager
-                )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                mergeHashes(&allHashes, result.hashes)
-            }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
-        }
-
-        // Exports icons for a single iOS icons entry.
-        // swiftlint:disable:next function_body_length cyclomatic_complexity function_parameter_count
-        private func exportiOSIconsEntry(
-            entry: Params.iOS.IconsEntry,
-            ios: Params.iOS,
-            client: Client,
-            params: Params,
-            ui: TerminalUI,
-            granularCacheManager: GranularCacheManager?
-        ) async throws -> PlatformExportResult {
-            let loaderConfig = IconsLoaderConfig.forIOS(entry: entry, params: params)
-
-            let loaderResult = try await ui.withSpinnerProgress("Fetching icons from Figma...") { onProgress in
-                let loader = IconsLoader(
-                    client: client,
-                    params: params,
-                    platform: .ios,
-                    logger: logger,
-                    config: loaderConfig
-                )
-                if let manager = granularCacheManager {
-                    loader.granularCacheManager = manager
-                    return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
-                } else {
-                    let output = try await loader.load(filter: filter, onBatchProgress: onProgress)
-                    return IconsLoaderResultWithHashes(
-                        light: output.light,
-                        dark: output.dark,
-                        computedHashes: [:],
-                        allSkipped: false,
-                        allNames: [] // Not needed when not using granular cache
-                    )
-                }
-            }
-
-            // If granular cache skipped all icons, return early
-            if loaderResult.allSkipped {
-                ui.success("All icons unchanged (granular cache). Skipping export.")
-                return PlatformExportResult(
-                    count: 0,
-                    hashes: loaderResult.computedHashes,
-                    skippedCount: loaderResult.allNames.count
-                )
-            }
-
-            let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
-
-            let processor = ImagesProcessor(
-                platform: .ios,
-                nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-                nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
-            )
-
-            let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
-                try await ui.withSpinner("Processing icons...") {
-                    let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                    return try (result.get(), result.warning)
-                }
-            if let iconsWarning {
-                ui.warning(iconsWarning)
-            }
-
-            let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
-
-            let output = XcodeImagesOutput(
-                assetsFolderURL: assetsURL,
-                assetsInMainBundle: ios.xcassetsInMainBundle,
-                assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
-                resourceBundleNames: ios.resourceBundleNames,
-                addObjcAttribute: ios.addObjcAttribute,
-                preservesVectorRepresentation: entry.preservesVectorRepresentation,
-                uiKitImageExtensionURL: entry.imageSwift,
-                swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-                templatesPath: ios.templatesPath
-            )
-
-            let exporter = XcodeIconsExporter(output: output)
-            // Process allNames with the same transformations applied to icons
-            let allIconNames = granularCacheManager != nil
-                ? processor.processNames(loaderResult.allNames)
-                : nil
-            let localAndRemoteFiles = try exporter.export(
-                icons: icons,
-                allIconNames: allIconNames,
-                append: filter != nil
-            )
-            if filter == nil, granularCacheManager == nil {
-                try? FileManager.default.removeItem(atPath: assetsURL.path)
-            }
-
-            let remoteFilesCount = localAndRemoteFiles.filter { $0.sourceURL != nil }.count
-            let fileDownloader = faultToleranceOptions.createFileDownloader()
-
-            // Download with progress bar (uses SharedDownloadQueue in batch mode)
-            let localFiles: [FileContents] = if remoteFilesCount > 0 {
-                try await ui.withProgress("Downloading icons", total: remoteFilesCount) { progress in
-                    try await PipelinedDownloader.download(
-                        files: localAndRemoteFiles,
-                        fileDownloader: fileDownloader
-                    ) { current, _ in
-                        progress.update(current: current)
-                    }
-                }
-            } else {
-                localAndRemoteFiles
-            }
-
-            try await ui.withSpinner("Writing files to Xcode project...") {
-                try fileWriter.write(files: localFiles)
-            }
-
-            // Calculate skipped count for granular cache stats
-            let skippedCount = granularCacheManager != nil
-                ? loaderResult.allNames.count - icons.count
-                : 0
-
-            guard params.ios?.xcassetsInSwiftPackage == false else {
-                // Suppress update check in batch mode (will be shown once at the end)
-                if BatchProgressViewStorage.progressView == nil {
-                    await checkForUpdate(logger: logger)
-                }
-                ui.success("Done! Exported \(icons.count) icons.")
-                return PlatformExportResult(
-                    count: icons.count,
-                    hashes: loaderResult.computedHashes,
-                    skippedCount: skippedCount
-                )
-            }
-
-            do {
-                let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
-                try localFiles.forEach { file in
-                    if file.destination.file.pathExtension == "swift" {
-                        try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
-                    }
-                }
-                try xcodeProject.save()
-            } catch {
-                ui.warning(.xcodeProjectUpdateFailed)
-            }
-
-            // Suppress update check in batch mode (will be shown once at the end)
-            if BatchProgressViewStorage.progressView == nil {
-                await checkForUpdate(logger: logger)
-            }
-
-            ui.success("Done! Exported \(icons.count) icons.")
-            return PlatformExportResult(
-                count: icons.count,
-                hashes: loaderResult.computedHashes,
-                skippedCount: skippedCount
             )
         }
 
@@ -544,31 +239,11 @@ extension ExFigCommand {
             }
 
             // Multiple entries - pre-fetch Components once for all entries
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processAndroidIconsEntries(
-                        entries: entries,
-                        android: android,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                return try await processAndroidIconsEntries(
+            return try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                client: client,
+                params: params
+            ) {
+                try await processAndroidIconsEntries(
                     entries: entries,
                     android: android,
                     client: client,
@@ -589,12 +264,8 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportAndroidIconsEntry(
+            try await EntryProcessor.processEntries(entries: entries) { entry in
+                try await exportAndroidIconsEntry(
                     entry: entry,
                     android: android,
                     client: client,
@@ -602,16 +273,7 @@ extension ExFigCommand {
                     ui: ui,
                     granularCacheManager: granularCacheManager
                 )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                mergeHashes(&allHashes, result.hashes)
             }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
         }
 
         // Exports icons for a single Android icons entry.
@@ -1010,31 +672,11 @@ extension ExFigCommand {
             }
 
             // Multiple entries - pre-fetch Components once for all entries
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processFlutterIconsEntries(
-                        entries: entries,
-                        flutter: flutter,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                return try await processFlutterIconsEntries(
+            return try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                client: client,
+                params: params
+            ) {
+                try await processFlutterIconsEntries(
                     entries: entries,
                     flutter: flutter,
                     client: client,
@@ -1055,12 +697,8 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportFlutterIconsEntry(
+            try await EntryProcessor.processEntries(entries: entries) { entry in
+                try await exportFlutterIconsEntry(
                     entry: entry,
                     flutter: flutter,
                     client: client,
@@ -1068,16 +706,7 @@ extension ExFigCommand {
                     ui: ui,
                     granularCacheManager: granularCacheManager
                 )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                mergeHashes(&allHashes, result.hashes)
             }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
         }
 
         // Exports icons for a single Flutter icons entry.
@@ -1234,34 +863,12 @@ extension ExFigCommand {
                 )
             }
 
-            // Multiple entries - need to pre-fetch components if not already done
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                // Inject via TaskLocal - IconsLoader will use pre-fetched components
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processWebIconsEntries(
-                        entries: entries,
-                        web: web,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                // Already have pre-fetched components (batch mode)
-                return try await processWebIconsEntries(
+            // Multiple entries - pre-fetch Components once for all entries
+            return try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                client: client,
+                params: params
+            ) {
+                try await processWebIconsEntries(
                     entries: entries,
                     web: web,
                     client: client,
@@ -1282,12 +889,8 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportWebIconsEntry(
+            try await EntryProcessor.processEntries(entries: entries) { entry in
+                try await exportWebIconsEntry(
                     entry: entry,
                     web: web,
                     client: client,
@@ -1295,16 +898,7 @@ extension ExFigCommand {
                     ui: ui,
                     granularCacheManager: granularCacheManager
                 )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                mergeHashes(&allHashes, result.hashes)
             }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
         }
 
         // Exports icons for a single Web icons entry.

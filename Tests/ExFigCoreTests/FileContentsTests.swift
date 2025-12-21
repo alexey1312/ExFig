@@ -164,7 +164,8 @@ final class FileContentsTests: XCTestCase {
         let webpContents = contents.changingExtension(newExtension: "webp")
 
         XCTAssertTrue(webpContents.destination.file.path.hasSuffix(".webp"))
-        XCTAssertEqual(webpContents.dataFile, dataFile)
+        // dataFile extension is also updated to match the new destination extension
+        XCTAssertEqual(webpContents.dataFile, URL(fileURLWithPath: "/tmp/image.webp"))
         XCTAssertEqual(webpContents.scale, 1.5)
         XCTAssertFalse(webpContents.dark)
     }

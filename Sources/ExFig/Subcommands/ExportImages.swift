@@ -58,20 +58,6 @@ extension ExFigCommand {
             let fileVersions: [FileVersionInfo]?
         }
 
-        /// Result of a platform export operation with granular cache hashes.
-        private struct PlatformExportResult {
-            let count: Int
-            let hashes: [String: [NodeId: String]]
-            /// Number of images skipped by granular cache.
-            let skippedCount: Int
-
-            init(count: Int, hashes: [String: [NodeId: String]], skippedCount: Int = 0) {
-                self.count = count
-                self.hashes = hashes
-                self.skippedCount = skippedCount
-            }
-        }
-
         /// Performs the actual export and returns the number of exported images.
         /// - Parameters:
         ///   - client: The Figma API client to use.
@@ -116,26 +102,17 @@ extension ExFigCommand {
                 return ImagesExportResult(count: 0, computedHashes: [:], granularCacheStats: nil, fileVersions: nil)
             }
 
-            // Check for granular cache warnings and setup
+            // Setup granular cache
             let configCacheEnabled = options.params.common?.cache?.isEnabled ?? false
-            if let warning = cacheOptions.granularCacheWarning(configEnabled: configCacheEnabled) {
-                ui.warning(warning)
-            }
-
-            let granularCacheEnabled = cacheOptions.isGranularCacheEnabled(configEnabled: configCacheEnabled)
-
-            // Clear node hashes if force flag with granular cache
-            if cacheOptions.force, granularCacheEnabled {
-                let fileIds = [options.params.figma.lightFileId] +
-                    (options.params.figma.darkFileId.map { [$0] } ?? [])
-                for fileId in fileIds {
-                    try trackingManager.clearNodeHashes(fileId: fileId)
-                }
-            }
-
-            let granularCacheManager: GranularCacheManager? = granularCacheEnabled
-                ? trackingManager.createGranularCacheManager()
-                : nil
+            let granularCacheSetup = try GranularCacheHelper.setup(
+                trackingManager: trackingManager,
+                cacheOptions: cacheOptions,
+                configCacheEnabled: configCacheEnabled,
+                params: options.params,
+                ui: ui
+            )
+            let granularCacheEnabled = granularCacheSetup.enabled
+            let granularCacheManager = granularCacheSetup.manager
 
             var totalImages = 0
             var totalSkipped = 0
@@ -154,7 +131,7 @@ extension ExFigCommand {
                 )
                 totalImages += result.count
                 totalSkipped += result.skippedCount
-                allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             if options.params.android != nil {
@@ -170,7 +147,7 @@ extension ExFigCommand {
                 )
                 totalImages += result.count
                 totalSkipped += result.skippedCount
-                allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             if options.params.flutter != nil {
@@ -186,7 +163,7 @@ extension ExFigCommand {
                 )
                 totalImages += result.count
                 totalSkipped += result.skippedCount
-                allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             if options.params.web != nil {
@@ -202,7 +179,7 @@ extension ExFigCommand {
                 )
                 totalImages += result.count
                 totalSkipped += result.skippedCount
-                allComputedHashes = mergeHashes(allComputedHashes, result.hashes)
+                allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
             // Update cache after successful export
@@ -216,11 +193,7 @@ extension ExFigCommand {
             }
 
             // Convert NodeId keys to String for batch result
-            let stringHashes = allComputedHashes.mapValues { nodeHashes in
-                nodeHashes.reduce(into: [String: String]()) { result, pair in
-                    result[pair.key] = pair.value
-                }
-            }
+            let stringHashes = HashMerger.convertToStringKeys(allComputedHashes)
 
             // Build granular cache stats if granular cache was used
             let stats: GranularCacheStats? = granularCacheEnabled && (totalImages > 0 || totalSkipped > 0)
@@ -233,22 +206,6 @@ extension ExFigCommand {
                 granularCacheStats: stats,
                 fileVersions: batchMode ? fileVersions : nil
             )
-        }
-
-        /// Merges hash maps from multiple platform exports.
-        private func mergeHashes(
-            _ existing: [String: [NodeId: String]],
-            _ new: [String: [NodeId: String]]
-        ) -> [String: [NodeId: String]] {
-            var result = existing
-            for (fileId, hashes) in new {
-                if let existingHashes = result[fileId] {
-                    result[fileId] = existingHashes.merging(hashes) { _, new in new }
-                } else {
-                    result[fileId] = hashes
-                }
-            }
-            return result
         }
 
         private func exportiOSImages(
@@ -280,31 +237,11 @@ extension ExFigCommand {
             }
 
             // Multiple entries - pre-fetch Components once for all entries
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processIOSImagesEntries(
-                        entries: entries,
-                        ios: ios,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                return try await processIOSImagesEntries(
+            return try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                client: client,
+                params: params
+            ) {
+                try await processIOSImagesEntries(
                     entries: entries,
                     ios: ios,
                     client: client,
@@ -325,12 +262,8 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportiOSImagesEntry(
+            try await EntryProcessor.processEntries(entries: entries) { entry in
+                try await exportiOSImagesEntry(
                     entry: entry,
                     ios: ios,
                     client: client,
@@ -338,16 +271,7 @@ extension ExFigCommand {
                     ui: ui,
                     granularCacheManager: granularCacheManager
                 )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                allHashes = mergeHashes(allHashes, result.hashes)
             }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
         }
 
         // swiftlint:disable:next function_body_length cyclomatic_complexity function_parameter_count
@@ -1432,31 +1356,12 @@ extension ExFigCommand {
                 )
             }
 
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processAndroidImagesEntries(
-                        entries: entries,
-                        android: android,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                return try await processAndroidImagesEntries(
+            // Multiple entries - pre-fetch Components once for all entries
+            return try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                client: client,
+                params: params
+            ) {
+                try await processAndroidImagesEntries(
                     entries: entries,
                     android: android,
                     client: client,
@@ -1476,12 +1381,8 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportAndroidImagesEntry(
+            try await EntryProcessor.processEntries(entries: entries) { entry in
+                try await exportAndroidImagesEntry(
                     entry: entry,
                     android: android,
                     client: client,
@@ -1489,16 +1390,7 @@ extension ExFigCommand {
                     ui: ui,
                     granularCacheManager: granularCacheManager
                 )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                allHashes = mergeHashes(allHashes, result.hashes)
             }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
         }
 
         // swiftlint:disable:next function_body_length cyclomatic_complexity function_parameter_count
@@ -2000,31 +1892,12 @@ extension ExFigCommand {
                 )
             }
 
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processFlutterImagesEntries(
-                        entries: entries,
-                        flutter: flutter,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                return try await processFlutterImagesEntries(
+            // Multiple entries - pre-fetch Components once for all entries
+            return try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                client: client,
+                params: params
+            ) {
+                try await processFlutterImagesEntries(
                     entries: entries,
                     flutter: flutter,
                     client: client,
@@ -2044,12 +1917,8 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportFlutterImagesEntry(
+            try await EntryProcessor.processEntries(entries: entries) { entry in
+                try await exportFlutterImagesEntry(
                     entry: entry,
                     flutter: flutter,
                     client: client,
@@ -2057,16 +1926,7 @@ extension ExFigCommand {
                     ui: ui,
                     granularCacheManager: granularCacheManager
                 )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                allHashes = mergeHashes(allHashes, result.hashes)
             }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
         }
 
         // swiftlint:disable:next function_body_length cyclomatic_complexity function_parameter_count
@@ -2254,32 +2114,12 @@ extension ExFigCommand {
                 )
             }
 
-            // Multiple entries - need to pre-fetch components if not already done
-            let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
-
-            if needsLocalPreFetch {
-                var componentsMap: [String: [Component]] = [:]
-                let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
-
-                for fileId in fileIds {
-                    let components = try await client.request(ComponentsEndpoint(fileId: fileId))
-                    componentsMap[fileId] = components
-                }
-
-                let preFetched = PreFetchedComponents(components: componentsMap)
-
-                return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
-                    try await processWebImagesEntries(
-                        entries: entries,
-                        web: web,
-                        client: client,
-                        params: params,
-                        ui: ui,
-                        granularCacheManager: granularCacheManager
-                    )
-                }
-            } else {
-                return try await processWebImagesEntries(
+            // Multiple entries - pre-fetch Components once for all entries
+            return try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                client: client,
+                params: params
+            ) {
+                try await processWebImagesEntries(
                     entries: entries,
                     web: web,
                     client: client,
@@ -2299,12 +2139,8 @@ extension ExFigCommand {
             ui: TerminalUI,
             granularCacheManager: GranularCacheManager?
         ) async throws -> PlatformExportResult {
-            var totalCount = 0
-            var totalSkipped = 0
-            var allHashes: [String: [NodeId: String]] = [:]
-
-            for entry in entries {
-                let result = try await exportWebImagesEntry(
+            try await EntryProcessor.processEntries(entries: entries) { entry in
+                try await exportWebImagesEntry(
                     entry: entry,
                     web: web,
                     client: client,
@@ -2312,16 +2148,7 @@ extension ExFigCommand {
                     ui: ui,
                     granularCacheManager: granularCacheManager
                 )
-                totalCount += result.count
-                totalSkipped += result.skippedCount
-                allHashes = mergeHashes(allHashes, result.hashes)
             }
-
-            return PlatformExportResult(
-                count: totalCount,
-                hashes: allHashes,
-                skippedCount: totalSkipped
-            )
         }
 
         // Exports images for a single Web images entry.
