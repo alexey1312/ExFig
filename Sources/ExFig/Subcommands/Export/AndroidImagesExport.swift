@@ -307,7 +307,7 @@ extension ExFigCommand.ExportImages {
         try ExFigCommand.fileWriter.write(files: localFiles)
 
         if entry.format == .webp {
-            let converter = createWebpConverter(from: entry.webpOptions)
+            let converter = WebpConverterFactory.createWebpConverter(from: entry.webpOptions)
             // Convert to proper file:// URLs (YAML-decoded URLs lack scheme)
             let filesToConvert = localFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
             try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
@@ -395,7 +395,7 @@ extension ExFigCommand.ExportImages {
         let scales = getScalesForPlatform(entry.scales, platform: .android)
 
         // Create WebP converter with appropriate encoding
-        let converter = createSvgToWebpConverter(from: entry.webpOptions)
+        let converter = WebpConverterFactory.createSvgToWebpConverter(from: entry.webpOptions)
 
         // Rasterize SVGs to WebP at each scale
         let totalConversions = localSVGFiles.count * scales.count
@@ -503,25 +503,6 @@ extension ExFigCommand.ExportImages {
         return filtered.isEmpty ? validScales : filtered
     }
 
-    /// Creates an SVG to WebP converter from format options.
-    func createSvgToWebpConverter(from options: Params.Android.Images
-        .FormatOptions?) -> SvgToWebpConverter
-    {
-        guard let options else {
-            // Default: lossy with quality 90
-            return SvgToWebpConverter(encoding: .lossy(quality: 90))
-        }
-
-        switch (options.encoding, options.quality) {
-        case (.lossless, _):
-            return SvgToWebpConverter(encoding: .lossless)
-        case let (.lossy, quality?):
-            return SvgToWebpConverter(encoding: .lossy(quality: quality))
-        case (.lossy, .none):
-            return SvgToWebpConverter(encoding: .lossy(quality: 90))
-        }
-    }
-
     /// Make array of remote FileContents for downloading images
     /// - Parameters:
     ///   - images: Dictionary of images. Key = scale, value = image info
@@ -542,24 +523,6 @@ extension ExFigCommand.ExportImages {
                 file: fileURL
             )
             return FileContents(destination: dest, sourceURL: image.url, scale: scale, dark: dark)
-        }
-    }
-
-    /// Creates a WebP converter from Android format options, using defaults if not specified.
-    func createWebpConverter(from options: Params.Android.Images.FormatOptions?) -> WebpConverter {
-        guard let options else {
-            // Default: lossy with quality 90
-            return WebpConverter(encoding: .lossy(quality: 90))
-        }
-
-        switch (options.encoding, options.quality) {
-        case (.lossless, _):
-            return WebpConverter(encoding: .lossless)
-        case let (.lossy, quality?):
-            return WebpConverter(encoding: .lossy(quality: quality))
-        case (.lossy, .none):
-            // Lossy without quality specified - use default 90
-            return WebpConverter(encoding: .lossy(quality: 90))
         }
     }
 

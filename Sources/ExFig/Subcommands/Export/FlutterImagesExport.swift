@@ -184,7 +184,7 @@ extension ExFigCommand.ExportImages {
             try ExFigCommand.fileWriter.write(files: localFiles)
             convertedPngPaths = Set(localFiles.map(\.destination.url.path))
 
-            let converter = createFlutterWebpConverter(from: entry.webpOptions)
+            let converter = WebpConverterFactory.createWebpConverter(from: entry.webpOptions)
             // Convert to proper file:// URLs (YAML-decoded URLs lack scheme)
             let filesToConvert = localFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
             try await ui.withProgress("Converting to WebP", total: filesToConvert.count) { progress in
@@ -226,22 +226,6 @@ extension ExFigCommand.ExportImages {
             hashes: loaderResult.computedHashes,
             skippedCount: skippedCount
         )
-    }
-
-    /// Creates a WebP converter from Flutter format options.
-    func createFlutterWebpConverter(from options: Params.Android.Images.FormatOptions?) -> WebpConverter {
-        guard let options else {
-            return WebpConverter(encoding: .lossy(quality: 90))
-        }
-
-        switch (options.encoding, options.quality) {
-        case (.lossless, _):
-            return WebpConverter(encoding: .lossless)
-        case let (.lossy, quality?):
-            return WebpConverter(encoding: .lossy(quality: quality))
-        case (.lossy, .none):
-            return WebpConverter(encoding: .lossy(quality: 90))
-        }
     }
 
     // swiftlint:enable function_body_length
