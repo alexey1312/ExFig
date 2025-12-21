@@ -199,7 +199,11 @@ ios:
 | ---------- | ------- | --------- | --------------------------------- |
 | `lossy`    | 90      | Smallest  | Photos, complex illustrations     |
 | `lossy`    | 100     | Small     | High-quality photos               |
-| `lossless` | N/A     | Medium    | Graphics requiring exact pixels   |
+| `lossless` | N/A     | Medium    | Near-lossless quality*            |
+
+\*Apple ImageIO does not support true lossless HEIC. The `lossless` option
+uses quality=1.0 (maximum) but is still technically lossy. For pixel-perfect
+output, use PNG format instead.
 
 ### Platform Availability
 

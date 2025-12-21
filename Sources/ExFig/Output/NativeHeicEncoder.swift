@@ -145,7 +145,8 @@ struct NativeHeicEncoder: Sendable {
                 throw NativeHeicEncoderError.encodingFailed
             }
 
-            // Create CGImage with premultiplied alpha
+            // Create CGImage with straight (non-premultiplied) alpha
+            // Input RGBA from PngDecoder/SvgRasterizer is already unpremultiplied
             guard let cgImage = CGImage(
                 width: width,
                 height: height,
@@ -153,7 +154,7 @@ struct NativeHeicEncoder: Sendable {
                 bitsPerPixel: bitsPerPixel,
                 bytesPerRow: bytesPerRow,
                 space: colorSpace,
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue),
                 provider: dataProvider,
                 decode: nil,
                 shouldInterpolate: false,
@@ -183,14 +184,15 @@ struct NativeHeicEncoder: Sendable {
             }
 
             // Set encoding options
-            // For lossless, don't set quality key - ImageIO defaults to lossless for HEIC
+            // Note: Apple ImageIO does NOT support true lossless HEIC encoding.
+            // Setting quality=1.0 gives maximum quality but is still lossy.
+            // See: https://developer.apple.com/forums/thread/670094
             var options: [CFString: Any] = [:]
 
-            if !lossless {
-                // Convert 0-100 to 0.0-1.0
-                let normalizedQuality = Double(quality) / 100.0
-                options[kCGImageDestinationLossyCompressionQuality] = normalizedQuality
-            }
+            // For "lossless" mode, use quality=1.0 (maximum quality)
+            // For lossy mode, use configured quality
+            let normalizedQuality = lossless ? 1.0 : Double(quality) / 100.0
+            options[kCGImageDestinationLossyCompressionQuality] = normalizedQuality
 
             // Add image to destination
             CGImageDestinationAddImage(destination, cgImage, options as CFDictionary)

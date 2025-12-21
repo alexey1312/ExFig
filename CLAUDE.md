@@ -311,6 +311,10 @@ ios:
 | `Params.ImageOutputFormat` | Enum: `.png` (default), `.heic`                    |
 | `Params.HeicOptions`       | Encoding mode (lossy/lossless) and quality (0-100) |
 
+**Important:** Apple ImageIO does not support true lossless HEIC encoding.
+The `lossless` option uses quality=1.0 (maximum) but is still technically lossy.
+See: https://developer.apple.com/forums/thread/670094
+
 ### TerminalUI Usage
 
 ```swift

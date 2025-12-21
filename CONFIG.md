@@ -674,8 +674,13 @@ When `outputFormat: heic` is specified:
 
 | Field      | Description                                     |
 | ---------- | ----------------------------------------------- |
-| `encoding` | `lossy` (default) or `lossless`                 |
+| `encoding` | `lossy` (default) or `lossless`*                |
 | `quality`  | Quality for lossy encoding: 0-100 (default: 90) |
+
+\*Note: Apple ImageIO does not support true lossless HEIC encoding.
+The `lossless` option uses maximum quality (quality=1.0) which produces
+near-lossless results but is still technically lossy. For true lossless,
+use PNG format. See: https://developer.apple.com/forums/thread/670094
 
 ```yaml
 # iOS example - HEIC output with SVG source (best quality)
