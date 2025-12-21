@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.8] - 2025-12-21
+
+### Bug Fixes
+
+- **ios**: Handle HEIC export for large SVG files by @alexey1312
+
+- **ios**: Clean up old format files when switching PNG/HEIC by @alexey1312
+
+- **heic**: Use straight alpha and document lossless limitation by @alexey1312
+
+
+### Documentation
+
+- Update key directories after export refactoring by @alexey1312
+
+
+### Refactor
+
+- **icons**: Extract iOS export and shared helpers by @alexey1312
+
+- **exports**: Extract platform-specific export files by @alexey1312
+
+- **images**: Extract WebP converter factory by @alexey1312
+
+- **images**: Extract HEIC converter factory by @alexey1312
+
+
 ## [1.2.7] - 2025-12-20
 
 ### Bug Fixes
