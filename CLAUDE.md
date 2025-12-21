@@ -79,13 +79,15 @@ Seven modules in `Sources/`:
 ```
 Sources/ExFig/
 ├── Subcommands/     # CLI commands (ExportColors, ExportIcons, DownloadImages, etc.)
+│   └── Export/      # Platform-specific export logic (iOSIconsExport, AndroidImagesExport, etc.)
 ├── Loaders/         # Figma data loaders (ColorsLoader, ImagesLoader, etc.)
 ├── Input/           # Config & CLI options (ExFigOptions, DownloadOptions, etc.)
-├── Output/          # File writers (FileWriter, WebpConverter, etc.)
+├── Output/          # File writers, converters, factories (WebpConverterFactory, HeicConverterFactory)
 ├── TerminalUI/      # Progress bars, spinners, logging, output coordination
-├── Cache/           # Version tracking for incremental exports
+├── Cache/           # Version tracking, granular cache (GranularCacheHelper, GranularCacheManager)
 ├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
-└── Batch/           # Batch processing (executor, runner, checkpoint)
+├── Batch/           # Batch processing (executor, runner, checkpoint)
+└── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger, EntryProcessor)
 
 Sources/*/Resources/ # Stencil templates for code generation
 Tests/               # Test targets mirror source structure
@@ -868,7 +870,7 @@ exfig init -p android
 
 ## Project Knowledge File
 
-The `.claude/EXFIG.toon` file contains a compact machine-readable summary of the project.
+The `@.claude/EXFIG.toon` file contains a compact machine-readable summary of the project.
 
 **Maintenance rule:** Keep this file updated when:
 

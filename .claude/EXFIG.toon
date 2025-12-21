@@ -129,11 +129,14 @@ modules[8]{name,path,purpose}:
 
 keyDirectories:
   subcommands: Sources/ExFig/Subcommands/
+  platformExports: Sources/ExFig/Subcommands/Export/
   loaders: Sources/ExFig/Loaders/
   input: Sources/ExFig/Input/
   output: Sources/ExFig/Output/
   cache: Sources/ExFig/Cache/
   batch: Sources/ExFig/Batch/
+  pipeline: Sources/ExFig/Pipeline/
+  shared: Sources/ExFig/Shared/
   terminalUI: Sources/ExFig/TerminalUI/
   templates: Sources/*/Resources/
   docc: Sources/ExFig/ExFig.docc/
@@ -181,6 +184,13 @@ keyFiles:
   heicEncoder: Sources/ExFig/Output/NativeHeicEncoder.swift
   svgToHeicConverter: Sources/ExFig/Output/SvgToHeicConverter.swift
   heicConverter: Sources/ExFig/Output/HeicConverter.swift
+  webpConverterFactory: Sources/ExFig/Output/WebpConverterFactory.swift
+  heicConverterFactory: Sources/ExFig/Output/HeicConverterFactory.swift
+  platformExportResult: Sources/ExFig/Shared/PlatformExportResult.swift
+  hashMerger: Sources/ExFig/Shared/HashMerger.swift
+  componentPreFetcher: Sources/ExFig/Shared/ComponentPreFetcher.swift
+  entryProcessor: Sources/ExFig/Shared/EntryProcessor.swift
+  granularCacheHelper: Sources/ExFig/Cache/GranularCacheHelper.swift
 
 faultTolerance:
   defaults:
