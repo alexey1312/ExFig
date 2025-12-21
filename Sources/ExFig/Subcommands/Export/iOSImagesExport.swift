@@ -679,32 +679,6 @@ extension ExFigCommand.ExportImages {
         return files
     }
 
-    /// Creates a HEIC converter from iOS images entry options.
-    func createHeicConverter(from entry: Params.iOS.ImagesEntry) -> HeicConverter {
-        let options = entry.heicOptions
-        let quality = options?.resolvedQuality ?? 90
-        let isLossless = options?.resolvedEncoding == .lossless
-
-        if isLossless {
-            return HeicConverter(encoding: .lossless)
-        } else {
-            return HeicConverter(encoding: .lossy(quality: quality))
-        }
-    }
-
-    /// Creates an SVG to HEIC converter from iOS images entry options.
-    func createSvgToHeicConverter(from entry: Params.iOS.ImagesEntry) -> SvgToHeicConverter {
-        let options = entry.heicOptions
-        let quality = options?.resolvedQuality ?? 90
-        let isLossless = options?.resolvedEncoding == .lossless
-
-        if isLossless {
-            return SvgToHeicConverter(encoding: .lossless)
-        } else {
-            return SvgToHeicConverter(encoding: .lossy(quality: quality))
-        }
-    }
-
     // MARK: - iOS SVG Source + HEIC Output Export
 
     // swiftlint:disable:next cyclomatic_complexity function_parameter_count
@@ -793,7 +767,7 @@ extension ExFigCommand.ExportImages {
 
         // iOS uses 1x, 2x, 3x scales
         let scales: [Double] = entry.scales ?? [1.0, 2.0, 3.0]
-        let converter = createSvgToHeicConverter(from: entry)
+        let converter = HeicConverterFactory.createSvgToHeicConverter(from: entry.heicOptions)
 
         // Clear existing assets if not filtering and not using granular cache
         if filter == nil, granularCacheManager == nil {
@@ -1060,7 +1034,7 @@ extension ExFigCommand.ExportImages {
             // Write PNG files to disk first (HEIC converter reads from disk)
             try ExFigCommand.fileWriter.write(files: pngFiles)
 
-            let converter = createHeicConverter(from: entry)
+            let converter = HeicConverterFactory.createHeicConverter(from: entry.heicOptions)
             // Convert to proper file:// URLs (YAML-decoded URLs lack scheme)
             let filesToConvert = pngFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
             try await ui.withProgress("Converting to HEIC", total: filesToConvert.count) { progress in
