@@ -15,7 +15,7 @@ assignees: ""
 - **ExFig version**: <!-- e.g., 1.0.0 or commit hash -->
 - **macOS version**: <!-- e.g., 14.0 -->
 - **Swift version**: <!-- Run `swift --version` -->
-- **Installation method**: <!-- Mint / mise / source -->
+- **Installation method**: <!-- Homebrew / Mint / mise / source -->
 
 ## Steps to Reproduce
 

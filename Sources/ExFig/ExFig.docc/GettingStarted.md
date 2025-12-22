@@ -14,6 +14,12 @@ ExFig is a command-line tool that exports design resources from Figma to iOS, An
 
 ## Installation
 
+### Using Homebrew (Recommended)
+
+```bash
+brew install alexey1312/exfig/exfig
+```
+
 ### Using Mint
 
 ```bash
@@ -23,7 +29,7 @@ mint install alexey1312/ExFig
 ### Using Mise
 
 ```bash
-mise use -g ubi:alexey1312/ExFig
+mise use -g github:alexey1312/ExFig
 ```
 
 ### From Source

@@ -66,7 +66,7 @@ Flutter, and React/TypeScript.
 
 > **Note:** Exporting icons and images requires a Figma Professional/Organization plan (uses Shareable Team Libraries).
 
-> **Tip:** For optimal PNG sizes, use oxipng (`ubi:shssoichiro/oxipng@9.1.5` via `mise use -g`) to compress exported PNG
+> **Tip:** For optimal PNG sizes, use oxipng (`github:shssoichiro/oxipng` via `mise use -g`) to compress exported PNG
 > files after export.
 
 ## Quick Start
@@ -81,7 +81,7 @@ brew install alexey1312/exfig/exfig
 mint install alexey1312/ExFig
 
 # Using mise
-mise use -g ubi:alexey1312/ExFig
+mise use -g github:alexey1312/ExFig
 
 # Or build from source
 git clone https://github.com/alexey1312/ExFig.git
