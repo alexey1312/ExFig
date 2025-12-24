@@ -105,7 +105,7 @@ jobs:
           cp -r .build/${{ matrix.build-path }}/exfig_FlutterExport.resources dist/
           cp -r .build/${{ matrix.build-path }}/exfig_WebExport.resources dist/
           cp LICENSE dist/
-          tar -czf ${{ matrix.archive-name }}.tar.gz -C dist .
+          cd dist && tar -czf ../${{ matrix.archive-name }}.tar.gz *
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     container:
-      image: swift:6.2
+      image: swift:6.2-jammy
     steps:
       - name: Install Git LFS
         run: |
