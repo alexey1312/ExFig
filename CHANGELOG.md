@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.12] - 2025-12-24
+
+### Miscellaneous Tasks
+
+- **release**: Use swift:6.2-jammy image for Linux builds by @alexey1312
+
+
 ## [1.2.11] - 2025-12-24
 
 ### Bug Fixes
