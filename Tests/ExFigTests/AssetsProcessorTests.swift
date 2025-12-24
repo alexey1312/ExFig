@@ -375,11 +375,15 @@ final class AssetsProcessorTests: XCTestCase {
             nameStyle: .snakeCase
         )
 
-        let names = ["motiveBox04Color", "IconName", "some/name"]
-        let result = processor.processNames(names)
+        // CamelCase input: numbers get separated (like color naming)
+        let camelCaseNames = ["motiveBox04Color", "IconName", "some/name"]
+        let camelCaseResult = processor.processNames(camelCaseNames)
+        XCTAssertEqual(camelCaseResult, ["motive_box_04_color", "icon_name", "some_name"])
 
-        // Numbers stay attached to preceding letters (no separator before digits)
-        XCTAssertEqual(result, ["motive_box04_color", "icon_name", "some_name"])
+        // kebab-case input: numbers stay attached (like image naming from Figma)
+        let kebabCaseNames = ["motive-box04-color", "icon-name"]
+        let kebabCaseResult = processor.processNames(kebabCaseNames)
+        XCTAssertEqual(kebabCaseResult, ["motive_box04_color", "icon_name"])
     }
 
     func testProcessNamesWithPascalCase() {
@@ -400,11 +404,15 @@ final class AssetsProcessorTests: XCTestCase {
             nameStyle: .kebabCase
         )
 
-        let names = ["motiveBox04Color", "IconName", "some_name"]
-        let result = processor.processNames(names)
+        // CamelCase input: numbers get separated
+        let camelCaseNames = ["motiveBox04Color", "IconName", "some_name"]
+        let camelCaseResult = processor.processNames(camelCaseNames)
+        XCTAssertEqual(camelCaseResult, ["motive-box-04-color", "icon-name", "some-name"])
 
-        // Numbers stay attached to preceding letters (no separator before digits)
-        XCTAssertEqual(result, ["motive-box04-color", "icon-name", "some-name"])
+        // snake_case input with numbers: numbers stay attached
+        let snakeCaseNames = ["motive_box04_color", "icon_name"]
+        let snakeCaseResult = processor.processNames(snakeCaseNames)
+        XCTAssertEqual(snakeCaseResult, ["motive-box04-color", "icon-name"])
     }
 
     func testProcessNamesWithScreamingSnakeCase() {

@@ -24,7 +24,7 @@ legacy_version_file = false
 
 [tools]
 # --- Swift Development ---
-swiftformat = "0.58.7" # Swift code formatting
+"github:nicklockwood/SwiftFormat" = { version = "0.58.7", asset_pattern = "swiftformat.zip" } # Swift code formatting
 swiftlint = "0.62.2"   # Swift linting
 xcsift = "1.0.17"      # xcodebuild output filtering
 

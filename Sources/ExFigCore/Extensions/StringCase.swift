@@ -16,6 +16,21 @@ extension String {
         filter { $0 != "_" }.allSatisfy { $0.isLowercase || $0.isNumber }
     }
 
+    /// A Boolean value indicating whether this string is considered kebab case.
+    ///
+    /// For example, the following strings are all kebab case:
+    ///
+    /// - "kebab-case"
+    /// - "example"
+    /// - "date-formatter"
+    ///
+    /// String can contain lowercase letters and hyphens only.
+    /// In kebab case, words are separated by hyphens.
+    var isKebabCase: Bool {
+        // Strip all hyphens and check if the rest is lowercase
+        filter { $0 != "-" }.allSatisfy { $0.isLowercase || $0.isNumber }
+    }
+
     /// A Boolean value indicating whether this string is considered lower camel case.
     ///
     /// For example, the following strings are all lower camel case:
@@ -50,8 +65,7 @@ public extension String {
                 results.append(String(character))
             } else if ((lastCharacter.isLetter || lastCharacter.isNumber) && character.isLowercase) ||
                 (lastCharacter.isNumber && character.isNumber) ||
-                (lastCharacter.isUppercase && character.isUppercase) ||
-                (lastCharacter.isLetter && character.isNumber)
+                (lastCharacter.isUppercase && character.isUppercase)
             {
                 results[results.count - 1] += String(character)
             } else if character.isLetter || character.isNumber {
@@ -106,6 +120,9 @@ public extension String {
     /// - Returns: A snake case copy of the string.
     func snakeCased() -> String {
         guard !isSnakeCase else { return self }
+        // Convert kebab-case to snake_case directly (preserves number placement like "discount5")
+        let kebabConverted = replacingOccurrences(of: "-", with: "_")
+        guard !kebabConverted.isSnakeCase else { return kebabConverted }
         let result = split(separator: " ").joined(separator: "_")
         guard !result.isSnakeCase else { return result }
         return result.lowercasedStrings().map { $0.lowercased() }.joined(separator: "_")
@@ -121,7 +138,11 @@ public extension String {
     ///
     /// - Returns: A kebab case copy of the string.
     func kebabCased() -> String {
-        lowercasedStrings().map { $0.lowercased() }.joined(separator: "-")
+        guard !isKebabCase else { return self }
+        // Convert snake_case to kebab-case directly (preserves number placement like "box04")
+        let snakeConverted = replacingOccurrences(of: "_", with: "-")
+        guard !snakeConverted.isKebabCase else { return snakeConverted }
+        return lowercasedStrings().map { $0.lowercased() }.joined(separator: "-")
     }
 
     /// Returns screaming snake case version of the string.

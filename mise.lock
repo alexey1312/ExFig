@@ -15,6 +15,18 @@ backend = "aqua:orhun/git-cliff"
 "platforms.macos-x64" = { checksum = "sha256:c3111dddaf866a986085f22ff22fa3003645fc69a3b9302c4e1352c4676c398a", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-apple-darwin.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:073c8027da2e055ec83c3609c4195284bd10b2771fcbd806ff0f94e48c310c77", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-pc-windows-msvc.zip"}
 
+[[tools."github:nicklockwood/SwiftFormat"]]
+version = "0.58.7"
+backend = "github:nicklockwood/SwiftFormat[asset_pattern=swiftformat.zip]"
+"platforms.linux-arm64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
+"platforms.linux-x64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
+"platforms.macos-arm64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
+"platforms.macos-x64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
+"platforms.windows-x64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
+
+[tools."github:nicklockwood/SwiftFormat".options]
+asset_pattern = "swiftformat.zip"
+
 [[tools.hk]]
 version = "1.28.0"
 backend = "aqua:jdx/hk"
