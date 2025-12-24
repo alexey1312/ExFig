@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import FigmaAPI
 import Foundation
 
@@ -68,13 +69,16 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
             var allFileVersions: [String: FileVersionInfo] = [:]
 
             // Only run exports for configured asset types
+            // Each export is wrapped with asset type context for progress reporting
             if hasColorsConfig(params) {
                 let colors = makeColors(
                     options: options,
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: faultToleranceOptions
                 )
-                colorsCount = try await colors.performExport(client: client, ui: ui)
+                colorsCount = try await BatchProgressViewStorage.$currentAssetType.withValue(.colors) {
+                    try await colors.performExport(client: client, ui: ui)
+                }
             }
 
             if hasIconsConfig(params) {
@@ -83,7 +87,9 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: heavyFaultToleranceOptions
                 )
-                let result = try await icons.performExportWithResult(client: client, ui: ui)
+                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.icons) {
+                    try await icons.performExportWithResult(client: client, ui: ui)
+                }
                 iconsCount = result.count
                 allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
                 allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
@@ -101,7 +107,9 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: heavyFaultToleranceOptions
                 )
-                let result = try await images.performExportWithResult(client: client, ui: ui)
+                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.images) {
+                    try await images.performExportWithResult(client: client, ui: ui)
+                }
                 imagesCount = result.count
                 allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
                 allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
@@ -119,7 +127,9 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: faultToleranceOptions
                 )
-                typographyCount = try await typography.performExport(client: client, ui: ui)
+                typographyCount = try await BatchProgressViewStorage.$currentAssetType.withValue(.typography) {
+                    try await typography.performExport(client: client, ui: ui)
+                }
             }
 
             return ExportStats(
@@ -264,6 +274,7 @@ struct BatchConfigRunner: Sendable {
         )
     }
 
+    // swiftlint:disable:next function_body_length
     func process(
         configFile: ConfigFile,
         ui: TerminalUI,
@@ -303,12 +314,34 @@ struct BatchConfigRunner: Sendable {
                 }
             )
 
-            let stats = try await exporter.export(
-                configFile: configFile,
-                options: options,
-                client: client,
-                ui: ui
-            )
+            // Create progress callback that updates BatchProgressView
+            let configName = configFile.name
+            let callback: BatchProgressViewStorage.DownloadProgressCallback = { current, total in
+                guard let progressView else { return }
+                // Route to correct asset type based on current context
+                if let assetType = BatchProgressViewStorage.currentAssetType {
+                    switch assetType {
+                    case .icons:
+                        await progressView.updateProgress(name: configName, icons: (current, total))
+                    case .images:
+                        await progressView.updateProgress(name: configName, images: (current, total))
+                    case .colors:
+                        await progressView.updateProgress(name: configName, colors: (current, total))
+                    case .typography:
+                        await progressView.updateProgress(name: configName, typography: (current, total))
+                    }
+                }
+            }
+
+            // Inject progress callback so export files can report incremental progress
+            let stats = try await BatchProgressViewStorage.$downloadProgressCallback.withValue(callback) {
+                try await exporter.export(
+                    configFile: configFile,
+                    options: options,
+                    client: client,
+                    ui: ui
+                )
+            }
 
             // Update progress view with final counts or log success
             if let progressView {

@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 import FigmaAPI
 import Foundation
 import Rainbow
@@ -43,6 +44,10 @@ actor BatchProgressView {
     private var configOrder: [String] = []
     private var lineCount: Int = 0
     private var rateLimiterStatus: RateLimiterStatus?
+
+    // Log queue to serialize warning/error output and prevent race conditions
+    private var logQueue: [String] = []
+    private var isProcessingLogs = false
 
     private let useColors: Bool
     private let useAnimations: Bool
@@ -167,6 +172,35 @@ actor BatchProgressView {
         // Move up and clear from cursor to end of screen
         TerminalOutputManager.shared.writeDirect(ANSICodes.cursorUp(lineCount))
         TerminalOutputManager.shared.writeDirect(ANSICodes.clearToEndOfScreen)
+    }
+
+    // MARK: - Serialized Log Output
+
+    /// Queue a log message for coordinated output.
+    /// Prevents race conditions when multiple warnings/errors are printed simultaneously.
+    func queueLogMessage(_ message: String) {
+        logQueue.append(message)
+        processLogQueueIfNeeded()
+    }
+
+    /// Process queued logs one at a time to prevent interleaving.
+    private func processLogQueueIfNeeded() {
+        guard !isProcessingLogs, !logQueue.isEmpty else { return }
+        isProcessingLogs = true
+
+        // Clear progress display before printing logs
+        clearForLog()
+
+        // Output all queued logs
+        while !logQueue.isEmpty {
+            let message = logQueue.removeFirst()
+            TerminalOutputManager.shared.writeDirect(message + "\n")
+        }
+
+        // Redraw progress display
+        render()
+
+        isProcessingLogs = false
     }
 
     /// Render the batch progress view.

@@ -163,8 +163,12 @@ extension ExFigCommand.ExportIcons {
                 try await PipelinedDownloader.download(
                     files: remoteFiles,
                     fileDownloader: fileDownloader
-                ) { current, _ in
+                ) { current, total in
                     progress.update(current: current)
+                    // Report to batch progress if in batch mode
+                    if let callback = BatchProgressViewStorage.downloadProgressCallback {
+                        Task { await callback(current, total) }
+                    }
                 }
             }
         } else {

@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import ExFigCore
 import Foundation
 import Rainbow
@@ -28,6 +29,8 @@ final class TerminalUI: Sendable {
     /// Print an info message
     func info(_ message: String) {
         guard outputMode != .quiet else { return }
+        // Suppress in batch mode - progress view shows status
+        if BatchProgressViewStorage.progressView != nil { return }
         if useColors {
             TerminalOutputManager.shared.print(message.cyan)
         } else {
@@ -38,18 +41,19 @@ final class TerminalUI: Sendable {
     /// Print a success message
     func success(_ message: String) {
         guard outputMode != .quiet else { return }
+        // Suppress in batch mode - progress view shows status
+        if BatchProgressViewStorage.progressView != nil { return }
         let icon = useColors ? "✓".green : "✓"
         TerminalOutputManager.shared.print("\(icon) \(message)")
     }
 
     /// Print a warning message (handles multi-line properly)
     func warning(_ message: String) {
-        // In batch mode, coordinate with progress display
+        // In batch mode, queue for coordinated output to prevent race conditions
         if let progressView = BatchProgressViewStorage.progressView {
+            let formatted = formatWarningForQueue(message)
             Task {
-                await progressView.clearForLog()
-                printWarning(message)
-                await progressView.render()
+                await progressView.queueLogMessage(formatted)
             }
             return
         }
@@ -97,12 +101,11 @@ final class TerminalUI: Sendable {
 
     /// Print an error message
     func error(_ message: String) {
-        // In batch mode, coordinate with progress display
+        // In batch mode, queue for coordinated output to prevent race conditions
         if let progressView = BatchProgressViewStorage.progressView {
+            let formatted = formatErrorForQueue(message)
             Task {
-                await progressView.clearForLog()
-                printError(message)
-                await progressView.render()
+                await progressView.queueLogMessage(formatted)
             }
             return
         }
@@ -148,8 +151,36 @@ final class TerminalUI: Sendable {
     /// Print a debug message (only in verbose mode)
     func debug(_ message: String) {
         guard outputMode == .verbose else { return }
+        // Suppress in batch mode - progress view shows status
+        if BatchProgressViewStorage.progressView != nil { return }
         let prefix = useColors ? "[DEBUG]".lightBlack : "[DEBUG]"
         TerminalOutputManager.shared.print("\(prefix) \(message)")
+    }
+
+    // MARK: - Batch Mode Log Formatting
+
+    /// Format warning message for batch mode queue (includes icon and coloring)
+    private func formatWarningForQueue(_ message: String) -> String {
+        let icon = useColors ? "⚠".yellow : "⚠"
+        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
+
+        return lines.enumerated().map { index, line in
+            let lineStr = String(line)
+            let text = useColors ? lineStr.yellow : lineStr
+            return index == 0 ? "\(icon) \(text)" : "  \(text)"
+        }.joined(separator: "\n")
+    }
+
+    /// Format error message for batch mode queue (includes icon and coloring)
+    private func formatErrorForQueue(_ message: String) -> String {
+        let icon = useColors ? "✗".red : "✗"
+        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
+
+        return lines.enumerated().map { index, line in
+            let lineStr = String(line)
+            let text = useColors ? lineStr.red : lineStr
+            return index == 0 ? "\(icon) \(text)" : "  \(text)"
+        }.joined(separator: "\n")
     }
 
     // MARK: - Spinner Operations
@@ -196,6 +227,11 @@ final class TerminalUI: Sendable {
         successMessage: String,
         operation: @Sendable () async throws -> T
     ) async rethrows -> T {
+        // Suppress in batch mode to avoid corrupting multi-line progress display
+        if BatchProgressViewStorage.progressView != nil {
+            return try await operation()
+        }
+
         guard outputMode.showProgress else {
             if outputMode != .quiet {
                 TerminalOutputManager.shared.print(message)
@@ -273,13 +309,14 @@ final class TerminalUI: Sendable {
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
         if BatchProgressViewStorage.progressView != nil {
-            let noopProgress = ProgressBar(
+            let silentProgress = ProgressBar(
                 message: message,
                 total: max(total, 1),
                 useColors: false,
-                useAnimations: false
+                useAnimations: false,
+                isSilent: true
             )
-            return try await operation(noopProgress)
+            return try await operation(silentProgress)
         }
 
         guard outputMode.showProgress, total > 0 else {

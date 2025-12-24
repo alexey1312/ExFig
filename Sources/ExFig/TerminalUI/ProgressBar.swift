@@ -27,6 +27,7 @@ final class ProgressBar: @unchecked Sendable {
     private let width: Int
     private let useColors: Bool
     private let useAnimations: Bool
+    private let isSilent: Bool
     // Timer is not Sendable, so we keep it separate and only access from renderQueue
     private var timer: DispatchSourceTimer?
 
@@ -55,7 +56,8 @@ final class ProgressBar: @unchecked Sendable {
         total: Int,
         width: Int = 30,
         useColors: Bool = true,
-        useAnimations: Bool = true
+        useAnimations: Bool = true,
+        isSilent: Bool = false
     ) {
         state = Lock(State(message: message))
         self.total = max(total, 1) // Prevent division by zero
@@ -63,6 +65,7 @@ final class ProgressBar: @unchecked Sendable {
         startTime = Date()
         self.useColors = useColors
         self.useAnimations = useAnimations
+        self.isSilent = isSilent
     }
 
     /// Start the progress bar rendering loop
@@ -106,8 +109,8 @@ final class ProgressBar: @unchecked Sendable {
         }
         needsRender = true
 
-        // For non-animation mode, print immediately
-        if !useAnimations {
+        // For non-animation mode, print immediately (unless silent)
+        if !useAnimations, !isSilent {
             Self.renderQueue.async { [self] in
                 renderPlainMode()
             }
@@ -134,6 +137,9 @@ final class ProgressBar: @unchecked Sendable {
     private func finish(success: Bool, message: String?) {
         guard isRunning else { return }
         isRunning = false
+
+        // Silent mode: skip all output
+        if isSilent { return }
 
         // Stop animation state synchronously so subsequent print() calls don't coordinate
         TerminalOutputManager.shared.hasActiveAnimation = false

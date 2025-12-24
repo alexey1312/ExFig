@@ -33,7 +33,7 @@ final class DownloadImageLoader: @unchecked Sendable {
             !component.name.trimmingCharacters(in: .whitespaces).isEmpty
         }
 
-        logger.info("Fetching vector images...")
+        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
         let imageIdToImagePath = try await loadImages(
             fileId: fileId,
             imagesDict: imagesDict,
@@ -79,7 +79,7 @@ final class DownloadImageLoader: @unchecked Sendable {
             throw ExFigError.componentsNotFound
         }
 
-        logger.info("Fetching raster images at \(scale)x...")
+        logger.info("Fetching \(imagesDict.count) images from '\(frameName)' at \(scale)x...")
         let params = FormatParams(scale: scale, format: format)
         let imageIdToImagePath = try await loadImages(
             fileId: fileId,

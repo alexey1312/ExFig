@@ -252,7 +252,7 @@ class ImageLoaderBase: @unchecked Sendable {
             return true
         }
 
-        logger.info("Fetching vector images...")
+        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
         let imageIdToImagePath = try await loadImages(
             fileId: fileId,
             imagesDict: imagesDict,
@@ -360,7 +360,7 @@ class ImageLoaderBase: @unchecked Sendable {
             return true
         }
 
-        logger.info("Fetching vector images...")
+        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
         let imageIdToImagePath = try await loadImages(
             fileId: fileId,
             imagesDict: imagesDict,
@@ -465,7 +465,7 @@ class ImageLoaderBase: @unchecked Sendable {
             return true
         }
 
-        logger.info("Fetching vector images...")
+        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
         let imageIdToImagePath = try await loadImages(
             fileId: fileId,
             imagesDict: imagesDict,
