@@ -285,6 +285,37 @@ final class ImageTrackingCacheTests: XCTestCase {
         XCTAssertEqual(cache.files["fileA"]?.fileName, "File A")
     }
 
+    // MARK: - Node Hashes - clearAllNodeHashes
+
+    func testClearAllNodeHashesRemovesHashesFromAllFiles() {
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "fileA", version: "v1")
+        cache.updateFileVersion(fileId: "fileB", version: "v2")
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "hash1"])
+        cache.updateNodeHashes(fileId: "fileB", hashes: ["2:1": "hash2", "2:2": "hash3"])
+
+        cache.clearAllNodeHashes()
+
+        XCTAssertNil(cache.files["fileA"]?.nodeHashes)
+        XCTAssertNil(cache.files["fileB"]?.nodeHashes)
+    }
+
+    func testClearAllNodeHashesPreservesVersions() {
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "fileA", version: "v1", fileName: "File A")
+        cache.updateFileVersion(fileId: "fileB", version: "v2", fileName: "File B")
+        cache.updateNodeHashes(fileId: "fileA", hashes: ["1:1": "hash1"])
+        cache.updateNodeHashes(fileId: "fileB", hashes: ["2:1": "hash2"])
+
+        cache.clearAllNodeHashes()
+
+        // Version info should be preserved for all files
+        XCTAssertEqual(cache.files["fileA"]?.version, "v1")
+        XCTAssertEqual(cache.files["fileA"]?.fileName, "File A")
+        XCTAssertEqual(cache.files["fileB"]?.version, "v2")
+        XCTAssertEqual(cache.files["fileB"]?.fileName, "File B")
+    }
+
     // MARK: - Node Hashes Persistence
 
     func testNodeHashesPersistAfterSaveAndLoad() throws {

@@ -423,7 +423,12 @@ extension ExFigCommand {
             guard experimentalGranularCache, cache, !noCache else { return nil }
 
             let resolvedCachePath = ImageTrackingCache.resolvePath(customPath: cachePath)
-            let cacheData = ImageTrackingCache.load(from: resolvedCachePath)
+            var cacheData = ImageTrackingCache.load(from: resolvedCachePath)
+
+            // Clear all node hashes when --force is set (forces full re-export)
+            if force {
+                cacheData.clearAllNodeHashes()
+            }
 
             return SharedGranularCache(cache: cacheData, cachePath: resolvedCachePath)
         }

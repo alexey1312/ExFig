@@ -212,4 +212,11 @@ extension ImageTrackingCache {
         fileInfo.nodeHashes = nil
         files[fileId] = fileInfo
     }
+
+    /// Clears node hashes for all files (used with --force flag in batch mode).
+    mutating func clearAllNodeHashes() {
+        for fileId in files.keys {
+            files[fileId]?.nodeHashes = nil
+        }
+    }
 }
