@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.10] - 2025-12-24
+
+### Bug Fixes
+
+- **core**: Preserve number placement in case conversions by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **mise**: Forward GitHub token to avoid API rate limits by @alexey1312
+
+
+### Other
+
+- Merge branch 'main' of github.com:alexey1312/ExFig by @alexey1312
+
+
 ## [1.2.9] - 2025-12-24
 
 ### Documentation
