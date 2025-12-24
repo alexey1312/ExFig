@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.13] - 2025-12-24
+
+### Miscellaneous Tasks
+
+- Use swift:6.2-jammy image and fix tar archive paths by @alexey1312
+
+
 ## [1.2.12] - 2025-12-24
 
 ### Miscellaneous Tasks
