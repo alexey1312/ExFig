@@ -22,7 +22,7 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
         let contentsFile = XcodeEmptyContents().makeFileContents(to: assetsFolderURL)
 
         let imageAssetsFiles = try assets.flatMap { pair -> [FileContents] in
-            try pair.makeFileContents(to: assetsFolderURL, preservesVector: nil, renderMode: nil)
+            try pair.makeFileContents(to: assetsFolderURL, preservesVector: nil, renderMode: output.renderMode)
         }
 
         // Generate extensions - use allAssetNames if provided, otherwise derive from assets
@@ -73,7 +73,7 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
 
         // Generate image assets with HEIC Contents.json
         let imageAssetsFiles = try assets.flatMap { pair -> [FileContents] in
-            try pair.makeFileContentsForHeic(to: assetsFolderURL)
+            try pair.makeFileContentsForHeic(to: assetsFolderURL, renderMode: output.renderMode)
         }
 
         // Generate extensions

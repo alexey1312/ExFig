@@ -36,6 +36,7 @@ final class FileWriter: Sendable {
         // 1. Collect unique directories and create them (sequential, fast)
         let directories = Set(files.map { URL(fileURLWithPath: $0.destination.directory.path) })
         for directory in directories {
+            try fixCaseMismatchIfNeeded(for: directory)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
         }
 
@@ -85,8 +86,40 @@ final class FileWriter: Sendable {
 
     private func writeFile(_ file: FileContents) throws {
         let directoryURL = URL(fileURLWithPath: file.destination.directory.path)
+        try fixCaseMismatchIfNeeded(for: directoryURL)
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
         try writeFileData(file)
+    }
+
+    /// Fixes directory name case mismatch on case-insensitive file systems (macOS).
+    ///
+    /// On case-insensitive FS, `speech2text.imageset` and `speech2Text.imageset` are the same directory.
+    /// When asset name casing changes, the old directory name persists. This method renames it.
+    private func fixCaseMismatchIfNeeded(for targetURL: URL) throws {
+        let fileManager = FileManager.default
+        let parent = targetURL.deletingLastPathComponent()
+        let targetName = targetURL.lastPathComponent
+
+        // Parent must exist for enumeration
+        guard fileManager.fileExists(atPath: parent.path) else { return }
+
+        // Find existing directory with different case
+        guard let contents = try? fileManager.contentsOfDirectory(
+            at: parent,
+            includingPropertiesForKeys: [.isDirectoryKey]
+        ) else { return }
+
+        for item in contents {
+            let itemName = item.lastPathComponent
+            // Case-insensitive match but different actual case
+            if itemName.lowercased() == targetName.lowercased(), itemName != targetName {
+                // Rename via temp directory (direct rename fails on case-insensitive FS)
+                let tempURL = parent.appendingPathComponent(UUID().uuidString)
+                try fileManager.moveItem(at: item, to: tempURL)
+                try fileManager.moveItem(at: tempURL, to: targetURL)
+                return
+            }
+        }
     }
 
     private func writeFileData(_ file: FileContents) throws {

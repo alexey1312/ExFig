@@ -183,7 +183,8 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            templatesPath: ios.templatesPath
+            templatesPath: ios.templatesPath,
+            renderMode: entry.renderMode
         )
 
         let exporter = XcodeImagesExporter(output: output)
@@ -408,7 +409,8 @@ extension ExFigCommand.ExportImages {
         let contentsJsonFiles = makeImagesetContentsJson(
             for: images,
             scales: scales,
-            assetsURL: assetsURL
+            assetsURL: assetsURL,
+            renderMode: entry.renderMode
         )
 
         // Generate folder Contents.json
@@ -433,7 +435,8 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            templatesPath: ios.templatesPath
+            templatesPath: ios.templatesPath,
+            renderMode: entry.renderMode
         )
 
         let exporter = XcodeImagesExporter(output: output)
@@ -541,7 +544,8 @@ extension ExFigCommand.ExportImages {
     func makeImagesetContentsJson(
         for images: [AssetPair<ImagePack>],
         scales: [Double],
-        assetsURL: URL
+        assetsURL: URL,
+        renderMode: XcodeRenderMode? = nil
     ) -> [FileContents] {
         var files: [FileContents] = []
 
@@ -576,10 +580,15 @@ extension ExFigCommand.ExportImages {
                 }
             }
 
-            let contentsJson: [String: Any] = [
+            var contentsJson: [String: Any] = [
                 "images": imagesArray,
                 "info": ["author": "xcode", "version": 1],
             ]
+
+            // Add properties if renderMode is set
+            if let renderMode, renderMode == .original || renderMode == .template {
+                contentsJson["properties"] = ["template-rendering-intent": renderMode.rawValue]
+            }
 
             if let jsonData = try? JSONSerialization.data(
                 withJSONObject: contentsJson,
@@ -622,7 +631,8 @@ extension ExFigCommand.ExportImages {
     func makeImagesetContentsJsonForHeic(
         for images: [AssetPair<ImagePack>],
         scales: [Double],
-        assetsURL: URL
+        assetsURL: URL,
+        renderMode: XcodeRenderMode? = nil
     ) -> [FileContents] {
         var files: [FileContents] = []
 
@@ -657,10 +667,15 @@ extension ExFigCommand.ExportImages {
                 }
             }
 
-            let contentsJson: [String: Any] = [
+            var contentsJson: [String: Any] = [
                 "images": imagesArray,
                 "info": ["author": "xcode", "version": 1],
             ]
+
+            // Add properties if renderMode is set
+            if let renderMode, renderMode == .original || renderMode == .template {
+                contentsJson["properties"] = ["template-rendering-intent": renderMode.rawValue]
+            }
 
             if let jsonData = try? JSONSerialization.data(
                 withJSONObject: contentsJson,
@@ -828,7 +843,8 @@ extension ExFigCommand.ExportImages {
         let contentsJsonFiles = makeImagesetContentsJsonForHeic(
             for: images,
             scales: scales,
-            assetsURL: assetsURL
+            assetsURL: assetsURL,
+            renderMode: entry.renderMode
         )
 
         // Generate folder Contents.json
@@ -853,7 +869,8 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            templatesPath: ios.templatesPath
+            templatesPath: ios.templatesPath,
+            renderMode: entry.renderMode
         )
 
         let exporter = XcodeImagesExporter(output: output)
@@ -992,7 +1009,8 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            templatesPath: ios.templatesPath
+            templatesPath: ios.templatesPath,
+            renderMode: entry.renderMode
         )
 
         // Use HEIC-aware exporter

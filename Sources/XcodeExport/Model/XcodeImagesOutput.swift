@@ -13,6 +13,8 @@ public struct XcodeImagesOutput {
     let uiKitImageExtensionURL: URL?
     let swiftUIImageExtensionURL: URL?
 
+    let renderMode: XcodeRenderMode?
+
     /// - Parameters:
     ///   - assetsFolderURL: An URL of a folder where to place icons/images
     ///   - preservesVectorRepresentation: A list of image names which should preserve vector data
@@ -28,7 +30,8 @@ public struct XcodeImagesOutput {
         preservesVectorRepresentation: [String]? = nil,
         uiKitImageExtensionURL: URL? = nil,
         swiftUIImageExtensionURL: URL? = nil,
-        templatesPath: URL? = nil
+        templatesPath: URL? = nil,
+        renderMode: XcodeRenderMode? = nil
     ) {
         self.assetsFolderURL = assetsFolderURL
         self.assetsInMainBundle = assetsInMainBundle
@@ -39,5 +42,6 @@ public struct XcodeImagesOutput {
         self.uiKitImageExtensionURL = uiKitImageExtensionURL
         self.swiftUIImageExtensionURL = swiftUIImageExtensionURL
         self.templatesPath = templatesPath
+        self.renderMode = renderMode
     }
 }

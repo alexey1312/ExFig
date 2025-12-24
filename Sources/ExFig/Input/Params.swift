@@ -291,6 +291,11 @@ struct Params: Decodable {
 
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
+
+            let renderMode: XcodeRenderMode?
+            let renderModeDefaultSuffix: String?
+            let renderModeOriginalSuffix: String?
+            let renderModeTemplateSuffix: String?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
@@ -309,6 +314,11 @@ struct Params: Decodable {
             let outputFormat: ImageOutputFormat?
             /// HEIC encoding options. Only used when outputFormat is heic.
             let heicOptions: HeicOptions?
+
+            let renderMode: XcodeRenderMode?
+            let renderModeDefaultSuffix: String?
+            let renderModeOriginalSuffix: String?
+            let renderModeTemplateSuffix: String?
         }
 
         /// Images configuration supporting both single object and array formats.
@@ -337,7 +347,11 @@ struct Params: Decodable {
                         swiftUIImageSwift: images.swiftUIImageSwift,
                         sourceFormat: nil,
                         outputFormat: nil,
-                        heicOptions: nil
+                        heicOptions: nil,
+                        renderMode: images.renderMode,
+                        renderModeDefaultSuffix: images.renderModeDefaultSuffix,
+                        renderModeOriginalSuffix: images.renderModeOriginalSuffix,
+                        renderModeTemplateSuffix: images.renderModeTemplateSuffix
                     )]
                 case let .multiple(entries):
                     entries

@@ -160,6 +160,123 @@ final class FileWriterTests: XCTestCase {
         }
     }
 
+    // MARK: - Case Mismatch Handling (macOS case-insensitive FS)
+
+    func testWriteRenamesDirectoryOnCaseMismatch() throws {
+        let writer = FileWriter()
+
+        // Create existing directory with different case
+        let oldCaseDir = tempDirectory.appendingPathComponent("SpeechToText.imageset")
+        try FileManager.default.createDirectory(at: oldCaseDir, withIntermediateDirectories: true)
+
+        // Create a marker file to prove it's the same directory being renamed
+        let markerFile = oldCaseDir.appendingPathComponent("marker.txt")
+        try Data("marker".utf8).write(to: markerFile)
+
+        // Write file to directory with new case
+        let newCaseDir = tempDirectory.appendingPathComponent("speechtotext.imageset")
+        let destination = Destination(
+            directory: newCaseDir,
+            // swiftlint:disable:next force_unwrapping
+            file: URL(string: "test.svg")!
+        )
+        let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
+
+        try writer.write(files: [file])
+
+        // Verify directory was renamed to new case
+        let contents = try FileManager.default.contentsOfDirectory(atPath: tempDirectory.path)
+        let imagesetDirs = contents.filter { $0.hasSuffix(".imageset") }
+
+        XCTAssertEqual(imagesetDirs.count, 1, "Should have exactly one imageset directory")
+        XCTAssertEqual(imagesetDirs.first, "speechtotext.imageset", "Directory should have new case")
+
+        // Verify marker file still exists (proves rename, not recreate)
+        let renamedMarker = newCaseDir.appendingPathComponent("marker.txt")
+        XCTAssertTrue(
+            FileManager.default.fileExists(atPath: renamedMarker.path),
+            "Marker file should exist after rename"
+        )
+
+        // Verify new file was written
+        let writtenFile = newCaseDir.appendingPathComponent("test.svg")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: writtenFile.path))
+    }
+
+    func testWriteParallelRenamesDirectoryOnCaseMismatch() async throws {
+        let writer = FileWriter()
+
+        // Create existing directory with different case
+        let oldCaseDir = tempDirectory.appendingPathComponent("Icon24px.imageset")
+        try FileManager.default.createDirectory(at: oldCaseDir, withIntermediateDirectories: true)
+
+        // Create a marker file
+        let markerFile = oldCaseDir.appendingPathComponent("marker.txt")
+        try Data("marker".utf8).write(to: markerFile)
+
+        // Write file to directory with new case
+        let newCaseDir = tempDirectory.appendingPathComponent("icon24px.imageset")
+        let destination = Destination(
+            directory: newCaseDir,
+            // swiftlint:disable:next force_unwrapping
+            file: URL(string: "icon.svg")!
+        )
+        let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
+
+        try await writer.writeParallel(files: [file])
+
+        // Verify directory was renamed to new case
+        let contents = try FileManager.default.contentsOfDirectory(atPath: tempDirectory.path)
+        let imagesetDirs = contents.filter { $0.hasSuffix(".imageset") }
+
+        XCTAssertEqual(imagesetDirs.count, 1)
+        XCTAssertEqual(imagesetDirs.first, "icon24px.imageset")
+
+        // Verify marker file still exists
+        let renamedMarker = newCaseDir.appendingPathComponent("marker.txt")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: renamedMarker.path))
+    }
+
+    func testWriteDoesNotRenameWhenCaseMatches() throws {
+        let writer = FileWriter()
+
+        // Create existing directory with matching case
+        let existingDir = tempDirectory.appendingPathComponent("correct.imageset")
+        try FileManager.default.createDirectory(at: existingDir, withIntermediateDirectories: true)
+
+        // Write file to same directory (same case)
+        let destination = Destination(
+            directory: existingDir,
+            // swiftlint:disable:next force_unwrapping
+            file: URL(string: "test.svg")!
+        )
+        let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
+
+        try writer.write(files: [file])
+
+        // Verify directory still exists with same name
+        let contents = try FileManager.default.contentsOfDirectory(atPath: tempDirectory.path)
+        XCTAssertTrue(contents.contains("correct.imageset"))
+    }
+
+    func testWriteCreatesNewDirectoryWhenNoMismatch() throws {
+        let writer = FileWriter()
+
+        // No existing directory - should just create new one
+        let newDir = tempDirectory.appendingPathComponent("brand-new.imageset")
+        let destination = Destination(
+            directory: newDir,
+            // swiftlint:disable:next force_unwrapping
+            file: URL(string: "test.svg")!
+        )
+        let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
+
+        try writer.write(files: [file])
+
+        // Verify directory was created
+        XCTAssertTrue(FileManager.default.fileExists(atPath: newDir.path))
+    }
+
     // MARK: - File from Disk
 
     func testWriteFromDataFile() throws {

@@ -157,7 +157,7 @@ extension AssetPair where AssetType == ImagePack {
     ///
     /// Downloads PNG files from Figma but generates Contents.json with .heic extension.
     /// After download, caller converts PNGs to HEIC and updates file extensions.
-    func makeFileContentsForHeic(to directory: URL) throws -> [FileContents] {
+    func makeFileContentsForHeic(to directory: URL, renderMode: XcodeRenderMode? = nil) throws -> [FileContents] {
         let name = light.name
         let dirURL = directory.appendingPathComponent("\(name).imageset")
 
@@ -187,9 +187,10 @@ extension AssetPair where AssetType == ImagePack {
             lightFiles = lightPack?.makeImageFileContents(to: dirURL) ?? []
         }
 
+        let properties = XcodeAssetContents.Properties(preserveVectorData: nil, renderMode: renderMode)
         let contentsFileContents = try XcodeAssetContents(
             images: lightAssetContents + darkAssetContents,
-            properties: nil
+            properties: properties
         ).makeFileContents(to: dirURL)
 
         return [contentsFileContents] + lightFiles + darkFiles
