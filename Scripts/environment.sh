@@ -36,6 +36,12 @@ export PATH="$(pwd)/bin:$PATH"
 MISE_VERSION=$(./bin/mise --version 2>/dev/null)
 echo "mise: $MISE_VERSION"
 
+# Configure GitHub token for mise to avoid API rate limits in CI
+# https://mise.jdx.dev/troubleshooting.html
+if [ -n "$GITHUB_ACTIONS" ] && [ -n "$GITHUB_TOKEN" ]; then
+    export MISE_GITHUB_TOKEN="$GITHUB_TOKEN"
+fi
+
 #
 # II. ACTIVATE MISE
 # -----------------------------------------------------------------------------
