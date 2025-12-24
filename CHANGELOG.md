@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.9] - 2025-12-24
+
+### Documentation
+
+- Fix installation instructions  by @alexey1312 in [#17](https://github.com/alexey1312/ExFig/pull/17)
+
+
+### Features
+
+- **ios**: Add renderMode support and fix case mismatch by @alexey1312
+
+- **batch**: Add incremental progress reporting for downloads by @alexey1312
+
+
 ## [1.2.8] - 2025-12-21
 
 ### Bug Fixes
