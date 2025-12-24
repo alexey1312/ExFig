@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.11] - 2025-12-24
+
+### Bug Fixes
+
+- **batch**: Clear node hashes for all files with --force flag by @alexey1312
+
+
 ## [1.2.10] - 2025-12-24
 
 ### Bug Fixes
