@@ -26,7 +26,7 @@ jobs:
             platform: linux-x64
             build-path: x86_64-unknown-linux-gnu/release
             archive-name: exfig-linux-x64
-            container: swift:6.2
+            container: swift:6.2-jammy
             extra-flags: --static-swift-stdlib -Xlinker -lcurl -Xlinker -lxml2 -Xlinker -lssl -Xlinker -lcrypto -Xlinker -lz
 
 
