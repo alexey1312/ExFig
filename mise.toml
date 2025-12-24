@@ -14,13 +14,9 @@
 # =============================================================================
 
 [settings]
-lockfile = false
+lockfile = true
 experimental = true
 legacy_version_file = false
-jobs = 6
-quiet = true
-terminal_progress = false
-github_attestations = false
 
 # =============================================================================
 # Tools
@@ -28,19 +24,19 @@ github_attestations = false
 
 [tools]
 # --- Swift Development ---
-swiftformat = "0.58.7"  # Swift code formatting
-swiftlint = "0.62.2"    # Swift linting
-xcsift = "1.0.15"       # xcodebuild output filtering
+swiftformat = "0.58.7" # Swift code formatting
+swiftlint = "0.62.2"   # Swift linting
+xcsift = "1.0.17"      # xcodebuild output filtering
 
 # --- Documentation & Formatting ---
-dprint = "0.50.2"       # MD/JSON/YAML formatting (Rust, fast)
+dprint = "0.50.2" # MD/JSON/YAML formatting (Rust, fast)
 
 # --- Git & CI ---
-hk = "1.28.0"           # Git hooks manager
-git-cliff = "2.10.1"    # Changelog generation
+hk = "1.28.0"        # Git hooks manager
+git-cliff = "2.10.1" # Changelog generation
 
 # --- Configuration ---
-pkl = "0.30.2"          # Configuration language (for hk.pkl)
+pkl = "0.30.2" # Configuration language (for hk.pkl)
 
 # =============================================================================
 # Tasks
