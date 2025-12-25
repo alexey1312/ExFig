@@ -76,7 +76,7 @@ extension ExFigCommand.ExportIcons {
     }
 
     // Exports icons for a single Android icons entry.
-    // swiftlint:disable:next function_body_length function_parameter_count
+    // swiftlint:disable:next function_body_length function_parameter_count cyclomatic_complexity
     func exportAndroidIconsEntry(
         entry: Params.Android.IconsEntry,
         android: Params.Android,
@@ -218,12 +218,16 @@ extension ExFigCommand.ExportIcons {
             })
 
         try await ui.withSpinner("Converting SVGs to vector drawables...") {
-            try ExFigCommand.svgFileConverter.convert(
-                inputDirectoryUrl: tempDirectoryLightURL, rtlFiles: rtlFileNames
-            )
-            try ExFigCommand.svgFileConverter.convert(
-                inputDirectoryUrl: tempDirectoryDarkURL, rtlFiles: rtlFileNames
-            )
+            if FileManager.default.fileExists(atPath: tempDirectoryLightURL.path) {
+                try ExFigCommand.svgFileConverter.convert(
+                    inputDirectoryUrl: tempDirectoryLightURL, rtlFiles: rtlFileNames
+                )
+            }
+            if FileManager.default.fileExists(atPath: tempDirectoryDarkURL.path) {
+                try ExFigCommand.svgFileConverter.convert(
+                    inputDirectoryUrl: tempDirectoryDarkURL, rtlFiles: rtlFileNames
+                )
+            }
         }
 
         // Create output directory main/res/custom-directory/drawable/
