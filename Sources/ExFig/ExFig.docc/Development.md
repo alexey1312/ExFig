@@ -4,13 +4,13 @@ Guide for contributing to ExFig development.
 
 ## Overview
 
-ExFig is built with Swift Package Manager and supports macOS 12.0+. This guide covers setting up your development
-environment and contributing to the project.
+ExFig is built with Swift Package Manager and supports macOS 12.0+ and Linux (Ubuntu 22.04). This guide covers setting up
+your development environment and contributing to the project.
 
 ## Requirements
 
-- macOS 12.0 or later
-- Xcode 15.0 or later (or Swift 6.0 toolchain)
+- macOS 12.0 or later, or Linux (Ubuntu 22.04)
+- Xcode 16.0 or later (or Swift 6.2+ toolchain)
 - [mise](https://mise.jdx.dev/) (optional, for task running)
 
 ## Getting Started

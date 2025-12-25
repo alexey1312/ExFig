@@ -8,7 +8,7 @@ ExFig is a command-line tool that exports design resources from Figma to iOS, An
 
 ## Requirements
 
-- macOS 12.0 or later
+- macOS 12.0 or later (or Linux Ubuntu 22.04)
 - Figma account with file access
 - Figma Personal Access Token
 

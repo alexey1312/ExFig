@@ -46,17 +46,17 @@ mise run lint               # SwiftLint
 
 ## Project Context
 
-| Aspect          | Details                                                       |
-| --------------- | ------------------------------------------------------------- |
-| Language        | Swift 6.0, macOS 12.0+                                        |
-| Package Manager | Swift Package Manager                                         |
-| CLI Framework   | swift-argument-parser                                         |
-| Config Format   | YAML (via Yams)                                               |
-| Templates       | Stencil                                                       |
-| Required Env    | `FIGMA_PERSONAL_TOKEN`                                        |
-| Config Files    | `exfig.yaml` or `figma-export.yaml` (auto-detected)           |
-| Tooling         | mise (`./bin/mise` self-contained, no global install needed)  |
-| Platforms       | macOS (primary), Linux (CI) - see Linux Compatibility section |
+| Aspect          | Details                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| Language        | Swift 6.2, macOS 12.0+                                                         |
+| Package Manager | Swift Package Manager                                                          |
+| CLI Framework   | swift-argument-parser                                                          |
+| Config Format   | YAML (via Yams)                                                                |
+| Templates       | Stencil                                                                        |
+| Required Env    | `FIGMA_PERSONAL_TOKEN`                                                         |
+| Config Files    | `exfig.yaml` or `figma-export.yaml` (auto-detected)                            |
+| Tooling         | mise (`./bin/mise` self-contained, no global install needed)                   |
+| Platforms       | macOS 12+ (primary), Linux/Ubuntu 22.04 (CI) - see Linux Compatibility section |
 
 ## Architecture
 
@@ -758,7 +758,7 @@ extension SomeType {
 
 ## Linux Compatibility
 
-The project builds on Linux (Ubuntu). Key differences from macOS:
+The project builds on Linux (Ubuntu 22.04 LTS / Jammy). Key differences from macOS:
 
 ### Required Import for Networking
 

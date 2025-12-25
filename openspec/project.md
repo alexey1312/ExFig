@@ -7,7 +7,7 @@ keeping design systems in sync across platforms.
 
 ## Tech Stack
 
-- Swift 6 with Swift Package Manager
+- Swift 6.2 with Swift Package Manager
 - swift-argument-parser for CLI
 - Yams for YAML parsing
 - Stencil and StencilSwiftKit for code generation
@@ -47,7 +47,7 @@ keeping design systems in sync across platforms.
 ## Important Constraints
 
 - Requires `FIGMA_PERSONAL_TOKEN`
-- macOS 12+ primary; Linux supported in CI with FoundationNetworking imports
+- macOS 12+ primary; Linux (Ubuntu 22.04) supported in CI with FoundationNetworking imports
 - Avoid new external binaries; conversions use native libraries
 
 ## External Dependencies

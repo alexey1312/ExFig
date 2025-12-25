@@ -2,8 +2,8 @@ meta:
   name: ExFig
   version: current
   description: CLI tool for exporting Figma assets to iOS, Android, Flutter, Web
-  swift: 6.0
-  platforms: macOS 12.0+, Linux
+  swift: 6.2
+  platforms: macOS 12.0+, Linux (Ubuntu 22.04)
   license: MIT
   repo: github.com/alexey1312/ExFig
 
