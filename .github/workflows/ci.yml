@@ -8,6 +8,8 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  MISE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  MISE_GITHUB_GITHUB_ATTESTATIONS: false
 
 jobs:
   lint:
@@ -18,9 +20,10 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup mise environment
-        run: source Scripts/environment.sh
-        shell: bash
+      - uses: jdx/mise-action@v3
+        with:
+          experimental: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check formatting (Swift + Markdown)
         run: bin/mise run format-check
@@ -48,9 +51,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-spm-
 
-      - name: Setup mise environment
-        run: source Scripts/environment.sh
-        shell: bash
+      - uses: jdx/mise-action@v3
+        with:
+          experimental: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Show Swift version
         run: swift --version
