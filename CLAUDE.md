@@ -133,13 +133,31 @@ let loader = IconsLoader(client: client, params: params, platform: .ios, logger:
 
 **Key types:**
 
-| Type                 | Purpose                                                  |
-| -------------------- | -------------------------------------------------------- |
-| `IconsConfiguration` | Enum with `.single`/`.multiple` for backward compat      |
-| `IconsEntry`         | Per-frame config (figmaFrameName, format, assetsFolder)  |
-| `IconsLoaderConfig`  | Sendable struct passed to IconsLoader for frame settings |
+| Type                 | Purpose                                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| `IconsConfiguration` | Enum with `.single`/`.multiple` for backward compat                                                       |
+| `IconsEntry`         | Per-frame config (figmaFrameName, format, assetsFolder, nameValidateRegexp, nameReplaceRegexp, nameStyle) |
+| `IconsLoaderConfig`  | Sendable struct passed to IconsLoader for frame settings                                                  |
 
-**Frame name resolution:** `entry.figmaFrameName` → `params.common?.icons?.figmaFrameName` → `"Icons"`
+**Per-entry fields with fallback:**
+
+| Field                | Fallback Order                                                           |
+| -------------------- | ------------------------------------------------------------------------ |
+| `figmaFrameName`     | entry → `common.icons.figmaFrameName` → `"Icons"`                        |
+| `nameValidateRegexp` | entry → `common.icons.nameValidateRegexp` → `nil`                        |
+| `nameReplaceRegexp`  | entry → `common.icons.nameReplaceRegexp` → `nil`                         |
+| `nameStyle`          | entry → platform default (iOS: `nil`, Android/Flutter/Web: `.snakeCase`) |
+
+**Fallback logic in export files:**
+
+```swift
+let processor = ImagesProcessor(
+    platform: .android,
+    nameValidateRegexp: entry.nameValidateRegexp ?? params.common?.icons?.nameValidateRegexp,
+    nameReplaceRegexp: entry.nameReplaceRegexp ?? params.common?.icons?.nameReplaceRegexp,
+    nameStyle: entry.nameStyle ?? .snakeCase
+)
+```
 
 ### Multiple Colors Configuration
 

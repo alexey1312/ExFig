@@ -237,8 +237,8 @@ android:
       stylesFile: "../../../values/styles.xml"
       # [optional] Path to styles-night.xml for dark mode (relative to mainRes)
       stylesNightFile: "../../../values-night/styles.xml"
-      # Theme name used in markers (e.g., "Theme.BaseTheme.inDrive")
-      themeName: "Theme.BaseTheme.inDrive"
+      # Theme name used in markers (e.g., "Theme.MyApp.Main")
+      themeName: "Theme.MyApp.Main"
       # [optional] Custom marker start text. Default: "FIGMA COLORS MARKER START"
       markerStart: "FIGMA COLORS MARKER START"
       # [optional] Custom marker end text. Default: "FIGMA COLORS MARKER END"
@@ -460,16 +460,57 @@ ios:
 
 Each entry in the array supports all the same fields as the legacy format, plus:
 
-| Field            | Description                                                                    |
-| ---------------- | ------------------------------------------------------------------------------ |
-| `figmaFrameName` | Figma frame name to export icons from. Overrides `common.icons.figmaFrameName` |
+| Field                | Description                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `figmaFrameName`     | Figma frame name to export icons from. Overrides `common.icons.figmaFrameName`         |
+| `nameValidateRegexp` | RegExp pattern for icon name validation. Overrides `common.icons.nameValidateRegexp`   |
+| `nameReplaceRegexp`  | RegExp pattern for name replacement. Overrides `common.icons.nameReplaceRegexp`        |
+| `nameStyle`          | Name style (camelCase, snake_case, etc.). Platform-specific default applies if not set |
 
 ### Fallback Behavior
 
-If `figmaFrameName` is not specified in an entry, it falls back to:
+For `figmaFrameName`, fallback order is:
 
-1. `common.icons.figmaFrameName` (if defined)
-2. `"Icons"` (default)
+1. Entry-level `figmaFrameName`
+2. `common.icons.figmaFrameName` (if defined)
+3. `"Icons"` (default)
+
+For `nameValidateRegexp`, `nameReplaceRegexp`, and `nameStyle`, fallback order is:
+
+1. Entry-level field (if defined)
+2. `common.icons.*` field (if defined)
+3. Platform default (e.g., `snake_case` for Android/Flutter/Web)
+
+### Per-Entry Regex Example
+
+Use per-entry regex when different icon categories require different naming transformations:
+
+```yaml
+common:
+  icons:
+    # Global fallback regex (optional)
+    nameValidateRegexp: "^(.+)$"
+    nameReplaceRegexp: "ic_$1"
+
+android:
+  icons:
+    - figmaFrameName: Actions
+      output: "action"
+      nameStyle: snake_case
+      # Uses global regex from common.icons
+
+    - figmaFrameName: Flags
+      output: "flag"
+      nameStyle: snake_case
+      # Custom regex for flags: strips "flags_" prefix
+      nameValidateRegexp: "^flags_(.+)$"
+      nameReplaceRegexp: "ic_flag_$1"
+
+    - figmaFrameName: Status
+      output: "status"
+      # Custom style, uses global regex
+      nameStyle: camelCase
+```
 
 ### Performance
 
@@ -838,11 +879,11 @@ Theme attributes allow your app to reference colors like `?attr/colorBackgroundP
 
 ```xml
 <resources>
-    <!-- FIGMA COLORS MARKER START: Theme.BaseTheme.inDrive -->
+    <!-- FIGMA COLORS MARKER START: Theme.MyApp.Main -->
     <attr name="colorBackgroundPrimary" format="color" />
     <attr name="colorBackgroundSecondary" format="color" />
     <attr name="colorTextPrimary" format="color" />
-    <!-- FIGMA COLORS MARKER END: Theme.BaseTheme.inDrive -->
+    <!-- FIGMA COLORS MARKER END: Theme.MyApp.Main -->
 </resources>
 ```
 
@@ -850,12 +891,12 @@ Theme attributes allow your app to reference colors like `?attr/colorBackgroundP
 
 ```xml
 <resources>
-    <style name="Theme.BaseTheme.inDrive" parent="Theme.MaterialComponents.DayNight">
-        <!-- FIGMA COLORS MARKER START: Theme.BaseTheme.inDrive -->
+    <style name="Theme.MyApp.Main" parent="Theme.MaterialComponents.DayNight">
+        <!-- FIGMA COLORS MARKER START: Theme.MyApp.Main -->
         <item name="colorBackgroundPrimary">@color/background_primary</item>
         <item name="colorBackgroundSecondary">@color/background_secondary</item>
         <item name="colorTextPrimary">@color/text_primary</item>
-        <!-- FIGMA COLORS MARKER END: Theme.BaseTheme.inDrive -->
+        <!-- FIGMA COLORS MARKER END: Theme.MyApp.Main -->
     </style>
 </resources>
 ```
@@ -871,7 +912,7 @@ android:
       attrsFile: "../../../values/attrs.xml"
       stylesFile: "../../../values/styles.xml"
       stylesNightFile: "../../../values-night/styles.xml"
-      themeName: "Theme.BaseTheme.inDrive"
+      themeName: "Theme.MyApp.Main"
       markerStart: "FIGMA COLORS MARKER START"
       markerEnd: "FIGMA COLORS MARKER END"
       autoCreateMarkers: false

@@ -2,8 +2,7 @@
 
 ## Why
 
-ExFig currently supports iOS, Android, and Flutter platforms. Web/React projects use a separate toolchain
-(`@indriver/figmator` in web-ui) with different patterns and output formats. Adding native Web support to ExFig enables:
+ExFig currently supports iOS, Android, and Flutter platforms. Web/React projects use a separate toolchain with different patterns and output formats. Adding native Web support to ExFig enables:
 
 - Unified Figma-to-code pipeline across all platforms
 - Consistent asset naming and structure

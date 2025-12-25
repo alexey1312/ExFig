@@ -84,7 +84,7 @@ Based on real Figma API responses for icons and illustrations:
 
 ```yaml
 type: COMPONENT
-name: "indrive"
+name: "icon_name"
 children:
   - type: VECTOR
     name: "shape"

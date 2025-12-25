@@ -32,10 +32,10 @@ final class ImagesConfigurationTests: XCTestCase {
         let json = """
         [
             {
-                "figmaFrameName": "InDrive",
-                "assetsFolder": "inDrive",
+                "figmaFrameName": "Banners",
+                "assetsFolder": "banners",
                 "nameStyle": "camelCase",
-                "imageSwift": "./Generated/InDrive.swift"
+                "imageSwift": "./Generated/Banners.swift"
             },
             {
                 "figmaFrameName": "Promo",
@@ -60,10 +60,10 @@ final class ImagesConfigurationTests: XCTestCase {
         XCTAssertEqual(config.entries.count, 2)
         XCTAssertTrue(config.isMultiple)
 
-        XCTAssertEqual(config.entries[0].figmaFrameName, "InDrive")
-        XCTAssertEqual(config.entries[0].assetsFolder, "inDrive")
+        XCTAssertEqual(config.entries[0].figmaFrameName, "Banners")
+        XCTAssertEqual(config.entries[0].assetsFolder, "banners")
         XCTAssertEqual(config.entries[0].nameStyle, .camelCase)
-        XCTAssertEqual(config.entries[0].imageSwift?.lastPathComponent, "InDrive.swift")
+        XCTAssertEqual(config.entries[0].imageSwift?.lastPathComponent, "Banners.swift")
         XCTAssertNil(config.entries[0].scales)
 
         XCTAssertEqual(config.entries[1].figmaFrameName, "Promo")
@@ -333,8 +333,8 @@ final class ImagesConfigurationTests: XCTestCase {
                 "xcassetsInMainBundle": true,
                 "images": [
                     {
-                        "figmaFrameName": "InDrive",
-                        "assetsFolder": "InDrive",
+                        "figmaFrameName": "Banners",
+                        "assetsFolder": "Banners",
                         "nameStyle": "camelCase"
                     },
                     {

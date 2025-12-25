@@ -511,4 +511,301 @@ final class IconsConfigurationTests: XCTestCase {
             )
         )
     }
+
+    // MARK: - Per-Entry Regex Fields Tests
+
+    func testIOSIconsEntryParsesRegexFields() throws {
+        let json = """
+        {
+            "figmaFrameName": "Flags",
+            "format": "svg",
+            "assetsFolder": "Flags",
+            "nameStyle": "camelCase",
+            "nameValidateRegexp": "^flags_(.+)$",
+            "nameReplaceRegexp": "ic_flag_$1"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.iOS.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertEqual(entry.figmaFrameName, "Flags")
+        XCTAssertEqual(entry.nameValidateRegexp, "^flags_(.+)$")
+        XCTAssertEqual(entry.nameReplaceRegexp, "ic_flag_$1")
+        XCTAssertEqual(entry.nameStyle, .camelCase)
+    }
+
+    func testIOSIconsEntryRegexFieldsAreOptional() throws {
+        let json = """
+        {
+            "format": "svg",
+            "assetsFolder": "Icons"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.iOS.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertNil(entry.nameValidateRegexp)
+        XCTAssertNil(entry.nameReplaceRegexp)
+    }
+
+    func testAndroidIconsEntryParsesRegexAndStyleFields() throws {
+        let json = """
+        {
+            "figmaFrameName": "Flags",
+            "output": "flag",
+            "nameStyle": "snake_case",
+            "nameValidateRegexp": "^flags_(.+)$",
+            "nameReplaceRegexp": "ic_flag_$1"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.Android.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertEqual(entry.figmaFrameName, "Flags")
+        XCTAssertEqual(entry.nameValidateRegexp, "^flags_(.+)$")
+        XCTAssertEqual(entry.nameReplaceRegexp, "ic_flag_$1")
+        XCTAssertEqual(entry.nameStyle, .snakeCase)
+    }
+
+    func testAndroidIconsEntryRegexAndStyleFieldsAreOptional() throws {
+        let json = """
+        {
+            "output": "drawable"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.Android.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertNil(entry.nameValidateRegexp)
+        XCTAssertNil(entry.nameReplaceRegexp)
+        XCTAssertNil(entry.nameStyle)
+    }
+
+    func testFlutterIconsEntryParsesRegexAndStyleFields() throws {
+        let json = """
+        {
+            "figmaFrameName": "Flags",
+            "output": "assets/flags",
+            "nameStyle": "snake_case",
+            "nameValidateRegexp": "^flags_(.+)$",
+            "nameReplaceRegexp": "ic_flag_$1"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.Flutter.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertEqual(entry.figmaFrameName, "Flags")
+        XCTAssertEqual(entry.nameValidateRegexp, "^flags_(.+)$")
+        XCTAssertEqual(entry.nameReplaceRegexp, "ic_flag_$1")
+        XCTAssertEqual(entry.nameStyle, .snakeCase)
+    }
+
+    func testFlutterIconsEntryRegexAndStyleFieldsAreOptional() throws {
+        let json = """
+        {
+            "output": "assets/icons"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.Flutter.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertNil(entry.nameValidateRegexp)
+        XCTAssertNil(entry.nameReplaceRegexp)
+        XCTAssertNil(entry.nameStyle)
+    }
+
+    // MARK: - Web IconsConfiguration Tests
+
+    func testWebIconsConfigurationParsesLegacySingleObject() throws {
+        let json = """
+        {
+            "outputDirectory": "icons"
+        }
+        """
+
+        let config = try JSONDecoder().decode(
+            Params.Web.IconsConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        guard case .single = config else {
+            XCTFail("Expected .single case")
+            return
+        }
+
+        XCTAssertEqual(config.entries.count, 1)
+        XCTAssertEqual(config.entries[0].outputDirectory, "icons")
+        XCTAssertFalse(config.isMultiple)
+    }
+
+    func testWebIconsConfigurationParsesMultipleEntries() throws {
+        let json = """
+        [
+            {
+                "figmaFrameName": "Actions",
+                "outputDirectory": "icons/actions"
+            },
+            {
+                "figmaFrameName": "Navigation",
+                "outputDirectory": "icons/nav",
+                "iconSize": 20
+            }
+        ]
+        """
+
+        let config = try JSONDecoder().decode(
+            Params.Web.IconsConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        guard case .multiple = config else {
+            XCTFail("Expected .multiple case")
+            return
+        }
+
+        XCTAssertEqual(config.entries.count, 2)
+        XCTAssertTrue(config.isMultiple)
+
+        XCTAssertEqual(config.entries[0].figmaFrameName, "Actions")
+        XCTAssertEqual(config.entries[0].outputDirectory, "icons/actions")
+
+        XCTAssertEqual(config.entries[1].figmaFrameName, "Navigation")
+        XCTAssertEqual(config.entries[1].outputDirectory, "icons/nav")
+        XCTAssertEqual(config.entries[1].iconSize, 20)
+    }
+
+    func testWebIconsEntryParsesRegexAndStyleFields() throws {
+        let json = """
+        {
+            "figmaFrameName": "Flags",
+            "outputDirectory": "icons/flags",
+            "nameStyle": "snake_case",
+            "nameValidateRegexp": "^flags_(.+)$",
+            "nameReplaceRegexp": "ic_flag_$1"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.Web.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertEqual(entry.figmaFrameName, "Flags")
+        XCTAssertEqual(entry.nameValidateRegexp, "^flags_(.+)$")
+        XCTAssertEqual(entry.nameReplaceRegexp, "ic_flag_$1")
+        XCTAssertEqual(entry.nameStyle, .snakeCase)
+    }
+
+    func testWebIconsEntryRegexAndStyleFieldsAreOptional() throws {
+        let json = """
+        {
+            "outputDirectory": "icons"
+        }
+        """
+
+        let entry = try JSONDecoder().decode(
+            Params.Web.IconsEntry.self,
+            from: Data(json.utf8)
+        )
+
+        XCTAssertNil(entry.nameValidateRegexp)
+        XCTAssertNil(entry.nameReplaceRegexp)
+        XCTAssertNil(entry.nameStyle)
+    }
+
+    // MARK: - Legacy to Entries Conversion
+
+    func testIOSLegacyToEntriesPreservesNilForRegexFields() throws {
+        let json = """
+        {
+            "format": "svg",
+            "assetsFolder": "Legacy"
+        }
+        """
+
+        let config = try JSONDecoder().decode(
+            Params.iOS.IconsConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.entries
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertNil(entries[0].nameValidateRegexp)
+        XCTAssertNil(entries[0].nameReplaceRegexp)
+    }
+
+    func testAndroidLegacyToEntriesPreservesNilForRegexFields() throws {
+        let json = """
+        {
+            "output": "drawable"
+        }
+        """
+
+        let config = try JSONDecoder().decode(
+            Params.Android.IconsConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.entries
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertNil(entries[0].nameValidateRegexp)
+        XCTAssertNil(entries[0].nameReplaceRegexp)
+        XCTAssertNil(entries[0].nameStyle)
+    }
+
+    func testFlutterLegacyToEntriesPreservesNilForRegexFields() throws {
+        let json = """
+        {
+            "output": "assets/icons"
+        }
+        """
+
+        let config = try JSONDecoder().decode(
+            Params.Flutter.IconsConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.entries
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertNil(entries[0].nameValidateRegexp)
+        XCTAssertNil(entries[0].nameReplaceRegexp)
+        XCTAssertNil(entries[0].nameStyle)
+    }
+
+    func testWebLegacyToEntriesPreservesNilForRegexFields() throws {
+        let json = """
+        {
+            "outputDirectory": "icons"
+        }
+        """
+
+        let config = try JSONDecoder().decode(
+            Params.Web.IconsConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.entries
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertNil(entries[0].nameValidateRegexp)
+        XCTAssertNil(entries[0].nameReplaceRegexp)
+        XCTAssertNil(entries[0].nameStyle)
+    }
 }

@@ -124,9 +124,9 @@ extension ExFigCommand.ExportIcons {
         // 2. Process images
         let processor = ImagesProcessor(
             platform: .web,
-            nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-            nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
-            nameStyle: .snakeCase
+            nameValidateRegexp: entry.nameValidateRegexp ?? params.common?.icons?.nameValidateRegexp,
+            nameReplaceRegexp: entry.nameReplaceRegexp ?? params.common?.icons?.nameReplaceRegexp,
+            nameStyle: entry.nameStyle ?? .snakeCase
         )
 
         let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =

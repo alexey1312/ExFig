@@ -227,6 +227,10 @@ struct Params: Decodable {
             let assetsFolder: String
             let preservesVectorRepresentation: [String]?
             let nameStyle: NameStyle
+            /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
+            let nameValidateRegexp: String?
+            /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
+            let nameReplaceRegexp: String?
 
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
@@ -264,6 +268,8 @@ struct Params: Decodable {
                         assetsFolder: icons.assetsFolder,
                         preservesVectorRepresentation: icons.preservesVectorRepresentation,
                         nameStyle: icons.nameStyle,
+                        nameValidateRegexp: nil,
+                        nameReplaceRegexp: nil,
                         imageSwift: icons.imageSwift,
                         swiftUIImageSwift: icons.swiftUIImageSwift,
                         renderMode: icons.renderMode,
@@ -413,6 +419,12 @@ struct Params: Decodable {
             let composePackageName: String?
             let composeFormat: ComposeIconFormat?
             let composeExtensionTarget: String?
+            /// Name style for icon names. Overrides default snake_case.
+            let nameStyle: NameStyle?
+            /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
+            let nameValidateRegexp: String?
+            /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
+            let nameReplaceRegexp: String?
         }
 
         /// Icons configuration supporting both single object and array formats.
@@ -437,7 +449,10 @@ struct Params: Decodable {
                         output: icons.output,
                         composePackageName: icons.composePackageName,
                         composeFormat: icons.composeFormat,
-                        composeExtensionTarget: icons.composeExtensionTarget
+                        composeExtensionTarget: icons.composeExtensionTarget,
+                        nameStyle: nil,
+                        nameValidateRegexp: nil,
+                        nameReplaceRegexp: nil
                     )]
                 case let .multiple(entries):
                     entries
@@ -464,7 +479,7 @@ struct Params: Decodable {
             /// Path to styles-night.xml relative to mainRes.
             let stylesNightFile: String?
 
-            /// Theme name used in markers (e.g., "Theme.BaseTheme.inDrive").
+            /// Theme name used in markers (e.g., "Theme.MyApp.Main").
             let themeName: String
 
             /// Custom marker start text (default: "FIGMA COLORS MARKER START").
@@ -751,6 +766,12 @@ struct Params: Decodable {
             let output: String
             let dartFile: String?
             let className: String?
+            /// Name style for icon names. Overrides default snake_case.
+            let nameStyle: NameStyle?
+            /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
+            let nameValidateRegexp: String?
+            /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
+            let nameReplaceRegexp: String?
         }
 
         /// Icons configuration supporting both single object and array formats.
@@ -774,7 +795,10 @@ struct Params: Decodable {
                         figmaFrameName: nil,
                         output: icons.output,
                         dartFile: icons.dartFile,
-                        className: icons.className
+                        className: icons.className,
+                        nameStyle: nil,
+                        nameValidateRegexp: nil,
+                        nameReplaceRegexp: nil
                     )]
                 case let .multiple(entries):
                     entries
@@ -951,6 +975,12 @@ struct Params: Decodable {
             let generateReactComponents: Bool?
             /// Icon size in pixels for viewBox. Defaults to 24.
             let iconSize: Int?
+            /// Name style for icon names. Overrides default snake_case.
+            let nameStyle: NameStyle?
+            /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
+            let nameValidateRegexp: String?
+            /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
+            let nameReplaceRegexp: String?
         }
 
         /// Icons configuration supporting both single object and array formats.
@@ -975,7 +1005,10 @@ struct Params: Decodable {
                         outputDirectory: icons.outputDirectory,
                         svgDirectory: icons.svgDirectory,
                         generateReactComponents: icons.generateReactComponents,
-                        iconSize: icons.iconSize
+                        iconSize: icons.iconSize,
+                        nameStyle: nil,
+                        nameValidateRegexp: nil,
+                        nameReplaceRegexp: nil
                     )]
                 case let .multiple(entries):
                     entries

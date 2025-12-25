@@ -130,8 +130,8 @@ extension ExFigCommand.ExportIcons {
 
         let processor = ImagesProcessor(
             platform: .ios,
-            nameValidateRegexp: params.common?.icons?.nameValidateRegexp,
-            nameReplaceRegexp: params.common?.icons?.nameReplaceRegexp,
+            nameValidateRegexp: entry.nameValidateRegexp ?? params.common?.icons?.nameValidateRegexp,
+            nameReplaceRegexp: entry.nameReplaceRegexp ?? params.common?.icons?.nameReplaceRegexp,
             nameStyle: entry.nameStyle
         )
 

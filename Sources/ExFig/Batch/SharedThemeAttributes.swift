@@ -5,7 +5,7 @@ import Foundation
 /// In batch mode, multiple configs may export to the same `attrs.xml` and `styles.xml` files.
 /// This struct captures one config's contribution for later merging.
 public struct ThemeAttributesCollection: Sendable {
-    /// Theme name used in markers (e.g., "Theme.BaseTheme.inDrive").
+    /// Theme name used in markers (e.g., "Theme.MyApp.Main").
     public let themeName: String
 
     /// Base marker start text (e.g., "FIGMA COLORS MARKER START").
