@@ -104,8 +104,8 @@ jobs:
         run: swift --version
 
       - name: Build
-        run: swift build 2>&1 | bin/mise exec -- xcsift
+        run: swift build 2>&1 | mise exec -- xcsift
 
       - name: Run tests
         # Use --num-workers 1 to avoid memory corruption with libpng on Linux
-        run: swift test --parallel --num-workers 1 2>&1 | bin/mise exec -- xcsift
+        run: swift test --parallel --num-workers 1 2>&1 | mise exec -- xcsift
