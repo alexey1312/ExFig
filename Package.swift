@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "exfig",
     platforms: [
-        .macOS(.v12),
+        .macOS(.v13),
     ],
     products: [
         .executable(name: "exfig", targets: ["ExFig"]),

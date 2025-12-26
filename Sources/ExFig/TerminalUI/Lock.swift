@@ -1,6 +1,6 @@
 import Foundation
 
-/// Thread-safe lock wrapper compatible with macOS 12.0+.
+/// Thread-safe lock wrapper compatible with macOS 13.0+.
 /// Uses NSLock internally but provides type-safe state management.
 /// Marked @unchecked Sendable because NSLock is thread-safe.
 final class Lock<T>: @unchecked Sendable {

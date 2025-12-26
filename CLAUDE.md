@@ -48,7 +48,7 @@ mise run lint               # SwiftLint
 
 | Aspect          | Details                                                                        |
 | --------------- | ------------------------------------------------------------------------------ |
-| Language        | Swift 6.2, macOS 12.0+                                                         |
+| Language        | Swift 6.2, macOS 13.0+                                                         |
 | Package Manager | Swift Package Manager                                                          |
 | CLI Framework   | swift-argument-parser                                                          |
 | Config Format   | YAML (via Yams)                                                                |
@@ -56,7 +56,7 @@ mise run lint               # SwiftLint
 | Required Env    | `FIGMA_PERSONAL_TOKEN`                                                         |
 | Config Files    | `exfig.yaml` or `figma-export.yaml` (auto-detected)                            |
 | Tooling         | mise (`./bin/mise` self-contained, no global install needed)                   |
-| Platforms       | macOS 12+ (primary), Linux/Ubuntu 22.04 (CI) - see Linux Compatibility section |
+| Platforms       | macOS 13+ (primary), Linux/Ubuntu 22.04 (CI) - see Linux Compatibility section |
 
 ## Architecture
 
@@ -386,7 +386,7 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 
 - `Spinner` and `ProgressBar` use `DispatchQueue` (not Swift actors) for smooth 12 FPS rendering
 - All terminal output routes through `TerminalOutputManager` to prevent race conditions
-- `Lock<T>` wrapper provides thread-safe state with NSLock (compatible with macOS 12.0+)
+- `Lock<T>` wrapper provides thread-safe state with NSLock (compatible with macOS 13.0+)
 
 **Batch Mode Progress Display:**
 

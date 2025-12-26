@@ -47,7 +47,7 @@ keeping design systems in sync across platforms.
 ## Important Constraints
 
 - Requires `FIGMA_PERSONAL_TOKEN`
-- macOS 12+ primary; Linux (Ubuntu 22.04) supported in CI with FoundationNetworking imports
+- macOS 13+ primary; Linux (Ubuntu 22.04) supported in CI with FoundationNetworking imports
 - Avoid new external binaries; conversions use native libraries
 
 ## External Dependencies

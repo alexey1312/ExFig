@@ -571,7 +571,7 @@ flutter_project/
 ## Requirements
 
 - **Swift 6.2+** (for building from source)
-- **macOS 12.0+** or **Linux (Ubuntu 22.04)**
+- **macOS 13.0+** or **Linux (Ubuntu 22.04)**
 - **Figma Personal Access Token**
 
 ## Contributing
