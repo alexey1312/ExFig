@@ -32,170 +32,180 @@ final class PngDecoderTests: XCTestCase {
     // MARK: - Valid PNG Tests
 
     func testDecodeValidPNG() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            // Create a 2x2 test PNG
+            let pngURL = try createTestPNG(width: 2, height: 2, color: (255, 0, 0, 255))
+
+            let decoder = PngDecoder()
+            let result = try decoder.decode(file: pngURL)
+
+            XCTAssertEqual(result.width, 2)
+            XCTAssertEqual(result.height, 2)
+            XCTAssertEqual(result.rgba.count, 2 * 2 * 4)
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        // Create a 2x2 test PNG
-        let pngURL = try createTestPNG(width: 2, height: 2, color: (255, 0, 0, 255))
-
-        let decoder = PngDecoder()
-        let result = try decoder.decode(file: pngURL)
-
-        XCTAssertEqual(result.width, 2)
-        XCTAssertEqual(result.height, 2)
-        XCTAssertEqual(result.rgba.count, 2 * 2 * 4)
     }
 
     func testDecodeExtractsCorrectDimensions() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            let pngURL = try createTestPNG(width: 10, height: 5, color: (0, 255, 0, 255))
+
+            let decoder = PngDecoder()
+            let result = try decoder.decode(file: pngURL)
+
+            XCTAssertEqual(result.width, 10)
+            XCTAssertEqual(result.height, 5)
+            XCTAssertEqual(result.byteCount, 10 * 5 * 4)
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        let pngURL = try createTestPNG(width: 10, height: 5, color: (0, 255, 0, 255))
-
-        let decoder = PngDecoder()
-        let result = try decoder.decode(file: pngURL)
-
-        XCTAssertEqual(result.width, 10)
-        XCTAssertEqual(result.height, 5)
-        XCTAssertEqual(result.byteCount, 10 * 5 * 4)
     }
 
     func testDecodePreservesColorValues() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            // Create a solid red PNG
+            let pngURL = try createTestPNG(width: 1, height: 1, color: (255, 0, 0, 255))
+
+            let decoder = PngDecoder()
+            let result = try decoder.decode(file: pngURL)
+
+            // First pixel should be red (RGBA)
+            XCTAssertEqual(result.rgba[0], 255, "Red channel")
+            XCTAssertEqual(result.rgba[1], 0, "Green channel")
+            XCTAssertEqual(result.rgba[2], 0, "Blue channel")
+            XCTAssertEqual(result.rgba[3], 255, "Alpha channel")
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        // Create a solid red PNG
-        let pngURL = try createTestPNG(width: 1, height: 1, color: (255, 0, 0, 255))
-
-        let decoder = PngDecoder()
-        let result = try decoder.decode(file: pngURL)
-
-        // First pixel should be red (RGBA)
-        XCTAssertEqual(result.rgba[0], 255, "Red channel")
-        XCTAssertEqual(result.rgba[1], 0, "Green channel")
-        XCTAssertEqual(result.rgba[2], 0, "Blue channel")
-        XCTAssertEqual(result.rgba[3], 255, "Alpha channel")
     }
 
     func testDecodePNGWithAlpha() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            // Create a semi-transparent PNG
+            let pngURL = try createTestPNG(width: 1, height: 1, color: (255, 0, 0, 128))
+
+            let decoder = PngDecoder()
+            let result = try decoder.decode(file: pngURL)
+
+            XCTAssertEqual(result.rgba[3], 128, "Alpha should be preserved")
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        // Create a semi-transparent PNG
-        let pngURL = try createTestPNG(width: 1, height: 1, color: (255, 0, 0, 128))
-
-        let decoder = PngDecoder()
-        let result = try decoder.decode(file: pngURL)
-
-        XCTAssertEqual(result.rgba[3], 128, "Alpha should be preserved")
     }
 
     func testDecodePNGWithoutAlpha() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            // Create an opaque PNG (alpha = 255)
+            let pngURL = try createTestPNG(width: 1, height: 1, color: (0, 128, 255, 255))
+
+            let decoder = PngDecoder()
+            let result = try decoder.decode(file: pngURL)
+
+            XCTAssertEqual(result.rgba[3], 255, "Opaque alpha should be 255")
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        // Create an opaque PNG (alpha = 255)
-        let pngURL = try createTestPNG(width: 1, height: 1, color: (0, 128, 255, 255))
-
-        let decoder = PngDecoder()
-        let result = try decoder.decode(file: pngURL)
-
-        XCTAssertEqual(result.rgba[3], 255, "Opaque alpha should be 255")
     }
 
     // MARK: - Error Handling Tests
 
     func testDecodeThrowsForMissingFile() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            let nonExistentURL = tempDirectory.appendingPathComponent("nonexistent.png")
+
+            let decoder = PngDecoder()
+            XCTAssertThrowsError(try decoder.decode(file: nonExistentURL)) { error in
+                guard let pngError = error as? PngDecoderError else {
+                    XCTFail("Expected PngDecoderError")
+                    return
+                }
+                if case let .fileNotFound(path) = pngError {
+                    XCTAssertTrue(path.contains("nonexistent.png"))
+                } else {
+                    XCTFail("Expected fileNotFound error")
+                }
+            }
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        let nonExistentURL = tempDirectory.appendingPathComponent("nonexistent.png")
-
-        let decoder = PngDecoder()
-        XCTAssertThrowsError(try decoder.decode(file: nonExistentURL)) { error in
-            guard let pngError = error as? PngDecoderError else {
-                XCTFail("Expected PngDecoderError")
-                return
-            }
-            if case let .fileNotFound(path) = pngError {
-                XCTAssertTrue(path.contains("nonexistent.png"))
-            } else {
-                XCTFail("Expected fileNotFound error")
-            }
-        }
     }
 
     func testDecodeThrowsForInvalidData() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            // Create a file with invalid data (not PNG)
+            let invalidURL = tempDirectory.appendingPathComponent("invalid.png")
+            try Data("not a png file".utf8).write(to: invalidURL)
+
+            let decoder = PngDecoder()
+            XCTAssertThrowsError(try decoder.decode(file: invalidURL)) { error in
+                guard let pngError = error as? PngDecoderError else {
+                    XCTFail("Expected PngDecoderError")
+                    return
+                }
+                XCTAssertEqual(pngError, .invalidFormat)
+            }
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        // Create a file with invalid data (not PNG)
-        let invalidURL = tempDirectory.appendingPathComponent("invalid.png")
-        try Data("not a png file".utf8).write(to: invalidURL)
-
-        let decoder = PngDecoder()
-        XCTAssertThrowsError(try decoder.decode(file: invalidURL)) { error in
-            guard let pngError = error as? PngDecoderError else {
-                XCTFail("Expected PngDecoderError")
-                return
-            }
-            XCTAssertEqual(pngError, .invalidFormat)
-        }
     }
 
     func testDecodeThrowsForCorruptedPNG() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            // Create a file with PNG magic bytes but corrupted content
+            let corruptedURL = tempDirectory.appendingPathComponent("corrupted.png")
+            var data = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) // PNG magic
+            data.append(contentsOf: [0x00, 0x00, 0x00, 0x00]) // Invalid chunk
+            try data.write(to: corruptedURL)
+
+            let decoder = PngDecoder()
+            XCTAssertThrowsError(try decoder.decode(file: corruptedURL)) { error in
+                guard let pngError = error as? PngDecoderError else {
+                    XCTFail("Expected PngDecoderError, got: \(error)")
+                    return
+                }
+                // Should be either invalidFormat or decodingFailed
+                switch pngError {
+                case .invalidFormat, .decodingFailed:
+                    break // Expected
+                case .fileNotFound:
+                    XCTFail("Expected invalidFormat or decodingFailed")
+                }
+            }
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        // Create a file with PNG magic bytes but corrupted content
-        let corruptedURL = tempDirectory.appendingPathComponent("corrupted.png")
-        var data = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) // PNG magic
-        data.append(contentsOf: [0x00, 0x00, 0x00, 0x00]) // Invalid chunk
-        try data.write(to: corruptedURL)
-
-        let decoder = PngDecoder()
-        XCTAssertThrowsError(try decoder.decode(file: corruptedURL)) { error in
-            guard let pngError = error as? PngDecoderError else {
-                XCTFail("Expected PngDecoderError, got: \(error)")
-                return
-            }
-            // Should be either invalidFormat or decodingFailed
-            switch pngError {
-            case .invalidFormat, .decodingFailed:
-                break // Expected
-            case .fileNotFound:
-                XCTFail("Expected invalidFormat or decodingFailed")
-            }
-        }
     }
 
     func testDecodeFromData() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            // Create PNG data
+            let pngData = try createTestPNGData(width: 3, height: 3, color: (0, 255, 0, 255))
+
+            let decoder = PngDecoder()
+            let result = try decoder.decode(data: pngData)
+
+            XCTAssertEqual(result.width, 3)
+            XCTAssertEqual(result.height, 3)
+            XCTAssertEqual(result.rgba.count, 3 * 3 * 4)
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        // Create PNG data
-        let pngData = try createTestPNGData(width: 3, height: 3, color: (0, 255, 0, 255))
-
-        let decoder = PngDecoder()
-        let result = try decoder.decode(data: pngData)
-
-        XCTAssertEqual(result.width, 3)
-        XCTAssertEqual(result.height, 3)
-        XCTAssertEqual(result.rgba.count, 3 * 3 * 4)
     }
 
     func testDecodeFromDataThrowsForEmptyData() throws {
-        #if os(Linux)
+        #if !os(Linux)
+            let decoder = PngDecoder()
+            XCTAssertThrowsError(try decoder.decode(data: Data())) { error in
+                guard let pngError = error as? PngDecoderError else {
+                    XCTFail("Expected PngDecoderError")
+                    return
+                }
+                XCTAssertEqual(pngError, .invalidFormat)
+            }
+        #else
             throw XCTSkip("Skipped on Linux due to libpng memory issues")
         #endif
-        let decoder = PngDecoder()
-        XCTAssertThrowsError(try decoder.decode(data: Data())) { error in
-            guard let pngError = error as? PngDecoderError else {
-                XCTFail("Expected PngDecoderError")
-                return
-            }
-            XCTAssertEqual(pngError, .invalidFormat)
-        }
     }
 
     // MARK: - Helpers

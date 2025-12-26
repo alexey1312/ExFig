@@ -64,171 +64,172 @@ final class NativeHeicEncoderTests: XCTestCase {
     // MARK: - Encoding Tests
 
     func testEncodeLossy() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            let encoder = NativeHeicEncoder(quality: 80, lossless: false)
+            let rgba = createSolidColorRGBA(width: 10, height: 10, r: 0, g: 255, b: 0, a: 255)
+
+            let heicData = try encoder.encode(rgba: rgba, width: 10, height: 10)
+
+            // Verify HEIC file starts with ftyp box
+            verifyHeicMagic([UInt8](heicData))
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder(quality: 80, lossless: false)
-        let rgba = createSolidColorRGBA(width: 10, height: 10, r: 0, g: 255, b: 0, a: 255)
-
-        let heicData = try encoder.encode(rgba: rgba, width: 10, height: 10)
-
-        // Verify HEIC file starts with ftyp box
-        verifyHeicMagic([UInt8](heicData))
     }
 
     func testEncodeLossless() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            // Use 10x10 to avoid potential issues with very small images on some macOS versions
+            let encoder = NativeHeicEncoder(lossless: true)
+            let rgba = createSolidColorRGBA(width: 10, height: 10, r: 255, g: 0, b: 0, a: 255)
+
+            let heicData = try encoder.encode(rgba: rgba, width: 10, height: 10)
+
+            // Verify HEIC file structure
+            XCTAssertGreaterThan(heicData.count, 12)
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder(lossless: true)
-        let rgba = createSolidColorRGBA(width: 4, height: 4, r: 255, g: 0, b: 0, a: 255)
-
-        let heicData = try encoder.encode(rgba: rgba, width: 4, height: 4)
-
-        // Verify HEIC file structure
-        XCTAssertGreaterThan(heicData.count, 12)
     }
 
     func testEncodeVariousDimensions() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            let encoder = NativeHeicEncoder(quality: 80)
+
+            // Note: HEIC requires even dimensions, so test with various even sizes
+            let dimensions = [(2, 2), (10, 10), (100, 50), (50, 100)]
+
+            for (width, height) in dimensions {
+                let rgba = createSolidColorRGBA(width: width, height: height, r: 128, g: 128, b: 128, a: 255)
+                let heicData = try encoder.encode(rgba: rgba, width: width, height: height)
+                XCTAssertGreaterThan(heicData.count, 0, "Empty HEIC data for \(width)x\(height)")
+            }
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder(quality: 80)
-
-        // Note: HEIC requires even dimensions, so test with various even sizes
-        let dimensions = [(2, 2), (10, 10), (100, 50), (50, 100)]
-
-        for (width, height) in dimensions {
-            let rgba = createSolidColorRGBA(width: width, height: height, r: 128, g: 128, b: 128, a: 255)
-            let heicData = try encoder.encode(rgba: rgba, width: width, height: height)
-            XCTAssertGreaterThan(heicData.count, 0, "Empty HEIC data for \(width)x\(height)")
-        }
     }
 
     func testEncodeOddDimensionsPads() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            let encoder = NativeHeicEncoder(quality: 80)
+            // Odd dimensions should be padded to even
+            let rgba = createSolidColorRGBA(width: 3, height: 5, r: 255, g: 0, b: 0, a: 255)
+
+            let heicData = try encoder.encode(rgba: rgba, width: 3, height: 5)
+            XCTAssertGreaterThan(heicData.count, 0)
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder(quality: 80)
-        // Odd dimensions should be padded to even
-        let rgba = createSolidColorRGBA(width: 3, height: 5, r: 255, g: 0, b: 0, a: 255)
-
-        let heicData = try encoder.encode(rgba: rgba, width: 3, height: 5)
-        XCTAssertGreaterThan(heicData.count, 0)
     }
 
     // MARK: - File Output Tests
 
     func testEncodeToFile() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            let encoder = NativeHeicEncoder(quality: 80)
+            let rgba = createSolidColorRGBA(width: 4, height: 4, r: 0, g: 0, b: 255, a: 255)
+
+            let outputURL = tempDirectory.appendingPathComponent("output.heic")
+            try encoder.encode(rgba: rgba, width: 4, height: 4, to: outputURL)
+
+            // Verify file exists
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputURL.path))
+
+            let savedData = try Data(contentsOf: outputURL)
+            XCTAssertGreaterThan(savedData.count, 0)
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder(quality: 80)
-        let rgba = createSolidColorRGBA(width: 4, height: 4, r: 0, g: 0, b: 255, a: 255)
-
-        let outputURL = tempDirectory.appendingPathComponent("output.heic")
-        try encoder.encode(rgba: rgba, width: 4, height: 4, to: outputURL)
-
-        // Verify file exists
-        XCTAssertTrue(FileManager.default.fileExists(atPath: outputURL.path))
-
-        let savedData = try Data(contentsOf: outputURL)
-        XCTAssertGreaterThan(savedData.count, 0)
     }
 
     // MARK: - Error Handling Tests
 
     func testEncodeThrowsForZeroWidth() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            let encoder = NativeHeicEncoder()
+            let rgba = [UInt8](repeating: 255, count: 4)
+
+            XCTAssertThrowsError(try encoder.encode(rgba: rgba, width: 0, height: 1)) { error in
+                guard let heicError = error as? NativeHeicEncoderError else {
+                    XCTFail("Expected NativeHeicEncoderError")
+                    return
+                }
+                XCTAssertEqual(heicError, .invalidDimensions)
+            }
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder()
-        let rgba = [UInt8](repeating: 255, count: 4)
-
-        XCTAssertThrowsError(try encoder.encode(rgba: rgba, width: 0, height: 1)) { error in
-            guard let heicError = error as? NativeHeicEncoderError else {
-                XCTFail("Expected NativeHeicEncoderError")
-                return
-            }
-            XCTAssertEqual(heicError, .invalidDimensions)
-        }
     }
 
     func testEncodeThrowsForZeroHeight() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            let encoder = NativeHeicEncoder()
+            let rgba = [UInt8](repeating: 255, count: 4)
+
+            XCTAssertThrowsError(try encoder.encode(rgba: rgba, width: 1, height: 0)) { error in
+                guard let heicError = error as? NativeHeicEncoderError else {
+                    XCTFail("Expected NativeHeicEncoderError")
+                    return
+                }
+                XCTAssertEqual(heicError, .invalidDimensions)
+            }
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder()
-        let rgba = [UInt8](repeating: 255, count: 4)
-
-        XCTAssertThrowsError(try encoder.encode(rgba: rgba, width: 1, height: 0)) { error in
-            guard let heicError = error as? NativeHeicEncoderError else {
-                XCTFail("Expected NativeHeicEncoderError")
-                return
-            }
-            XCTAssertEqual(heicError, .invalidDimensions)
-        }
     }
 
     func testEncodeThrowsForInvalidRgbaSize() throws {
-        #if !os(macOS)
+        #if os(macOS)
+            guard NativeHeicEncoder.isAvailable() else {
+                throw XCTSkip("HEIC encoding not available on this macOS version")
+            }
+
+            let encoder = NativeHeicEncoder()
+            let rgba = [UInt8](repeating: 255, count: 10) // Should be 4 bytes for 1x1
+
+            XCTAssertThrowsError(try encoder.encode(rgba: rgba, width: 1, height: 1)) { error in
+                guard let heicError = error as? NativeHeicEncoderError else {
+                    XCTFail("Expected NativeHeicEncoderError")
+                    return
+                }
+                if case let .invalidRgbaData(expected, actual) = heicError {
+                    XCTAssertEqual(expected, 4)
+                    XCTAssertEqual(actual, 10)
+                } else {
+                    XCTFail("Expected invalidRgbaData error")
+                }
+            }
+        #else
             throw XCTSkip("HEIC encoding is only available on macOS")
         #endif
-
-        guard NativeHeicEncoder.isAvailable() else {
-            throw XCTSkip("HEIC encoding not available on this macOS version")
-        }
-
-        let encoder = NativeHeicEncoder()
-        let rgba = [UInt8](repeating: 255, count: 10) // Should be 4 bytes for 1x1
-
-        XCTAssertThrowsError(try encoder.encode(rgba: rgba, width: 1, height: 1)) { error in
-            guard let heicError = error as? NativeHeicEncoderError else {
-                XCTFail("Expected NativeHeicEncoderError")
-                return
-            }
-            if case let .invalidRgbaData(expected, actual) = heicError {
-                XCTAssertEqual(expected, 4)
-                XCTAssertEqual(actual, 10)
-            } else {
-                XCTFail("Expected invalidRgbaData error")
-            }
-        }
     }
 
     func testPlatformNotSupported() throws {
