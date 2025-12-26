@@ -25,7 +25,7 @@ let package = Package(
         .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
         .package(url: "https://github.com/toon-format/toon-swift", from: "0.3.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
-        .package(url: "https://github.com/alexey1312/swift-resvg.git", from: "0.45.1"),
+        .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.2"),
     ],
     targets: [
         // Main target
