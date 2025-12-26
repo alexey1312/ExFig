@@ -227,10 +227,10 @@ extension ExFigCommand.ExportImages {
 
         try await ui.withSpinner("Converting SVGs to vector drawables...") {
             if FileManager.default.fileExists(atPath: tempDirectoryLightURL.path) {
-                try ExFigCommand.svgFileConverter.convert(inputDirectoryUrl: tempDirectoryLightURL)
+                try await ExFigCommand.svgFileConverter.convertAsync(inputDirectoryUrl: tempDirectoryLightURL)
             }
             if FileManager.default.fileExists(atPath: tempDirectoryDarkURL.path) {
-                try ExFigCommand.svgFileConverter.convert(inputDirectoryUrl: tempDirectoryDarkURL)
+                try await ExFigCommand.svgFileConverter.convertAsync(inputDirectoryUrl: tempDirectoryDarkURL)
             }
         }
 

@@ -11,19 +11,22 @@ public final class AndroidImageVectorExporter: Sendable {
         public let generatePreview: Bool
         public let colorMappings: [String: String]
         public let normalize: Bool
+        public let maxConcurrent: Int
 
         public init(
             packageName: String,
             extensionTarget: String? = nil,
             generatePreview: Bool = true,
             colorMappings: [String: String] = [:],
-            normalize: Bool = true
+            normalize: Bool = true,
+            maxConcurrent: Int = 4
         ) {
             self.packageName = packageName
             self.extensionTarget = extensionTarget
             self.generatePreview = generatePreview
             self.colorMappings = colorMappings
             self.normalize = normalize
+            self.maxConcurrent = maxConcurrent
         }
     }
 
@@ -35,7 +38,44 @@ public final class AndroidImageVectorExporter: Sendable {
         self.config = config
     }
 
-    /// Exports SVG data as ImageVector Kotlin files
+    /// Exports SVG data as ImageVector Kotlin files (async, parallel)
+    /// - Parameters:
+    ///   - svgFiles: Dictionary of icon name to SVG data
+    /// - Returns: Array of FileContents to be written
+    public func exportAsync(svgFiles: [String: Data]) async throws -> [FileContents] {
+        guard !svgFiles.isEmpty else { return [] }
+
+        return try await withThrowingTaskGroup(of: FileContents?.self) { [self] group in
+            var iterator = svgFiles.makeIterator()
+            var results: [FileContents] = []
+            results.reserveCapacity(svgFiles.count)
+
+            // Start initial batch
+            for _ in 0 ..< min(config.maxConcurrent, svgFiles.count) {
+                if let (name, svgData) = iterator.next() {
+                    group.addTask { [name, svgData] in
+                        try? self.exportSingle(name: name, svgData: svgData)
+                    }
+                }
+            }
+
+            // Collect results and start new tasks
+            for try await result in group {
+                if let file = result {
+                    results.append(file)
+                }
+                if let (name, svgData) = iterator.next() {
+                    group.addTask { [name, svgData] in
+                        try? self.exportSingle(name: name, svgData: svgData)
+                    }
+                }
+            }
+
+            return results
+        }
+    }
+
+    /// Exports SVG data as ImageVector Kotlin files (sync)
     /// - Parameters:
     ///   - svgFiles: Dictionary of icon name to SVG data
     /// - Returns: Array of FileContents to be written

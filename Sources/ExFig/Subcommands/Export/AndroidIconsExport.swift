@@ -219,12 +219,12 @@ extension ExFigCommand.ExportIcons {
 
         try await ui.withSpinner("Converting SVGs to vector drawables...") {
             if FileManager.default.fileExists(atPath: tempDirectoryLightURL.path) {
-                try ExFigCommand.svgFileConverter.convert(
+                try await ExFigCommand.svgFileConverter.convertAsync(
                     inputDirectoryUrl: tempDirectoryLightURL, rtlFiles: rtlFileNames
                 )
             }
             if FileManager.default.fileExists(atPath: tempDirectoryDarkURL.path) {
-                try ExFigCommand.svgFileConverter.convert(
+                try await ExFigCommand.svgFileConverter.convertAsync(
                     inputDirectoryUrl: tempDirectoryDarkURL, rtlFiles: rtlFileNames
                 )
             }
@@ -451,7 +451,7 @@ extension ExFigCommand.ExportIcons {
                 }
             }
 
-            let files = try exporter.export(svgFiles: svgFiles)
+            let files = try await exporter.exportAsync(svgFiles: svgFiles)
 
             // Clear output directory if not filtering
             if filter == nil, granularCacheManager == nil {
