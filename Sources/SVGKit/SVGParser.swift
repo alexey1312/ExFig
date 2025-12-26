@@ -244,6 +244,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     /// Storage for clip-path definitions
     private var clipPathDefs: [String: String] = [:]
 
+    /// Storage for mask definitions (mask id -> path data for clip-path conversion)
+    private var maskDefs: [String: String] = [:]
+
     /// Storage for linear gradient definitions
     private var linearGradientDefs: [String: SVGLinearGradient] = [:]
 
@@ -331,6 +334,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
         // Reset definitions for this parse
         clipPathDefs = [:]
+        maskDefs = [:]
         linearGradientDefs = [:]
         radialGradientDefs = [:]
         symbolDefs = [:]
@@ -351,8 +355,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         // Store viewBox for gradient coordinate resolution
         currentViewBox = viewBoxValues
 
-        // Parse defs for clip-paths and gradients
+        // Parse defs for clip-paths, masks, and gradients
         try parseDefsForClipPaths(from: root)
+        parseDefsForMasks(from: root)
         parseDefsForGradients(from: root)
 
         // Parse all path elements (flattened for backward compatibility)
@@ -453,6 +458,11 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
         // Skip <defs> - elements there are only used via <use> references
         if name == "defs" {
+            return
+        }
+
+        // Skip <mask> - content is used for clip-path, not rendered directly
+        if name == "mask" {
             return
         }
 
@@ -714,6 +724,90 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
                 clipPathDefs[id] = pathData
             }
         }
+    }
+
+    /// Parses mask elements and extracts path data for clip-path conversion.
+    /// Figma uses `<mask>` instead of `<clipPath>` for rounded corners on flags.
+    /// Masks can be at root level or inside <defs>.
+    private func parseDefsForMasks(from root: XMLElement) {
+        // Find mask elements anywhere in document (root level or in defs)
+        findAllMaskElements(in: root)
+    }
+
+    /// Recursively finds all mask elements and extracts their path data
+    private func findAllMaskElements(in element: XMLElement) {
+        let name = elementName(element)
+
+        if name == "mask" {
+            // Extract mask id and path data
+            if let id = attributeValue(element, forName: "id") {
+                // Get path data from first rect or path inside mask
+                if let rectElement = childElements(of: element, named: "rect").first {
+                    if let pathData = convertRectToPathData(rectElement) {
+                        maskDefs[id] = pathData
+                    }
+                } else if let pathElement = childElements(of: element, named: "path").first,
+                          let pathData = attributeValue(pathElement, forName: "d")
+                {
+                    maskDefs[id] = pathData
+                }
+            }
+        }
+
+        // Recurse into children (including defs)
+        for child in element.children ?? [] {
+            if let childElement = child as? XMLElement {
+                findAllMaskElements(in: childElement)
+            }
+        }
+    }
+
+    /// Converts a rect element to SVG path data string with rounded corners support
+    private func convertRectToPathData(_ rect: XMLElement) -> String? {
+        // SVG spec: x and y default to 0, width and height are required
+        let x = attributeValue(rect, forName: "x").flatMap(Double.init) ?? 0
+        let y = attributeValue(rect, forName: "y").flatMap(Double.init) ?? 0
+        guard let width = attributeValue(rect, forName: "width").flatMap(Double.init),
+              let height = attributeValue(rect, forName: "height").flatMap(Double.init)
+        else {
+            return nil
+        }
+
+        // Check for rounded corners (rx and/or ry)
+        let rx = attributeValue(rect, forName: "rx").flatMap(Double.init) ?? 0
+        let ry = attributeValue(rect, forName: "ry").flatMap(Double.init) ?? rx
+
+        if rx == 0, ry == 0 {
+            // Simple rectangle without rounded corners
+            return "M\(x),\(y)h\(width)v\(height)h\(-width)Z"
+        }
+
+        // Clamp rx/ry to half of width/height
+        let clampedRx = min(rx, width / 2)
+        let clampedRy = min(ry, height / 2)
+
+        // Rounded rectangle path with arcs
+        // Start at top-left after the corner arc
+        var path = "M\(x + clampedRx),\(y)"
+        // Top edge
+        path += "h\(width - 2 * clampedRx)"
+        // Top-right corner arc
+        path += "a\(clampedRx),\(clampedRy) 0 0 1 \(clampedRx),\(clampedRy)"
+        // Right edge
+        path += "v\(height - 2 * clampedRy)"
+        // Bottom-right corner arc
+        path += "a\(clampedRx),\(clampedRy) 0 0 1 \(-clampedRx),\(clampedRy)"
+        // Bottom edge
+        path += "h\(-width + 2 * clampedRx)"
+        // Bottom-left corner arc
+        path += "a\(clampedRx),\(clampedRy) 0 0 1 \(-clampedRx),\(-clampedRy)"
+        // Left edge
+        path += "v\(-height + 2 * clampedRy)"
+        // Top-left corner arc
+        path += "a\(clampedRx),\(clampedRy) 0 0 1 \(clampedRx),\(-clampedRy)"
+        path += "Z"
+
+        return path
     }
 
     // MARK: - <use> and <symbol> Support
@@ -1001,8 +1095,8 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
                 let attrs = mergeAttributes(from: childElement, with: inheritedAttributes)
                 let (_, useGroups) = try resolveUseElement(childElement, inheritedAttributes: attrs)
                 groups.append(contentsOf: useGroups)
-            } else if name != "defs" {
-                // Skip defs but recurse into other non-group elements
+            } else if name != "defs", name != "mask" {
+                // Skip defs and mask, but recurse into other non-group elements
                 try collectGroups(from: childElement, into: &groups, inheritedAttributes: inheritedAttributes)
             }
         }
@@ -1015,7 +1109,8 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     ) throws -> SVGGroup {
         let attrs = mergeAttributes(from: element, with: inheritedAttributes)
         let transform = parseTransform(from: element)
-        let ownClipPath = resolveClipPath(from: element)
+        // Try clip-path first, then fall back to mask (Figma uses mask for rounded corners)
+        let ownClipPath = resolveClipPath(from: element) ?? resolveMask(from: element)
         // Inherit clip-path from parent if this group doesn't define its own
         let effectiveClipPath = ownClipPath ?? inheritedClipPath
         let opacity = attrs["opacity"].flatMap { Double($0) }
@@ -1067,6 +1162,17 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             return nil
         }
         return clipPathDefs[id]
+    }
+
+    /// Resolves mask attribute to path data for clip-path conversion.
+    /// Figma uses `mask="url(#id)"` instead of `clip-path` for rounded corners.
+    private func resolveMask(from element: XMLElement) -> String? {
+        guard let maskRef = attributeValue(element, forName: "mask"),
+              let id = parseClipPathReference(maskRef) // Same url(#id) format
+        else {
+            return nil
+        }
+        return maskDefs[id]
     }
 
     private func collectGroupPaths(from element: XMLElement, attributes: [String: String]) throws -> [SVGPath] {

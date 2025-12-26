@@ -43,15 +43,22 @@ public struct VectorDrawableXMLGenerator: Sendable {
             lines.append("\(prefix)\(attr)\(suffix)")
         }
 
-        // Generate groups (if present)
-        if let groups = svg.groups {
+        // Generate groups and root-level paths
+        if let groups = svg.groups, !groups.isEmpty {
+            // Collect paths that are inside groups (by path data)
+            let groupPathDatas = collectPathDatasFromGroups(groups)
+
+            // Generate root-level paths that are NOT inside any group (e.g., border rect)
+            for path in svg.paths where !groupPathDatas.contains(path.pathData) {
+                generatePath(path, into: &lines, indent: 1)
+            }
+
+            // Generate groups
             for group in groups {
                 generateGroup(group, into: &lines, indent: 1)
             }
-        }
-
-        // Generate flattened paths (for SVGs without groups or as fallback)
-        if svg.groups == nil || svg.groups?.isEmpty == true {
+        } else {
+            // No groups - generate all flattened paths
             for path in svg.paths {
                 generatePath(path, into: &lines, indent: 1)
             }
@@ -251,6 +258,24 @@ public struct VectorDrawableXMLGenerator: Sendable {
         if pathHasGradient { return true }
 
         return group.children.contains { hasGradientsInGroup($0) }
+    }
+
+    /// Recursively collects all path data strings from groups to identify which paths are inside groups
+    private func collectPathDatasFromGroups(_ groups: [SVGGroup]) -> Set<String> {
+        var pathDatas = Set<String>()
+        for group in groups {
+            collectPathDatasFromGroup(group, into: &pathDatas)
+        }
+        return pathDatas
+    }
+
+    private func collectPathDatasFromGroup(_ group: SVGGroup, into pathDatas: inout Set<String>) {
+        for path in group.paths {
+            pathDatas.insert(path.pathData)
+        }
+        for child in group.children {
+            collectPathDatasFromGroup(child, into: &pathDatas)
+        }
     }
 
     private func generateGradientFill(_ fill: SVGFill, into lines: inout [String], indent: Int) {

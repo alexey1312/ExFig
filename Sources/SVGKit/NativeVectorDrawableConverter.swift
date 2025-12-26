@@ -33,7 +33,12 @@ public struct NativeVectorDrawableConverter: Sendable {
     private let maxConcurrent: Int
     private let logger = Logger(label: "com.alexey1312.exfig.native-vector-drawable-converter")
 
-    public init(autoMirrored: Bool = false, normalize: Bool = true, maxConcurrent: Int = 4) {
+    /// - Parameters:
+    ///   - autoMirrored: If true, generates autoMirrored attribute for RTL support
+    ///   - normalize: If true, normalizes SVG via usvg before parsing.
+    ///                Default is false to preserve mask/clip-path structure from Figma.
+    ///   - maxConcurrent: Maximum concurrent conversions
+    public init(autoMirrored: Bool = false, normalize: Bool = false, maxConcurrent: Int = 4) {
         self.autoMirrored = autoMirrored
         self.normalize = normalize
         self.maxConcurrent = maxConcurrent

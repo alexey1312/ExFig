@@ -13,12 +13,20 @@ public final class AndroidImageVectorExporter: Sendable {
         public let normalize: Bool
         public let maxConcurrent: Int
 
+        /// - Parameters:
+        ///   - packageName: Kotlin package name for generated files
+        ///   - extensionTarget: Optional extension receiver for icon properties
+        ///   - generatePreview: If true, generates @Preview annotation
+        ///   - colorMappings: Hex color to Compose Color mappings
+        ///   - normalize: If true, normalizes SVG via usvg before parsing.
+        ///                Default is false to preserve mask/clip-path structure from Figma.
+        ///   - maxConcurrent: Maximum concurrent conversions
         public init(
             packageName: String,
             extensionTarget: String? = nil,
             generatePreview: Bool = true,
             colorMappings: [String: String] = [:],
-            normalize: Bool = true,
+            normalize: Bool = false,
             maxConcurrent: Int = 4
         ) {
             self.packageName = packageName
