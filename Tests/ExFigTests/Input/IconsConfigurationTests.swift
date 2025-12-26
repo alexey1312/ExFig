@@ -541,7 +541,8 @@ final class IconsConfigurationTests: XCTestCase {
         let json = """
         {
             "format": "svg",
-            "assetsFolder": "Icons"
+            "assetsFolder": "Icons",
+            "nameStyle": "camelCase"
         }
         """
 
@@ -737,7 +738,8 @@ final class IconsConfigurationTests: XCTestCase {
         let json = """
         {
             "format": "svg",
-            "assetsFolder": "Legacy"
+            "assetsFolder": "Legacy",
+            "nameStyle": "camelCase"
         }
         """
 
