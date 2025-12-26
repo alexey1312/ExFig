@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.14] - 2025-12-26
+
+### Bug Fixes
+
+- **android**: Skip SVG conversion for missing temp dirs by @alexey1312
+
+- **svg**: Handle missing fill default and clip-path inheritance by @alexey1312
+
+- **svg**: Convert mask elements to clip-path for Figma flags by @alexey1312
+
+
+### Documentation
+
+- Update Swift version and clarify platform support by @alexey1312
+
+
+### Features
+
+- **icons**: Add per-entry regex and nameStyle fields by @alexey1312
+
+- **svg**: Add usvg normalization before parsing by @alexey1312
+
+- **android**: Parallelize SVG to vector drawable conversion by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- Use mise-action for environment setup by @alexey1312
+
+- Bump minimum macOS version from 12.0 to 13.0 by @alexey1312
+
+- Add xcsift filtering and fix shell quoting by @alexey1312
+
+- **dev**: Add actionlint for GitHub Actions linting by @alexey1312
+
+- Pipe Linux build/test output through xcsift by @alexey1312
+
+- Pipe Linux build/test output through xcsift by @alexey1312
+
+- Pipe Linux build/test output through xcsift by @alexey1312
+
+- Pipe Linux build/test output through xcsift by @alexey1312
+
+
+### Testing
+
+- **icons**: Add nameStyle to iOS IconsEntry test fixtures by @alexey1312
+
+- **ci**: Relax timing thresholds and image size for CI stability by @alexey1312
+
+
 ## [1.2.13] - 2025-12-24
 
 ### Miscellaneous Tasks
