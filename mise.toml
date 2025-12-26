@@ -33,6 +33,7 @@ dprint = "0.50.2" # MD/JSON/YAML formatting (Rust, fast)
 
 # --- Git & CI ---
 hk = "1.28.0"        # Git hooks manager
+actionlint = "1.7.9" # GitHub Actions linting
 git-cliff = "2.10.1" # Changelog generation
 
 # --- Configuration ---
@@ -69,8 +70,11 @@ swift test --filter {{arg(name='filter')}} 2>&1 | xcsift -w -f toon --toon-key-f
 """
 
 [tasks.lint]
-description = "Run SwiftLint"
-run = "swiftlint lint --strict Sources Tests 2>&1 | xcsift -f toon --toon-key-folding safe"
+description = "Run SwiftLint and actionlint"
+run = """
+swiftlint lint --strict Sources Tests 2>&1 | xcsift -f toon --toon-key-folding safe
+actionlint
+"""
 
 [tasks."format:swift"]
 description = "Format Swift code"

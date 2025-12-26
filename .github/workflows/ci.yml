@@ -77,10 +77,10 @@ jobs:
     container:
       image: swift:6.2-jammy
     steps:
-      - name: Install Git LFS
+      - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y git-lfs
+          apt-get install -y git-lfs curl
           git lfs install
 
       - uses: actions/checkout@v6
@@ -104,8 +104,8 @@ jobs:
         run: swift --version
 
       - name: Build
-        run: swift build 2>&1 | xcsift
+        run: swift build
 
       - name: Run tests
         # Use --num-workers 1 to avoid memory corruption with libpng on Linux
-        run: swift test --parallel --num-workers 1 2>&1 | xcsift
+        run: swift test --parallel --num-workers 1

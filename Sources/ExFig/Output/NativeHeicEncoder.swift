@@ -10,7 +10,11 @@ import Foundation
 enum NativeHeicEncoderError: LocalizedError, Equatable {
     case invalidDimensions
     case invalidRgbaData(expected: Int, actual: Int)
-    case encodingFailed
+    case dataProviderCreationFailed
+    case colorSpaceCreationFailed
+    case cgImageCreationFailed
+    case destinationCreationFailed
+    case finalizationFailed(lossless: Bool, quality: Double)
     case platformNotSupported
 
     var errorDescription: String? {
@@ -19,8 +23,16 @@ enum NativeHeicEncoderError: LocalizedError, Equatable {
             "Invalid image dimensions: width and height must be > 0"
         case let .invalidRgbaData(expected, actual):
             "Invalid RGBA data: expected \(expected) bytes, got \(actual)"
-        case .encodingFailed:
-            "HEIC encoding failed"
+        case .dataProviderCreationFailed:
+            "Failed to create CGDataProvider from RGBA data"
+        case .colorSpaceCreationFailed:
+            "Failed to create sRGB color space"
+        case .cgImageCreationFailed:
+            "Failed to create CGImage from RGBA data"
+        case .destinationCreationFailed:
+            "Failed to create HEIC image destination"
+        case let .finalizationFailed(lossless, quality):
+            "HEIC encoding failed: lossless=\(lossless), quality=\(quality)"
         case .platformNotSupported:
             "HEIC encoding is not supported on this platform"
         }
@@ -32,8 +44,12 @@ enum NativeHeicEncoderError: LocalizedError, Equatable {
             "Ensure the source image has valid dimensions"
         case .invalidRgbaData:
             "Re-export the source image from Figma"
-        case .encodingFailed:
-            "Try re-exporting the source image or use PNG format instead"
+        case .dataProviderCreationFailed, .colorSpaceCreationFailed, .cgImageCreationFailed:
+            "This is an internal error - please report it"
+        case .destinationCreationFailed:
+            "HEIC codec may not be available on this system"
+        case .finalizationFailed:
+            "Try using lossy encoding or PNG format instead"
         case .platformNotSupported:
             "Use macOS for HEIC export or choose PNG format"
         }
@@ -137,12 +153,12 @@ struct NativeHeicEncoder: Sendable {
 
             // Create data provider from RGBA bytes
             guard let dataProvider = CGDataProvider(data: Data(rgba) as CFData) else {
-                throw NativeHeicEncoderError.encodingFailed
+                throw NativeHeicEncoderError.dataProviderCreationFailed
             }
 
             // Use sRGB colorspace (DeviceRGB fails silently with HEIC)
             guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
-                throw NativeHeicEncoderError.encodingFailed
+                throw NativeHeicEncoderError.colorSpaceCreationFailed
             }
 
             // Create CGImage with straight (non-premultiplied) alpha
@@ -160,7 +176,7 @@ struct NativeHeicEncoder: Sendable {
                 shouldInterpolate: false,
                 intent: .defaultIntent
             ) else {
-                throw NativeHeicEncoderError.encodingFailed
+                throw NativeHeicEncoderError.cgImageCreationFailed
             }
 
             // Create mutable data for output
@@ -180,7 +196,7 @@ struct NativeHeicEncoder: Sendable {
                 1,
                 nil
             ) else {
-                throw NativeHeicEncoderError.encodingFailed
+                throw NativeHeicEncoderError.destinationCreationFailed
             }
 
             // Set encoding options
@@ -199,7 +215,7 @@ struct NativeHeicEncoder: Sendable {
 
             // Finalize
             guard CGImageDestinationFinalize(destination) else {
-                throw NativeHeicEncoderError.encodingFailed
+                throw NativeHeicEncoderError.finalizationFailed(lossless: lossless, quality: normalizedQuality)
             }
 
             return mutableData as Data
