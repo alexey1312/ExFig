@@ -31,7 +31,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         // Verify structure
@@ -57,7 +57,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         XCTAssertTrue(xml.contains("android:pathData=\"M6.4142 13L12.9981 19.5839"))
@@ -72,7 +72,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         XCTAssertTrue(xml.contains("android:strokeColor=\"#FF0000\""))
@@ -89,7 +89,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         XCTAssertTrue(xml.contains("<group"))
@@ -106,7 +106,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         """
 
         let generatorWithMirror = VectorDrawableXMLGenerator(autoMirrored: true)
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generatorWithMirror.generate(from: parsed)
 
         XCTAssertTrue(xml.contains("android:autoMirrored=\"true\""))
@@ -126,7 +126,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         XCTAssertTrue(xml.contains("<clip-path"))
@@ -140,7 +140,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         // Alpha 0.5 = 127 (0x7F)
@@ -161,7 +161,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         // Verify XML is well-formed by parsing it
@@ -183,7 +183,7 @@ final class VectorDrawableIntegrationTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let xml = generator.generate(from: parsed)
 
         // Check indentation (4 spaces)

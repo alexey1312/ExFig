@@ -181,7 +181,8 @@ final class AndroidImageVectorExporterTests: XCTestCase {
     func testExportSVGWithCircle() throws {
         let config = AndroidImageVectorExporter.Config(
             packageName: "com.example.icons",
-            generatePreview: false
+            generatePreview: false,
+            normalize: false
         )
         let exporter = AndroidImageVectorExporter(outputDirectory: outputDirectory, config: config)
 

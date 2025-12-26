@@ -19,7 +19,7 @@ final class SVGCSSStyleTests: XCTestCase {
     // MARK: - Helper
 
     private func parse(_ svg: String) throws -> ParsedSVG {
-        try parser.parse(Data(svg.utf8))
+        try parser.parse(Data(svg.utf8), normalize: false)
     }
 
     // MARK: - Class Selector Tests

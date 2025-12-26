@@ -1,6 +1,7 @@
 // swiftlint:disable file_length
 import Foundation
 import Logging
+import Resvg
 #if os(Linux)
     import FoundationXML
 #endif
@@ -311,10 +312,19 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     }
 
     /// Parses SVG data into a ParsedSVG structure
-    /// - Parameter data: Raw SVG file data
+    /// - Parameters:
+    ///   - data: Raw SVG file data
+    ///   - normalize: If true, normalizes SVG using usvg before parsing (applies defaults, resolves references)
     /// - Returns: Parsed SVG representation
-    public func parse(_ data: Data) throws -> ParsedSVG {
-        let document = try XMLDocument(data: data, options: [])
+    public func parse(_ data: Data, normalize: Bool = true) throws -> ParsedSVG {
+        // Normalize SVG using usvg (applies defaults, resolves <use>, inlines CSS)
+        let svgData: Data = if normalize {
+            try SvgNormalizer().normalize(data)
+        } else {
+            data
+        }
+
+        let document = try XMLDocument(data: svgData, options: [])
         guard let root = document.rootElement(), elementName(root) == "svg" else {
             throw SVGParserError.invalidSVGRoot
         }
@@ -366,11 +376,13 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     }
 
     /// Parses SVG from a file URL
-    /// - Parameter url: URL to the SVG file
+    /// - Parameters:
+    ///   - url: URL to the SVG file
+    ///   - normalize: If true, normalizes SVG using usvg before parsing
     /// - Returns: Parsed SVG representation
-    public func parse(contentsOf url: URL) throws -> ParsedSVG {
+    public func parse(contentsOf url: URL, normalize: Bool = true) throws -> ParsedSVG {
         let data = try Data(contentsOf: url)
-        return try parse(data)
+        return try parse(data, normalize: normalize)
     }
 
     // MARK: - Private Methods

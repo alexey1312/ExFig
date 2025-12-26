@@ -190,7 +190,7 @@ final class SVGMatrixTransformTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertNotNil(parsed.groups)
         XCTAssertEqual(parsed.groups?.count, 1)
@@ -207,7 +207,7 @@ final class SVGMatrixTransformTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertNotNil(parsed.groups)
         XCTAssertEqual(parsed.groups?[0].transform?.skewY, 20)
@@ -223,7 +223,7 @@ final class SVGMatrixTransformTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertNotNil(parsed.groups)
         let transform = parsed.groups?[0].transform

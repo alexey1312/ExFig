@@ -10,17 +10,20 @@ public final class AndroidImageVectorExporter: Sendable {
         public let extensionTarget: String?
         public let generatePreview: Bool
         public let colorMappings: [String: String]
+        public let normalize: Bool
 
         public init(
             packageName: String,
             extensionTarget: String? = nil,
             generatePreview: Bool = true,
-            colorMappings: [String: String] = [:]
+            colorMappings: [String: String] = [:],
+            normalize: Bool = true
         ) {
             self.packageName = packageName
             self.extensionTarget = extensionTarget
             self.generatePreview = generatePreview
             self.colorMappings = colorMappings
+            self.normalize = normalize
         }
     }
 
@@ -48,7 +51,7 @@ public final class AndroidImageVectorExporter: Sendable {
         var files: [FileContents] = []
 
         for (name, svgData) in svgFiles {
-            let svg = try svgParser.parse(svgData)
+            let svg = try svgParser.parse(svgData, normalize: config.normalize)
             let kotlinCode = generator.generate(name: name, svg: svg)
 
             let fileName = name.toPascalCase() + ".kt"
@@ -72,7 +75,7 @@ public final class AndroidImageVectorExporter: Sendable {
     ///   - svgData: SVG file data
     /// - Returns: FileContents for the generated Kotlin file
     public func exportSingle(name: String, svgData: Data) throws -> FileContents {
-        let svg = try SVGParser().parse(svgData)
+        let svg = try SVGParser().parse(svgData, normalize: config.normalize)
 
         let generator = ImageVectorGenerator(config: .init(
             packageName: config.packageName,

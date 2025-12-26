@@ -31,7 +31,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
 
         // Convert
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         // Verify XML file was created
@@ -54,7 +54,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         let svgFile = tempDirectory.appendingPathComponent("test.svg")
         try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         // SVG file should be removed
@@ -76,7 +76,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         let svgFile = tempDirectory.appendingPathComponent("grouped.svg")
         try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         let xmlFile = tempDirectory.appendingPathComponent("grouped.xml")
@@ -96,7 +96,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         let svgFile = tempDirectory.appendingPathComponent("arrow.svg")
         try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter(autoMirrored: true)
+        let converter = NativeVectorDrawableConverter(autoMirrored: true, normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         let xmlFile = tempDirectory.appendingPathComponent("arrow.xml")
@@ -128,7 +128,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
             encoding: .utf8
         )
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory, rtlFiles: Set(["arrow_right"]))
 
         // RTL file should have autoMirrored
@@ -157,7 +157,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         try svgContent1.write(to: tempDirectory.appendingPathComponent("icon1.svg"), atomically: true, encoding: .utf8)
         try svgContent2.write(to: tempDirectory.appendingPathComponent("icon2.svg"), atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         // Both XML files should exist
@@ -180,7 +180,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         try svgContent.write(to: tempDirectory.appendingPathComponent("icon.svg"), atomically: true, encoding: .utf8)
         try txtContent.write(to: tempDirectory.appendingPathComponent("readme.txt"), atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         // SVG should be converted
@@ -193,7 +193,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
     }
 
     func testConvertEmptyDirectory() throws {
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         // Should not throw for empty directory
         XCTAssertNoThrow(try converter.convert(inputDirectoryUrl: tempDirectory))
     }
@@ -211,7 +211,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         try validSvg.write(to: tempDirectory.appendingPathComponent("valid.svg"), atomically: true, encoding: .utf8)
         try invalidSvg.write(to: tempDirectory.appendingPathComponent("invalid.svg"), atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         // Should not throw - continues processing other files
         XCTAssertNoThrow(try converter.convert(inputDirectoryUrl: tempDirectory))
 
@@ -224,7 +224,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
 
     func testConvertMissingDirectoryThrows() {
         let nonExistentUrl = tempDirectory.appendingPathComponent("nonexistent")
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
 
         XCTAssertThrowsError(try converter.convert(inputDirectoryUrl: nonExistentUrl))
     }
@@ -240,7 +240,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         let svgFile = tempDirectory.appendingPathComponent("alpha.svg")
         try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         let xmlFile = tempDirectory.appendingPathComponent("alpha.xml")
@@ -259,7 +259,7 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         let svgFile = tempDirectory.appendingPathComponent("stroke.svg")
         try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
 
-        let converter = NativeVectorDrawableConverter()
+        let converter = NativeVectorDrawableConverter(normalize: false)
         try converter.convert(inputDirectoryUrl: tempDirectory)
 
         let xmlFile = tempDirectory.appendingPathComponent("stroke.xml")

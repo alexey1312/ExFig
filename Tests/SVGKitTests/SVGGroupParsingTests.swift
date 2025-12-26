@@ -27,7 +27,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?.count, 1)
         XCTAssertEqual(parsed.groups?[0].paths.count, 1)
@@ -42,7 +42,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?.count, 1)
         XCTAssertEqual(parsed.groups?[0].transform?.translateX, 10)
@@ -58,7 +58,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?[0].transform?.scaleX, 2)
         XCTAssertEqual(parsed.groups?[0].transform?.scaleY, 3)
@@ -73,7 +73,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?[0].transform?.rotation, 45)
         XCTAssertEqual(parsed.groups?[0].transform?.pivotX, 12)
@@ -96,7 +96,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?.count, 1)
         XCTAssertEqual(parsed.groups?[0].clipPath, "M0,0 L24,0 L24,24 L0,24 Z")
@@ -115,7 +115,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?.count, 1)
         XCTAssertEqual(parsed.groups?[0].transform?.translateX, 5)
@@ -135,7 +135,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?.count, 2)
         XCTAssertEqual(parsed.groups?[0].transform?.translateX, 0)
@@ -153,7 +153,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?[0].opacity, 0.5)
     }
@@ -169,7 +169,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         let transform = parsed.groups?[0].transform
         XCTAssertEqual(transform?.translateX, 10)
@@ -191,7 +191,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         // Flattened paths should include all paths
         XCTAssertEqual(parsed.paths.count, 2)
@@ -211,7 +211,7 @@ final class SVGGroupParsingTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.width, 24)
         XCTAssertEqual(parsed.height, 24)

@@ -78,6 +78,7 @@ let package = Package(
             name: "SVGKit",
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
+                .product(name: "Resvg", package: "swift-resvg"),
             ]
         ),
 

@@ -20,7 +20,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertEqual(parsed.linearGradients.count, 1)
 
@@ -51,7 +51,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         // Percentages should be converted to viewport coordinates
@@ -73,7 +73,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.spreadMethod, .reflect)
@@ -91,7 +91,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.spreadMethod, .repeating)
@@ -109,7 +109,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.spreadMethod, .pad)
@@ -129,7 +129,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertEqual(parsed.radialGradients.count, 1)
 
@@ -155,7 +155,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.radialGradients["grad2"]
 
         XCTAssertEqual(gradient?.fx, 8)
@@ -174,7 +174,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.radialGradients["grad1"]
 
         XCTAssertEqual(gradient?.cx, 50)
@@ -196,7 +196,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.stops[0].opacity, 0.5)
@@ -214,7 +214,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.stops[0].opacity, 1.0)
@@ -233,7 +233,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.stops[0].offset, 0.0)
@@ -254,7 +254,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.stops[0].offset, 0.0)
@@ -277,7 +277,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
 
@@ -301,7 +301,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
 
@@ -319,7 +319,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         // Should fall back to none when gradient not found
         if case .none = parsed.paths[0].fillType {
@@ -338,7 +338,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertTrue(parsed.linearGradients.isEmpty)
         XCTAssertTrue(parsed.radialGradients.isEmpty)
@@ -360,7 +360,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertTrue(parsed.linearGradients.isEmpty)
         XCTAssertTrue(parsed.radialGradients.isEmpty)
@@ -373,7 +373,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertTrue(parsed.linearGradients.isEmpty)
         XCTAssertTrue(parsed.radialGradients.isEmpty)
@@ -401,7 +401,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertEqual(parsed.linearGradients.count, 2)
         XCTAssertEqual(parsed.radialGradients.count, 1)
@@ -424,7 +424,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
         let gradient = parsed.linearGradients["grad1"]
 
         XCTAssertEqual(gradient?.stops[0].color.red, 255)
@@ -450,7 +450,7 @@ final class SVGGradientParsingTests: XCTestCase {
         </svg>
         """
 
-        let parsed = try parser.parse(Data(svg.utf8))
+        let parsed = try parser.parse(Data(svg.utf8), normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
 

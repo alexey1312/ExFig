@@ -29,10 +29,12 @@ public enum VectorDrawableConverterError: Error, LocalizedError {
 /// Replaces the external vd-tool Java dependency with pure Swift implementation
 public struct NativeVectorDrawableConverter: Sendable {
     private let autoMirrored: Bool
+    private let normalize: Bool
     private let logger = Logger(label: "com.alexey1312.exfig.native-vector-drawable-converter")
 
-    public init(autoMirrored: Bool = false) {
+    public init(autoMirrored: Bool = false, normalize: Bool = true) {
         self.autoMirrored = autoMirrored
+        self.normalize = normalize
     }
 
     /// Converts all SVG files in a directory to Android Vector Drawable XML format
@@ -100,7 +102,7 @@ public struct NativeVectorDrawableConverter: Sendable {
         let svgData = try Data(contentsOf: svgFile)
 
         // Parse SVG
-        let parsedSVG = try parser.parse(svgData)
+        let parsedSVG = try parser.parse(svgData, normalize: normalize)
 
         // Generate Vector Drawable XML
         let xmlContent = generator.generate(from: parsedSVG)

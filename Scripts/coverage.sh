@@ -10,6 +10,7 @@
 #   --html          Generate HTML report and open in browser
 #   --json          Output coverage as JSON (for CI badges)
 #   --quiet         Only output the coverage percentage
+#   --update-badge  Update coverage badge in README.md
 #   --help          Show this help message
 #
 # Examples:
@@ -17,6 +18,7 @@
 #   ./Scripts/coverage.sh --html             # Generate HTML report
 #   ./Scripts/coverage.sh --json             # Output JSON for badges
 #   ./Scripts/coverage.sh --quiet            # Just the percentage
+#   ./Scripts/coverage.sh --run-tests --update-badge  # Run tests and update badge
 # =============================================================================
 
 set -e
@@ -33,6 +35,7 @@ RUN_TESTS=false
 HTML_REPORT=false
 JSON_OUTPUT=false
 QUIET=false
+UPDATE_BADGE=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -51,6 +54,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --quiet)
             QUIET=true
+            shift
+            ;;
+        --update-badge)
+            UPDATE_BADGE=true
             shift
             ;;
         --help|-h)
@@ -182,4 +189,21 @@ else
     COLOR_CODE=$RED
 fi
 
-echo -e "Total coverage: ${COLOR_CODE}${COVERAGE}%${NC}"
+# Update badge in README.md if requested
+if [[ "$UPDATE_BADGE" == "true" ]]; then
+    # Determine badge color
+    if (( $(echo "$COVERAGE >= 80" | bc -l) )); then
+        BADGE_COLOR="brightgreen"
+    elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then
+        BADGE_COLOR="green"
+    elif (( $(echo "$COVERAGE >= 40" | bc -l) )); then
+        BADGE_COLOR="yellow"
+    else
+        BADGE_COLOR="red"
+    fi
+
+    perl -i -pe "s|coverage-[0-9.]+%25-[a-z]+|coverage-${COVERAGE}%25-${BADGE_COLOR}|g" README.md
+    echo -e "Updated README.md badge: ${COLOR_CODE}${COVERAGE}%${NC} (${BADGE_COLOR})"
+else
+    echo -e "Total coverage: ${COLOR_CODE}${COVERAGE}%${NC}"
+fi

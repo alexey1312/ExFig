@@ -26,7 +26,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.width, 24)
         XCTAssertEqual(parsed.height, 24)
@@ -42,7 +42,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.width, 48)
         XCTAssertEqual(parsed.height, 48)
@@ -57,7 +57,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.width, 32)
         XCTAssertEqual(parsed.height, 32)
@@ -72,7 +72,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.width, 24)
         XCTAssertEqual(parsed.height, 24)
@@ -87,7 +87,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertNotNil(parsed.paths[0].fill)
@@ -103,7 +103,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertNil(parsed.paths[0].fill)
@@ -121,7 +121,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths[0].strokeLineCap, .round)
     }
@@ -133,7 +133,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths[0].strokeLineJoin, .bevel)
     }
@@ -145,7 +145,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths[0].fillRule, .evenOdd)
     }
@@ -157,7 +157,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths[0].opacity, 0.5)
     }
@@ -171,7 +171,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths[0].fill?.red, 255)
         XCTAssertEqual(parsed.paths[0].stroke?.green, 255)
@@ -187,7 +187,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertFalse(parsed.paths[0].pathData.isEmpty)
@@ -200,7 +200,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertFalse(parsed.paths[0].pathData.isEmpty)
@@ -213,7 +213,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertFalse(parsed.paths[0].pathData.isEmpty)
@@ -226,7 +226,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertTrue(parsed.paths[0].pathData.contains("M4.0,4.0"))
@@ -240,7 +240,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertTrue(parsed.paths[0].pathData.hasSuffix("Z"))
@@ -253,7 +253,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertFalse(parsed.paths[0].pathData.hasSuffix("Z"))
@@ -272,7 +272,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 1)
         XCTAssertEqual(parsed.paths[0].fill?.red, 255)
@@ -287,7 +287,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.paths.count, 2)
         XCTAssertEqual(parsed.paths[0].fill?.red, 255)
@@ -302,7 +302,7 @@ final class SVGParserTests: XCTestCase {
         """
         let data = Data(svg.utf8)
 
-        XCTAssertThrowsError(try parser.parse(data)) { error in
+        XCTAssertThrowsError(try parser.parse(data, normalize: false)) { error in
             XCTAssertEqual(error as? SVGParserError, .invalidSVGRoot)
         }
     }
@@ -317,7 +317,7 @@ final class SVGParserTests: XCTestCase {
         </svg>
         """
         let data = Data(svg.utf8)
-        let parsed = try parser.parse(data)
+        let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.width, 24)
         XCTAssertEqual(parsed.height, 24)
