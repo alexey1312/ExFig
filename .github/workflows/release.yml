@@ -105,7 +105,7 @@ jobs:
           cp -r .build/${{ matrix.build-path }}/exfig_FlutterExport.resources dist/
           cp -r .build/${{ matrix.build-path }}/exfig_WebExport.resources dist/
           cp LICENSE dist/
-          cd dist && tar -czf ../${{ matrix.archive-name }}.tar.gz *
+          cd dist && tar -czf ../${{ matrix.archive-name }}.tar.gz -- *
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -190,7 +190,7 @@ jobs:
     steps:
       - name: Get version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
       - name: Download release assets and calculate SHA256
         id: sha
@@ -199,11 +199,11 @@ jobs:
 
           curl -sL "https://github.com/alexey1312/ExFig/releases/download/v${VERSION}/exfig-macos.zip" -o exfig-macos.zip
           MACOS_SHA=$(sha256sum exfig-macos.zip | cut -d' ' -f1)
-          echo "macos=${MACOS_SHA}" >> $GITHUB_OUTPUT
+          echo "macos=${MACOS_SHA}" >> "$GITHUB_OUTPUT"
 
           curl -sL "https://github.com/alexey1312/ExFig/releases/download/v${VERSION}/exfig-linux-x64.tar.gz" -o exfig-linux.tar.gz
           LINUX_SHA=$(sha256sum exfig-linux.tar.gz | cut -d' ' -f1)
-          echo "linux=${LINUX_SHA}" >> $GITHUB_OUTPUT
+          echo "linux=${LINUX_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout Homebrew tap
         uses: actions/checkout@v6
