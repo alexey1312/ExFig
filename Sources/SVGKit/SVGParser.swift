@@ -1,5 +1,6 @@
 // swiftlint:disable file_length
 import Foundation
+import Logging
 #if os(Linux)
     import FoundationXML
 #endif
@@ -262,6 +263,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
     /// Maximum depth for resolving nested <use> references
     private let maxUseDepth = 10
+
+    /// Logger for warnings and diagnostics
+    private let logger = Logger(label: "SVGParser")
 
     public init() {}
 
@@ -847,6 +851,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
         // Find referenced element
         guard let referencedElement = symbolDefs[refId] ?? elementDefs[refId] else {
+            logger.warning("SVG <use> references missing id '\(refId)'")
             return ([], [])
         }
 
@@ -993,18 +998,25 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
     private func parseGroup(
         _ element: XMLElement,
-        inheritedAttributes: [String: String]
+        inheritedAttributes: [String: String],
+        inheritedClipPath: String? = nil
     ) throws -> SVGGroup {
         let attrs = mergeAttributes(from: element, with: inheritedAttributes)
         let transform = parseTransform(from: element)
-        let clipPath = resolveClipPath(from: element)
+        let ownClipPath = resolveClipPath(from: element)
+        // Inherit clip-path from parent if this group doesn't define its own
+        let effectiveClipPath = ownClipPath ?? inheritedClipPath
         let opacity = attrs["opacity"].flatMap { Double($0) }
         let paths = try collectGroupPaths(from: element, attributes: attrs)
-        let children = try collectChildGroups(from: element, inheritedAttributes: attrs)
+        let children = try collectChildGroups(
+            from: element,
+            inheritedAttributes: attrs,
+            inheritedClipPath: effectiveClipPath
+        )
 
         return SVGGroup(
             transform: transform,
-            clipPath: clipPath,
+            clipPath: effectiveClipPath,
             paths: paths,
             children: children,
             opacity: opacity
@@ -1074,12 +1086,17 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
     private func collectChildGroups(
         from element: XMLElement,
-        inheritedAttributes: [String: String]
+        inheritedAttributes: [String: String],
+        inheritedClipPath: String? = nil
     ) throws -> [SVGGroup] {
         var children: [SVGGroup] = []
         for child in element.children ?? [] {
             guard let childElement = child as? XMLElement, elementName(childElement) == "g" else { continue }
-            try children.append(parseGroup(childElement, inheritedAttributes: inheritedAttributes))
+            try children.append(parseGroup(
+                childElement,
+                inheritedAttributes: inheritedAttributes,
+                inheritedClipPath: inheritedClipPath
+            ))
         }
         return children
     }

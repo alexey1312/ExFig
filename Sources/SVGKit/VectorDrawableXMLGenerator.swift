@@ -137,6 +137,9 @@ public struct VectorDrawableXMLGenerator: Sendable {
                 pathAttrs.append("android:fillColor=\"\(formatColor(fill))\"")
             } else if case let .solid(color) = path.fillType {
                 pathAttrs.append("android:fillColor=\"\(formatColor(color))\"")
+            } else if path.stroke == nil {
+                // SVG spec: missing fill attribute defaults to black
+                pathAttrs.append("android:fillColor=\"#FF000000\"")
             }
         }
 

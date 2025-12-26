@@ -183,6 +183,9 @@ public struct ImageVectorGenerator: Sendable {
             if let fill = path.fill {
                 let colorCode = mapColor(fill)
                 params.append("fill = SolidColor(\(colorCode))")
+            } else if path.stroke == nil {
+                // SVG spec: missing fill attribute defaults to black
+                params.append("fill = SolidColor(Color.Black)")
             }
         }
 
