@@ -78,6 +78,10 @@ backend = "core:python"
 version = "3.13.11"
 backend = "core:python"
 
+[[tools.swift]]
+version = "6.2.3"
+backend = "core:swift"
+
 [[tools.swiftformat]]
 version = "0.58.7"
 backend = "asdf:swiftformat"

@@ -38,6 +38,7 @@ git-cliff = "2.10.1" # Changelog generation
 
 # --- Configuration ---
 pkl = "0.30.2" # Configuration language (for hk.pkl)
+swift = "6.2.3"
 
 # =============================================================================
 # Tasks

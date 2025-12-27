@@ -208,12 +208,17 @@ actor SharedDownloadQueue {
                 activeCount -= 1
                 totalDownloadsCompleted += 1
 
-                // Start next download if available
-                if let file = iterator.next() {
-                    activeDownloadCount += 1
-                    activeCount += 1
-                    group.addTask {
-                        try await self.downloadFile(file)
+                // Dynamic concurrency adjustment
+                // Always try to fill available slots, or maintain at least 1 active task if files remain
+                while activeDownloadCount < maxConcurrentDownloads || activeCount == 0 {
+                    if let file = iterator.next() {
+                        activeDownloadCount += 1
+                        activeCount += 1
+                        group.addTask {
+                            try await self.downloadFile(file)
+                        }
+                    } else {
+                        break
                     }
                 }
             }
