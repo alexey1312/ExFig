@@ -110,3 +110,4 @@ public enum ResvgPathConverter {
             .replacingOccurrences(of: #"\.?0+$"#, with: "", options: .regularExpression)
     }
 }
+
