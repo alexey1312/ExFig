@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.15] - 2025-12-27
+
+### Bug Fixes
+
+- **svg**: Preserve fill on shape elements in groups by @alexey1312
+
+
+### Documentation
+
+- Use portable ./bin/mise paths in CLAUDE.md by @alexey1312
+
+
 ## [1.2.14] - 2025-12-26
 
 ### Bug Fixes
