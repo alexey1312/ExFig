@@ -24,25 +24,31 @@ public enum ResvgPathConverter {
     /// }
     /// ```
     public static func toPathString(_ segments: [PathSegment]) -> String {
-        var result = ""
+        var parts: [String] = []
+        parts.reserveCapacity(segments.count)
+
         for segment in segments {
             switch segment.type {
             case .moveTo:
-                result += "M\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                parts.append("M\(formatFloat(segment.x)),\(formatFloat(segment.y))")
             case .lineTo:
-                result += "L\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                parts.append("L\(formatFloat(segment.x)),\(formatFloat(segment.y))")
             case .quadTo:
-                result += "Q\(formatFloat(segment.x1)),\(formatFloat(segment.y1)) "
-                result += "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                parts.append(
+                    "Q\(formatFloat(segment.x1)),\(formatFloat(segment.y1)) " +
+                    "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                )
             case .cubicTo:
-                result += "C\(formatFloat(segment.x1)),\(formatFloat(segment.y1)) "
-                result += "\(formatFloat(segment.x2)),\(formatFloat(segment.y2)) "
-                result += "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                parts.append(
+                    "C\(formatFloat(segment.x1)),\(formatFloat(segment.y1)) " +
+                    "\(formatFloat(segment.x2)),\(formatFloat(segment.y2)) " +
+                    "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                )
             case .close:
-                result += "Z"
+                parts.append("Z")
             }
         }
-        return result
+        return parts.joined()
     }
 
     /// Converts a resvg Path to SVG path data string.
@@ -62,33 +68,7 @@ public enum ResvgPathConverter {
     /// - Parameter mask: Mask from Group.mask
     /// - Returns: SVG path data string, or nil if mask has no path children
     public static func extractPathFromMask(_ mask: Mask) -> String? {
-        for child in mask.root.children {
-            if let path = child.asPath() {
-                return toPathString(path)
-            }
-            // Recurse into groups
-            if let group = child.asGroup() {
-                if let pathData = extractPathFromGroup(group) {
-                    return pathData
-                }
-            }
-        }
-        return nil
-    }
-
-    /// Extracts the first path data from a group's children.
-    private static func extractPathFromGroup(_ group: Group) -> String? {
-        for child in group.children {
-            if let path = child.asPath() {
-                return toPathString(path)
-            }
-            if let childGroup = child.asGroup() {
-                if let pathData = extractPathFromGroup(childGroup) {
-                    return pathData
-                }
-            }
-        }
-        return nil
+        extractPathFromGroup(mask.root)
     }
 
     /// Extracts the first path data from a clip-path's content.
@@ -96,12 +76,20 @@ public enum ResvgPathConverter {
     /// - Parameter clipPath: ClipPath from Group.clipPath
     /// - Returns: SVG path data string, or nil if clip-path has no path children
     public static func extractPathFromClipPath(_ clipPath: ClipPath) -> String? {
-        for child in clipPath.root.children {
+        extractPathFromGroup(clipPath.root)
+    }
+
+    /// Extracts the first path data from a group's children.
+    ///
+    /// - Parameter group: Group to search for paths
+    /// - Returns: SVG path data string from first path found, or nil if none
+    public static func extractPathFromGroup(_ group: Group) -> String? {
+        for child in group.children {
             if let path = child.asPath() {
                 return toPathString(path)
             }
-            if let group = child.asGroup() {
-                if let pathData = extractPathFromGroup(group) {
+            if let childGroup = child.asGroup() {
+                if let pathData = extractPathFromGroup(childGroup) {
                     return pathData
                 }
             }

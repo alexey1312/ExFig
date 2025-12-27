@@ -34,7 +34,12 @@ final class ResvgPathConverterTests: XCTestCase {
 
         XCTAssertEqual(paths.count, 1)
         let pathString = ResvgPathConverter.toPathString(paths[0])
-        XCTAssertTrue(pathString.contains("L"))
+        // Should contain MoveTo followed by LineTo
+        XCTAssertTrue(pathString.hasPrefix("M"), "Path should start with MoveTo")
+        XCTAssertTrue(pathString.contains("L"), "Path should contain LineTo")
+        // Verify expected coordinates are present
+        XCTAssertTrue(pathString.contains("10"), "Path should contain x coordinate 10")
+        XCTAssertTrue(pathString.contains("20"), "Path should contain y coordinate 20")
     }
 
     func testConvertCubicBezierSegment() throws {
@@ -48,7 +53,11 @@ final class ResvgPathConverterTests: XCTestCase {
 
         XCTAssertEqual(paths.count, 1)
         let pathString = ResvgPathConverter.toPathString(paths[0])
-        XCTAssertTrue(pathString.contains("C"))
+        // Should contain MoveTo followed by CurveTo
+        XCTAssertTrue(pathString.hasPrefix("M"), "Path should start with MoveTo")
+        XCTAssertTrue(pathString.contains("C"), "Path should contain CurveTo (cubic bezier)")
+        // CurveTo should have control points and end point
+        XCTAssertTrue(pathString.contains("20"), "Path should contain coordinate 20")
     }
 
     func testConvertCloseSegment() throws {
@@ -62,7 +71,10 @@ final class ResvgPathConverterTests: XCTestCase {
 
         XCTAssertEqual(paths.count, 1)
         let pathString = ResvgPathConverter.toPathString(paths[0])
-        XCTAssertTrue(pathString.contains("Z"))
+        // Should contain MoveTo, LineTo commands and Close
+        XCTAssertTrue(pathString.hasPrefix("M"), "Path should start with MoveTo")
+        XCTAssertTrue(pathString.contains("L"), "Path should contain LineTo")
+        XCTAssertTrue(pathString.hasSuffix("Z"), "Path should end with Close")
     }
 
     // MARK: - Tree Traversal Tests
@@ -129,8 +141,15 @@ final class ResvgPathConverterTests: XCTestCase {
         XCTAssertNotNil(maskPath, "Should find mask path in SVG")
 
         if let pathData = maskPath {
-            XCTAssertFalse(pathData.isEmpty)
-            XCTAssertTrue(pathData.contains("M") || pathData.contains("L") || pathData.contains("C"))
+            XCTAssertFalse(pathData.isEmpty, "Mask path data should not be empty")
+            // Mask path should be a valid SVG path starting with MoveTo
+            XCTAssertTrue(pathData.hasPrefix("M"), "Mask path should start with MoveTo command")
+            // For a rect with rx=4, the path should contain curves (C) for rounded corners
+            // or lines (L) for straight edges
+            XCTAssertTrue(
+                pathData.contains("L") || pathData.contains("C"),
+                "Mask path should contain LineTo or CurveTo commands"
+            )
         }
     }
 
@@ -153,7 +172,13 @@ final class ResvgPathConverterTests: XCTestCase {
         XCTAssertNotNil(clipPath, "Should find clip-path in SVG")
 
         if let pathData = clipPath {
-            XCTAssertFalse(pathData.isEmpty)
+            XCTAssertFalse(pathData.isEmpty, "Clip-path data should not be empty")
+            // Clip-path should be a valid SVG path starting with MoveTo
+            XCTAssertTrue(pathData.hasPrefix("M"), "Clip-path should start with MoveTo command")
+            // For a simple rect, should contain LineTo commands
+            XCTAssertTrue(pathData.contains("L"), "Clip-path should contain LineTo commands for rect edges")
+            // Rect paths are typically closed
+            XCTAssertTrue(pathData.contains("Z"), "Clip-path for rect should be closed")
         }
     }
 
