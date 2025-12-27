@@ -29,14 +29,17 @@ and Flutter projects.
 
 ```bash
 # Build & Test
-mise run build              # Debug build
-mise run test               # All tests
-mise run test:filter NAME   # Specific test target
+./bin/mise run build                # Debug build
+./bin/mise run build:release        # Release build
+./bin/mise run test                 # All tests
+./bin/mise run test:filter NAME     # Filter by target/class/method
+./bin/mise run test:file FILE       # Run tests for specific file
 
 # Code Quality (run before commit)
-mise run format             # Format Swift
-mise run format-md          # Format Markdown
-mise run lint               # SwiftLint
+./bin/mise run format               # Format all (Swift + Markdown)
+./bin/mise run format:swift         # Format Swift only
+./bin/mise run format:md            # Format Markdown only
+./bin/mise run lint                 # SwiftLint + actionlint
 
 # Run CLI
 .build/debug/exfig --help
@@ -256,25 +259,13 @@ android:
 
 **Key files:**
 
-| File                                            | Purpose                                       |
-| ----------------------------------------------- | --------------------------------------------- |
-| `Sources/Resvg/SvgRasterizer.swift`             | Swift wrapper for resvg C API                 |
-| `Sources/ExFig/Output/SvgToWebpConverter.swift` | SVG → WebP conversion                         |
-| `Sources/ExFig/Output/SvgToPngConverter.swift`  | SVG → PNG conversion                          |
-| `Libraries/macos/libresvg.a`                    | Static resvg library (universal arm64+x86_64) |
-| `Libraries/linux/libresvg.a`                    | Static resvg library (x86_64)                 |
-| `Scripts/build-resvg-static.sh`                 | Script to rebuild resvg from source           |
+| File                                            | Purpose                                             |
+| ----------------------------------------------- | --------------------------------------------------- |
+| `Sources/ExFig/Output/SvgToWebpConverter.swift` | SVG → WebP conversion                               |
+| `Sources/ExFig/Output/SvgToPngConverter.swift`  | SVG → PNG conversion                                |
+| `swift-resvg` (SPM dependency)                  | Swift wrapper for resvg (managed via Package.swift) |
 
-**Updating resvg:**
-
-```bash
-# Build new version (requires Rust toolchain)
-./Scripts/build-resvg-static.sh 0.46.0
-
-# Commit changes
-git add Libraries/macos/libresvg.a Sources/CResvg/include/resvg.h
-git commit -m "chore(deps): update resvg to 0.46.0"
-```
+**Updating resvg:** Update version in `Package.swift` dependencies.
 
 ### HEIC Output Format (iOS)
 
@@ -829,7 +820,13 @@ Test targets mirror source modules:
 | `FigmaAPITests`      | API client, endpoints          |
 | `SVGKitTests`        | SVG parsing, code generation   |
 
-Run specific tests: `mise run test:filter ExFigTests`
+Run specific tests:
+
+```bash
+./bin/mise run test:filter ExFigTests              # By test target
+./bin/mise run test:filter SVGParserTests          # By test class
+./bin/mise run test:file Tests/SVGKitTests/SVGParserTests.swift  # By file
+```
 
 ## Commit Guidelines
 
@@ -848,9 +845,9 @@ docs: update naming style documentation
 **Pre-commit requirements:**
 
 ```bash
-mise run setup       # Install hk git hooks (one-time)
-mise run format      # Run all formatters (hk fix --all)
-mise run lint        # Must pass (may have issues on Linux)
+./bin/mise run setup       # Install hk git hooks (one-time)
+./bin/mise run format      # Run all formatters (hk fix --all)
+./bin/mise run lint        # Must pass (may have issues on Linux)
 ```
 
 ## Configuration Reference
@@ -886,7 +883,7 @@ exfig init -p android
 | ------------------ | ---------------------------------------------- |
 | Build fails        | `swift package clean && swift build`           |
 | Tests fail         | Check `FIGMA_PERSONAL_TOKEN` is set            |
-| Formatting fails   | Run `mise run setup` to install tools          |
+| Formatting fails   | Run `./bin/mise run setup` to install tools    |
 | Template errors    | Check Stencil syntax and context variables     |
 | Linux test crashes | Use `--num-workers 1` for test parallelization |
 
