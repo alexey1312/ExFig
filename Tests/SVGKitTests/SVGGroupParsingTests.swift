@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 import CustomDump
 import Foundation
 @testable import SVGKit
@@ -248,6 +249,46 @@ final class SVGGroupParsingTests: XCTestCase {
         XCTAssertNotNil(clipPath, "Should parse mask rect even without explicit x attribute")
         XCTAssertTrue(clipPath?.hasPrefix("M2.0,4") == true, "Should start at x=0+rx, y=4")
         XCTAssertTrue(clipPath?.contains("a") == true, "Should contain arc commands for rounded corners")
+    }
+
+    func testRectFillPreservationInMaskedGroup() throws {
+        // Reproduces bug where <rect fill="#FF0000"> inside masked group loses fill color
+        let svg = """
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <mask id="mask0">
+        <rect y="4" width="24" height="16" rx="2" fill="white"/>
+        </mask>
+        <g mask="url(#mask0)">
+        <rect y="4" width="24" height="16" fill="#FF0000"/>
+        <path d="M10 10H14V14H10V10Z" fill="white"/>
+        </g>
+        </svg>
+        """
+        let data = Data(svg.utf8)
+        let parsed = try parser.parse(data, normalize: false)
+
+        XCTAssertEqual(parsed.groups?.count, 1)
+        XCTAssertEqual(parsed.groups?[0].paths.count, 2)
+
+        // First path (converted from rect) should have red fill
+        let redPath = parsed.groups?[0].paths[0]
+        XCTAssertNotNil(redPath?.fill, "Rect should preserve fill color")
+        XCTAssertEqual(redPath?.fill?.red, 255, "Red component should be 255")
+        XCTAssertEqual(redPath?.fill?.green, 0, "Green component should be 0")
+        XCTAssertEqual(redPath?.fill?.blue, 0, "Blue component should be 0")
+
+        // Second path should have white fill
+        let whitePath = parsed.groups?[0].paths[1]
+        XCTAssertEqual(whitePath?.fill?.red, 255)
+        XCTAssertEqual(whitePath?.fill?.green, 255)
+        XCTAssertEqual(whitePath?.fill?.blue, 255)
+
+        // Verify generated XML has correct colors
+        let generator = VectorDrawableXMLGenerator()
+        let xml = generator.generate(from: parsed)
+
+        XCTAssertTrue(xml.contains("#FF0000"), "Output should contain #FF0000 (red)")
+        XCTAssertFalse(xml.contains("#FF000000"), "Output should NOT contain #FF000000 (black fallback)")
     }
 
     // MARK: - Nested Groups

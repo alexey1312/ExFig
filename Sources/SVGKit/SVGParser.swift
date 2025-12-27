@@ -1185,7 +1185,10 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             {
                 let pathAttrs = overrideAttributes(from: childElement, with: attributes)
                 try paths.append(createSVGPath(pathData: pathData, attributes: pathAttrs))
-            } else if let path = try convertShapeToPath(childElement, attributes: attributes) {
+            } else if let path = try convertShapeToPath(
+                childElement,
+                attributes: overrideAttributes(from: childElement, with: attributes)
+            ) {
                 paths.append(path)
             }
         }
