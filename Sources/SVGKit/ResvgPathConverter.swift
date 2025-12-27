@@ -36,13 +36,13 @@ public enum ResvgPathConverter {
             case .quadTo:
                 parts.append(
                     "Q\(formatFloat(segment.x1)),\(formatFloat(segment.y1)) " +
-                    "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                        "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
                 )
             case .cubicTo:
                 parts.append(
                     "C\(formatFloat(segment.x1)),\(formatFloat(segment.y1)) " +
-                    "\(formatFloat(segment.x2)),\(formatFloat(segment.y2)) " +
-                    "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
+                        "\(formatFloat(segment.x2)),\(formatFloat(segment.y2)) " +
+                        "\(formatFloat(segment.x)),\(formatFloat(segment.y))"
                 )
             case .close:
                 parts.append("Z")
@@ -110,4 +110,3 @@ public enum ResvgPathConverter {
             .replacingOccurrences(of: #"\.?0+$"#, with: "", options: .regularExpression)
     }
 }
-

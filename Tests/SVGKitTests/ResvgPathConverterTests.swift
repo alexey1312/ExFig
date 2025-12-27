@@ -295,4 +295,3 @@ final class ResvgPathConverterTests: XCTestCase {
         return nil
     }
 }
-
