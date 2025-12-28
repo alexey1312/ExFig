@@ -2,10 +2,12 @@ import XCTest
 
 /// UI tests for main app navigation.
 /// These tests verify the sidebar navigation and view switching.
+@MainActor
 final class NavigationUITests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    @MainActor
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         // Launch with mock authentication to skip auth view
@@ -13,7 +15,8 @@ final class NavigationUITests: XCTestCase {
         app.launch()
     }
 
-    override func tearDownWithError() throws {
+    @MainActor
+    override func tearDown() async throws {
         app = nil
     }
 

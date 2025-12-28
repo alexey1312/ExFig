@@ -2,17 +2,20 @@ import XCTest
 
 /// UI tests for the configuration editor.
 /// These tests verify the config editing workflow.
+@MainActor
 final class ConfigEditorUITests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    @MainActor
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["--uitesting", "--mock-authenticated", "--navigate-to-config"]
         app.launch()
     }
 
-    override func tearDownWithError() throws {
+    @MainActor
+    override func tearDown() async throws {
         app = nil
     }
 
@@ -103,11 +106,11 @@ final class ConfigEditorUITests: XCTestCase {
         // The exact UI depends on implementation
 
         // Look for any validation indicator
-        let errorIndicator = app.images.matching(
+        _ = app.images.matching(
             NSPredicate(format: "identifier CONTAINS[cd] 'error' OR identifier CONTAINS[cd] 'warning'")
         ).firstMatch
 
-        let errorText = app.staticTexts.matching(
+        _ = app.staticTexts.matching(
             NSPredicate(format: "value CONTAINS[cd] 'required' OR value CONTAINS[cd] 'invalid'")
         ).firstMatch
 

@@ -181,15 +181,25 @@ run = "tuist build ExFigStudio"
 
 [tasks."app:test"]
 description = "Run ExFig Studio unit tests"
-run = "tuist test ExFigStudioTests"
+run = """
+tuist generate
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioTests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
 
 [tasks."app:uitest"]
 description = "Run ExFig Studio UI tests"
-run = "tuist test ExFigStudioUITests"
+run = """
+tuist generate
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioUITests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
 
 [tasks."app:test:all"]
 description = "Run all ExFig Studio tests (unit + UI)"
-run = "tuist test ExFigStudioTests ExFigStudioUITests"
+run = """
+tuist generate
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioTests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioUITests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
 
 [tasks."app:open"]
 description = "Open ExFig Studio in Xcode"

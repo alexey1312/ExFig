@@ -2,17 +2,20 @@ import XCTest
 
 /// UI tests for the asset preview grid.
 /// These tests verify the asset selection and filtering workflow.
+@MainActor
 final class AssetPreviewUITests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    @MainActor
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["--uitesting", "--mock-authenticated", "--navigate-to-assets"]
         app.launch()
     }
 
-    override func tearDownWithError() throws {
+    @MainActor
+    override func tearDown() async throws {
         app = nil
     }
 
@@ -66,7 +69,7 @@ final class AssetPreviewUITests: XCTestCase {
             let button = app.buttons[assetType]
             let staticText = app.staticTexts[assetType]
 
-            let exists = button.exists || staticText.exists
+            _ = button.exists || staticText.exists
             // Not all types may be visible, depending on data
         }
 
@@ -96,7 +99,7 @@ final class AssetPreviewUITests: XCTestCase {
         let gridItems = app.images
         let checkboxes = app.checkBoxes
 
-        if !gridItems.isEmpty {
+        if !gridItems.allElementsBoundByIndex.isEmpty {
             // Try to click on first item
             let firstItem = gridItems.element(boundBy: 0)
             if firstItem.isHittable {
@@ -104,7 +107,7 @@ final class AssetPreviewUITests: XCTestCase {
                 // Selection state changed - test passes
                 XCTAssertTrue(true, "Asset selection interaction works")
             }
-        } else if !checkboxes.isEmpty {
+        } else if !checkboxes.allElementsBoundByIndex.isEmpty {
             let firstCheckbox = checkboxes.element(boundBy: 0)
             if firstCheckbox.isHittable {
                 firstCheckbox.click()
@@ -132,8 +135,8 @@ final class AssetPreviewUITests: XCTestCase {
 
     func testLoadingIndicatorAppears() throws {
         // Look for loading state
-        let progressIndicator = app.progressIndicators.firstMatch
-        let spinner = app.activityIndicators.firstMatch
+        _ = app.progressIndicators.firstMatch
+        _ = app.activityIndicators.firstMatch
 
         // Loading indicator may or may not be visible depending on state
         // Just verify the view is responsive

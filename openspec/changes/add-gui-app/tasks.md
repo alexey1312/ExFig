@@ -10,7 +10,7 @@
 - [x] 1.6 Create `ProgressReporter` protocol (in `Sources/ExFigKit/Progress/ProgressReporter.swift`)
 - [x] 1.7 Update `Package.swift` with ExFigKit target
 - [x] 1.8 Update ExFig CLI to depend on ExFigKit
-- [x] 1.9 Verify CLI still works after refactor (build passes, 1782 tests pass)
+- [x] 1.9 Verify CLI still works after refactor (build passes, 1824 tests pass)
 - [x] 1.10 Add Swift Task cancellation support to loaders
 
 **Note:** Conservative extraction approach taken for Phase 1:

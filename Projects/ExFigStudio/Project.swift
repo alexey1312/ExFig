@@ -1,5 +1,41 @@
 import ProjectDescription
 
+// MARK: - Schemes
+
+let schemes: [Scheme] = [
+    .scheme(
+        name: "ExFigStudio",
+        shared: true,
+        buildAction: .buildAction(targets: ["ExFigStudio"]),
+        testAction: .targets(
+            ["ExFigStudioTests"],
+            configuration: .debug,
+            options: .options(coverage: true)
+        ),
+        runAction: .runAction(executable: "ExFigStudio")
+    ),
+    .scheme(
+        name: "ExFigStudioTests",
+        shared: true,
+        buildAction: .buildAction(targets: ["ExFigStudio", "ExFigStudioTests"]),
+        testAction: .targets(
+            ["ExFigStudioTests"],
+            configuration: .debug,
+            options: .options(coverage: true)
+        )
+    ),
+    .scheme(
+        name: "ExFigStudioUITests",
+        shared: true,
+        buildAction: .buildAction(targets: ["ExFigStudio", "ExFigStudioUITests"]),
+        testAction: .targets(
+            ["ExFigStudioUITests"],
+            configuration: .debug,
+            options: .options(coverage: true)
+        )
+    ),
+]
+
 // MARK: - Project Definition
 
 let project = Project(
@@ -130,5 +166,6 @@ let project = Project(
                 .target(name: "ExFigStudio"),
             ]
         ),
-    ]
+    ],
+    schemes: schemes
 )

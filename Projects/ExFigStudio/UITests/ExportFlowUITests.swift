@@ -2,17 +2,20 @@ import XCTest
 
 /// UI tests for the export workflow.
 /// These tests verify the export progress and history views.
+@MainActor
 final class ExportFlowUITests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    @MainActor
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["--uitesting", "--mock-authenticated", "--navigate-to-export"]
         app.launch()
     }
 
-    override func tearDownWithError() throws {
+    @MainActor
+    override func tearDown() async throws {
         app = nil
     }
 
@@ -43,8 +46,8 @@ final class ExportFlowUITests: XCTestCase {
 
     func testExportPhaseIndicators() throws {
         // Look for phase indicators (progress, status text)
-        let progressIndicator = app.progressIndicators.firstMatch
-        let statusText = app.staticTexts.matching(
+        _ = app.progressIndicators.firstMatch
+        _ = app.staticTexts.matching(
             NSPredicate(
                 format: """
                     value CONTAINS[cd] 'fetching' OR value CONTAINS[cd] 'processing' OR

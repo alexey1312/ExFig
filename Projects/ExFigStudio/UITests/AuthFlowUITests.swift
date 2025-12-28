@@ -2,17 +2,20 @@ import XCTest
 
 /// UI tests for the authentication flow.
 /// These tests verify the critical user journey of signing in and signing out.
+@MainActor
 final class AuthFlowUITests: XCTestCase {
     var app: XCUIApplication!
 
-    override func setUpWithError() throws {
+    @MainActor
+    override func setUp() async throws {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["--uitesting"]
         app.launch()
     }
 
-    override func tearDownWithError() throws {
+    @MainActor
+    override func tearDown() async throws {
         app = nil
     }
 
