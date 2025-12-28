@@ -86,6 +86,43 @@ final class SharedDownloadQueueTests: XCTestCase {
         XCTAssertEqual(stats.maxConcurrent, 10)
     }
 
+    // MARK: - LRU Eviction Tests
+
+    func testUnclaimedResultsAreStoredForLaterRetrieval() async throws {
+        // Given: A queue
+        let queue = SharedDownloadQueue(maxConcurrentDownloads: 5)
+        let files = [FileContents.makeLocal(name: "test")]
+        let job = DownloadJob(files: files, configId: "config1", priority: 0)
+
+        // When: Job completes but we don't immediately wait
+        let jobId = await queue.submitAndProcess(job: job)
+
+        // Small delay to ensure job completes
+        try await Task.sleep(nanoseconds: 10_000_000)
+
+        // Then: Result can still be retrieved later
+        let result = try await queue.waitForCompletion(jobId: jobId)
+        XCTAssertEqual(result.configId, "config1")
+    }
+
+    func testManyJobsDoNotCauseMemoryLeak() async throws {
+        // Given: A queue that processes many small jobs
+        let queue = SharedDownloadQueue(maxConcurrentDownloads: 10)
+
+        // When: Submitting and waiting for 50 jobs (under eviction limit)
+        for i in 0 ..< 50 {
+            let files = [FileContents.makeLocal(name: "file\(i)")]
+            let job = DownloadJob(files: files, configId: "config\(i)", priority: 0)
+            let jobId = await queue.submitAndProcess(job: job)
+            _ = try await queue.waitForCompletion(jobId: jobId)
+        }
+
+        // Then: Stats show all completed
+        let stats = await queue.stats()
+        XCTAssertEqual(stats.pendingJobs, 0)
+        XCTAssertEqual(stats.activeJobs, 0)
+    }
+
     func testStatsDescription() {
         // Given: Stats with values
         let stats = QueueStats(

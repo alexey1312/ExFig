@@ -24,6 +24,12 @@ actor SharedDownloadQueue {
     /// Completed job results by job ID
     private var completedResults: [UUID: DownloadJobResult] = [:]
 
+    /// Order of completed results for LRU eviction (oldest first)
+    private var completedResultsOrder: [UUID] = []
+
+    /// Maximum number of unclaimed results to keep (prevents memory leak if waitForCompletion not called)
+    private let maxUnclaimedResults = 100
+
     /// Continuations waiting for job completion
     private var jobCompletionContinuations: [UUID: CheckedContinuation<DownloadJobResult, Error>] = [:]
 
@@ -75,6 +81,7 @@ actor SharedDownloadQueue {
     func waitForCompletion(jobId: UUID) async throws -> DownloadJobResult {
         // Check if already completed
         if let result = completedResults.removeValue(forKey: jobId) {
+            completedResultsOrder.removeAll { $0 == jobId }
             return result
         }
 
@@ -157,18 +164,33 @@ actor SharedDownloadQueue {
             if let continuation = jobCompletionContinuations.removeValue(forKey: jobId) {
                 continuation.resume(returning: downloadResult)
             } else {
+                // Store result for later retrieval
                 completedResults[jobId] = downloadResult
+                completedResultsOrder.append(jobId)
+                evictOldResultsIfNeeded()
             }
 
         case let .failure(error):
             if let continuation = jobCompletionContinuations.removeValue(forKey: jobId) {
                 continuation.resume(throwing: error)
             }
+            // Failed jobs without waiters are not cached (no result to return)
         }
 
         // Trigger processing of next jobs
         Task {
             await processNextJobs()
+        }
+    }
+
+    /// Remove oldest unclaimed results if cache exceeds limit
+    private func evictOldResultsIfNeeded() {
+        while completedResults.count > maxUnclaimedResults {
+            guard let oldestId = completedResultsOrder.first else { break }
+            completedResultsOrder.removeFirst()
+            if let evicted = completedResults.removeValue(forKey: oldestId) {
+                logger.debug("Evicted unclaimed result: job=\(oldestId) config=\(evicted.configId)")
+            }
         }
     }
 
