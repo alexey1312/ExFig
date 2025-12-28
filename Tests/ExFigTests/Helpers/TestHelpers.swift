@@ -174,7 +174,6 @@ extension Component {
         json += "}"
 
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
         // swiftlint:disable:next force_try
         return try! decoder.decode(Component.self, from: Data(json.utf8))
     }
@@ -350,7 +349,6 @@ extension VariablesMeta {
         """
 
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
         // swiftlint:disable:next force_try
         return try! decoder.decode(VariablesMeta.self, from: Data(json.utf8))
     }

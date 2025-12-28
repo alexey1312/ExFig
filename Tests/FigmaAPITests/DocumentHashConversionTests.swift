@@ -13,14 +13,14 @@ final class DocumentHashConversionTests: XCTestCase {
             "type": "COMPONENT",
             "fills": [{"type": "SOLID", "color": {"r": 1.0, "g": 0.5, "b": 0.0, "a": 1.0}}],
             "strokes": [{"type": "SOLID", "color": {"r": 0.0, "g": 0.0, "b": 0.0, "a": 1.0}}],
-            "strokeWeight": 2.0,
-            "strokeAlign": "CENTER",
-            "strokeJoin": "ROUND",
-            "strokeCap": "ROUND",
+            "stroke_weight": 2.0,
+            "stroke_align": "CENTER",
+            "stroke_join": "ROUND",
+            "stroke_cap": "ROUND",
             "effects": [{"type": "DROP_SHADOW", "radius": 4.0, "visible": true}],
             "opacity": 0.9,
-            "blendMode": "NORMAL",
-            "clipsContent": true
+            "blend_mode": "NORMAL",
+            "clips_content": true
         }
         """
 
@@ -52,7 +52,7 @@ final class DocumentHashConversionTests: XCTestCase {
             "name": "icon",
             "type": "VECTOR",
             "fills": [{"type": "SOLID", "color": {"r": 0.33333334, "g": 0.66666667, "b": 0.5, "a": 1.0}}],
-            "strokeWeight": 1.0000001,
+            "stroke_weight": 1.0000001,
             "opacity": 0.9999999
         }
         """
@@ -106,7 +106,7 @@ final class DocumentHashConversionTests: XCTestCase {
             "type": "VECTOR",
             "fills": [{
                 "type": "GRADIENT_LINEAR",
-                "gradientStops": [
+                "gradient_stops": [
                     {"position": 0.0, "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}},
                     {"position": 1.0, "color": {"r": 0.0, "g": 0.0, "b": 1.0, "a": 1.0}}
                 ]
@@ -299,7 +299,7 @@ final class DocumentHashConversionTests: XCTestCase {
             "type": "VECTOR",
             "fills": [{
                 "type": "SOLID",
-                "blendMode": "MULTIPLY",
+                "blend_mode": "MULTIPLY",
                 "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}
             }]
         }
@@ -317,7 +317,7 @@ final class DocumentHashConversionTests: XCTestCase {
             "id": "1:2",
             "name": "icon",
             "type": "VECTOR",
-            "fills": [{"type": "SOLID", "blendMode": "NORMAL", "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}}]
+            "fills": [{"type": "SOLID", "blend_mode": "NORMAL", "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}}]
         }
         """
 
@@ -326,7 +326,7 @@ final class DocumentHashConversionTests: XCTestCase {
             "id": "1:2",
             "name": "icon",
             "type": "VECTOR",
-            "fills": [{"type": "SOLID", "blendMode": "MULTIPLY", "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}}]
+            "fills": [{"type": "SOLID", "blend_mode": "MULTIPLY", "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}}]
         }
         """
 
