@@ -180,8 +180,16 @@ description = "Build ExFig Studio app"
 run = "tuist build ExFigStudio"
 
 [tasks."app:test"]
-description = "Run ExFig Studio tests"
-run = "tuist test ExFigStudio"
+description = "Run ExFig Studio unit tests"
+run = "tuist test ExFigStudioTests"
+
+[tasks."app:uitest"]
+description = "Run ExFig Studio UI tests"
+run = "tuist test ExFigStudioUITests"
+
+[tasks."app:test:all"]
+description = "Run all ExFig Studio tests (unit + UI)"
+run = "tuist test ExFigStudioTests ExFigStudioUITests"
 
 [tasks."app:open"]
 description = "Open ExFig Studio in Xcode"

@@ -101,7 +101,7 @@ let project = Project(
             ]
         ),
 
-        // MARK: - Tests
+        // MARK: - Unit Tests
 
         .target(
             name: "ExFigStudioTests",
@@ -111,6 +111,21 @@ let project = Project(
             deploymentTargets: .macOS("15.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
+            dependencies: [
+                .target(name: "ExFigStudio"),
+            ]
+        ),
+
+        // MARK: - UI Tests
+
+        .target(
+            name: "ExFigStudioUITests",
+            destinations: .macOS,
+            product: .uiTests,
+            bundleId: "io.exfig.studio.uitests",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: ["UITests/**"],
             dependencies: [
                 .target(name: "ExFigStudio"),
             ]

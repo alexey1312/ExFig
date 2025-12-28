@@ -1,0 +1,374 @@
+name: Release App
+
+on:
+  push:
+    tags:
+      - 'studio-v[0-9]+.[0-9]+.[0-9]+'
+      - 'studio-v[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.0)'
+        required: true
+        type: string
+      skip_notarization:
+        description: 'Skip notarization (for testing)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    name: Build ExFig Studio
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    env:
+      # Xcode version
+      DEVELOPER_DIR: "/Applications/Xcode_26.1.1.app/Contents/Developer"
+      # Pass secrets as env vars for conditional checks
+      HAS_SIGNING_SECRETS: ${{ secrets.APPLE_TEAM_ID != '' && secrets.APPLE_CERTIFICATE_BASE64 != '' }}
+      HAS_NOTARIZATION_SECRETS: ${{ secrets.APPLE_NOTARIZATION_PASSWORD != '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Setup mise
+        uses: jdx/mise-action@v3
+        with:
+          experimental: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag or input
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/studio-v}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Update version in Project.swift
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          FILE="Projects/ExFigStudio/Project.swift"
+          sed -i '' "s/\"CFBundleShortVersionString\": \"[^\"]*\"/\"CFBundleShortVersionString\": \"$VERSION\"/" "$FILE"
+          sed -i '' "s/\"CFBundleVersion\": \"[^\"]*\"/\"CFBundleVersion\": \"${{ github.run_number }}\"/" "$FILE"
+
+      - name: Generate Xcode project
+        run: ./bin/mise exec -- tuist generate --no-open
+
+      - name: Import code signing certificate
+        if: env.HAS_SIGNING_SECRETS == 'true'
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ github.run_id }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          CERTIFICATE_PATH="$RUNNER_TEMP/certificate.p12"
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          security import "$CERTIFICATE_PATH" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          # Add to keychain search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          # Allow codesign to access the keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Build archive (signed)
+        if: env.HAS_SIGNING_SECRETS == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_IDENTITY_NAME: ${{ secrets.APPLE_IDENTITY_NAME }}
+        run: |
+          xcodebuild archive \
+            -workspace ExFig.xcworkspace \
+            -scheme ExFigStudio \
+            -configuration Release \
+            -archivePath dist/ExFigStudio.xcarchive \
+            CODE_SIGN_IDENTITY="Developer ID Application: $APPLE_IDENTITY_NAME" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
+            -quiet
+
+      - name: Build archive (unsigned - for testing)
+        if: env.HAS_SIGNING_SECRETS != 'true'
+        run: |
+          xcodebuild archive \
+            -workspace ExFig.xcworkspace \
+            -scheme ExFigStudio \
+            -configuration Release \
+            -archivePath dist/ExFigStudio.xcarchive \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            -quiet
+
+      - name: Export app (signed)
+        if: env.HAS_SIGNING_SECRETS == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > dist/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>developer-id</string>
+              <key>teamID</key>
+              <string>${APPLE_TEAM_ID}</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>signingCertificate</key>
+              <string>Developer ID Application</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath dist/ExFigStudio.xcarchive \
+            -exportPath dist \
+            -exportOptionsPlist dist/ExportOptions.plist \
+            -quiet
+
+      - name: Export app (unsigned)
+        if: env.HAS_SIGNING_SECRETS != 'true'
+        run: |
+          cat > dist/ExportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>mac-application</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath dist/ExFigStudio.xcarchive \
+            -exportPath dist \
+            -exportOptionsPlist dist/ExportOptions.plist \
+            -quiet
+
+      - name: Rename exported app
+        run: |
+          mv "dist/ExFigStudio.app" "dist/ExFig Studio.app"
+
+      - name: Notarize app
+        if: env.HAS_SIGNING_SECRETS == 'true' && env.HAS_NOTARIZATION_SECRETS == 'true' && github.event.inputs.skip_notarization != 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_NOTARIZATION_PASSWORD: ${{ secrets.APPLE_NOTARIZATION_PASSWORD }}
+        run: |
+          # Create zip for notarization
+          ditto -c -k --keepParent "dist/ExFig Studio.app" dist/ExFigStudio-notarization.zip
+
+          # Submit for notarization
+          xcrun notarytool submit dist/ExFigStudio-notarization.zip \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_NOTARIZATION_PASSWORD" \
+            --wait
+
+          # Staple the notarization ticket
+          xcrun stapler staple "dist/ExFig Studio.app"
+
+          rm dist/ExFigStudio-notarization.zip
+
+      - name: Create DMG
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ./Scripts/create-dmg.sh "dist/ExFig Studio.app" "dist/ExFigStudio-${VERSION}.dmg" "$VERSION"
+
+      - name: Calculate checksums
+        id: checksums
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA256=$(shasum -a 256 "dist/ExFigStudio-${VERSION}.dmg" | cut -d' ' -f1)
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "$SHA256  ExFigStudio-${VERSION}.dmg" > dist/checksums.txt
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [[ -n "${KEYCHAIN_PATH:-}" ]]; then
+            security delete-keychain "$KEYCHAIN_PATH" || true
+          fi
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExFigStudio-${{ steps.version.outputs.version }}
+          path: |
+            dist/ExFigStudio-*.dmg
+            dist/checksums.txt
+          if-no-files-found: error
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/studio-v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ExFigStudio-${{ steps.version.outputs.version }}
+          path: artifacts
+
+      - name: Generate release notes
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          {
+            echo "notes<<EOF"
+            echo "## ExFig Studio v${VERSION}"
+            echo ""
+            echo "### Installation"
+            echo ""
+            echo "**Homebrew Cask (recommended):**"
+            echo "\`\`\`bash"
+            echo "brew install --cask alexey1312/exfig/exfig-studio"
+            echo "\`\`\`"
+            echo ""
+            echo "**Manual download:**"
+            echo "1. Download \`ExFigStudio-${VERSION}.dmg\`"
+            echo "2. Open the DMG and drag ExFig Studio to Applications"
+            echo "3. On first launch, right-click and select \"Open\" to bypass Gatekeeper"
+            echo ""
+            echo "### Requirements"
+            echo "- macOS 15.0 (Sequoia) or later"
+            echo "- Figma account for OAuth authentication"
+            echo ""
+            echo "### Changes"
+            echo "See the [full changelog](https://github.com/alexey1312/ExFig/blob/main/CHANGELOG.md) for details."
+            echo ""
+            echo "---"
+            echo ""
+            echo "**SHA256 Checksum:**"
+            echo "\`\`\`"
+            cat artifacts/checksums.txt
+            echo "\`\`\`"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ExFig Studio v${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.notes }}
+          prerelease: ${{ contains(github.ref, '-') }}
+          files: |
+            artifacts/ExFigStudio-*.dmg
+            artifacts/checksums.txt
+
+  update-homebrew:
+    name: Update Homebrew Cask
+    needs: release
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.ref, '-') }}
+
+    steps:
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/studio-v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download DMG and calculate SHA256
+        id: sha
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          curl -sL "https://github.com/alexey1312/ExFig/releases/download/studio-v${VERSION}/ExFigStudio-${VERSION}.dmg" -o ExFigStudio.dmg
+          SHA256=$(sha256sum ExFigStudio.dmg | cut -d' ' -f1)
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v6
+        with:
+          repository: alexey1312/homebrew-exfig
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-exfig
+
+      - name: Update cask formula
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA256="${{ steps.sha.outputs.sha256 }}"
+
+          CASK_FILE="homebrew-exfig/Casks/exfig-studio.rb"
+
+          # Create or update cask file
+          cat > "$CASK_FILE" << EOF
+          cask "exfig-studio" do
+            version "$VERSION"
+            sha256 "$SHA256"
+
+            url "https://github.com/alexey1312/ExFig/releases/download/studio-v#{version}/ExFigStudio-#{version}.dmg"
+            name "ExFig Studio"
+            desc "Visual configuration editor for ExFig"
+            homepage "https://github.com/alexey1312/ExFig"
+
+            depends_on macos: ">= :sequoia"
+
+            app "ExFig Studio.app"
+
+            zap trash: [
+              "~/Library/Application Support/ExFig Studio",
+              "~/Library/Caches/io.exfig.studio",
+              "~/Library/Preferences/io.exfig.studio.plist",
+            ]
+          end
+          EOF
+
+          echo "Updated cask to version $VERSION"
+          cat "$CASK_FILE"
+
+      - name: Commit and push
+        working-directory: homebrew-exfig
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/exfig-studio.rb
+          git diff --staged --quiet || git commit -m "chore: bump exfig-studio to v${{ steps.version.outputs.version }}"
+          git push

@@ -154,20 +154,49 @@ This approach avoids Tuist's limitation with binary targets while maintaining a 
 
 ## 8. Distribution
 
-- [ ] 8.1 Configure GitHub secrets (APPLE_ID, TEAM_ID, CERT_BASE64, NOTARIZATION_PASSWORD)
-- [ ] 8.2 Create `Scripts/build-release.sh`
-- [ ] 8.3 Configure code signing with Developer ID
-- [ ] 8.4 Set up notarization workflow
-- [ ] 8.5 Create DMG with create-dmg
-- [ ] 8.6 Write Homebrew Cask formula
-- [ ] 8.7 Add GitHub Actions release workflow
+- [x] 8.1 Configure GitHub secrets (APPLE_ID, TEAM_ID, CERT_BASE64, NOTARIZATION_PASSWORD) - documented in `docs/app-release-secrets.md`
+- [x] 8.2 Create `Scripts/build-app-release.sh` for local builds
+- [x] 8.3 Configure code signing with Developer ID - integrated in release workflow
+- [x] 8.4 Set up notarization workflow - integrated in `.github/workflows/release-app.yml`
+- [x] 8.5 Create DMG with `Scripts/create-dmg.sh`
+- [x] 8.6 Write Homebrew Cask formula - `Casks/exfig-studio.rb` (template for homebrew-exfig tap)
+- [x] 8.7 Add GitHub Actions release workflow - `.github/workflows/release-app.yml`
+
+**Implemented:**
+
+- `Scripts/build-app-release.sh` - Local build script with optional signing and notarization
+- `Scripts/create-dmg.sh` - DMG creation with custom icon layout
+- `.github/workflows/release-app.yml` - Complete release workflow:
+  - Builds signed/unsigned app based on available secrets
+  - Notarizes with Apple notarytool
+  - Creates DMG and checksums
+  - Publishes GitHub Release
+  - Updates Homebrew Cask formula automatically
+- `Casks/exfig-studio.rb` - Homebrew Cask template for `alexey1312/homebrew-exfig`
+- `docs/app-release-secrets.md` - Documentation for required GitHub secrets
+
+**Release process:**
+
+```bash
+# Create release tag
+git tag studio-v1.0.0
+git push origin studio-v1.0.0
+```
+
+**Local build:**
+
+```bash
+./Scripts/build-app-release.sh
+# Or with signing:
+APPLE_TEAM_ID=YOUR_TEAM_ID ./Scripts/build-app-release.sh
+```
 
 ## 9. Testing
 
 - [x] 9.1 Write ExFigKit unit tests (existing - 1824 tests pass)
 - [x] 9.2 Write OAuth flow tests (24 tests pass)
 - [x] 9.3 Write ViewModel tests (98 tests pass)
-- [ ] 9.4 Write UI tests for critical flows
+- [x] 9.4 Write UI tests for critical flows
 
 **ViewModel Tests Implemented:**
 
@@ -178,4 +207,21 @@ This approach avoids Tuist's limitation with binary targets while maintaining a 
 - `ExportViewModelTests` - Export state, cancellation, phase management
 - `ExportHistoryViewModelTests` - History filtering, grouping, persistence
 
-All tests use Swift Testing framework (`@Test`, `@Suite`, `#expect`).
+**UI Tests Implemented:**
+
+- `AuthFlowUITests` - Auth view display, method picker, token input, OAuth button
+- `NavigationUITests` - Sidebar navigation, view switching, sign out button
+- `ConfigEditorUITests` - Platform sections, file ID field, YAML import/export
+- `ExportFlowUITests` - Export controls, phase indicators, log display, history
+- `AssetPreviewUITests` - Asset grid, type filter, batch selection, search
+
+UI tests located in `Projects/ExFigStudio/UITests/`.
+
+All tests use Swift Testing framework (`@Test`, `@Suite`, `#expect`) for unit tests
+and XCTest for UI tests.
+
+**mise tasks:**
+
+- `./bin/mise run app:test` - Run unit tests
+- `./bin/mise run app:uitest` - Run UI tests
+- `./bin/mise run app:test:all` - Run all tests
