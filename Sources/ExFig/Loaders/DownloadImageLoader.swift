@@ -5,7 +5,7 @@ import Logging
 
 /// Simplified image loader for the download command.
 /// Does not depend on Params struct - uses direct parameters.
-final class DownloadImageLoader: @unchecked Sendable {
+final class DownloadImageLoader: Sendable {
     private let client: Client
     private let logger: Logger
 
