@@ -20,6 +20,16 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 <!-- OPENSPEC:END -->
 
+## Context7 for External Libraries
+
+**Always use Context7 MCP** to look up documentation for external tools and libraries before implementing:
+
+1. `resolve-library-id` — find the library ID
+2. `get-library-docs` with `topic` — get relevant docs (use `mode: code` for API, `mode: info` for concepts)
+3. Paginate with `page: 2, 3...` if context insufficient
+
+This applies to: Swift packages, CLI tools (mise, hk, swiftlint, etc.), Figma API, and any third-party dependency.
+
 # CLAUDE.md
 
 Agent instructions for ExFig - a CLI tool that exports colors, typography, icons, and images from Figma to iOS, Android,

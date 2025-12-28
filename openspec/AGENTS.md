@@ -8,8 +8,7 @@ Instructions for AI coding assistants using OpenSpec for spec-driven development
 - Decide scope: new capability vs modify existing capability
 - Pick a unique `change-id`: kebab-case, verb-led (`add-`, `update-`, `remove-`, `refactor-`)
 - Scaffold: `proposal.md`, `tasks.md`, `design.md` (only if needed), and delta specs per affected capability
-- Write deltas: use `## ADDED|MODIFIED|REMOVED|RENAMED Requirements`; include at least one `#### Scenario:` per
-  requirement
+- Write deltas: use `## ADDED|MODIFIED|REMOVED|RENAMED Requirements`; include at least one `#### Scenario:` per requirement
 - Validate: `openspec validate [change-id] --strict` and fix issues
 - Request approval: Do not start implementation until proposal is approved
 
@@ -49,8 +48,7 @@ Skip proposal for:
 **Workflow**
 
 1. Review `openspec/project.md`, `openspec list`, and `openspec list --specs` to understand current context.
-2. Choose a unique verb-led `change-id` and scaffold `proposal.md`, `tasks.md`, optional `design.md`, and spec deltas
-   under `openspec/changes/<id>/`.
+2. Choose a unique verb-led `change-id` and scaffold `proposal.md`, `tasks.md`, optional `design.md`, and spec deltas under `openspec/changes/<id>/`.
 3. Draft spec deltas using `## ADDED|MODIFIED|REMOVED Requirements` with at least one `#### Scenario:` per requirement.
 4. Run `openspec validate <id> --strict` and resolve any issues before sharing the proposal.
 
@@ -221,8 +219,7 @@ The system SHALL provide...
 **Migration**: [How to handle]
 ```
 
-If multiple capabilities are affected, create multiple delta files under
-`changes/[change-id]/specs/<capability>/spec.md`—one per capability.
+If multiple capabilities are affected, create multiple delta files under `changes/[change-id]/specs/<capability>/spec.md`—one per capability.
 
 4. **Create tasks.md:**
 
@@ -235,7 +232,8 @@ If multiple capabilities are affected, create multiple delta files under
 - [ ] 1.4 Write tests
 ```
 
-5. **Create design.md when needed:** Create `design.md` if any of the following apply; otherwise omit it:
+5. **Create design.md when needed:**
+   Create `design.md` if any of the following apply; otherwise omit it:
 
 - Cross-cutting change (multiple services/modules) or a new architectural pattern
 - New external dependency or significant data model changes
@@ -311,17 +309,11 @@ Headers matched with `trim(header)` - whitespace ignored.
 
 #### When to use ADDED vs MODIFIED
 
-- ADDED: Introduces a new capability or sub-capability that can stand alone as a requirement. Prefer ADDED when the
-  change is orthogonal (e.g., adding "Slash Command Configuration") rather than altering the semantics of an existing
-  requirement.
-- MODIFIED: Changes the behavior, scope, or acceptance criteria of an existing requirement. Always paste the full,
-  updated requirement content (header + all scenarios). The archiver will replace the entire requirement with what you
-  provide here; partial deltas will drop previous details.
-- RENAMED: Use when only the name changes. If you also change behavior, use RENAMED (name) plus MODIFIED (content)
-  referencing the new name.
+- ADDED: Introduces a new capability or sub-capability that can stand alone as a requirement. Prefer ADDED when the change is orthogonal (e.g., adding "Slash Command Configuration") rather than altering the semantics of an existing requirement.
+- MODIFIED: Changes the behavior, scope, or acceptance criteria of an existing requirement. Always paste the full, updated requirement content (header + all scenarios). The archiver will replace the entire requirement with what you provide here; partial deltas will drop previous details.
+- RENAMED: Use when only the name changes. If you also change behavior, use RENAMED (name) plus MODIFIED (content) referencing the new name.
 
-Common pitfall: Using MODIFIED to add a new concern without including the previous text. This causes loss of detail at
-archive time. If you aren’t explicitly changing the existing requirement, add a new requirement under ADDED instead.
+Common pitfall: Using MODIFIED to add a new concern without including the previous text. This causes loss of detail at archive time. If you aren’t explicitly changing the existing requirement, add a new requirement under ADDED instead.
 
 Authoring a MODIFIED requirement correctly:
 
@@ -439,7 +431,7 @@ notifications/spec.md
 
 ### Simplicity First
 
-- Default to \<100 lines of new code
+- Default to <100 lines of new code
 - Single-file implementations until proven insufficient
 - Avoid frameworks without clear justification
 - Choose boring, proven patterns
@@ -473,9 +465,12 @@ Only add complexity with:
 
 ## Tool Selection Guide
 
-| Task | Tool | Why | |------|------|-----| | Find files by pattern | Glob | Fast pattern matching | | Search code
-content | Grep | Optimized regex search | | Read specific files | Read | Direct file access | | Explore unknown scope |
-Task | Multi-step investigation |
+| Task                  | Tool | Why                      |
+| --------------------- | ---- | ------------------------ |
+| Find files by pattern | Glob | Fast pattern matching    |
+| Search code content   | Grep | Optimized regex search   |
+| Read specific files   | Read | Direct file access       |
+| Explore unknown scope | Task | Multi-step investigation |
 
 ## Error Recovery
 
