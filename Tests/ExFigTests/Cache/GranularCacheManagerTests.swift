@@ -236,6 +236,83 @@ final class GranularCacheManagerTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(nodesRequests.count, 2)
     }
 
+    // MARK: - Parallel Hash Computation
+
+    func testParallelHashComputationProducesDeterministicResults() async throws {
+        // Given: Multiple components with the same data
+        let components = (0 ..< 20).map { i in
+            Component.make(nodeId: "node\(i)", name: "icon_\(i)", frameName: "Icons")
+        }
+        let nodes = makeNodeResponse(for: components)
+        mockClient.setResponse(nodes, for: NodesEndpoint.self)
+
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "file123", version: "v1")
+
+        let manager = GranularCacheManager(client: mockClient, cache: cache)
+
+        // When: Computing hashes multiple times
+        let result1 = try await manager.filterChangedComponents(
+            fileId: "file123",
+            components: Dictionary(uniqueKeysWithValues: components.map { ($0.nodeId, $0) })
+        )
+
+        let result2 = try await manager.filterChangedComponents(
+            fileId: "file123",
+            components: Dictionary(uniqueKeysWithValues: components.map { ($0.nodeId, $0) })
+        )
+
+        // Then: Hashes should be identical (deterministic)
+        XCTAssertEqual(result1.computedHashes, result2.computedHashes)
+    }
+
+    func testEmptyComponentsReturnsEmptyResult() async throws {
+        // Given: No components
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "file123", version: "v1")
+
+        let manager = GranularCacheManager(client: mockClient, cache: cache)
+
+        // When: Filtering with empty components
+        let result = try await manager.filterChangedComponents(
+            fileId: "file123",
+            components: [:]
+        )
+
+        // Then: Empty result
+        XCTAssertTrue(result.changedComponents.isEmpty)
+        XCTAssertTrue(result.computedHashes.isEmpty)
+    }
+
+    func testParallelHashComputationWithManyNodes() async throws {
+        // Given: Large number of components to trigger parallel processing
+        let components = (0 ..< 200).map { i in
+            Component.make(nodeId: "node\(i)", name: "icon_\(i)", frameName: "Icons")
+        }
+        let nodes = makeNodeResponse(for: components)
+        mockClient.setResponse(nodes, for: NodesEndpoint.self)
+
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "file123", version: "v1")
+
+        let manager = GranularCacheManager(client: mockClient, cache: cache)
+
+        // When: Computing hashes for many nodes
+        let result = try await manager.filterChangedComponents(
+            fileId: "file123",
+            components: Dictionary(uniqueKeysWithValues: components.map { ($0.nodeId, $0) })
+        )
+
+        // Then: All hashes computed correctly
+        XCTAssertEqual(result.computedHashes.count, 200)
+        XCTAssertEqual(result.changedComponents.count, 200)
+
+        // Verify each hash is non-empty
+        for (_, hash) in result.computedHashes {
+            XCTAssertFalse(hash.isEmpty)
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeNodeResponse(for components: [Component]) -> [NodeId: Node] {

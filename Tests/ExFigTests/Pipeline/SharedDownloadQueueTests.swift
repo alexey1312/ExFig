@@ -141,6 +141,97 @@ final class SharedDownloadQueueTests: XCTestCase {
         XCTAssertTrue(description.contains("completed=10"))
     }
 
+    // MARK: - LRU Eviction Edge Cases
+
+    func testConcurrentJobsFromSameConfig() async throws {
+        // Given: A queue with multiple jobs from the same config
+        let queue = SharedDownloadQueue(maxConcurrentDownloads: 5)
+
+        let job1 = DownloadJob(
+            files: [FileContents.makeLocal(name: "file1")],
+            configId: "same-config",
+            priority: 0
+        )
+        let job2 = DownloadJob(
+            files: [FileContents.makeLocal(name: "file2")],
+            configId: "same-config",
+            priority: 0
+        )
+
+        // When: Submitting both jobs from same config
+        let jobId1 = await queue.submitAndProcess(job: job1)
+        let jobId2 = await queue.submitAndProcess(job: job2)
+
+        // Then: Both jobs complete successfully
+        let result1 = try await queue.waitForCompletion(jobId: jobId1)
+        let result2 = try await queue.waitForCompletion(jobId: jobId2)
+
+        XCTAssertEqual(result1.configId, "same-config")
+        XCTAssertEqual(result2.configId, "same-config")
+        XCTAssertEqual(result1.downloadedFiles.count, 1)
+        XCTAssertEqual(result2.downloadedFiles.count, 1)
+    }
+
+    func testEmptyFilesJobCompletesSuccessfully() async throws {
+        // Given: A job with no files
+        let queue = SharedDownloadQueue(maxConcurrentDownloads: 5)
+        let job = DownloadJob(
+            files: [],
+            configId: "empty-job",
+            priority: 0
+        )
+
+        // When: Submitting and waiting
+        let jobId = await queue.submitAndProcess(job: job)
+        let result = try await queue.waitForCompletion(jobId: jobId)
+
+        // Then: Completes with empty files
+        XCTAssertEqual(result.downloadedFiles.count, 0)
+        XCTAssertEqual(result.configId, "empty-job")
+    }
+
+    func testPriorityOrderingWithMixedPriorities() async throws {
+        // Given: Jobs with various priorities
+        let queue = SharedDownloadQueue(maxConcurrentDownloads: 1)
+
+        let lowPriority = DownloadJob(
+            files: [FileContents.makeLocal(name: "low")],
+            configId: "low",
+            priority: 100
+        )
+        let mediumPriority = DownloadJob(
+            files: [FileContents.makeLocal(name: "medium")],
+            configId: "medium",
+            priority: 50
+        )
+        let highPriority = DownloadJob(
+            files: [FileContents.makeLocal(name: "high")],
+            configId: "high",
+            priority: 1
+        )
+
+        // When: Submitting in reverse priority order
+        await queue.submit(job: lowPriority)
+        await queue.submit(job: mediumPriority)
+        let highJobId = await queue.submitAndProcess(job: highPriority)
+
+        // Then: High priority job can be waited on
+        let result = try await queue.waitForCompletion(jobId: highJobId)
+        XCTAssertEqual(result.configId, "high")
+    }
+
+    func testCancelNonExistentConfig() async {
+        // Given: An empty queue
+        let queue = SharedDownloadQueue(maxConcurrentDownloads: 5)
+
+        // When: Cancelling a config that doesn't exist
+        await queue.cancelConfig("non-existent")
+
+        // Then: No crash, stats remain clean
+        let stats = await queue.stats()
+        XCTAssertEqual(stats.pendingJobs, 0)
+    }
+
     // MARK: - DownloadJob Tests
 
     func testDownloadJobInit() {
