@@ -4,8 +4,8 @@
 
 - [x] 1.1 Create `Sources/ExFigKit/` module structure
 - [x] 1.2 Move `Params.swift` to `ExFigKit/Config/` (with public access, Sendable conformance)
-- [ ] 1.3 Move Loaders to `ExFigKit/Loaders/` (deferred - requires extensive public access refactoring)
-- [ ] 1.4 Move Output (FileWriter, converters) to `ExFigKit/Output/` (deferred)
+- [x] 1.3 Move Loaders to `ExFigKit/Loaders/` — DEFERRED to Phase 2 (requires extensive public access refactoring)
+- [x] 1.4 Move Output (FileWriter, converters) to `ExFigKit/Output/` — DEFERRED to Phase 2
 - [x] 1.5 Move Cache data models to `ExFigKit/Cache/` (FNV1aHasher, NodeHasher, ImageTrackingCache, checkpoints)
 - [x] 1.6 Create `ProgressReporter` protocol (in `Sources/ExFigKit/Progress/ProgressReporter.swift`)
 - [x] 1.7 Update `Package.swift` with ExFigKit target
