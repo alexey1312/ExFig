@@ -1,3 +1,5 @@
+import ExFigKit
+
 // swiftlint:disable file_length type_body_length
 @testable import ExFig
 import ExFigCore

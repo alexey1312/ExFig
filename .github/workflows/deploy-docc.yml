@@ -28,6 +28,7 @@ jobs:
         run: |
           swift package --allow-writing-to-directory docs \
               generate-documentation --target ExFig \
+              --additional-symbol-graph-dir .build \
               --disable-indexing \
               --transform-for-static-hosting \
               --hosting-base-path ExFig \

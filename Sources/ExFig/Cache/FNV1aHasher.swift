@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// FNV-1a 64-bit hash implementation.

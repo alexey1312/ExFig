@@ -1,5 +1,6 @@
 @testable import ExFig
 import ExFigCore
+import ExFigKit
 @testable import FigmaAPI
 import Logging
 import XCTest

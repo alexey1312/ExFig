@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// Checkpoint for resuming interrupted exports.

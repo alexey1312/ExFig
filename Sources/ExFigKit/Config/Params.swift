@@ -2,83 +2,105 @@ import ExFigCore
 import Foundation
 
 // swiftlint:disable nesting type_name type_body_length file_length
-struct Params: Decodable {
-    struct Figma: Decodable {
-        let lightFileId: String
-        let darkFileId: String?
-        let lightHighContrastFileId: String?
-        let darkHighContrastFileId: String?
-        let timeout: TimeInterval?
+public struct Params: Decodable, Sendable {
+    public struct Figma: Decodable, Sendable {
+        public let lightFileId: String
+        public let darkFileId: String?
+        public let lightHighContrastFileId: String?
+        public let darkHighContrastFileId: String?
+        public let timeout: TimeInterval?
     }
 
-    struct Common: Decodable {
+    public struct Common: Decodable, Sendable {
         /// Cache configuration for tracking Figma file versions.
         /// When enabled, exports are skipped if the file version hasn't changed.
-        struct Cache: Decodable {
+        public struct Cache: Decodable, Sendable {
             /// Enable version tracking cache. Default: false.
-            let enabled: Bool?
+            public let enabled: Bool?
 
             /// Custom path to cache file. Default: .exfig-cache.json
-            let path: String?
+            public let path: String?
 
             /// Whether cache is enabled (with default value).
-            var isEnabled: Bool { enabled ?? false }
+            public var isEnabled: Bool { enabled ?? false }
         }
 
-        struct Colors: Decodable {
-            let nameValidateRegexp: String?
-            let nameReplaceRegexp: String?
-            let useSingleFile: Bool?
-            let darkModeSuffix: String?
-            let lightHCModeSuffix: String?
-            let darkHCModeSuffix: String?
+        public struct Colors: Decodable, Sendable {
+            public let nameValidateRegexp: String?
+            public let nameReplaceRegexp: String?
+            public let useSingleFile: Bool?
+            public let darkModeSuffix: String?
+            public let lightHCModeSuffix: String?
+            public let darkHCModeSuffix: String?
         }
 
-        struct VariablesColors: Decodable {
-            let tokensFileId: String
-            let tokensCollectionName: String
+        public struct VariablesColors: Decodable, Sendable {
+            public let tokensFileId: String
+            public let tokensCollectionName: String
 
-            let lightModeName: String
-            let darkModeName: String?
-            let lightHCModeName: String?
-            let darkHCModeName: String?
+            public let lightModeName: String
+            public let darkModeName: String?
+            public let lightHCModeName: String?
+            public let darkHCModeName: String?
 
-            let primitivesModeName: String?
+            public let primitivesModeName: String?
 
-            let nameValidateRegexp: String?
-            let nameReplaceRegexp: String?
+            public let nameValidateRegexp: String?
+            public let nameReplaceRegexp: String?
+
+            public init(
+                tokensFileId: String,
+                tokensCollectionName: String,
+                lightModeName: String,
+                darkModeName: String? = nil,
+                lightHCModeName: String? = nil,
+                darkHCModeName: String? = nil,
+                primitivesModeName: String? = nil,
+                nameValidateRegexp: String? = nil,
+                nameReplaceRegexp: String? = nil
+            ) {
+                self.tokensFileId = tokensFileId
+                self.tokensCollectionName = tokensCollectionName
+                self.lightModeName = lightModeName
+                self.darkModeName = darkModeName
+                self.lightHCModeName = lightHCModeName
+                self.darkHCModeName = darkHCModeName
+                self.primitivesModeName = primitivesModeName
+                self.nameValidateRegexp = nameValidateRegexp
+                self.nameReplaceRegexp = nameReplaceRegexp
+            }
         }
 
-        struct Icons: Decodable {
-            let nameValidateRegexp: String?
-            let figmaFrameName: String?
-            let nameReplaceRegexp: String?
-            let useSingleFile: Bool?
-            let darkModeSuffix: String?
+        public struct Icons: Decodable, Sendable {
+            public let nameValidateRegexp: String?
+            public let figmaFrameName: String?
+            public let nameReplaceRegexp: String?
+            public let useSingleFile: Bool?
+            public let darkModeSuffix: String?
         }
 
-        struct Images: Decodable {
-            let nameValidateRegexp: String?
-            let figmaFrameName: String?
-            let nameReplaceRegexp: String?
-            let useSingleFile: Bool?
-            let darkModeSuffix: String?
+        public struct Images: Decodable, Sendable {
+            public let nameValidateRegexp: String?
+            public let figmaFrameName: String?
+            public let nameReplaceRegexp: String?
+            public let useSingleFile: Bool?
+            public let darkModeSuffix: String?
         }
 
-        struct Typography: Decodable {
-            let nameValidateRegexp: String?
-            let nameReplaceRegexp: String?
+        public struct Typography: Decodable, Sendable {
+            public let nameValidateRegexp: String?
+            public let nameReplaceRegexp: String?
         }
 
-        let cache: Cache?
-        let colors: Colors?
-        let variablesColors: VariablesColors?
-        let icons: Icons?
-        let images: Images?
-        let typography: Typography?
+        public let cache: Cache?
+        public let colors: Colors?
+        public let variablesColors: VariablesColors?
+        public let icons: Icons?
+        public let images: Images?
+        public let typography: Typography?
     }
 
-    enum VectorFormat: String, Decodable {
+    public enum VectorFormat: String, Decodable, Sendable {
         case pdf
         case svg
     }
@@ -86,7 +108,7 @@ struct Params: Decodable {
     /// Source format for fetching images from Figma API.
     /// - `png`: Download raster PNG from Figma (default, legacy behavior)
     /// - `svg`: Download SVG and rasterize locally with resvg (higher quality)
-    enum SourceFormat: String, Decodable {
+    public enum SourceFormat: String, Decodable, Sendable {
         case png
         case svg
     }
@@ -94,70 +116,70 @@ struct Params: Decodable {
     /// Output format for iOS images in asset catalogs.
     /// - `png`: Standard PNG format (default, maximum compatibility)
     /// - `heic`: HEIC format (~40-50% smaller, iOS 12+, macOS only for encoding)
-    enum ImageOutputFormat: String, Decodable {
+    public enum ImageOutputFormat: String, Decodable, Sendable {
         case png
         case heic
     }
 
     /// HEIC encoding options for iOS images.
-    struct HeicOptions: Decodable {
+    public struct HeicOptions: Decodable, Sendable {
         /// Encoding mode: lossy (default) or lossless.
-        enum Encoding: String, Decodable {
+        public enum Encoding: String, Decodable, Sendable {
             case lossy
             case lossless
         }
 
-        let encoding: Encoding?
-        let quality: Int?
+        public let encoding: Encoding?
+        public let quality: Int?
 
         /// Resolved encoding mode (default: lossy).
-        var resolvedEncoding: Encoding { encoding ?? .lossy }
+        public var resolvedEncoding: Encoding { encoding ?? .lossy }
 
         /// Resolved quality (default: 90).
-        var resolvedQuality: Int { quality ?? 90 }
+        public var resolvedQuality: Int { quality ?? 90 }
     }
 
-    struct iOS: Decodable {
+    public struct iOS: Decodable, Sendable {
         /// Single colors configuration (legacy format).
         /// Uses common.variablesColors for Figma Variables source.
-        struct Colors: Decodable {
-            let useColorAssets: Bool
-            let assetsFolder: String?
-            let nameStyle: NameStyle
-            let groupUsingNamespace: Bool?
+        public struct Colors: Decodable, Sendable {
+            public let useColorAssets: Bool
+            public let assetsFolder: String?
+            public let nameStyle: NameStyle
+            public let groupUsingNamespace: Bool?
 
-            let colorSwift: URL?
-            let swiftuiColorSwift: URL?
+            public let colorSwift: URL?
+            public let swiftuiColorSwift: URL?
         }
 
         /// Colors entry with Figma Variables source for multiple colors configuration.
-        struct ColorsEntry: Decodable {
+        public struct ColorsEntry: Decodable, Sendable {
             // Source (Figma Variables)
-            let tokensFileId: String
-            let tokensCollectionName: String
-            let lightModeName: String
-            let darkModeName: String?
-            let lightHCModeName: String?
-            let darkHCModeName: String?
-            let primitivesModeName: String?
-            let nameValidateRegexp: String?
-            let nameReplaceRegexp: String?
+            public let tokensFileId: String
+            public let tokensCollectionName: String
+            public let lightModeName: String
+            public let darkModeName: String?
+            public let lightHCModeName: String?
+            public let darkHCModeName: String?
+            public let primitivesModeName: String?
+            public let nameValidateRegexp: String?
+            public let nameReplaceRegexp: String?
 
             // Output (iOS-specific)
-            let useColorAssets: Bool
-            let assetsFolder: String?
-            let nameStyle: NameStyle
-            let groupUsingNamespace: Bool?
-            let colorSwift: URL?
-            let swiftuiColorSwift: URL?
+            public let useColorAssets: Bool
+            public let assetsFolder: String?
+            public let nameStyle: NameStyle
+            public let groupUsingNamespace: Bool?
+            public let colorSwift: URL?
+            public let swiftuiColorSwift: URL?
         }
 
         /// Colors configuration supporting both single object and array formats.
-        enum ColorsConfiguration: Decodable {
+        public enum ColorsConfiguration: Decodable, Sendable {
             case single(Colors)
             case multiple([ColorsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 // Try decoding as array first (new format)
                 if let array = try? [ColorsEntry](from: decoder) {
                     self = .multiple(array)
@@ -170,7 +192,7 @@ struct Params: Decodable {
 
             /// Returns all color entries for iteration.
             /// For legacy format, returns single entry with nil source fields (uses common.variablesColors).
-            var entries: [ColorsEntry] {
+            public var entries: [ColorsEntry] {
                 switch self {
                 case let .single(colors):
                     // Legacy format: source fields are nil, use common.variablesColors
@@ -197,56 +219,56 @@ struct Params: Decodable {
             }
 
             /// Returns true if using new multi-entry format.
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Single icons configuration (legacy format).
-        struct Icons: Decodable {
-            let format: VectorFormat
-            let assetsFolder: String
-            let preservesVectorRepresentation: [String]?
-            let nameStyle: NameStyle
+        public struct Icons: Decodable, Sendable {
+            public let format: VectorFormat
+            public let assetsFolder: String
+            public let preservesVectorRepresentation: [String]?
+            public let nameStyle: NameStyle
 
-            let imageSwift: URL?
-            let swiftUIImageSwift: URL?
+            public let imageSwift: URL?
+            public let swiftUIImageSwift: URL?
 
-            let renderMode: XcodeRenderMode?
-            let renderModeDefaultSuffix: String?
-            let renderModeOriginalSuffix: String?
-            let renderModeTemplateSuffix: String?
+            public let renderMode: XcodeRenderMode?
+            public let renderModeDefaultSuffix: String?
+            public let renderModeOriginalSuffix: String?
+            public let renderModeTemplateSuffix: String?
         }
 
         /// Icons entry with figmaFrameName for multiple icons configuration.
-        struct IconsEntry: Decodable {
+        public struct IconsEntry: Decodable, Sendable {
             /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
-            let figmaFrameName: String?
-            let format: VectorFormat
-            let assetsFolder: String
-            let preservesVectorRepresentation: [String]?
-            let nameStyle: NameStyle
+            public let figmaFrameName: String?
+            public let format: VectorFormat
+            public let assetsFolder: String
+            public let preservesVectorRepresentation: [String]?
+            public let nameStyle: NameStyle
             /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
-            let nameValidateRegexp: String?
+            public let nameValidateRegexp: String?
             /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
-            let nameReplaceRegexp: String?
+            public let nameReplaceRegexp: String?
 
-            let imageSwift: URL?
-            let swiftUIImageSwift: URL?
+            public let imageSwift: URL?
+            public let swiftUIImageSwift: URL?
 
-            let renderMode: XcodeRenderMode?
-            let renderModeDefaultSuffix: String?
-            let renderModeOriginalSuffix: String?
-            let renderModeTemplateSuffix: String?
+            public let renderMode: XcodeRenderMode?
+            public let renderModeDefaultSuffix: String?
+            public let renderModeOriginalSuffix: String?
+            public let renderModeTemplateSuffix: String?
         }
 
         /// Icons configuration supporting both single object and array formats.
-        enum IconsConfiguration: Decodable {
+        public enum IconsConfiguration: Decodable, Sendable {
             case single(Icons)
             case multiple([IconsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 // Try decoding as array first (new format)
                 if let array = try? [IconsEntry](from: decoder) {
                     self = .multiple(array)
@@ -258,7 +280,7 @@ struct Params: Decodable {
             }
 
             /// Returns all icon entries for iteration.
-            var entries: [IconsEntry] {
+            public var entries: [IconsEntry] {
                 switch self {
                 case let .single(icons):
                     // Convert legacy format to entry
@@ -283,56 +305,56 @@ struct Params: Decodable {
             }
 
             /// Returns true if using new multi-entry format.
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Single images configuration (legacy format).
-        struct Images: Decodable {
-            let assetsFolder: String
-            let nameStyle: NameStyle
-            let scales: [Double]?
+        public struct Images: Decodable, Sendable {
+            public let assetsFolder: String
+            public let nameStyle: NameStyle
+            public let scales: [Double]?
 
-            let imageSwift: URL?
-            let swiftUIImageSwift: URL?
+            public let imageSwift: URL?
+            public let swiftUIImageSwift: URL?
 
-            let renderMode: XcodeRenderMode?
-            let renderModeDefaultSuffix: String?
-            let renderModeOriginalSuffix: String?
-            let renderModeTemplateSuffix: String?
+            public let renderMode: XcodeRenderMode?
+            public let renderModeDefaultSuffix: String?
+            public let renderModeOriginalSuffix: String?
+            public let renderModeTemplateSuffix: String?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
-        struct ImagesEntry: Decodable {
+        public struct ImagesEntry: Decodable, Sendable {
             /// Figma frame name to export images from. Overrides common.images.figmaFrameName.
-            let figmaFrameName: String?
-            let assetsFolder: String
-            let nameStyle: NameStyle
-            let scales: [Double]?
-            let imageSwift: URL?
-            let swiftUIImageSwift: URL?
+            public let figmaFrameName: String?
+            public let assetsFolder: String
+            public let nameStyle: NameStyle
+            public let scales: [Double]?
+            public let imageSwift: URL?
+            public let swiftUIImageSwift: URL?
             /// Source format for fetching from Figma API. Default: png
-            let sourceFormat: SourceFormat?
+            public let sourceFormat: SourceFormat?
             /// Output format for asset catalog. Default: png
             /// HEIC provides ~40-50% smaller files but requires iOS 12+ and macOS for encoding.
-            let outputFormat: ImageOutputFormat?
+            public let outputFormat: ImageOutputFormat?
             /// HEIC encoding options. Only used when outputFormat is heic.
-            let heicOptions: HeicOptions?
+            public let heicOptions: HeicOptions?
 
-            let renderMode: XcodeRenderMode?
-            let renderModeDefaultSuffix: String?
-            let renderModeOriginalSuffix: String?
-            let renderModeTemplateSuffix: String?
+            public let renderMode: XcodeRenderMode?
+            public let renderModeDefaultSuffix: String?
+            public let renderModeOriginalSuffix: String?
+            public let renderModeTemplateSuffix: String?
         }
 
         /// Images configuration supporting both single object and array formats.
-        enum ImagesConfiguration: Decodable {
+        public enum ImagesConfiguration: Decodable, Sendable {
             case single(Images)
             case multiple([ImagesEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [ImagesEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -341,7 +363,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [ImagesEntry] {
+            public var entries: [ImagesEntry] {
                 switch self {
                 case let .single(images):
                     [ImagesEntry(
@@ -364,38 +386,38 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
-        struct Typography: Decodable {
-            let fontSwift: URL?
-            let labelStyleSwift: URL?
-            let swiftUIFontSwift: URL?
-            let generateLabels: Bool
-            let labelsDirectory: URL?
-            let nameStyle: NameStyle
+        public struct Typography: Decodable, Sendable {
+            public let fontSwift: URL?
+            public let labelStyleSwift: URL?
+            public let swiftUIFontSwift: URL?
+            public let generateLabels: Bool
+            public let labelsDirectory: URL?
+            public let nameStyle: NameStyle
         }
 
-        let xcodeprojPath: String
-        let target: String
-        let xcassetsPath: URL
-        let xcassetsInMainBundle: Bool
-        let xcassetsInSwiftPackage: Bool?
-        let resourceBundleNames: [String]?
-        let addObjcAttribute: Bool?
-        let templatesPath: URL?
+        public let xcodeprojPath: String
+        public let target: String
+        public let xcassetsPath: URL
+        public let xcassetsInMainBundle: Bool
+        public let xcassetsInSwiftPackage: Bool?
+        public let resourceBundleNames: [String]?
+        public let addObjcAttribute: Bool?
+        public let templatesPath: URL?
 
-        let colors: ColorsConfiguration?
-        let icons: IconsConfiguration?
-        let images: ImagesConfiguration?
-        let typography: Typography?
+        public let colors: ColorsConfiguration?
+        public let icons: IconsConfiguration?
+        public let images: ImagesConfiguration?
+        public let typography: Typography?
     }
 
-    struct Android: Decodable {
-        enum ComposeIconFormat: String, Decodable {
+    public struct Android: Decodable, Sendable {
+        public enum ComposeIconFormat: String, Decodable, Sendable {
             /// Generates extension functions that use `painterResource(R.drawable.xxx)`
             case resourceReference
             /// Generates ImageVector code directly from SVG data
@@ -403,36 +425,36 @@ struct Params: Decodable {
         }
 
         /// Single icons configuration (legacy format).
-        struct Icons: Decodable {
-            let output: String
-            let composePackageName: String?
-            let composeFormat: ComposeIconFormat?
+        public struct Icons: Decodable, Sendable {
+            public let output: String
+            public let composePackageName: String?
+            public let composeFormat: ComposeIconFormat?
             /// Extension target for ImageVector (e.g., "com.example.app.ui.AppIcons")
-            let composeExtensionTarget: String?
+            public let composeExtensionTarget: String?
         }
 
         /// Icons entry with figmaFrameName for multiple icons configuration.
-        struct IconsEntry: Decodable {
+        public struct IconsEntry: Decodable, Sendable {
             /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
-            let figmaFrameName: String?
-            let output: String
-            let composePackageName: String?
-            let composeFormat: ComposeIconFormat?
-            let composeExtensionTarget: String?
+            public let figmaFrameName: String?
+            public let output: String
+            public let composePackageName: String?
+            public let composeFormat: ComposeIconFormat?
+            public let composeExtensionTarget: String?
             /// Name style for icon names. Overrides default snake_case.
-            let nameStyle: NameStyle?
+            public let nameStyle: NameStyle?
             /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
-            let nameValidateRegexp: String?
+            public let nameValidateRegexp: String?
             /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
-            let nameReplaceRegexp: String?
+            public let nameReplaceRegexp: String?
         }
 
         /// Icons configuration supporting both single object and array formats.
-        enum IconsConfiguration: Decodable {
+        public enum IconsConfiguration: Decodable, Sendable {
             case single(Icons)
             case multiple([IconsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [IconsEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -441,7 +463,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [IconsEntry] {
+            public var entries: [IconsEntry] {
                 switch self {
                 case let .single(icons):
                     [IconsEntry(
@@ -459,101 +481,101 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Theme attributes configuration for generating attrs.xml and styles.xml.
-        struct ThemeAttributes: Decodable, Sendable {
+        public struct ThemeAttributes: Decodable, Sendable {
             /// Whether theme attributes generation is enabled.
-            let enabled: Bool?
+            public let enabled: Bool?
 
             /// Path to attrs.xml relative to mainRes (e.g., "../../../values/attrs.xml").
-            let attrsFile: String?
+            public let attrsFile: String?
 
             /// Path to styles.xml relative to mainRes (e.g., "../../../values/styles.xml").
-            let stylesFile: String?
+            public let stylesFile: String?
 
             /// Path to styles-night.xml relative to mainRes.
-            let stylesNightFile: String?
+            public let stylesNightFile: String?
 
             /// Theme name used in markers (e.g., "Theme.MyApp.Main").
-            let themeName: String
+            public let themeName: String
 
             /// Custom marker start text (default: "FIGMA COLORS MARKER START").
-            let markerStart: String?
+            public let markerStart: String?
 
             /// Custom marker end text (default: "FIGMA COLORS MARKER END").
-            let markerEnd: String?
+            public let markerEnd: String?
 
             /// Name transformation configuration.
-            let nameTransform: NameTransform?
+            public let nameTransform: NameTransform?
 
             /// If true, create file with markers if missing.
-            let autoCreateMarkers: Bool?
+            public let autoCreateMarkers: Bool?
 
-            var isEnabled: Bool { enabled ?? false }
-            var resolvedMarkerStart: String { markerStart ?? "FIGMA COLORS MARKER START" }
-            var resolvedMarkerEnd: String { markerEnd ?? "FIGMA COLORS MARKER END" }
-            var shouldAutoCreateMarkers: Bool { autoCreateMarkers ?? false }
-            var resolvedAttrsFile: String { attrsFile ?? "values/attrs.xml" }
-            var resolvedStylesFile: String { stylesFile ?? "values/styles.xml" }
-            var resolvedStylesNightFile: String { stylesNightFile ?? "values-night/styles.xml" }
+            public var isEnabled: Bool { enabled ?? false }
+            public var resolvedMarkerStart: String { markerStart ?? "FIGMA COLORS MARKER START" }
+            public var resolvedMarkerEnd: String { markerEnd ?? "FIGMA COLORS MARKER END" }
+            public var shouldAutoCreateMarkers: Bool { autoCreateMarkers ?? false }
+            public var resolvedAttrsFile: String { attrsFile ?? "values/attrs.xml" }
+            public var resolvedStylesFile: String { stylesFile ?? "values/styles.xml" }
+            public var resolvedStylesNightFile: String { stylesNightFile ?? "values-night/styles.xml" }
 
             /// Name transformation options.
-            struct NameTransform: Decodable, Sendable {
+            public struct NameTransform: Decodable, Sendable {
                 /// Target case style for attribute names (default: PascalCase).
-                let style: NameStyle?
+                public let style: NameStyle?
 
                 /// Prefix to add to attribute names (default: "color").
-                let prefix: String?
+                public let prefix: String?
 
                 /// Prefixes to strip from color names before transformation.
-                let stripPrefixes: [String]?
+                public let stripPrefixes: [String]?
 
-                var resolvedStyle: NameStyle { style ?? .pascalCase }
-                var resolvedPrefix: String { prefix ?? "color" }
-                var resolvedStripPrefixes: [String] { stripPrefixes ?? [] }
+                public var resolvedStyle: NameStyle { style ?? .pascalCase }
+                public var resolvedPrefix: String { prefix ?? "color" }
+                public var resolvedStripPrefixes: [String] { stripPrefixes ?? [] }
             }
         }
 
         /// Single colors configuration (legacy format).
         /// Uses common.variablesColors for Figma Variables source.
-        struct Colors: Decodable {
-            let xmlOutputFileName: String?
-            let composePackageName: String?
-            let themeAttributes: ThemeAttributes?
+        public struct Colors: Decodable, Sendable {
+            public let xmlOutputFileName: String?
+            public let composePackageName: String?
+            public let themeAttributes: ThemeAttributes?
         }
 
         /// Colors entry with Figma Variables source for multiple colors configuration.
-        struct ColorsEntry: Decodable {
+        public struct ColorsEntry: Decodable, Sendable {
             // Source (Figma Variables)
-            let tokensFileId: String
-            let tokensCollectionName: String
-            let lightModeName: String
-            let darkModeName: String?
-            let lightHCModeName: String?
-            let darkHCModeName: String?
-            let primitivesModeName: String?
-            let nameValidateRegexp: String?
-            let nameReplaceRegexp: String?
+            public let tokensFileId: String
+            public let tokensCollectionName: String
+            public let lightModeName: String
+            public let darkModeName: String?
+            public let lightHCModeName: String?
+            public let darkHCModeName: String?
+            public let primitivesModeName: String?
+            public let nameValidateRegexp: String?
+            public let nameReplaceRegexp: String?
 
             // Output (Android-specific)
-            let xmlOutputFileName: String?
-            let composePackageName: String?
+            public let xmlOutputFileName: String?
+            public let composePackageName: String?
 
             // Theme attributes
-            let themeAttributes: ThemeAttributes?
+            public let themeAttributes: ThemeAttributes?
         }
 
         /// Colors configuration supporting both single object and array formats.
-        enum ColorsConfiguration: Decodable {
+        public enum ColorsConfiguration: Decodable, Sendable {
             case single(Colors)
             case multiple([ColorsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [ColorsEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -562,7 +584,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [ColorsEntry] {
+            public var entries: [ColorsEntry] {
                 switch self {
                 case let .single(colors):
                     [ColorsEntry(
@@ -584,56 +606,56 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Single images configuration (legacy format).
-        struct Images: Decodable {
-            enum Format: String, Decodable {
+        public struct Images: Decodable, Sendable {
+            public enum Format: String, Decodable, Sendable {
                 case svg
                 case png
                 case webp
             }
 
-            struct FormatOptions: Decodable {
-                enum Encoding: String, Decodable {
+            public struct FormatOptions: Decodable, Sendable {
+                public enum Encoding: String, Decodable, Sendable {
                     case lossy
                     case lossless
                 }
 
-                let encoding: Encoding
-                let quality: Int?
+                public let encoding: Encoding
+                public let quality: Int?
             }
 
-            let scales: [Double]?
-            let output: String
-            let format: Format
-            let webpOptions: FormatOptions?
+            public let scales: [Double]?
+            public let output: String
+            public let format: Format
+            public let webpOptions: FormatOptions?
             /// Source format for fetching from Figma API. Default: png
-            let sourceFormat: SourceFormat?
+            public let sourceFormat: SourceFormat?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
-        struct ImagesEntry: Decodable {
+        public struct ImagesEntry: Decodable, Sendable {
             /// Figma frame name to export images from. Overrides common.images.figmaFrameName.
-            let figmaFrameName: String?
-            let scales: [Double]?
-            let output: String
-            let format: Images.Format
-            let webpOptions: Images.FormatOptions?
+            public let figmaFrameName: String?
+            public let scales: [Double]?
+            public let output: String
+            public let format: Images.Format
+            public let webpOptions: Images.FormatOptions?
             /// Source format for fetching from Figma API. Default: png
-            let sourceFormat: SourceFormat?
+            public let sourceFormat: SourceFormat?
         }
 
         /// Images configuration supporting both single object and array formats.
-        enum ImagesConfiguration: Decodable {
+        public enum ImagesConfiguration: Decodable, Sendable {
             case single(Images)
             case multiple([ImagesEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [ImagesEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -642,7 +664,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [ImagesEntry] {
+            public var entries: [ImagesEntry] {
                 switch self {
                 case let .single(images):
                     [ImagesEntry(
@@ -658,29 +680,29 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
-        struct Typography: Decodable {
-            let nameStyle: NameStyle
-            let composePackageName: String?
+        public struct Typography: Decodable, Sendable {
+            public let nameStyle: NameStyle
+            public let composePackageName: String?
         }
 
-        let mainRes: URL
-        let resourcePackage: String?
-        let mainSrc: URL?
-        let colors: ColorsConfiguration?
-        let icons: IconsConfiguration?
-        let images: ImagesConfiguration?
-        let typography: Typography?
-        let templatesPath: URL?
+        public let mainRes: URL
+        public let resourcePackage: String?
+        public let mainSrc: URL?
+        public let colors: ColorsConfiguration?
+        public let icons: IconsConfiguration?
+        public let images: ImagesConfiguration?
+        public let typography: Typography?
+        public let templatesPath: URL?
     }
 
-    struct Flutter: Decodable {
-        enum ImageFormat: String, Decodable {
+    public struct Flutter: Decodable, Sendable {
+        public enum ImageFormat: String, Decodable, Sendable {
             case svg
             case png
             case webp
@@ -688,35 +710,35 @@ struct Params: Decodable {
 
         /// Single colors configuration (legacy format).
         /// Uses common.variablesColors for Figma Variables source.
-        struct Colors: Decodable {
-            let output: String?
-            let className: String?
+        public struct Colors: Decodable, Sendable {
+            public let output: String?
+            public let className: String?
         }
 
         /// Colors entry with Figma Variables source for multiple colors configuration.
-        struct ColorsEntry: Decodable {
+        public struct ColorsEntry: Decodable, Sendable {
             // Source (Figma Variables)
-            let tokensFileId: String
-            let tokensCollectionName: String
-            let lightModeName: String
-            let darkModeName: String?
-            let lightHCModeName: String?
-            let darkHCModeName: String?
-            let primitivesModeName: String?
-            let nameValidateRegexp: String?
-            let nameReplaceRegexp: String?
+            public let tokensFileId: String
+            public let tokensCollectionName: String
+            public let lightModeName: String
+            public let darkModeName: String?
+            public let lightHCModeName: String?
+            public let darkHCModeName: String?
+            public let primitivesModeName: String?
+            public let nameValidateRegexp: String?
+            public let nameReplaceRegexp: String?
 
             // Output (Flutter-specific)
-            let output: String?
-            let className: String?
+            public let output: String?
+            public let className: String?
         }
 
         /// Colors configuration supporting both single object and array formats.
-        enum ColorsConfiguration: Decodable {
+        public enum ColorsConfiguration: Decodable, Sendable {
             case single(Colors)
             case multiple([ColorsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [ColorsEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -725,7 +747,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [ColorsEntry] {
+            public var entries: [ColorsEntry] {
                 switch self {
                 case let .single(colors):
                     [ColorsEntry(
@@ -746,40 +768,40 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Single icons configuration (legacy format).
-        struct Icons: Decodable {
-            let output: String
-            let dartFile: String?
-            let className: String?
+        public struct Icons: Decodable, Sendable {
+            public let output: String
+            public let dartFile: String?
+            public let className: String?
         }
 
         /// Icons entry with figmaFrameName for multiple icons configuration.
-        struct IconsEntry: Decodable {
+        public struct IconsEntry: Decodable, Sendable {
             /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
-            let figmaFrameName: String?
-            let output: String
-            let dartFile: String?
-            let className: String?
+            public let figmaFrameName: String?
+            public let output: String
+            public let dartFile: String?
+            public let className: String?
             /// Name style for icon names. Overrides default snake_case.
-            let nameStyle: NameStyle?
+            public let nameStyle: NameStyle?
             /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
-            let nameValidateRegexp: String?
+            public let nameValidateRegexp: String?
             /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
-            let nameReplaceRegexp: String?
+            public let nameReplaceRegexp: String?
         }
 
         /// Icons configuration supporting both single object and array formats.
-        enum IconsConfiguration: Decodable {
+        public enum IconsConfiguration: Decodable, Sendable {
             case single(Icons)
             case multiple([IconsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [IconsEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -788,7 +810,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [IconsEntry] {
+            public var entries: [IconsEntry] {
                 switch self {
                 case let .single(icons):
                     [IconsEntry(
@@ -805,44 +827,44 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Single images configuration (legacy format).
-        struct Images: Decodable {
-            let output: String
-            let dartFile: String?
-            let className: String?
-            let scales: [Double]?
-            let format: ImageFormat?
-            let webpOptions: Android.Images.FormatOptions?
+        public struct Images: Decodable, Sendable {
+            public let output: String
+            public let dartFile: String?
+            public let className: String?
+            public let scales: [Double]?
+            public let format: ImageFormat?
+            public let webpOptions: Android.Images.FormatOptions?
             /// Source format for fetching from Figma API. Default: png
-            let sourceFormat: SourceFormat?
+            public let sourceFormat: SourceFormat?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
-        struct ImagesEntry: Decodable {
+        public struct ImagesEntry: Decodable, Sendable {
             /// Figma frame name to export images from. Overrides common.images.figmaFrameName.
-            let figmaFrameName: String?
-            let output: String
-            let dartFile: String?
-            let className: String?
-            let scales: [Double]?
-            let format: ImageFormat?
-            let webpOptions: Android.Images.FormatOptions?
+            public let figmaFrameName: String?
+            public let output: String
+            public let dartFile: String?
+            public let className: String?
+            public let scales: [Double]?
+            public let format: ImageFormat?
+            public let webpOptions: Android.Images.FormatOptions?
             /// Source format for fetching from Figma API. Default: png
-            let sourceFormat: SourceFormat?
+            public let sourceFormat: SourceFormat?
         }
 
         /// Images configuration supporting both single object and array formats.
-        enum ImagesConfiguration: Decodable {
+        public enum ImagesConfiguration: Decodable, Sendable {
             case single(Images)
             case multiple([ImagesEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [ImagesEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -851,7 +873,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [ImagesEntry] {
+            public var entries: [ImagesEntry] {
                 switch self {
                 case let .single(images):
                     [ImagesEntry(
@@ -869,57 +891,57 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
-        let output: URL
-        let colors: ColorsConfiguration?
-        let icons: IconsConfiguration?
-        let images: ImagesConfiguration?
-        let templatesPath: URL?
+        public let output: URL
+        public let colors: ColorsConfiguration?
+        public let icons: IconsConfiguration?
+        public let images: ImagesConfiguration?
+        public let templatesPath: URL?
     }
 
     // MARK: - Web
 
-    struct Web: Decodable {
+    public struct Web: Decodable, Sendable {
         /// Single colors configuration (legacy format).
         /// Uses common.variablesColors for Figma Variables source.
-        struct Colors: Decodable {
-            let outputDirectory: String?
-            let cssFileName: String?
-            let tsFileName: String?
-            let jsonFileName: String?
+        public struct Colors: Decodable, Sendable {
+            public let outputDirectory: String?
+            public let cssFileName: String?
+            public let tsFileName: String?
+            public let jsonFileName: String?
         }
 
         /// Colors entry with Figma Variables source for multiple colors configuration.
-        struct ColorsEntry: Decodable {
+        public struct ColorsEntry: Decodable, Sendable {
             // Source (Figma Variables)
-            let tokensFileId: String
-            let tokensCollectionName: String
-            let lightModeName: String
-            let darkModeName: String?
-            let lightHCModeName: String?
-            let darkHCModeName: String?
-            let primitivesModeName: String?
-            let nameValidateRegexp: String?
-            let nameReplaceRegexp: String?
+            public let tokensFileId: String
+            public let tokensCollectionName: String
+            public let lightModeName: String
+            public let darkModeName: String?
+            public let lightHCModeName: String?
+            public let darkHCModeName: String?
+            public let primitivesModeName: String?
+            public let nameValidateRegexp: String?
+            public let nameReplaceRegexp: String?
 
             // Output (Web-specific)
-            let outputDirectory: String?
-            let cssFileName: String?
-            let tsFileName: String?
-            let jsonFileName: String?
+            public let outputDirectory: String?
+            public let cssFileName: String?
+            public let tsFileName: String?
+            public let jsonFileName: String?
         }
 
         /// Colors configuration supporting both single object and array formats.
-        enum ColorsConfiguration: Decodable {
+        public enum ColorsConfiguration: Decodable, Sendable {
             case single(Colors)
             case multiple([ColorsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [ColorsEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -928,7 +950,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [ColorsEntry] {
+            public var entries: [ColorsEntry] {
                 switch self {
                 case let .single(colors):
                     [ColorsEntry(
@@ -951,44 +973,44 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Single icons configuration (legacy format).
-        struct Icons: Decodable {
-            let outputDirectory: String
-            let svgDirectory: String?
-            let generateReactComponents: Bool?
+        public struct Icons: Decodable, Sendable {
+            public let outputDirectory: String
+            public let svgDirectory: String?
+            public let generateReactComponents: Bool?
             /// Icon size in pixels for viewBox. Defaults to 24.
-            let iconSize: Int?
+            public let iconSize: Int?
         }
 
         /// Icons entry with figmaFrameName for multiple icons configuration.
-        struct IconsEntry: Decodable {
+        public struct IconsEntry: Decodable, Sendable {
             /// Figma frame name to export icons from. Overrides common.icons.figmaFrameName.
-            let figmaFrameName: String?
-            let outputDirectory: String
-            let svgDirectory: String?
-            let generateReactComponents: Bool?
+            public let figmaFrameName: String?
+            public let outputDirectory: String
+            public let svgDirectory: String?
+            public let generateReactComponents: Bool?
             /// Icon size in pixels for viewBox. Defaults to 24.
-            let iconSize: Int?
+            public let iconSize: Int?
             /// Name style for icon names. Overrides default snake_case.
-            let nameStyle: NameStyle?
+            public let nameStyle: NameStyle?
             /// Regex pattern for validating/capturing icon names. Overrides common.icons.nameValidateRegexp.
-            let nameValidateRegexp: String?
+            public let nameValidateRegexp: String?
             /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
-            let nameReplaceRegexp: String?
+            public let nameReplaceRegexp: String?
         }
 
         /// Icons configuration supporting both single object and array formats.
-        enum IconsConfiguration: Decodable {
+        public enum IconsConfiguration: Decodable, Sendable {
             case single(Icons)
             case multiple([IconsEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [IconsEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -997,7 +1019,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [IconsEntry] {
+            public var entries: [IconsEntry] {
                 switch self {
                 case let .single(icons):
                     [IconsEntry(
@@ -1015,34 +1037,34 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
         /// Single images configuration (legacy format).
-        struct Images: Decodable {
-            let outputDirectory: String
-            let assetsDirectory: String?
-            let generateReactComponents: Bool?
+        public struct Images: Decodable, Sendable {
+            public let outputDirectory: String
+            public let assetsDirectory: String?
+            public let generateReactComponents: Bool?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
-        struct ImagesEntry: Decodable {
+        public struct ImagesEntry: Decodable, Sendable {
             /// Figma frame name to export images from. Overrides common.images.figmaFrameName.
-            let figmaFrameName: String?
-            let outputDirectory: String
-            let assetsDirectory: String?
-            let generateReactComponents: Bool?
+            public let figmaFrameName: String?
+            public let outputDirectory: String
+            public let assetsDirectory: String?
+            public let generateReactComponents: Bool?
         }
 
         /// Images configuration supporting both single object and array formats.
-        enum ImagesConfiguration: Decodable {
+        public enum ImagesConfiguration: Decodable, Sendable {
             case single(Images)
             case multiple([ImagesEntry])
 
-            init(from decoder: Decoder) throws {
+            public init(from decoder: Decoder) throws {
                 if let array = try? [ImagesEntry](from: decoder) {
                     self = .multiple(array)
                     return
@@ -1051,7 +1073,7 @@ struct Params: Decodable {
                 self = .single(single)
             }
 
-            var entries: [ImagesEntry] {
+            public var entries: [ImagesEntry] {
                 switch self {
                 case let .single(images):
                     [ImagesEntry(
@@ -1065,23 +1087,23 @@ struct Params: Decodable {
                 }
             }
 
-            var isMultiple: Bool {
+            public var isMultiple: Bool {
                 if case .multiple = self { return true }
                 return false
             }
         }
 
-        let output: URL
-        let colors: ColorsConfiguration?
-        let icons: IconsConfiguration?
-        let images: ImagesConfiguration?
-        let templatesPath: URL?
+        public let output: URL
+        public let colors: ColorsConfiguration?
+        public let icons: IconsConfiguration?
+        public let images: ImagesConfiguration?
+        public let templatesPath: URL?
     }
 
-    let figma: Figma
-    let common: Common?
-    let ios: iOS?
-    let android: Android?
-    let flutter: Flutter?
-    let web: Web?
+    public let figma: Figma
+    public let common: Common?
+    public let ios: iOS?
+    public let android: Android?
+    public let flutter: Flutter?
+    public let web: Web?
 }

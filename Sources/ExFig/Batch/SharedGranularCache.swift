@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// Shared granular cache for batch processing.

@@ -1,6 +1,7 @@
 import AndroidExport
 import ArgumentParser
 import ExFigCore
+import ExFigKit
 import FigmaAPI
 import Foundation
 import XcodeExport

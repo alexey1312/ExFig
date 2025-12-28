@@ -1,3 +1,4 @@
+import ExFigKit
 import FigmaAPI
 
 /// Pre-fetched file metadata for batch processing optimization.

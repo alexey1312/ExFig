@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import Foundation
 
 /// Input structure for asset token export.

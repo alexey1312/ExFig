@@ -1,3 +1,5 @@
+import ExFigKit
+
 // swiftlint:disable file_length
 import FigmaAPI
 import Foundation

@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// Factory for creating WebP and SVG-to-WebP converters from format options.

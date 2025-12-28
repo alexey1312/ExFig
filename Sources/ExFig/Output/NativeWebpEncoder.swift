@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 import libwebp
 import WebP

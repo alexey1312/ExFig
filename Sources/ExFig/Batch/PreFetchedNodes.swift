@@ -1,3 +1,4 @@
+import ExFigKit
 import FigmaAPI
 
 /// Pre-fetched node documents for granular cache optimization.

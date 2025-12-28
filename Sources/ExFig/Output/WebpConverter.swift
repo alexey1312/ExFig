@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import Foundation
 
 /// Progress callback type for conversion operations

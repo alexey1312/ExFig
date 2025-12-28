@@ -10,6 +10,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "exfig", targets: ["ExFig"]),
+        .library(name: "ExFigKit", targets: ["ExFigKit"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
@@ -32,6 +33,7 @@ let package = Package(
         .executableTarget(
             name: "ExFig",
             dependencies: [
+                "ExFigKit",
                 "FigmaAPI",
                 "ExFigCore",
                 "XcodeExport",
@@ -59,6 +61,21 @@ let package = Package(
         // Loads data via Figma REST API
         .target(
             name: "FigmaAPI"
+        ),
+
+        // Reusable library for CLI and GUI app
+        .target(
+            name: "ExFigKit",
+            dependencies: [
+                "FigmaAPI",
+                "ExFigCore",
+                .product(name: "Yams", package: "Yams"),
+                .product(name: "Logging", package: "swift-log"),
+                .product(name: "Resvg", package: "swift-resvg"),
+                .product(name: "WebP", package: "libwebp"),
+                .product(name: "LibPNG", package: "libpng"),
+                .product(name: "XcodeProj", package: "XcodeProj"),
+            ]
         ),
 
         // Exports resources to Xcode project

@@ -73,11 +73,12 @@ and Flutter projects.
 
 ## Architecture
 
-Seven modules in `Sources/`:
+Eight modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
 | `ExFig`         | CLI commands, loaders, file I/O, terminal UI              |
+| `ExFigKit`      | Shared library: config models (Params), errors            |
 | `ExFigCore`     | Domain models (Color, Image, TextStyle), processors       |
 | `FigmaAPI`      | Figma REST API client, endpoints, response models         |
 | `XcodeExport`   | iOS export (.xcassets, Swift extensions)                  |
@@ -90,6 +91,11 @@ Seven modules in `Sources/`:
 ## Key Directories
 
 ```
+Sources/ExFigKit/
+├── Config/          # Params.swift - YAML config models (public, Sendable)
+├── ExFigKit.swift   # Module entry point
+└── ExFigKitError.swift # Error types (aliased as ExFigError)
+
 Sources/ExFig/
 ├── Subcommands/     # CLI commands (ExportColors, ExportIcons, DownloadImages, etc.)
 │   └── Export/      # Platform-specific export logic (iOSIconsExport, AndroidImagesExport, etc.)

@@ -1,5 +1,7 @@
-// swiftlint:disable file_length type_body_length
 @testable import ExFig
+
+// swiftlint:disable file_length type_body_length
+import ExFigKit
 import XCTest
 
 final class IconsConfigurationTests: XCTestCase {

@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// Cache model for tracking Figma file versions and node hashes.

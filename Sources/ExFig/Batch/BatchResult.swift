@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// Represents a config file to be processed.

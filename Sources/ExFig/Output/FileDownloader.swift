@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import Foundation
 import Logging
 #if os(Linux)

@@ -1,3 +1,4 @@
+import ExFigKit
 import FigmaAPI
 
 /// Pre-fetched components for batch processing optimization.

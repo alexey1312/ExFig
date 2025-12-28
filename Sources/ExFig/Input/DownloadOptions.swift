@@ -1,5 +1,6 @@
 import ArgumentParser
 import ExFigCore
+import ExFigKit
 import Foundation
 
 /// Image format for download command
