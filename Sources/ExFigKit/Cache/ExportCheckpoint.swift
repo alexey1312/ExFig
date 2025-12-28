@@ -1,4 +1,3 @@
-import ExFigKit
 import Foundation
 
 /// Checkpoint for resuming interrupted exports.
@@ -178,11 +177,11 @@ public extension ExportCheckpoint {
 
 // MARK: - Config Hash
 
-extension ExportCheckpoint {
+public extension ExportCheckpoint {
     /// Compute SHA-256 hash of config file.
     /// - Parameter url: URL of config file.
     /// - Returns: Hex-encoded SHA-256 hash.
-    public static func computeConfigHash(from url: URL) throws -> String {
+    static func computeConfigHash(from url: URL) throws -> String {
         let data = try Data(contentsOf: url)
         return computeHash(of: data)
     }

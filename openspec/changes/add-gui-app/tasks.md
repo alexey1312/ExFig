@@ -6,16 +6,20 @@
 - [x] 1.2 Move `Params.swift` to `ExFigKit/Config/` (with public access, Sendable conformance)
 - [ ] 1.3 Move Loaders to `ExFigKit/Loaders/` (deferred - requires extensive public access refactoring)
 - [ ] 1.4 Move Output (FileWriter, converters) to `ExFigKit/Output/` (deferred)
-- [ ] 1.5 Move Cache to `ExFigKit/Cache/` (deferred)
+- [x] 1.5 Move Cache data models to `ExFigKit/Cache/` (FNV1aHasher, NodeHasher, ImageTrackingCache, checkpoints)
 - [x] 1.6 Create `ProgressReporter` protocol (in `Sources/ExFigKit/Progress/ProgressReporter.swift`)
 - [x] 1.7 Update `Package.swift` with ExFigKit target
 - [x] 1.8 Update ExFig CLI to depend on ExFigKit
 - [x] 1.9 Verify CLI still works after refactor (build passes, 1782 tests pass)
 - [x] 1.10 Add Swift Task cancellation support to loaders
 
-**Note:** Conservative extraction approach taken - only `Params`, `ExFigError`, and `ProgressReporter` moved to ExFigKit.
-Full extraction of Loaders/Output/Cache deferred due to extensive public access modifications needed.
-Task cancellation added to `ImageLoaderBase` (loadImages, loadImageBatch, loadPNGImages, loadVectorImages).
+**Note:** Conservative extraction approach taken for Phase 1:
+
+- `Params`, `ExFigError`, `ProgressReporter` moved to ExFigKit (core config and protocols)
+- Cache data models moved: `FNV1aHasher`, `NodeHasher`, `ImageTrackingCache`, `CachedFileInfo`, `ExportCheckpoint`, `BatchCheckpoint`
+- Cache managers (`GranularCacheManager`, `ImageTrackingManager`, `VersionTrackingHelper`) remain in ExFig due to TerminalUI dependency
+- Full extraction of Loaders/Output deferred due to extensive public access modifications needed
+- Task cancellation added to `ImageLoaderBase` (loadImages, loadImageBatch, loadPNGImages, loadVectorImages)
 
 ## 2. OAuth Authentication
 

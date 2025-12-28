@@ -1,4 +1,3 @@
-import ExFigKit
 import FigmaAPI
 import Foundation
 
@@ -12,7 +11,7 @@ import Foundation
 /// - Sorted keys JSON for stable output
 /// - Recursive hashing includes all children
 /// - Float normalization handled at property creation time
-enum NodeHasher {
+public enum NodeHasher {
     /// Computes a stable hash for the given node properties.
     ///
     /// The hash is computed from canonical JSON (sorted keys) of the
@@ -21,7 +20,7 @@ enum NodeHasher {
     ///
     /// - Parameter properties: The hashable visual properties of a node.
     /// - Returns: 16-character lowercase hex string (e.g., "a1b2c3d4e5f67890").
-    static func computeHash(_ properties: NodeHashableProperties) -> String {
+    public static func computeHash(_ properties: NodeHashableProperties) -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
 

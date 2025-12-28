@@ -1,4 +1,3 @@
-import ExFigKit
 import Foundation
 
 /// FNV-1a 64-bit hash implementation.
@@ -11,7 +10,7 @@ import Foundation
 ///
 /// Performance: ~2 GB/s on modern hardware.
 /// Collision probability: negligible for change detection (see design.md).
-enum FNV1aHasher {
+public enum FNV1aHasher {
     /// FNV-1a 64-bit offset basis.
     private static let offsetBasis: UInt64 = 0xCBF2_9CE4_8422_2325
 
@@ -26,7 +25,7 @@ enum FNV1aHasher {
     ///
     /// - Parameter data: The data to hash.
     /// - Returns: 64-bit hash value.
-    static func hash(_ data: Data) -> UInt64 {
+    public static func hash(_ data: Data) -> UInt64 {
         var hash = offsetBasis
         for byte in data {
             hash ^= UInt64(byte)
@@ -39,7 +38,7 @@ enum FNV1aHasher {
     ///
     /// - Parameter data: The data to hash.
     /// - Returns: 16-character lowercase hex string (e.g., "cbf29ce484222325").
-    static func hashToHex(_ data: Data) -> String {
+    public static func hashToHex(_ data: Data) -> String {
         let hashValue = hash(data)
         return String(format: "%016llx", hashValue)
     }

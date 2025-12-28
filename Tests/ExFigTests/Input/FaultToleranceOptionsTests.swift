@@ -1,6 +1,7 @@
 // swiftlint:disable file_length
 @testable import ExFig
 import ExFigCore
+import ExFigKit
 import FigmaAPI
 import XCTest
 

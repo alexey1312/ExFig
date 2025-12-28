@@ -1,4 +1,3 @@
-import ExFigKit
 import Foundation
 
 /// Checkpoint for resuming batch processing of multiple configs.

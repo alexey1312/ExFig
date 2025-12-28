@@ -1,4 +1,5 @@
 @testable import ExFig
+import ExFigKit
 import XCTest
 
 final class ImageTrackingCacheTests: XCTestCase {

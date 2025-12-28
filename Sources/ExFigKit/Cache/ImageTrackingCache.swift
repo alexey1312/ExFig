@@ -1,4 +1,3 @@
-import ExFigKit
 import Foundation
 
 /// Cache model for tracking Figma file versions and node hashes.
@@ -7,28 +6,28 @@ import Foundation
 /// Schema versions:
 /// - v1: File-level version tracking only
 /// - v2: Added per-node hash tracking for granular cache (experimental)
-struct ImageTrackingCache: Codable, Sendable {
+public struct ImageTrackingCache: Codable, Sendable {
     /// Current schema version for cache file format.
     /// v2 adds nodeHashes field to CachedFileInfo.
-    static let currentSchemaVersion = 2
+    public static let currentSchemaVersion = 2
 
     /// Default cache file name.
-    static let defaultFileName = ".exfig-cache.json"
+    public static let defaultFileName = ".exfig-cache.json"
 
     /// Schema version for cache format migration.
-    let schemaVersion: Int
+    public let schemaVersion: Int
 
     /// Cached file versions keyed by file ID.
-    var files: [String: CachedFileInfo]
+    public var files: [String: CachedFileInfo]
 
     /// Creates a new empty cache.
-    init() {
+    public init() {
         schemaVersion = Self.currentSchemaVersion
         files = [:]
     }
 
     /// Creates cache with existing data.
-    init(schemaVersion: Int, files: [String: CachedFileInfo]) {
+    public init(schemaVersion: Int, files: [String: CachedFileInfo]) {
         self.schemaVersion = schemaVersion
         self.files = files
     }
@@ -37,24 +36,24 @@ struct ImageTrackingCache: Codable, Sendable {
 // MARK: - CachedFileInfo
 
 /// Information about a cached Figma file.
-struct CachedFileInfo: Codable, Sendable {
+public struct CachedFileInfo: Codable, Sendable {
     /// Figma file version identifier.
     /// Changes when library is published or version is manually saved.
-    let version: String
+    public let version: String
 
     /// ISO 8601 timestamp of last successful export.
-    let lastExport: String
+    public let lastExport: String
 
     /// Optional: file name for debugging/display purposes.
-    let fileName: String?
+    public let fileName: String?
 
     /// Optional: per-node content hashes for granular change detection.
     /// Maps node ID (e.g., "1:23") to FNV-1a 64-bit hash hex string.
     /// Only populated when `--experimental-granular-cache` is used.
-    var nodeHashes: [String: String]?
+    public var nodeHashes: [String: String]?
 
     /// Creates cached file info.
-    init(
+    public init(
         version: String,
         lastExport: Date = Date(),
         fileName: String? = nil,
@@ -69,7 +68,7 @@ struct CachedFileInfo: Codable, Sendable {
 
 // MARK: - Cache Persistence
 
-extension ImageTrackingCache {
+public extension ImageTrackingCache {
     /// Loads cache from a file at the specified path.
     /// Returns an empty cache if file doesn't exist or is invalid.
     /// Migrates from older schema versions automatically.
@@ -119,7 +118,7 @@ extension ImageTrackingCache {
 
 // MARK: - Cache Operations
 
-extension ImageTrackingCache {
+public extension ImageTrackingCache {
     /// Checks if file version has changed since last export.
     /// Returns true if export is needed (version changed or file not in cache).
     func needsExport(fileId: String, currentVersion: String) -> Bool {
@@ -149,7 +148,7 @@ extension ImageTrackingCache {
 
 // MARK: - Node Hash Operations
 
-extension ImageTrackingCache {
+public extension ImageTrackingCache {
     /// Returns node IDs that have changed compared to cached hashes.
     ///
     /// - Parameters:

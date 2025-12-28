@@ -1,5 +1,6 @@
 @testable import ExFig
 import ExFigCore
+import ExFigKit
 import Foundation
 import XCTest
 
