@@ -1,123 +1,6 @@
 {
-  "originHash" : "453b4da1d247bf8378060b417a29d1524c2f3673afdd08afbd7dd04ef6030af1",
+  "originHash" : "5dd046e54f62147bfb7597a47966edd98963c25c70d8090907e7e8401e7356be",
   "pins" : [
-    {
-      "identity" : "aexml",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tadija/AEXML.git",
-      "state" : {
-        "revision" : "db806756c989760b35108146381535aec231092b",
-        "version" : "4.7.0"
-      }
-    },
-    {
-      "identity" : "komondor",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/shibapm/Komondor.git",
-      "state" : {
-        "revision" : "90b087b1e39069684b1ff4bf915c2aae594f2d60",
-        "version" : "1.1.3"
-      }
-    },
-    {
-      "identity" : "libpng",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/the-swift-collective/libpng.git",
-      "state" : {
-        "revision" : "0eff23aca92a086b7892831f5cb4f58e15be9449",
-        "version" : "1.6.45"
-      }
-    },
-    {
-      "identity" : "libwebp",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/the-swift-collective/libwebp.git",
-      "state" : {
-        "revision" : "5f745a17b9a5c2a4283f17c2cde4517610ab5f99",
-        "version" : "1.4.1"
-      }
-    },
-    {
-      "identity" : "packageconfig",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/shibapm/PackageConfig.git",
-      "state" : {
-        "revision" : "58523193c26fb821ed1720dcd8a21009055c7cdb",
-        "version" : "1.1.3"
-      }
-    },
-    {
-      "identity" : "pathkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kylef/PathKit.git",
-      "state" : {
-        "revision" : "3bfd2737b700b9a36565a8c94f4ad2b050a5e574",
-        "version" : "1.0.1"
-      }
-    },
-    {
-      "identity" : "rainbow",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/onevcat/Rainbow",
-      "state" : {
-        "revision" : "cdf146ae671b2624917648b61c908d1244b98ca1",
-        "version" : "4.2.1"
-      }
-    },
-    {
-      "identity" : "shellout",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/JohnSundell/ShellOut.git",
-      "state" : {
-        "revision" : "e1577acf2b6e90086d01a6d5e2b8efdaae033568",
-        "version" : "2.3.0"
-      }
-    },
-    {
-      "identity" : "spectre",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kylef/Spectre.git",
-      "state" : {
-        "revision" : "26cc5e9ae0947092c7139ef7ba612e34646086c7",
-        "version" : "0.10.1"
-      }
-    },
-    {
-      "identity" : "stencil",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stencilproject/Stencil.git",
-      "state" : {
-        "revision" : "4f222ac85d673f35df29962fc4c36ccfdaf9da5b",
-        "version" : "0.15.1"
-      }
-    },
-    {
-      "identity" : "stencilswiftkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SwiftGen/StencilSwiftKit",
-      "state" : {
-        "revision" : "20e2de5322c83df005939d9d9300fab130b49f97",
-        "version" : "2.10.1"
-      }
-    },
-    {
-      "identity" : "swift-argument-parser",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-argument-parser",
-      "state" : {
-        "revision" : "c5d11a805e765f52ba34ec7284bd4fcd6ba68615",
-        "version" : "1.7.0"
-      }
-    },
-    {
-      "identity" : "swift-collections",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-collections",
-      "state" : {
-        "revision" : "8c0c0a8b49e080e54e5e328cc552821ff07cd341",
-        "version" : "1.2.1"
-      }
-    },
     {
       "identity" : "swift-log",
       "kind" : "remoteSourceControl",
@@ -128,48 +11,12 @@
       }
     },
     {
-      "identity" : "swift-resvg",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/alexey1312/swift-resvg.git",
-      "state" : {
-        "revision" : "f408b4a39dd59b402f1db3605daff6748c5e81ec",
-        "version" : "0.45.1-swift.3"
-      }
-    },
-    {
-      "identity" : "toon-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/toon-format/toon-swift",
-      "state" : {
-        "revision" : "2561ea3a337c2fa42c307c0c44fdbad358c7c49c",
-        "version" : "0.3.0"
-      }
-    },
-    {
-      "identity" : "xcodeproj",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tuist/XcodeProj.git",
-      "state" : {
-        "revision" : "b1caa062d4aaab3e3d2bed5fe0ac5f8ce9bf84f4",
-        "version" : "8.27.7"
-      }
-    },
-    {
       "identity" : "yams",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jpsim/Yams.git",
       "state" : {
         "revision" : "3d6871d5b4a5cd519adf233fbb576e0a2af71c17",
         "version" : "5.4.0"
-      }
-    },
-    {
-      "identity" : "zlib",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/the-swift-collective/zlib.git",
-      "state" : {
-        "revision" : "f1d153b90420f9fcc6ef916cd67ea96f0e68d137",
-        "version" : "1.3.2"
       }
     }
   ],

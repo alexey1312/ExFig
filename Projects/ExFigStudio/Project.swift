@@ -1,9 +1,72 @@
 import ProjectDescription
 
+// MARK: - Project Definition
+
 let project = Project(
     name: "ExFigStudio",
     organizationName: "ExFig",
+    settings: .settings(
+        base: [
+            "SWIFT_VERSION": "6.0",
+        ],
+        configurations: [
+            .debug(name: "Debug"),
+            .release(name: "Release"),
+        ]
+    ),
     targets: [
+        // MARK: - ExFigCore (shared domain models)
+
+        .target(
+            name: "ExFigCore",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.core",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/ExFigCore/**/*.swift")),
+            ]),
+            dependencies: []
+        ),
+
+        // MARK: - FigmaAPI (API client)
+
+        .target(
+            name: "FigmaAPI",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.figmaapi",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/FigmaAPI/**/*.swift")),
+            ]),
+            dependencies: []
+        ),
+
+        // MARK: - ExFigKit (shared library for CLI and GUI)
+
+        .target(
+            name: "ExFigKit",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.kit",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/ExFigKit/**/*.swift")),
+            ]),
+            dependencies: [
+                .target(name: "FigmaAPI"),
+                .target(name: "ExFigCore"),
+                .external(name: "Yams"),
+                .external(name: "Logging"),
+            ]
+        ),
+
+        // MARK: - ExFig Studio App
+
         .target(
             name: "ExFigStudio",
             destinations: .macOS,
@@ -32,11 +95,14 @@ let project = Project(
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             dependencies: [
-                .external(name: "ExFigKit"),
-                .external(name: "FigmaAPI"),
-                .external(name: "ExFigCore"),
+                .target(name: "ExFigKit"),
+                .target(name: "FigmaAPI"),
+                .target(name: "ExFigCore"),
             ]
         ),
+
+        // MARK: - Tests
+
         .target(
             name: "ExFigStudioTests",
             destinations: .macOS,

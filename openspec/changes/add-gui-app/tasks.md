@@ -44,7 +44,7 @@
 
 - [x] 3.1 Add `tuist` to `mise.toml` tools
 - [x] 3.2 Create `Tuist/Config.swift` with global settings
-- [x] 3.3 Create `Tuist/Package.swift` referencing local SPM package
+- [x] 3.3 Create `Tuist/Package.swift` with third-party dependencies
 - [x] 3.4 Create `Workspace.swift` combining CLI + App
 - [x] 3.5 Create `Projects/ExFigStudio/Project.swift` with app target
 - [x] 3.6 Configure `exfig://` URL scheme in InfoPlist
@@ -53,13 +53,24 @@
 - [x] 3.9 Create base `ExFigStudioApp.swift` entry point
 - [x] 3.10 Add `.gitignore` entries for generated `.xcodeproj`, `.xcworkspace`
 - [x] 3.11 Create `Projects/ExFigStudio/Resources/Assets.xcassets` with app icon placeholder
-- [ ] 3.12 Run `tuist generate` and verify workspace opens (blocked - requires Tuist configuration refinement)
+- [x] 3.12 Run `tuist generate` and verify workspace opens
 
-**Note:** Tuist project structure is created, but `tuist generate` fails silently during dependency resolution. The local SPM package integration needs refinement. Options to resolve:
+**Resolution:** Used Tuist native targets approach (option 2 from earlier notes).
 
-1. Extract ExFigKit/FigmaAPI/ExFigCore as separate SPM packages
-2. Use Tuist's native project targets instead of external dependencies
-3. Debug Tuist's handling of complex SPM packages with binary dependencies
+Tuist has issues with local SPM packages containing binary dependencies (e.g., `swift-resvg` with `CResvg` binary target). The solution was to:
+
+1. Define `ExFigCore`, `FigmaAPI`, and `ExFigKit` as native Tuist framework targets in `Project.swift`
+2. Use `.sourceFilesList(globs: [.glob(.relativeToRoot("Sources/..."))])` to reference source files from the main package
+3. Add only pure Swift dependencies (Yams, swift-log) to `Tuist/Package.swift` as external dependencies
+4. Reference external dependencies in native targets via `.external(name: "...")`
+
+This approach avoids Tuist's limitation with binary targets while maintaining a single source tree.
+
+**Verified:**
+
+- `tuist generate` succeeds (4.464s)
+- `tuist build ExFigStudio` succeeds (Build Succeeded)
+- Generated workspace: `ExFig.xcworkspace`
 
 ## 4. Core Views
 
