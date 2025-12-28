@@ -7,14 +7,15 @@
 - [ ] 1.3 Move Loaders to `ExFigKit/Loaders/` (deferred - requires extensive public access refactoring)
 - [ ] 1.4 Move Output (FileWriter, converters) to `ExFigKit/Output/` (deferred)
 - [ ] 1.5 Move Cache to `ExFigKit/Cache/` (deferred)
-- [ ] 1.6 Create `ProgressReporter` protocol
+- [x] 1.6 Create `ProgressReporter` protocol (in `Sources/ExFigKit/Progress/ProgressReporter.swift`)
 - [x] 1.7 Update `Package.swift` with ExFigKit target
 - [x] 1.8 Update ExFig CLI to depend on ExFigKit
-- [x] 1.9 Verify CLI still works after refactor (build passes, 1700 tests pass)
-- [ ] 1.10 Add Swift Task cancellation support to loaders
+- [x] 1.9 Verify CLI still works after refactor (build passes, 1782 tests pass)
+- [x] 1.10 Add Swift Task cancellation support to loaders
 
-**Note:** Conservative extraction approach taken - only `Params` and `ExFigError` moved to ExFigKit.
+**Note:** Conservative extraction approach taken - only `Params`, `ExFigError`, and `ProgressReporter` moved to ExFigKit.
 Full extraction of Loaders/Output/Cache deferred due to extensive public access modifications needed.
+Task cancellation added to `ImageLoaderBase` (loadImages, loadImageBatch, loadPNGImages, loadVectorImages).
 
 ## 2. OAuth Authentication
 

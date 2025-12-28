@@ -230,6 +230,9 @@ class ImageLoaderBase: @unchecked Sendable {
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
+        // Check for cancellation before starting
+        try Task.checkCancellation()
+
         var imagesDict = try await fetchImageComponents(
             fileId: fileId, frameName: frameName, filter: filter
         )
@@ -519,6 +522,9 @@ class ImageLoaderBase: @unchecked Sendable {
         scales: [Double],
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
+        // Check for cancellation before starting
+        try Task.checkCancellation()
+
         let imagesDict = try await fetchImageComponents(
             fileId: fileId, frameName: frameName, filter: filter
         )
@@ -706,7 +712,10 @@ class ImageLoaderBase: @unchecked Sendable {
         totalBatches: Int,
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [Double: [NodeId: ImagePath]] {
-        try await withThrowingTaskGroup(
+        // Check for cancellation before starting parallel scale loading
+        try Task.checkCancellation()
+
+        return try await withThrowingTaskGroup(
             of: (Double, [NodeId: ImagePath]).self
         ) { [self] group in
             for scale in scales {
@@ -738,6 +747,9 @@ class ImageLoaderBase: @unchecked Sendable {
         totalBatches totalBatchesOverride: Int? = nil,
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [NodeId: ImagePath] {
+        // Check for cancellation before starting
+        try Task.checkCancellation()
+
         let batchSize = 100
         // Conservative concurrency limit to respect Figma API rate limits
         // (10-20 requests/min depending on plan)
@@ -763,6 +775,9 @@ class ImageLoaderBase: @unchecked Sendable {
             var activeTasks = 0
 
             for batch in batches {
+                // Check for cancellation between batches
+                try Task.checkCancellation()
+
                 // If we've reached max concurrency, wait for one to complete
                 if activeTasks >= maxConcurrentBatches {
                     if let batchResult = try await group.next() {
@@ -806,6 +821,9 @@ class ImageLoaderBase: @unchecked Sendable {
         scale: Double?,
         imagesDict: [NodeId: Component]
     ) async throws -> [(NodeId, ImagePath)] {
+        // Check for cancellation before API request
+        try Task.checkCancellation()
+
         // Recreate FormatParams inside task to avoid Sendable issues
         let params: FormatParams =
             switch format {
