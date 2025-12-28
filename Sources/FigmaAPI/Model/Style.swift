@@ -11,6 +11,13 @@ public struct Style: Decodable, Sendable {
     public let name: String
     public let description: String
 
+    enum CodingKeys: String, CodingKey {
+        case styleType = "style_type"
+        case nodeId = "node_id"
+        case name
+        case description
+    }
+
     public init(styleType: StyleType, nodeId: String, name: String, description: String) {
         self.styleType = styleType
         self.nodeId = nodeId

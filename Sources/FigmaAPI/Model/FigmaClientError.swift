@@ -13,4 +13,9 @@ struct FigmaClientError: Decodable, LocalizedError, Sendable {
             "Figma API: \(err)"
         }
     }
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case err
+    }
 }

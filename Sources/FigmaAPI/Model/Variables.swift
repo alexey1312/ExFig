@@ -1,6 +1,11 @@
 public struct Mode: Codable, Sendable {
     public var modeId: String
     public var name: String
+
+    enum CodingKeys: String, CodingKey {
+        case modeId = "modeId"
+        case name
+    }
 }
 
 public struct VariableCollectionValue: Codable, Sendable {
@@ -9,6 +14,14 @@ public struct VariableCollectionValue: Codable, Sendable {
     public var name: String
     public var modes: [Mode]
     public var variableIds: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case defaultModeId = "defaultModeId"
+        case id
+        case name
+        case modes
+        case variableIds = "variableIds"
+    }
 }
 
 public struct VariableAlias: Codable, Sendable {
@@ -65,6 +78,14 @@ public struct VariableValue: Codable, Sendable {
     public var variableCollectionId: String
     public var valuesByMode: [String: ValuesByMode]
     public var description: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case variableCollectionId = "variableCollectionId"
+        case valuesByMode = "valuesByMode"
+        case description
+    }
 }
 
 public typealias VariableId = String
@@ -73,6 +94,11 @@ public typealias VariableCollectionId = String
 public struct VariablesMeta: Codable, Sendable {
     public var variableCollections: [VariableCollectionId: VariableCollectionValue]
     public var variables: [VariableId: VariableValue]
+
+    enum CodingKeys: String, CodingKey {
+        case variableCollections = "variableCollections"
+        case variables
+    }
 }
 
 public struct VariablesResponse: Codable, Sendable {

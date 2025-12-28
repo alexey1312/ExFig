@@ -19,7 +19,7 @@ enum FixtureLoader {
     static func load<T: Decodable>(_ name: String) throws -> T {
         let data = try loadData(name)
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode(T.self, from: data)
     }
 }
