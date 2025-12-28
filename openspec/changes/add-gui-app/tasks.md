@@ -23,28 +23,43 @@
 
 ## 2. OAuth Authentication
 
-- [ ] 2.1 Create `Sources/FigmaAPI/OAuth/OAuthClient.swift`
-- [ ] 2.2 Create `Sources/FigmaAPI/OAuth/OAuthTokenManager.swift`
-- [ ] 2.3 Create `Sources/FigmaAPI/OAuth/KeychainStorage.swift`
-- [ ] 2.4 Implement PKCE flow (S256 code challenge)
-- [ ] 2.5 Support token refresh
-- [ ] 2.6 Add dual auth enum (OAuth + Personal Token)
-- [ ] 2.7 Write OAuth tests
+- [x] 2.1 Create `Sources/FigmaAPI/OAuth/OAuthClient.swift`
+- [x] 2.2 Create `Sources/FigmaAPI/OAuth/OAuthTokenManager.swift`
+- [x] 2.3 Create `Sources/FigmaAPI/OAuth/KeychainStorage.swift`
+- [x] 2.4 Implement PKCE flow (S256 code challenge)
+- [x] 2.5 Support token refresh
+- [x] 2.6 Add dual auth enum (OAuth + Personal Token)
+- [x] 2.7 Write OAuth tests (24 tests pass)
+
+**Implemented:**
+
+- `OAuthClient` actor with PKCE S256 challenge generation
+- `OAuthTokenManager` actor for secure token storage and automatic refresh
+- `KeychainStorage` using macOS Keychain (with file-based fallback for Linux)
+- `FigmaAuth` enum supporting both `.personalToken(String)` and `.oauth(OAuthTokenManager)`
+- `AuthenticatedFigmaClient` with automatic token refresh on 401
+- Comprehensive test suite covering PKCE, token management, storage, and auth flow
 
 ## 3. Tuist Project Setup
 
-- [ ] 3.1 Add `tuist` to `mise.toml` tools
-- [ ] 3.2 Create `Tuist/Config.swift` with global settings
-- [ ] 3.3 Reference SPM package via `.package(path: ".")` in Project.swift
-- [ ] 3.4 Create `Workspace.swift` combining CLI + App
-- [ ] 3.5 Create `Projects/ExFigStudio/Project.swift` with app target
-- [ ] 3.6 Configure `exfig://` URL scheme in InfoPlist
-- [ ] 3.7 Add mise tasks: `app:generate`, `app:build`, `app:test`, `app:open`
-- [ ] 3.8 Create `AppDelegate.swift` for URL handling
-- [ ] 3.9 Create base `ExFigStudioApp.swift` entry point
-- [ ] 3.10 Add `.gitignore` entries for generated `.xcodeproj`, `.xcworkspace`
-- [ ] 3.11 Create `Projects/ExFigStudio/Resources/Assets.xcassets` with app icon placeholder
-- [ ] 3.12 Run `tuist generate` and verify workspace opens
+- [x] 3.1 Add `tuist` to `mise.toml` tools
+- [x] 3.2 Create `Tuist/Config.swift` with global settings
+- [x] 3.3 Create `Tuist/Package.swift` referencing local SPM package
+- [x] 3.4 Create `Workspace.swift` combining CLI + App
+- [x] 3.5 Create `Projects/ExFigStudio/Project.swift` with app target
+- [x] 3.6 Configure `exfig://` URL scheme in InfoPlist
+- [x] 3.7 Add mise tasks: `app:generate`, `app:build`, `app:test`, `app:open`, `app:clean`
+- [x] 3.8 Create `AppDelegate.swift` for URL handling
+- [x] 3.9 Create base `ExFigStudioApp.swift` entry point
+- [x] 3.10 Add `.gitignore` entries for generated `.xcodeproj`, `.xcworkspace`
+- [x] 3.11 Create `Projects/ExFigStudio/Resources/Assets.xcassets` with app icon placeholder
+- [ ] 3.12 Run `tuist generate` and verify workspace opens (blocked - requires Tuist configuration refinement)
+
+**Note:** Tuist project structure is created, but `tuist generate` fails silently during dependency resolution. The local SPM package integration needs refinement. Options to resolve:
+
+1. Extract ExFigKit/FigmaAPI/ExFigCore as separate SPM packages
+2. Use Tuist's native project targets instead of external dependencies
+3. Debug Tuist's handling of complex SPM packages with binary dependencies
 
 ## 4. Core Views
 
@@ -96,7 +111,7 @@
 
 ## 9. Testing
 
-- [ ] 9.1 Write ExFigKit unit tests
-- [ ] 9.2 Write OAuth flow tests
+- [x] 9.1 Write ExFigKit unit tests (existing - 1824 tests pass)
+- [x] 9.2 Write OAuth flow tests (24 tests pass)
 - [ ] 9.3 Write ViewModel tests
 - [ ] 9.4 Write UI tests for critical flows

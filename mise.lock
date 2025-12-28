@@ -53,6 +53,11 @@ backend = "aqua:realm/SwiftLint"
 "platforms.macos-arm64" = { checksum = "sha256:79625bece2716395d955d34a5993e6c948ef57d0256abe5538aaab82f2ad6b68", url = "https://github.com/realm/SwiftLint/releases/download/0.62.2/portable_swiftlint.zip"}
 "platforms.macos-x64" = { checksum = "sha256:79625bece2716395d955d34a5993e6c948ef57d0256abe5538aaab82f2ad6b68", url = "https://github.com/realm/SwiftLint/releases/download/0.62.2/portable_swiftlint.zip"}
 
+[[tools.tuist]]
+version = "4.44.0"
+backend = "aqua:tuist/tuist"
+"platforms.macos-arm64" = { checksum = "sha256:3a4b426a4bad2311fe62ef472378a5ac3bfbce550b9d0cb611d4ddb663a88e35", url = "https://github.com/tuist/tuist/releases/download/4.44.0/tuist.zip"}
+
 [[tools.xcsift]]
 version = "1.0.19"
 backend = "github:ldomaradzki/xcsift"

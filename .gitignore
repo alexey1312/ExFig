@@ -100,3 +100,14 @@ docs/
 
 # resvg build artifacts
 .resvg-build/
+
+# Tuist generated files
+# The generated Xcode project and workspace should not be committed
+# since they are generated from the manifest files
+*.xcodeproj
+*.xcworkspace
+Derived/
+.tuist-bin/
+
+# Tuist cache (local development)
+.tuist/
