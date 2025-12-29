@@ -34,5 +34,7 @@ let package = Package(
         .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
         // SVG rasterization
         .package(url: "https://github.com/alexey1312/swift-resvg.git", branch: "release/xcframework"),
+        // Secrets obfuscation
+        .package(url: "https://github.com/p-x9/ObfuscateMacro", from: "0.12.0"),
     ]
 )

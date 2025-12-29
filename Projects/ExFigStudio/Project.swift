@@ -252,6 +252,7 @@ let project = Project(
                 .target(name: "SVGKit"),
                 .external(name: "WebP"),
                 .external(name: "LibPNG"),
+                .external(name: "ObfuscateMacro"),
             ]
         ),
 

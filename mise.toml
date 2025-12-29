@@ -28,6 +28,9 @@ swiftformat = "0.58.7" # Swift code formatting
 swiftlint = "0.62.2"   # Swift linting
 xcsift = "1.0.19"      # xcodebuild output filtering
 
+# --- Secrets Management ---
+fnox = "1.7.0" # Encrypted secrets storage (Fort Knox for secrets)
+
 # --- Documentation & Formatting ---
 dprint = "0.50.2" # MD/JSON/YAML formatting (Rust, fast)
 
@@ -173,11 +176,29 @@ run = "./Scripts/coverage.sh --run-tests --update-badge"
 
 [tasks."app:generate"]
 description = "Generate Xcode project with Tuist"
-run = "tuist generate"
+run = """
+./Scripts/generate-secrets.sh
+tuist generate
+"""
 
 [tasks."app:build"]
 description = "Build ExFig Studio app"
-run = "tuist build ExFigStudio"
+run = """
+./Scripts/generate-secrets.sh
+tuist build ExFigStudio
+"""
+
+[tasks."oauth:setup"]
+description = "Configure OAuth credentials (interactive)"
+run = """
+echo "Setting up Figma OAuth credentials..."
+echo "Get your credentials from: https://www.figma.com/developers/apps"
+echo ""
+fnox set FIGMA_CLIENT_ID
+fnox set FIGMA_CLIENT_SECRET
+echo ""
+echo "Credentials saved (encrypted in fnox.toml)"
+"""
 
 [tasks."app:test"]
 description = "Run ExFig Studio unit tests"

@@ -66,6 +66,12 @@ jobs:
           sed -i '' "s/\"CFBundleShortVersionString\": \"[^\"]*\"/\"CFBundleShortVersionString\": \"$VERSION\"/" "$FILE"
           sed -i '' "s/\"CFBundleVersion\": \"[^\"]*\"/\"CFBundleVersion\": \"${{ github.run_number }}\"/" "$FILE"
 
+      - name: Generate OAuth secrets
+        env:
+          FIGMA_CLIENT_ID: ${{ secrets.FIGMA_CLIENT_ID }}
+          FIGMA_CLIENT_SECRET: ${{ secrets.FIGMA_CLIENT_SECRET }}
+        run: ./Scripts/generate-secrets.sh
+
       - name: Generate Xcode project
         run: ./bin/mise exec -- tuist generate --no-open
 

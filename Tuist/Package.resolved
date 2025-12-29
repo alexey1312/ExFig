@@ -1,5 +1,5 @@
 {
-  "originHash" : "cad4ffa75b2604df72c1041dbb7826b717d31cea429ee25ddf6307c3fcb9fa48",
+  "originHash" : "8ecb854c18be603a677ee0451fa77fc78fc911f1675a69215979ae917777f589",
   "pins" : [
     {
       "identity" : "komondor",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "5f745a17b9a5c2a4283f17c2cde4517610ab5f99",
         "version" : "1.4.1"
+      }
+    },
+    {
+      "identity" : "obfuscatemacro",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/p-x9/ObfuscateMacro",
+      "state" : {
+        "revision" : "116c9747ed2dd50d6b058a49bbb79e96b5e2e1a2",
+        "version" : "0.13.0"
       }
     },
     {
@@ -83,6 +92,15 @@
       }
     },
     {
+      "identity" : "swift-algorithms",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-algorithms",
+      "state" : {
+        "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
+        "version" : "1.2.1"
+      }
+    },
+    {
       "identity" : "swift-asn1",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-asn1.git",
@@ -119,12 +137,30 @@
       }
     },
     {
+      "identity" : "swift-numerics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-numerics.git",
+      "state" : {
+        "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
+        "version" : "1.1.1"
+      }
+    },
+    {
       "identity" : "swift-resvg",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/alexey1312/swift-resvg.git",
       "state" : {
         "branch" : "release/xcframework",
         "revision" : "56cf084fdc6a3c7449e999a84c1b2f4aacf38aa4"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax.git",
+      "state" : {
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
       }
     },
     {

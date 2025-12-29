@@ -15,6 +15,10 @@ backend = "aqua:dprint/dprint"
 "platforms.macos-x64" = { checksum = "sha256:61becbf8d1b16540e364a4f00be704266ae322ee0ff3ba66a4a21033f66a8d55", url = "https://github.com/dprint/dprint/releases/download/0.50.2/dprint-x86_64-apple-darwin.zip"}
 "platforms.windows-x64" = { checksum = "sha256:2dbdb57106818acd930a00bc0c2c33370bd4c7265f78a6cda000e3621f2d3c1c", url = "https://github.com/dprint/dprint/releases/download/0.50.2/dprint-x86_64-pc-windows-msvc.zip"}
 
+[[tools.fnox]]
+version = "1.7.0"
+backend = "github:jdx/fnox"
+
 [[tools.git-cliff]]
 version = "2.10.1"
 backend = "aqua:orhun/git-cliff"

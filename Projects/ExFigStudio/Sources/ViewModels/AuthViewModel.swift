@@ -82,8 +82,8 @@ final class AuthViewModel {
 
     init(
         tokenStorage: SecureStorage = KeychainStorage(),
-        oauthClientId: String = "",
-        oauthClientSecret: String = ""
+        oauthClientId: String = Secrets.figmaClientId,
+        oauthClientSecret: String = Secrets.figmaClientSecret
     ) {
         self.tokenStorage = tokenStorage
         self.oauthClientId = oauthClientId

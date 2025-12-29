@@ -111,3 +111,7 @@ Derived/
 
 # Tuist cache (local development)
 .tuist/
+
+# Secrets (generated at build time)
+Projects/ExFigStudio/Sources/Generated/
+fnox.toml
