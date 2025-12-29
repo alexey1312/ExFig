@@ -11,6 +11,8 @@ import PackageDescription
             "Logging": .framework,
             "Stencil": .framework,
             "StencilSwiftKit": .framework,
+            // Resvg must be static - the xcframework contains libresvg.a (static lib)
+            "Resvg": .staticLibrary,
         ]
     )
 #endif

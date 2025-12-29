@@ -108,7 +108,7 @@ let project = Project(
         .target(
             name: "SVGKit",
             destinations: .macOS,
-            product: .framework,
+            product: .staticFramework,
             bundleId: "io.exfig.svgkit",
             deploymentTargets: .macOS("15.0"),
             infoPlist: .default,
@@ -117,6 +117,7 @@ let project = Project(
             ]),
             dependencies: [
                 .external(name: "Logging"),
+                // Use Resvg Swift wrapper from swift-resvg package (configured as static library)
                 .external(name: "Resvg"),
             ]
         ),
@@ -148,7 +149,7 @@ let project = Project(
         .target(
             name: "AndroidExport",
             destinations: .macOS,
-            product: .framework,
+            product: .staticFramework,
             bundleId: "io.exfig.androidexport",
             deploymentTargets: .macOS("15.0"),
             infoPlist: .default,
