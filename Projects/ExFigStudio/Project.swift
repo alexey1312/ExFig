@@ -103,27 +103,6 @@ let project = Project(
             ]
         ),
 
-        // MARK: - Resvg (Swift wrapper for CResvg binary)
-
-        .target(
-            name: "Resvg",
-            destinations: .macOS,
-            product: .framework,
-            bundleId: "io.exfig.resvg",
-            deploymentTargets: .macOS("15.0"),
-            infoPlist: .default,
-            sources: .sourceFilesList(globs: [
-                .glob(.relativeToRoot("Sources/Resvg/**/*.swift")),
-            ]),
-            dependencies: [
-                .xcframework(path: .relativeToRoot("Frameworks/Resvg.xcframework")),
-            ],
-            settings: .settings(base: [
-                // Link iconv required by Resvg
-                "OTHER_LDFLAGS": ["-liconv"],
-            ])
-        ),
-
         // MARK: - SVGKit (SVG parsing and code generation)
 
         .target(
@@ -138,7 +117,7 @@ let project = Project(
             ]),
             dependencies: [
                 .external(name: "Logging"),
-                .target(name: "Resvg"),
+                .external(name: "Resvg"),
             ]
         ),
 

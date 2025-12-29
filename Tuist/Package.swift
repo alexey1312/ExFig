@@ -18,9 +18,6 @@ import PackageDescription
 // Third-party dependencies for ExFig Studio
 // Note: ExFigKit, FigmaAPI, ExFigCore are defined as native Tuist targets
 // to avoid issues with Tuist's handling of local SPM packages with binary dependencies
-//
-// Binary dependencies (Resvg) are defined as native Tuist targets in Project.swift
-// using XCFrameworks built by Scripts/build-xcframeworks.sh
 let package = Package(
     name: "ExFigDependencies",
     dependencies: [
@@ -33,5 +30,7 @@ let package = Package(
         // C libraries for image processing
         .package(url: "https://github.com/the-swift-collective/libwebp.git", from: "1.4.1"),
         .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
+        // SVG rasterization
+        .package(url: "https://github.com/alexey1312/swift-resvg.git", branch: "release/xcframework"),
     ]
 )
