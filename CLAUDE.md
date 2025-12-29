@@ -32,8 +32,8 @@ This applies to: Swift packages, CLI tools (mise, hk, swiftlint, etc.), Figma AP
 
 # CLAUDE.md
 
-Agent instructions for ExFig - a CLI tool that exports colors, typography, icons, and images from Figma to iOS, Android,
-and Flutter projects.
+Agent instructions for ExFig - a CLI tool and macOS app that exports colors, typography, icons, and images from Figma to
+iOS, Android, and Flutter projects.
 
 ## Quick Reference
 
@@ -73,28 +73,45 @@ and Flutter projects.
 
 ## Architecture
 
-Eight modules in `Sources/`:
+Eight SPM modules in `Sources/`:
 
-| Module          | Purpose                                                   |
-| --------------- | --------------------------------------------------------- |
-| `ExFig`         | CLI commands, loaders, file I/O, terminal UI              |
-| `ExFigKit`      | Shared library: config models (Params), errors            |
-| `ExFigCore`     | Domain models (Color, Image, TextStyle), processors       |
-| `FigmaAPI`      | Figma REST API client, endpoints, response models         |
-| `XcodeExport`   | iOS export (.xcassets, Swift extensions)                  |
-| `AndroidExport` | Android export (XML resources, Compose, Vector Drawables) |
-| `FlutterExport` | Flutter export (Dart code, SVG/PNG assets)                |
-| `SVGKit`        | SVG parsing, ImageVector/VectorDrawable generation        |
+| Module          | Purpose                                                            |
+| --------------- | ------------------------------------------------------------------ |
+| `ExFig`         | CLI commands, loaders, file I/O, terminal UI                       |
+| `ExFigKit`      | Shared library: config models (Params), errors, progress reporting |
+| `ExFigCore`     | Domain models (Color, Image, TextStyle), processors                |
+| `FigmaAPI`      | Figma REST API client, endpoints, OAuth 2.0 authentication         |
+| `XcodeExport`   | iOS export (.xcassets, Swift extensions)                           |
+| `AndroidExport` | Android export (XML resources, Compose, Vector Drawables)          |
+| `FlutterExport` | Flutter export (Dart code, SVG/PNG assets)                         |
+| `SVGKit`        | SVG parsing, ImageVector/VectorDrawable generation                 |
 
-**Data flow:** CLI → Config parsing → FigmaAPI fetch → ExFigCore processing → Platform export → File write
+**ExFig Studio** (macOS GUI app) in `Projects/ExFigStudio/`:
+
+| Directory       | Purpose                                    |
+| --------------- | ------------------------------------------ |
+| `Sources/`      | SwiftUI views, ViewModels, app entry point |
+| `Resources/`    | Assets, entitlements, Info.plist           |
+| `Project.swift` | Tuist project definition                   |
+
+**Data flow:**
+
+- CLI: Config parsing → FigmaAPI fetch → ExFigCore processing → Platform export → File write
+- GUI: OAuth login → Visual config → FigmaAPI fetch → ExFigCore processing → Export with progress
 
 ## Key Directories
 
 ```
 Sources/ExFigKit/
 ├── Config/          # Params.swift - YAML config models (public, Sendable)
+├── Progress/        # ProgressReporter protocol for CLI/GUI abstraction
 ├── ExFigKit.swift   # Module entry point
 └── ExFigKitError.swift # Error types (aliased as ExFigError)
+
+Sources/FigmaAPI/
+├── OAuth/           # OAuthClient.swift, KeychainStorage.swift (PKCE + secure storage)
+├── Client/          # FigmaClient, RateLimitedClient, RetryPolicy
+└── Endpoint/        # API endpoint definitions
 
 Sources/ExFig/
 ├── Subcommands/     # CLI commands (ExportColors, ExportIcons, DownloadImages, etc.)
@@ -107,6 +124,14 @@ Sources/ExFig/
 ├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
 ├── Batch/           # Batch processing (executor, runner, checkpoint)
 └── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger, EntryProcessor)
+
+Projects/ExFigStudio/
+├── Sources/
+│   ├── Views/       # SwiftUI views (MainView, ConfigView, ExportView, etc.)
+│   ├── ViewModels/  # Observable ViewModels (AuthViewModel, ExportViewModel, etc.)
+│   └── App/         # App entry point, AppDelegate
+├── Resources/       # Assets.xcassets, entitlements
+└── Project.swift    # Tuist project definition
 
 Sources/*/Resources/ # Stencil templates for code generation
 Tests/               # Test targets mirror source structure
@@ -879,19 +904,73 @@ exfig init -p android
 
 ## Dependencies
 
-| Package               | Version | Purpose                    |
-| --------------------- | ------- | -------------------------- |
-| swift-argument-parser | 1.5.0+  | CLI framework              |
-| swift-collections     | 1.2.x   | Ordered collections        |
-| Yams                  | 5.3.0+  | YAML parsing               |
-| Stencil               | 0.15.1+ | Template engine            |
-| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions   |
-| XcodeProj             | 8.27.0+ | Xcode project manipulation |
-| swift-log             | 1.6.0+  | Logging                    |
-| Rainbow               | 4.2.0+  | Terminal colors            |
-| libwebp               | 1.4.1+  | WebP encoding              |
-| libpng                | 1.6.45+ | PNG decoding               |
-| swift-custom-dump     | 1.3.0+  | Test assertions            |
+| Package               | Version | Purpose                     |
+| --------------------- | ------- | --------------------------- |
+| swift-argument-parser | 1.5.0+  | CLI framework               |
+| swift-collections     | 1.2.x   | Ordered collections         |
+| swift-crypto          | 3.0.0+  | Cross-platform cryptography |
+| Yams                  | 5.3.0+  | YAML parsing                |
+| Stencil               | 0.15.1+ | Template engine             |
+| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions    |
+| XcodeProj             | 8.27.0+ | Xcode project manipulation  |
+| swift-log             | 1.6.0+  | Logging                     |
+| Rainbow               | 4.2.0+  | Terminal colors             |
+| libwebp               | 1.4.1+  | WebP encoding               |
+| libpng                | 1.6.45+ | PNG decoding                |
+| swift-custom-dump     | 1.3.0+  | Test assertions             |
+
+## ExFig Studio (GUI App)
+
+ExFig Studio is a macOS GUI app built with SwiftUI and managed by Tuist.
+
+### Building ExFig Studio
+
+```bash
+# Generate Xcode project
+./bin/mise exec -- tuist generate --no-open
+
+# Build and run
+open ExFig.xcworkspace
+# Select "ExFigStudio" scheme and run
+
+# Or build from command line
+xcodebuild -workspace ExFig.xcworkspace -scheme ExFigStudio -configuration Debug build
+```
+
+### Key Components
+
+| Component         | File                                           | Purpose                              |
+| ----------------- | ---------------------------------------------- | ------------------------------------ |
+| `AuthViewModel`   | `Projects/ExFigStudio/Sources/ViewModels/`     | OAuth 2.0 flow with Figma            |
+| `ExportViewModel` | `Projects/ExFigStudio/Sources/ViewModels/`     | Export progress and state management |
+| `OAuthClient`     | `Sources/FigmaAPI/OAuth/OAuthClient.swift`     | PKCE-based OAuth implementation      |
+| `KeychainStorage` | `Sources/FigmaAPI/OAuth/KeychainStorage.swift` | Secure token storage                 |
+
+### OAuth 2.0 Authentication
+
+ExFig Studio uses OAuth 2.0 with PKCE for secure Figma authentication:
+
+```swift
+// Generate authorization URL
+let client = OAuthClient(config: OAuthConfig(
+    clientId: "your-client-id",
+    clientSecret: "your-client-secret",
+    scopes: [.filesRead]
+))
+let (url, state) = try await client.authorizationURL()
+
+// Handle callback
+let tokens = try await client.handleCallback(callbackURL)
+
+// Refresh token
+let newTokens = try await client.refreshToken(tokens.refreshToken)
+```
+
+**Security notes:**
+
+- PKCE uses SHA-256 via Swift Crypto (cross-platform)
+- Tokens stored in macOS Keychain (Linux uses file-based fallback with 0600 permissions)
+- State parameter validated to prevent CSRF attacks
 
 ## Troubleshooting
 

@@ -148,7 +148,11 @@ public protocol SecureStorage: Sendable {
 
 #else
 
-    /// Fallback storage for Linux (file-based, not secure for production).
+    /// Fallback storage for Linux (file-based with restricted permissions).
+    ///
+    /// - Warning: This is less secure than macOS Keychain. On Linux, tokens are stored
+    ///   in files with 0600 permissions. For production use on Linux, consider integrating
+    ///   with a secrets manager (e.g., libsecret, HashiCorp Vault).
     public final class KeychainStorage: SecureStorage, @unchecked Sendable {
         private let storagePath: URL
         private let lock = NSLock()
@@ -156,22 +160,39 @@ public protocol SecureStorage: Sendable {
         public init(service: String = "io.exfig.studio", accessGroup _: String? = nil) {
             let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
             storagePath = cacheDir.appendingPathComponent(service)
-            try? FileManager.default.createDirectory(at: storagePath, withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(
+                at: storagePath,
+                withIntermediateDirectories: true,
+                attributes: [.posixPermissions: 0o700]
+            )
+        }
+
+        /// Sanitize key to prevent path traversal attacks.
+        private func sanitizedKey(_ key: String) -> String {
+            // Remove path separators and parent directory references
+            key.replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "\\", with: "_")
+                .replacingOccurrences(of: "..", with: "__")
         }
 
         public func save(_ data: Data, forKey key: String) throws {
             lock.lock()
             defer { lock.unlock() }
 
-            let fileURL = storagePath.appendingPathComponent(key)
-            try data.write(to: fileURL)
+            let fileURL = storagePath.appendingPathComponent(sanitizedKey(key))
+            try data.write(to: fileURL, options: .atomic)
+            // Set file permissions to 0600 (owner read/write only)
+            try FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: fileURL.path
+            )
         }
 
         public func load(forKey key: String) throws -> Data {
             lock.lock()
             defer { lock.unlock() }
 
-            let fileURL = storagePath.appendingPathComponent(key)
+            let fileURL = storagePath.appendingPathComponent(sanitizedKey(key))
             guard FileManager.default.fileExists(atPath: fileURL.path) else {
                 throw KeychainError.itemNotFound
             }
@@ -182,14 +203,14 @@ public protocol SecureStorage: Sendable {
             lock.lock()
             defer { lock.unlock() }
 
-            let fileURL = storagePath.appendingPathComponent(key)
+            let fileURL = storagePath.appendingPathComponent(sanitizedKey(key))
             if FileManager.default.fileExists(atPath: fileURL.path) {
                 try FileManager.default.removeItem(at: fileURL)
             }
         }
 
         public func exists(forKey key: String) -> Bool {
-            let fileURL = storagePath.appendingPathComponent(key)
+            let fileURL = storagePath.appendingPathComponent(sanitizedKey(key))
             return FileManager.default.fileExists(atPath: fileURL.path)
         }
     }

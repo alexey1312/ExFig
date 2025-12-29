@@ -1,3 +1,4 @@
+import Crypto
 import Foundation
 #if os(Linux)
     import FoundationNetworking
@@ -106,42 +107,46 @@ public struct PKCEChallenge: Sendable {
         var bytes = [UInt8](repeating: 0, count: 32)
         bytes.withUnsafeMutableBufferPointer { buffer in
             #if os(Linux)
-                // Linux: use /dev/urandom
-                guard let urandom = fopen("/dev/urandom", "r") else { return }
+                // Linux: use /dev/urandom with proper error checking
+                guard let urandom = fopen("/dev/urandom", "r") else {
+                    // Fallback: use Swift Crypto's random bytes
+                    var randomData = Data(count: 32)
+                    randomData.withUnsafeMutableBytes { ptr in
+                        for i in 0 ..< 32 {
+                            ptr[i] = UInt8.random(in: 0 ... 255)
+                        }
+                    }
+                    randomData.copyBytes(to: buffer)
+                    return
+                }
                 defer { fclose(urandom) }
-                _ = fread(buffer.baseAddress!, 1, 32, urandom)
+                let bytesRead = fread(buffer.baseAddress!, 1, 32, urandom)
+                if bytesRead != 32 {
+                    // If we didn't read enough bytes, fill with random
+                    for i in bytesRead ..< 32 {
+                        buffer[i] = UInt8.random(in: 0 ... 255)
+                    }
+                }
             #else
-                _ = SecRandomCopyBytes(kSecRandomDefault, 32, buffer.baseAddress!)
+                let status = SecRandomCopyBytes(kSecRandomDefault, 32, buffer.baseAddress!)
+                guard status == errSecSuccess else {
+                    // Fallback: use random bytes if SecRandomCopyBytes fails
+                    for i in 0 ..< 32 {
+                        buffer[i] = UInt8.random(in: 0 ... 255)
+                    }
+                    return
+                }
             #endif
         }
         return base64URLEncode(Data(bytes))
     }
 
     private static func generateCodeChallenge(from verifier: String) -> String {
+        // Use Swift Crypto for cross-platform SHA-256 (works on macOS and Linux)
         let data = Data(verifier.utf8)
-        #if os(Linux)
-            // Linux: use CommonCrypto-compatible approach
-            // For Linux, we'd need to add CryptoSwift or similar
-            // For now, use a simple SHA-256 implementation
-            let hash = sha256(data)
-        #else
-            var hash = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-            data.withUnsafeBytes { buffer in
-                _ = CC_SHA256(buffer.baseAddress, CC_LONG(data.count), &hash)
-            }
-        #endif
-        return base64URLEncode(Data(hash))
+        let digest = SHA256.hash(data: data)
+        return base64URLEncode(Data(digest))
     }
-
-    #if os(Linux)
-        private static func sha256(_ data: Data) -> [UInt8] {
-            // Minimal SHA-256 for Linux - in production, use CryptoSwift
-            // This is a placeholder that should be replaced with proper crypto
-            var hash = [UInt8](repeating: 0, count: 32)
-            // TODO: Implement proper SHA-256 for Linux
-            return hash
-        }
-    #endif
 
     private static func base64URLEncode(_ data: Data) -> String {
         data.base64EncodedString()
@@ -150,10 +155,6 @@ public struct PKCEChallenge: Sendable {
             .replacingOccurrences(of: "=", with: "")
     }
 }
-
-#if !os(Linux)
-    import CommonCrypto
-#endif
 
 // MARK: - OAuth Client
 
@@ -217,9 +218,13 @@ public actor OAuthClient {
             throw OAuthError.missingAuthorizationCode
         }
 
+        // Validate state parameter (CSRF protection)
         let state = queryItems.first(where: { $0.name == "state" })?.value
-        if let pendingState, state != pendingState {
-            throw OAuthError.stateMismatch
+        if let pendingState {
+            // If we have a pending state, callback must include matching state
+            guard let state, state == pendingState else {
+                throw OAuthError.stateMismatch
+            }
         }
 
         guard let pkce = pendingPKCE else {
@@ -245,8 +250,11 @@ public actor OAuthClient {
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
+        // Use strict URL encoding for form data (avoid parameter injection)
+        var allowedCharacters = CharacterSet.alphanumerics
+        allowedCharacters.insert(charactersIn: "-._~:/")
         let encodedRedirectURI = config.redirectURI
-            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? config.redirectURI
+            .addingPercentEncoding(withAllowedCharacters: allowedCharacters) ?? config.redirectURI
         let body = [
             "grant_type=authorization_code",
             "client_id=\(config.clientId)",

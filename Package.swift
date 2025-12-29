@@ -27,6 +27,7 @@ let package = Package(
         .package(url: "https://github.com/toon-format/toon-swift", from: "0.3.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
         .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.3"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
     ],
     targets: [
         // Main target
@@ -60,10 +61,13 @@ let package = Package(
 
         // Loads data via Figma REST API
         .target(
-            name: "FigmaAPI"
+            name: "FigmaAPI",
+            dependencies: [
+                .product(name: "Crypto", package: "swift-crypto"),
+            ]
         ),
 
-        // Reusable library for CLI and GUI app
+        // Reusable library for CLI and GUI app (config models, errors, common types)
         .target(
             name: "ExFigKit",
             dependencies: [
@@ -71,10 +75,6 @@ let package = Package(
                 "ExFigCore",
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "Resvg", package: "swift-resvg"),
-                .product(name: "WebP", package: "libwebp"),
-                .product(name: "LibPNG", package: "libpng"),
-                .product(name: "XcodeProj", package: "XcodeProj"),
             ]
         ),
 

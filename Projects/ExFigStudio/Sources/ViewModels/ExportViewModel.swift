@@ -5,14 +5,14 @@ import SwiftUI
 // MARK: - Export Phase
 
 /// Represents a phase in the export process.
-struct ExportPhase: Identifiable {
+struct ExportPhase: Identifiable, Sendable {
     let id = UUID()
     let name: String
     var status: Status
     var progress: Double
     var message: String
 
-    enum Status {
+    enum Status: Sendable {
         case pending
         case inProgress
         case completed
@@ -24,13 +24,13 @@ struct ExportPhase: Identifiable {
 // MARK: - Export Log Entry
 
 /// A single log entry during export.
-struct ExportLogEntry: Identifiable {
+struct ExportLogEntry: Identifiable, Sendable {
     let id = UUID()
     let timestamp: Date
     let level: Level
     let message: String
 
-    enum Level {
+    enum Level: Sendable {
         case info
         case warning
         case error
@@ -101,7 +101,12 @@ final class ExportViewModel {
     }
 
     var canStart: Bool {
-        state == .idle || state == .cancelled || state == .completed(success: 0, failed: 0)
+        switch state {
+        case .idle, .cancelled, .completed, .failed:
+            true
+        case .preparing, .exporting:
+            false
+        }
     }
 
     // MARK: - Actions
@@ -196,6 +201,8 @@ final class ExportViewModel {
 
     /// Reset to idle state.
     func reset() {
+        exportTask?.cancel()
+        exportTask = nil
         state = .idle
         phases = []
         logs = []
@@ -211,7 +218,6 @@ final class ExportViewModel {
 /// Progress reporter implementation for SwiftUI.
 final class GUIProgressReporter: ProgressReporter, @unchecked Sendable {
     private let viewModel: ExportViewModel
-    private let lock = NSLock()
 
     init(viewModel: ExportViewModel) {
         self.viewModel = viewModel

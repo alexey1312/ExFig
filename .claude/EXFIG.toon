@@ -1,9 +1,11 @@
 meta:
   name: ExFig
   version: current
-  description: CLI tool for exporting Figma assets to iOS, Android, Flutter, Web
+  description: CLI tool and macOS app for exporting Figma assets to iOS, Android, Flutter, Web
   swift: 6.2
-  platforms: macOS 13.0+, Linux (Ubuntu 22.04)
+  platforms:
+    cli: macOS 13.0+, Linux (Ubuntu 22.04)
+    gui: macOS 15.0+ (ExFig Studio)
   license: MIT
   repo: github.com/alexey1312/ExFig
 
@@ -117,15 +119,30 @@ commands:
       failFast: --fail-fast
       resume: --resume
 
-modules[8]{name,path,purpose}:
+modules[9]{name,path,purpose}:
   ExFig,Sources/ExFig,CLI commands and orchestration
+  ExFigKit,Sources/ExFigKit,Shared library: config models, errors, progress reporting
   ExFigCore,Sources/ExFigCore,Domain models and processors
-  FigmaAPI,Sources/FigmaAPI,HTTP client with rate limiting
+  FigmaAPI,Sources/FigmaAPI,HTTP client with rate limiting and OAuth 2.0
   XcodeExport,Sources/XcodeExport,iOS xcassets and Swift extensions
   AndroidExport,Sources/AndroidExport,Android XML and Compose code
   FlutterExport,Sources/FlutterExport,Flutter Dart code
   WebExport,Sources/WebExport,Web CSS variables and React/TypeScript
   SVGKit,Sources/SVGKit,SVG parsing and vector generation
+
+exfigStudio:
+  path: Projects/ExFigStudio/
+  purpose: macOS GUI app with OAuth authentication
+  projectManager: Tuist
+  frameworks: [SwiftUI, AppKit]
+  keyFiles:
+    views: Sources/Views/
+    viewModels: Sources/ViewModels/
+    app: Sources/App/
+    project: Project.swift
+  auth:
+    method: OAuth 2.0 with PKCE
+    storage: macOS Keychain (Linux file fallback)
 
 keyDirectories:
   subcommands: Sources/ExFig/Subcommands/
@@ -169,6 +186,9 @@ keyFiles:
   retryPolicy: Sources/FigmaAPI/Client/RetryPolicy.swift
   checkpoint: Sources/ExFig/Cache/CheckpointTracker.swift
   figmaClient: Sources/FigmaAPI/Client/FigmaClient.swift
+  oauthClient: Sources/FigmaAPI/OAuth/OAuthClient.swift
+  keychainStorage: Sources/FigmaAPI/OAuth/KeychainStorage.swift
+  progressReporter: Sources/ExFigKit/Progress/ProgressReporter.swift
   terminalUI: Sources/ExFig/TerminalUI/TerminalUI.swift
   outputManager: Sources/ExFig/TerminalUI/TerminalOutputManager.swift
   spinner: Sources/ExFig/TerminalUI/Spinner.swift
@@ -280,9 +300,10 @@ buildCommands:
   docsPreview: mise run docs:preview
   run: .build/debug/exfig
 
-dependencies[12]{name,version,purpose}:
+dependencies[13]{name,version,purpose}:
   swift-argument-parser,1.5.0+,CLI framework
   swift-collections,1.2.x,Ordered collections
+  swift-crypto,3.0.0+,Cross-platform cryptography (OAuth PKCE)
   Yams,5.3.0+,YAML parsing
   Stencil,0.15.1+,Template engine
   StencilSwiftKit,2.10.1+,Swift Stencil extensions
@@ -301,6 +322,11 @@ figmaAPI:
     components: GET /v1/files/:key/components
     styles: GET /v1/files/:key/styles
     variables: GET /v1/files/:key/variables
+  oauth:
+    authorize: https://www.figma.com/oauth
+    token: https://api.figma.com/v1/oauth/token
+    scopes: [files:read, file_comments:write, library_analytics:read, webhooks:write, openid, email, profile]
+    pkce: SHA-256 via Swift Crypto
   rateLimits:
     tier1: 10-20 req/min (files, images)
     tier2: 25-100 req/min

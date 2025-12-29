@@ -6,8 +6,7 @@ import FigmaAPI
 import Foundation
 import Logging
 
-/// Callback for reporting batch progress (completed, total)
-typealias BatchProgressCallback = @Sendable (Int, Int) -> Void
+// BatchProgressCallback is imported from ExFigKit
 
 /// Result containing loaded images and optional granular cache data.
 struct ImageLoaderResult {
