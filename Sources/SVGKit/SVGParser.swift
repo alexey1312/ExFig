@@ -327,7 +327,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             data
         }
 
-        let document = try XMLDocument(data: svgData, options: [])
+        // Disable external entity loading to prevent XXE attacks
+        let options: XMLNode.Options = [.nodeLoadExternalEntitiesNever]
+        let document = try XMLDocument(data: svgData, options: options)
         guard let root = document.rootElement(), elementName(root) == "svg" else {
             throw SVGParserError.invalidSVGRoot
         }
