@@ -104,41 +104,11 @@ public struct PKCEChallenge: Sendable {
     }
 
     private static func generateCodeVerifier() -> String {
-        var bytes = [UInt8](repeating: 0, count: 32)
-        bytes.withUnsafeMutableBufferPointer { buffer in
-            #if os(Linux)
-                // Linux: use /dev/urandom with proper error checking
-                guard let urandom = fopen("/dev/urandom", "r") else {
-                    // Fallback: use Swift Crypto's random bytes
-                    var randomData = Data(count: 32)
-                    randomData.withUnsafeMutableBytes { ptr in
-                        for i in 0 ..< 32 {
-                            ptr[i] = UInt8.random(in: 0 ... 255)
-                        }
-                    }
-                    randomData.copyBytes(to: buffer)
-                    return
-                }
-                defer { fclose(urandom) }
-                let bytesRead = fread(buffer.baseAddress!, 1, 32, urandom)
-                if bytesRead != 32 {
-                    // If we didn't read enough bytes, fill with random
-                    for i in bytesRead ..< 32 {
-                        buffer[i] = UInt8.random(in: 0 ... 255)
-                    }
-                }
-            #else
-                let status = SecRandomCopyBytes(kSecRandomDefault, 32, buffer.baseAddress!)
-                guard status == errSecSuccess else {
-                    // Fallback: use random bytes if SecRandomCopyBytes fails
-                    for i in 0 ..< 32 {
-                        buffer[i] = UInt8.random(in: 0 ... 255)
-                    }
-                    return
-                }
-            #endif
-        }
-        return base64URLEncode(Data(bytes))
+        // Use SymmetricKey from swift-crypto which provides cryptographically secure random bytes
+        // on all platforms (macOS, iOS, Linux) without fallback to insecure alternatives
+        let key = SymmetricKey(size: .bits256) // 256 bits = 32 bytes
+        let bytes = key.withUnsafeBytes { Data($0) }
+        return base64URLEncode(bytes)
     }
 
     private static func generateCodeChallenge(from verifier: String) -> String {

@@ -50,11 +50,14 @@ struct ExportProgressView: View {
             allowsMultipleSelection: false
         ) { result in
             if case let .success(urls) = result, let url = urls.first {
-                // Start accessing security-scoped resource
-                if url.startAccessingSecurityScopedResource() {
-                    configViewModel.outputDirectory = url
-                    // Note: We don't stop accessing here to keep the bookmark valid
+                // Start accessing security-scoped resource for initial validation
+                let didStartAccessing = url.startAccessingSecurityScopedResource()
+                defer {
+                    if didStartAccessing {
+                        url.stopAccessingSecurityScopedResource()
+                    }
                 }
+                configViewModel.outputDirectory = url
             }
         }
     }
