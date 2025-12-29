@@ -1,5 +1,5 @@
 {
-  "originHash" : "77aaf791fe722a59a03b8bd26d597f3c411eaa9a15541b70617638f11018bc75",
+  "originHash" : "cad4ffa75b2604df72c1041dbb7826b717d31cea429ee25ddf6307c3fcb9fa48",
   "pins" : [
     {
       "identity" : "komondor",
@@ -116,6 +116,15 @@
       "state" : {
         "revision" : "bc386b95f2a16ccd0150a8235e7c69eab2b866ca",
         "version" : "1.8.0"
+      }
+    },
+    {
+      "identity" : "swift-resvg",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/alexey1312/swift-resvg.git",
+      "state" : {
+        "branch" : "release/xcframework",
+        "revision" : "56cf084fdc6a3c7449e999a84c1b2f4aacf38aa4"
       }
     },
     {

@@ -1,10 +1,22 @@
+// swiftlint:disable file_length type_body_length
+import ExFigCore
+import ExFigKit
+import FigmaAPI
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Export Progress View
 
 /// View showing export progress with phases and logs.
 struct ExportProgressView: View {
-    @Bindable var viewModel: ExportViewModel
+    @Bindable var appState: AppState
+
+    // Convenience accessors
+    private var viewModel: ExportViewModel { appState.exportViewModel }
+    private var configViewModel: ConfigViewModel { appState.configViewModel }
+
+    // State for directory picker
+    @State private var showingDirectoryPicker = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,17 +27,188 @@ struct ExportProgressView: View {
 
             Divider()
 
-            // Content split view
-            HSplitView {
-                // Phases list
-                phasesView
-                    .frame(minWidth: 300)
+            // Content based on state
+            if case .idle = viewModel.state {
+                // Show export setup when idle
+                exportSetupView
+            } else {
+                // Content split view during/after export
+                HSplitView {
+                    // Phases list
+                    phasesView
+                        .frame(minWidth: 300)
 
-                // Log view
-                logView
-                    .frame(minWidth: 400)
+                    // Log view
+                    logView
+                        .frame(minWidth: 400)
+                }
             }
         }
+        .fileImporter(
+            isPresented: $showingDirectoryPicker,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            if case let .success(urls) = result, let url = urls.first {
+                // Start accessing security-scoped resource
+                if url.startAccessingSecurityScopedResource() {
+                    configViewModel.outputDirectory = url
+                    // Note: We don't stop accessing here to keep the bookmark valid
+                }
+            }
+        }
+    }
+
+    // MARK: - Export Setup View
+
+    private var exportSetupView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            // Icon
+            Image(systemName: "square.and.arrow.up.circle")
+                .font(.system(size: 64))
+                .foregroundStyle(.secondary)
+
+            // Title
+            Text("Ready to Export")
+                .font(.largeTitle)
+                .fontWeight(.medium)
+
+            // Validation status
+            validationStatusView
+
+            // Output directory picker
+            outputDirectorySection
+
+            // Enabled platforms summary
+            platformsSummaryView
+
+            // Start button
+            startExportButton
+
+            Spacer()
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private var validationStatusView: some View {
+        if !configViewModel.isValid {
+            VStack(spacing: 8) {
+                ForEach(configViewModel.validationErrors, id: \.self) { error in
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text(error)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
+    private var outputDirectorySection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Output Directory")
+                .font(.headline)
+
+            HStack {
+                Image(systemName: "folder.fill")
+                    .foregroundStyle(.secondary)
+
+                Text(configViewModel.outputDirectory.path)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
+                Spacer()
+
+                Button("Choose...") {
+                    showingDirectoryPicker = true
+                }
+            }
+            .padding()
+            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .frame(maxWidth: 500)
+    }
+
+    private var platformsSummaryView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Enabled Platforms")
+                .font(.headline)
+
+            if configViewModel.enabledPlatforms.isEmpty {
+                Text("No platforms enabled")
+                    .foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 16) {
+                    ForEach(configViewModel.enabledPlatforms) { config in
+                        VStack(spacing: 4) {
+                            Image(systemName: config.platform.iconName)
+                                .font(.title2)
+                            Text(config.platform.rawValue)
+                                .font(.caption)
+                        }
+                        .padding(12)
+                        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            }
+        }
+    }
+
+    private var startExportButton: some View {
+        Button {
+            startExport()
+        } label: {
+            HStack {
+                Image(systemName: "play.fill")
+                Text("Start Export")
+            }
+            .frame(minWidth: 150)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .disabled(!configViewModel.isValid || appState.figmaAuth == nil)
+        .padding(.top, 16)
+    }
+
+    private func startExport() {
+        guard let figmaAuth = appState.figmaAuth else {
+            viewModel.state = .failed("Not authenticated")
+            return
+        }
+
+        Task {
+            do {
+                let params = try configViewModel.buildParams(outputDirectory: configViewModel.outputDirectory)
+                let enabledAssets = getEnabledAssetTypes()
+
+                await viewModel.startExport(
+                    params: params,
+                    platforms: configViewModel.platforms,
+                    selectedAssets: enabledAssets,
+                    figmaAuth: figmaAuth
+                )
+            } catch {
+                viewModel.state = .failed(error.localizedDescription)
+            }
+        }
+    }
+
+    private func getEnabledAssetTypes() -> Set<AssetType> {
+        var types: Set<AssetType> = []
+        for platform in configViewModel.enabledPlatforms {
+            if platform.colorsEnabled { types.insert(.colors) }
+            if platform.iconsEnabled { types.insert(.icons) }
+            if platform.imagesEnabled { types.insert(.images) }
+            if platform.typographyEnabled { types.insert(.typography) }
+        }
+        return types
     }
 
     // MARK: - Header
@@ -286,23 +469,35 @@ struct LogEntryRow: View {
 
 // MARK: - Preview
 
-#Preview {
-    ExportProgressView(viewModel: {
-        let vm = ExportViewModel()
-        vm.phases = [
+#Preview("Idle State") {
+    ExportProgressView(appState: {
+        let state = AppState()
+        state.isAuthenticated = true
+        state.configViewModel.fileKey = "abc123"
+        state.configViewModel.platforms[0].isEnabled = true // iOS
+        return state
+    }())
+        .frame(width: 900, height: 500)
+}
+
+#Preview("Exporting") {
+    ExportProgressView(appState: {
+        let state = AppState()
+        state.isAuthenticated = true
+        state.exportViewModel.phases = [
             ExportPhase(name: "Export iOS", status: .completed, progress: 1.0, message: "Completed"),
             ExportPhase(name: "Export Android", status: .inProgress, progress: 0.6, message: "Downloading icons..."),
             ExportPhase(name: "Export Flutter", status: .pending, progress: 0, message: "Waiting..."),
         ]
-        vm.logs = [
+        state.exportViewModel.logs = [
             ExportLogEntry(timestamp: Date(), level: .info, message: "Starting export..."),
             ExportLogEntry(timestamp: Date(), level: .success, message: "iOS export completed"),
             ExportLogEntry(timestamp: Date(), level: .info, message: "Starting Android export..."),
         ]
-        vm.state = .exporting
-        vm.overallProgress = 0.5
-        vm.currentPhaseName = "Export Android"
-        return vm
+        state.exportViewModel.state = .exporting
+        state.exportViewModel.overallProgress = 0.5
+        state.exportViewModel.currentPhaseName = "Export Android"
+        return state
     }())
         .frame(width: 900, height: 500)
 }

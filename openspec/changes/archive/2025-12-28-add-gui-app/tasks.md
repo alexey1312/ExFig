@@ -225,3 +225,62 @@ and XCTest for UI tests.
 - `./bin/mise run app:test` - Run unit tests
 - `./bin/mise run app:uitest` - Run UI tests
 - `./bin/mise run app:test:all` - Run all tests
+
+## 10. Real Export Integration (Track 3)
+
+- [x] 10.1 Move Loaders to ExFigKit (IconsLoader, ImagesLoader, ColorsVariablesLoader, etc.)
+- [x] 10.2 Create `ExportCoordinator` actor for GUI export orchestration
+- [x] 10.3 Wire `ExportViewModel.startExport()` to `ExportCoordinator`
+- [x] 10.4 Implement `ConfigViewModel.buildParams()` to convert GUI config to `Params`
+- [x] 10.5 Wire up export flow from UI (start button, directory picker, platform selection)
+- [x] 10.6 Update `ExportProgressView` to use `AppState` for full config access
+
+**Implemented:**
+
+- **ExportCoordinator** (`Projects/ExFigStudio/Sources/Services/ExportCoordinator.swift`)
+  - Actor orchestrating real export using ExFigKit loaders
+  - `exportAll()` dispatches to `exportColors()`, `exportIcons()`, `exportImages()`, `exportTypography()`
+  - Uses `GUIProgressReporter` for progress updates
+  - Currently exports with simulated file write (TODOs for full platform exporter wiring)
+
+- **ConfigViewModel.buildParams()** (`Projects/ExFigStudio/Sources/ViewModels/ConfigViewModel.swift`)
+  - JSON dictionary construction + JSONDecoder pattern to work around synthesized initializers
+  - Converts GUI platform configs to proper `Params.iOS`, `Params.Android`, etc.
+  - Helper methods: `buildFigmaJSON()`, `buildCommonJSON()`, `buildIOSJSON()`, etc.
+
+- **ExportProgressView** (`Projects/ExFigStudio/Sources/Views/Export/ExportProgressView.swift`)
+  - Now takes `@Bindable var appState: AppState` instead of just `ExportViewModel`
+  - Export setup UI when idle: validation status, directory picker, platforms summary
+  - Start button triggers `startExport()` which builds params and calls coordinator
+  - Uses `.fileImporter` for sandboxed directory selection with security-scoped resources
+
+- **ExportViewModel.startExport()** (`Projects/ExFigStudio/Sources/ViewModels/ExportViewModel.swift`)
+  - New signature: `startExport(params:platforms:selectedAssets:figmaAuth:)`
+  - Creates `FigmaClient` from `FigmaAuth`, instantiates `ExportCoordinator`
+  - Converts GUI `Platform` enum to `ExFigCore.Platform`
+
+**Key Implementation Notes:**
+
+1. **JSON-based Params construction** — `Params` structs have internal synthesized initializers, so GUI uses JSON dictionary → JSONDecoder pattern:
+   ```swift
+   var json: [String: Any] = [:]
+   json["figma"] = buildFigmaJSON()
+   json["common"] = buildCommonJSON()
+   // ...
+   let data = try JSONSerialization.data(withJSONObject: json)
+   return try JSONDecoder().decode(Params.self, from: data)
+   ```
+
+2. **Type disambiguation** — ExFigStudio has local `Platform` enum conflicting with `ExFigCore.Platform`:
+   - `ExportCoordinator` uses `ExFigCore.Platform` explicitly in all method signatures
+   - `ExportViewModel` converts via `ExFigCore.Platform(rawValue:)`
+   - `ExportLogEntry.Level.color` uses `SwiftUI.Color` to avoid conflict with `ExFigCore.Color`
+
+3. **Security-scoped resources** — Directory picker uses `startAccessingSecurityScopedResource()` for sandbox compliance
+
+**Verification:**
+
+- `swift build` ✅
+- `xcodebuild -scheme ExFigStudio` ✅
+- `mise lint` ✅
+- `mise format` ✅

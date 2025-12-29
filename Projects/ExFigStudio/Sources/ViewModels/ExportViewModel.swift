@@ -1,4 +1,6 @@
+import ExFigCore
 import ExFigKit
+import FigmaAPI
 import Foundation
 import SwiftUI
 
@@ -37,7 +39,7 @@ struct ExportLogEntry: Identifiable, Sendable {
         case success
         case debug
 
-        var color: Color {
+        var color: SwiftUI.Color {
             switch self {
             case .info: .primary
             case .warning: .orange
@@ -111,17 +113,29 @@ final class ExportViewModel {
 
     // MARK: - Actions
 
-    /// Start the export process.
-    func startExport(platforms: [Platform], assets: [AssetItem]) async {
+    /// Start the export process using the real ExportCoordinator.
+    ///
+    /// - Parameters:
+    ///   - params: Configuration parameters built from GUI settings.
+    ///   - platforms: Platform configurations from ConfigViewModel.
+    ///   - selectedAssets: Set of asset types to export.
+    ///   - figmaAuth: Authentication for Figma API.
+    func startExport(
+        params: Params,
+        platforms: [PlatformConfig],
+        selectedAssets: Set<AssetType>,
+        figmaAuth: FigmaAuth
+    ) async {
         state = .preparing
         phases = []
         logs = []
         overallProgress = 0
 
-        // Create phases for each platform
-        for platform in platforms {
+        // Create phases for enabled platforms
+        let enabledPlatforms = platforms.filter(\.isEnabled)
+        for config in enabledPlatforms {
             phases.append(ExportPhase(
-                name: "Export \(platform.rawValue)",
+                name: "Export \(config.platform.rawValue)",
                 status: .pending,
                 progress: 0,
                 message: "Waiting..."
@@ -130,51 +144,48 @@ final class ExportViewModel {
 
         state = .exporting
 
-        // Simulate export process (replace with actual ExFigKit integration)
         exportTask = Task {
-            var successCount = 0
-            var failCount = 0
+            let client = figmaAuth.makeClient()
+            let reporter = GUIProgressReporter(viewModel: self)
+            let coordinator = ExportCoordinator(client: client, progressReporter: reporter)
 
-            for (index, platform) in platforms.enumerated() {
-                guard !Task.isCancelled else {
-                    state = .cancelled
-                    return
-                }
-
-                // Update phase status
-                phases[index].status = .inProgress
-                phases[index].message = "Loading assets..."
-                currentPhaseName = platform.rawValue
-
-                // Simulate progress
-                for step in stride(from: 0.0, to: 1.0, by: 0.1) {
-                    guard !Task.isCancelled else { break }
-
-                    try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
-                    phases[index].progress = step
-                    overallProgress = (Double(index) + step) / Double(platforms.count)
-                }
-
-                if Task.isCancelled {
-                    phases[index].status = .cancelled
-                    phases[index].message = "Cancelled"
-                } else {
-                    phases[index].status = .completed
-                    phases[index].progress = 1.0
-                    phases[index].message = "Completed"
-                    successCount += 1
-
-                    logs.append(ExportLogEntry(
-                        timestamp: Date(),
-                        level: .success,
-                        message: "\(platform.rawValue) export completed"
-                    ))
-                }
+            // Convert GUI Platform to ExFigCore.Platform
+            let corePlatforms = enabledPlatforms.compactMap { config -> ExFigCore.Platform? in
+                ExFigCore.Platform(rawValue: config.platform.rawValue.lowercased())
             }
 
-            if !Task.isCancelled {
+            do {
+                let results = try await coordinator.exportAll(
+                    params: params,
+                    platforms: corePlatforms,
+                    assets: selectedAssets
+                )
+
+                // Aggregate results
+                let successCount = results.filter(\.success).count
+                let failCount = results.filter { !$0.success }.count
+
+                // Update phase statuses based on results
+                for (index, result) in results.enumerated() where index < phases.count {
+                    if result.success {
+                        phases[index].status = .completed
+                        phases[index].progress = 1.0
+                        phases[index].message = "Exported \(result.count) items"
+                    } else {
+                        phases[index].status = .failed
+                        phases[index].message = result.errorMessage ?? "Failed"
+                    }
+                }
+
                 overallProgress = 1.0
                 state = .completed(success: successCount, failed: failCount)
+            } catch {
+                state = .failed(error.localizedDescription)
+                logs.append(ExportLogEntry(
+                    timestamp: Date(),
+                    level: .error,
+                    message: error.localizedDescription
+                ))
             }
         }
 

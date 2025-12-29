@@ -168,7 +168,7 @@ struct MainView: View {
         case .config:
             ConfigEditorView(viewModel: appState.configViewModel)
         case .export:
-            ExportProgressView(viewModel: appState.exportViewModel)
+            ExportProgressView(appState: appState)
         case .history:
             ExportHistoryView(viewModel: appState.historyViewModel)
         case nil:

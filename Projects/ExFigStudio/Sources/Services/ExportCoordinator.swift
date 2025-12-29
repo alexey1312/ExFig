@@ -8,17 +8,17 @@ import Logging
 
 /// Result of an export operation.
 struct ExportResult: Sendable {
-    let platform: Platform
+    let platform: ExFigCore.Platform
     let assetType: AssetType
     let count: Int
     let success: Bool
     let errorMessage: String?
 
-    static func success(platform: Platform, assetType: AssetType, count: Int) -> ExportResult {
+    static func success(platform: ExFigCore.Platform, assetType: AssetType, count: Int) -> ExportResult {
         ExportResult(platform: platform, assetType: assetType, count: count, success: true, errorMessage: nil)
     }
 
-    static func failure(platform: Platform, assetType: AssetType, error: Error) -> ExportResult {
+    static func failure(platform: ExFigCore.Platform, assetType: AssetType, error: Error) -> ExportResult {
         ExportResult(
             platform: platform,
             assetType: assetType,
@@ -28,7 +28,7 @@ struct ExportResult: Sendable {
         )
     }
 
-    static func skipped(platform: Platform, assetType: AssetType) -> ExportResult {
+    static func skipped(platform: ExFigCore.Platform, assetType: AssetType) -> ExportResult {
         ExportResult(
             platform: platform,
             assetType: assetType,
@@ -66,7 +66,7 @@ actor ExportCoordinator {
     /// Export all selected asset types to all selected platforms.
     func exportAll(
         params: Params,
-        platforms: [Platform],
+        platforms: [ExFigCore.Platform],
         assets: Set<AssetType>
     ) async throws -> [ExportResult] {
         var results: [ExportResult] = []
@@ -96,7 +96,7 @@ actor ExportCoordinator {
 
     // MARK: - Colors Export
 
-    func exportColors(params: Params, platforms: [Platform]) async throws -> [ExportResult] {
+    func exportColors(params: Params, platforms: [ExFigCore.Platform]) async throws -> [ExportResult] {
         var results: [ExportResult] = []
 
         await progressReporter.beginPhase("Loading colors from Figma")
@@ -144,7 +144,7 @@ actor ExportCoordinator {
 
     // MARK: - Icons Export
 
-    func exportIcons(params: Params, platforms: [Platform]) async throws -> [ExportResult] {
+    func exportIcons(params: Params, platforms: [ExFigCore.Platform]) async throws -> [ExportResult] {
         var results: [ExportResult] = []
 
         await progressReporter.beginPhase("Loading icons from Figma")
@@ -182,7 +182,7 @@ actor ExportCoordinator {
 
     // MARK: - Images Export
 
-    func exportImages(params: Params, platforms: [Platform]) async throws -> [ExportResult] {
+    func exportImages(params: Params, platforms: [ExFigCore.Platform]) async throws -> [ExportResult] {
         var results: [ExportResult] = []
 
         await progressReporter.beginPhase("Loading images from Figma")
@@ -220,7 +220,7 @@ actor ExportCoordinator {
 
     // MARK: - Typography Export
 
-    func exportTypography(params: Params, platforms: [Platform]) async throws -> [ExportResult] {
+    func exportTypography(params: Params, platforms: [ExFigCore.Platform]) async throws -> [ExportResult] {
         var results: [ExportResult] = []
 
         await progressReporter.beginPhase("Loading typography from Figma")

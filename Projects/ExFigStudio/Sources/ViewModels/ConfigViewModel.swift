@@ -1,6 +1,28 @@
+// swiftlint:disable file_length
+import ExFigCore
 import ExFigKit
 import Foundation
 import SwiftUI
+
+// MARK: - Config Error
+
+/// Errors that can occur when building export configuration.
+enum ConfigError: LocalizedError {
+    case invalidConfiguration([String])
+    case missingOutputDirectory
+    case paramsEncodingFailed(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case let .invalidConfiguration(errors):
+            "Invalid configuration: \(errors.joined(separator: ", "))"
+        case .missingOutputDirectory:
+            "Output directory must be specified"
+        case let .paramsEncodingFailed(error):
+            "Failed to encode params: \(error.localizedDescription)"
+        }
+    }
+}
 
 // MARK: - Platform Type
 
@@ -16,7 +38,7 @@ enum Platform: String, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .ios: "apple.logo"
-        case .android: "android.logo" // This doesn't exist, we'll use a generic one
+        case .android: "rectangle.stack"
         case .flutter: "f.circle"
         case .web: "globe"
         }
@@ -172,8 +194,8 @@ struct PlatformConfig: Identifiable {
                     description: "Path for design tokens", type: .path
                 ),
                 ExportOption(
-                    enabled: true, name: "Format", value: "css",
-                    description: "Output format for design tokens", type: .picker(["css", "scss", "json", "js"])
+                    enabled: true, name: "CSS File", value: "colors.css",
+                    description: "CSS file for colors", type: .path
                 ),
                 ExportOption(
                     enabled: true, name: "Icons Format", value: "svg",
@@ -200,6 +222,11 @@ final class ConfigViewModel {
     var nameValidateRegexp: String = ""
     var nameReplaceRegexp: String = ""
     var nameStyle: NameStyle = .original
+
+    // Output directory for exports
+    var outputDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Desktop")
+        .appendingPathComponent("ExFigExport")
 
     // Validation
     var validationErrors: [String] = []
@@ -249,7 +276,7 @@ final class ConfigViewModel {
 
         // Figma configuration
         lines.append("figma:")
-        lines.append("  fileId: \"\(fileKey)\"")
+        lines.append("  lightFileId: \"\(fileKey)\"")
         lines.append("")
 
         // Common configuration
@@ -322,7 +349,7 @@ final class ConfigViewModel {
 
     private func applyValue(key: String, value: String, section: String) {
         switch section {
-        case "figma" where key == "fileId":
+        case "figma" where key == "lightFileId":
             fileKey = value
         case "common" where key == "figmaFrameName":
             figmaFrameName = value
@@ -344,6 +371,250 @@ final class ConfigViewModel {
             platforms[index].isEnabled.toggle()
         }
     }
+
+    // MARK: - Build Params
+
+    /// Convert GUI configuration to Params struct for export.
+    ///
+    /// Uses JSON encoding/decoding to construct Params since the
+    /// synthesized memberwise initializers are internal.
+    ///
+    /// - Parameter outputDirectory: Directory where exported files will be written.
+    /// - Returns: Params struct ready for ExportCoordinator.
+    /// - Throws: ConfigError if configuration is invalid.
+    func buildParams(outputDirectory: URL) throws -> Params {
+        guard isValid else {
+            throw ConfigError.invalidConfiguration(validationErrors)
+        }
+
+        // Build JSON structure that matches Params
+        var paramsDict: [String: Any] = [:]
+
+        // Figma config
+        paramsDict["figma"] = [
+            "lightFileId": fileKey,
+        ]
+
+        // Common config
+        if !figmaFrameName.isEmpty || !nameValidateRegexp.isEmpty {
+            var commonDict: [String: Any] = [:]
+            if !figmaFrameName.isEmpty {
+                commonDict["icons"] = [
+                    "figmaFrameName": figmaFrameName,
+                    "nameValidateRegexp": nameValidateRegexp.isEmpty ? nil : nameValidateRegexp,
+                    "nameReplaceRegexp": nameReplaceRegexp.isEmpty ? nil : nameReplaceRegexp,
+                ].compactMapValues { $0 }
+            }
+            if !commonDict.isEmpty {
+                paramsDict["common"] = commonDict
+            }
+        }
+
+        // iOS config
+        if let iosConfig = buildIOSDict(outputDirectory: outputDirectory) {
+            paramsDict["ios"] = iosConfig
+        }
+
+        // Android config
+        if let androidConfig = buildAndroidDict(outputDirectory: outputDirectory) {
+            paramsDict["android"] = androidConfig
+        }
+
+        // Flutter config
+        if let flutterConfig = buildFlutterDict(outputDirectory: outputDirectory) {
+            paramsDict["flutter"] = flutterConfig
+        }
+
+        // Web config
+        if let webConfig = buildWebDict(outputDirectory: outputDirectory) {
+            paramsDict["web"] = webConfig
+        }
+
+        // Convert to Params via JSON
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: paramsDict)
+            return try JSONDecoder().decode(Params.self, from: jsonData)
+        } catch {
+            throw ConfigError.paramsEncodingFailed(error)
+        }
+    }
+
+    // MARK: - Config Dict Builders
+
+    private func buildIOSDict(outputDirectory: URL) -> [String: Any]? {
+        guard let config = platforms.first(where: { $0.platform == .ios && $0.isEnabled }) else {
+            return nil
+        }
+
+        let assetsFolder = config.optionValue("assetsfolder") ?? "Assets.xcassets"
+
+        var dict: [String: Any] = [
+            "xcodeprojPath": ".",
+            "target": "App",
+            "xcassetsPath": outputDirectory.appendingPathComponent(assetsFolder).path,
+            "xcassetsInMainBundle": true,
+        ]
+
+        if config.colorsEnabled {
+            let useColorAssets = config.optionBool("usecolorassets", default: true)
+            dict["colors"] = [
+                "useColorAssets": useColorAssets,
+                "assetsFolder": "Colors",
+                "nameStyle": nameStyle.yamlValue,
+            ].compactMapValues { $0 }
+        }
+
+        if config.iconsEnabled {
+            dict["icons"] = [
+                "format": "pdf",
+                "assetsFolder": "Icons",
+                "nameStyle": nameStyle.yamlValue,
+            ].compactMapValues { $0 }
+        }
+
+        if config.imagesEnabled {
+            dict["images"] = [
+                "assetsFolder": "Illustrations",
+                "nameStyle": nameStyle.yamlValue,
+                "scales": [1, 2, 3],
+            ].compactMapValues { $0 }
+        }
+
+        if config.typographyEnabled {
+            dict["typography"] = [
+                "generateLabels": false,
+                "nameStyle": nameStyle.yamlValue,
+            ].compactMapValues { $0 }
+        }
+
+        return dict
+    }
+
+    private func buildAndroidDict(outputDirectory: URL) -> [String: Any]? {
+        guard let config = platforms.first(where: { $0.platform == .android && $0.isEnabled }) else {
+            return nil
+        }
+
+        let resourcesPath = config.optionValue("resourcespath") ?? "app/src/main/res"
+
+        var dict: [String: Any] = [
+            "mainRes": outputDirectory.appendingPathComponent(resourcesPath).path,
+        ]
+
+        if config.colorsEnabled {
+            dict["colors"] = [
+                "xmlOutputFileName": config.optionValue("colorsxml") ?? "colors.xml",
+            ].compactMapValues { $0 }
+        }
+
+        if config.iconsEnabled {
+            dict["icons"] = [
+                "output": "drawable",
+            ]
+        }
+
+        if config.imagesEnabled {
+            dict["images"] = [
+                "output": "drawable",
+                "format": "webp",
+            ]
+        }
+
+        if config.typographyEnabled {
+            dict["typography"] = [
+                "nameStyle": "snakeCase",
+            ]
+        }
+
+        return dict
+    }
+
+    private func buildFlutterDict(outputDirectory: URL) -> [String: Any]? {
+        guard let config = platforms.first(where: { $0.platform == .flutter && $0.isEnabled }) else {
+            return nil
+        }
+
+        let libPath = config.optionValue("outputpath") ?? "lib/generated"
+
+        var dict: [String: Any] = [
+            "output": outputDirectory.appendingPathComponent(libPath).path,
+        ]
+
+        if config.colorsEnabled {
+            dict["colors"] = [
+                "output": "colors.dart",
+                "className": config.optionValue("colorsclass") ?? "AppColors",
+            ]
+        }
+
+        if config.iconsEnabled {
+            let assetsPath = config.optionValue("assetspath") ?? "assets/icons"
+            dict["icons"] = [
+                "output": outputDirectory.appendingPathComponent(assetsPath).path,
+            ]
+        }
+
+        if config.imagesEnabled {
+            let assetsPath = config.optionValue("assetspath") ?? "assets/images"
+            dict["images"] = [
+                "output": outputDirectory.appendingPathComponent(assetsPath).path,
+            ]
+        }
+
+        return dict
+    }
+
+    private func buildWebDict(outputDirectory: URL) -> [String: Any]? {
+        guard let config = platforms.first(where: { $0.platform == .web && $0.isEnabled }) else {
+            return nil
+        }
+
+        let outputPath = config.optionValue("outputpath") ?? "src/design-tokens"
+
+        var dict: [String: Any] = [
+            "output": outputDirectory.appendingPathComponent(outputPath).path,
+        ]
+
+        if config.colorsEnabled {
+            dict["colors"] = [
+                "outputDirectory": "colors",
+                "cssFileName": "colors.css",
+            ]
+        }
+
+        if config.iconsEnabled {
+            dict["icons"] = [
+                "outputDirectory": "icons",
+            ]
+        }
+
+        if config.imagesEnabled {
+            dict["images"] = [
+                "outputDirectory": "images",
+            ]
+        }
+
+        return dict
+    }
+}
+
+// MARK: - PlatformConfig Helpers
+
+extension PlatformConfig {
+    /// Get option value by normalized name (lowercase, no spaces).
+    func optionValue(_ normalizedName: String) -> String? {
+        let option = options.first { opt in
+            let normalized = opt.name.lowercased().replacingOccurrences(of: " ", with: "")
+            return normalized == normalizedName && opt.enabled
+        }
+        return option?.value
+    }
+
+    /// Get boolean option value by normalized name.
+    func optionBool(_ normalizedName: String, default defaultValue: Bool = false) -> Bool {
+        guard let value = optionValue(normalizedName) else { return defaultValue }
+        return value.lowercased() == "true"
+    }
 }
 
 // MARK: - Name Style
@@ -356,4 +627,24 @@ enum NameStyle: String, CaseIterable, Identifiable {
     case kebabCase = "kebab-case"
 
     var id: String { rawValue }
+
+    /// YAML-compatible value for JSON encoding.
+    var yamlValue: String? {
+        switch self {
+        case .original: nil
+        case .camelCase: "camelCase"
+        case .snakeCase: "snakeCase"
+        case .kebabCase: "kebabCase"
+        }
+    }
+
+    /// Convert to ExFigCore.NameStyle for direct use.
+    var paramsNameStyle: ExFigCore.NameStyle? {
+        switch self {
+        case .original: nil
+        case .camelCase: .camelCase
+        case .snakeCase: .snakeCase
+        case .kebabCase: .kebabCase
+        }
+    }
 }
