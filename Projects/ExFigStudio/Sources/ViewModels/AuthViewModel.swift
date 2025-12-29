@@ -28,7 +28,7 @@ enum AuthMethod: String, CaseIterable, Identifiable {
 enum AuthState: Equatable {
     case notAuthenticated
     case authenticating
-    case authenticated(email: String?)
+    case authenticated(user: FigmaUser?)
     case error(String)
 
     static func == (lhs: AuthState, rhs: AuthState) -> Bool {
@@ -105,12 +105,12 @@ final class AuthViewModel {
         do {
             // Validate token by making a test API call
             let trimmedToken = personalToken.trimmingCharacters(in: .whitespacesAndNewlines)
-            let isValid = try await validateToken(trimmedToken)
+            let user = try await validateToken(trimmedToken)
 
-            if isValid {
+            if user != nil {
                 // Store token securely
                 try tokenStorage.save(Data(trimmedToken.utf8), forKey: "figma_personal_token")
-                authState = .authenticated(email: nil)
+                authState = .authenticated(user: user)
                 onAuthenticationComplete?(.personalToken(trimmedToken))
             } else {
                 authState = .error("Invalid token - please check and try again")
@@ -122,24 +122,28 @@ final class AuthViewModel {
         isValidatingToken = false
     }
 
-    /// Validate a personal access token by making a test API call.
-    private func validateToken(_ token: String) async throws -> Bool {
-        // Create a simple GET request to /v1/me endpoint
+    /// Validate a personal access token and fetch user info.
+    private func validateToken(_ token: String) async throws -> FigmaUser? {
+        // Create a GET request to /v1/me endpoint
         guard let url = URL(string: "https://api.figma.com/v1/me") else {
-            return false
+            return nil
         }
 
         var request = URLRequest(url: url)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue(token, forHTTPHeaderField: "X-Figma-Token")
         request.timeoutInterval = 15
 
-        let (_, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            return false
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200
+        else {
+            return nil
         }
 
-        return httpResponse.statusCode == 200
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try? decoder.decode(FigmaUser.self, from: data)
     }
 
     // MARK: - OAuth Auth
@@ -156,7 +160,7 @@ final class AuthViewModel {
         let config = OAuthConfig(
             clientId: oauthClientId,
             clientSecret: oauthClientSecret,
-            scopes: [.filesRead]
+            scopes: [.filesRead, .currentUserRead]
         )
 
         let client = OAuthClient(config: config)
@@ -187,7 +191,10 @@ final class AuthViewModel {
             let tokenResponse = try await client.handleCallback(url)
             try await manager.store(tokenResponse)
 
-            authState = .authenticated(email: nil)
+            // Fetch user info with the new token
+            let user = try await fetchUserInfo(accessToken: tokenResponse.accessToken)
+
+            authState = .authenticated(user: user)
             onAuthenticationComplete?(.oauth(manager))
         } catch {
             authState = .error("OAuth failed: \(error.localizedDescription)")
@@ -195,6 +202,29 @@ final class AuthViewModel {
 
         // Clear pending state
         pendingState = nil
+    }
+
+    /// Fetch current user info using OAuth access token.
+    private func fetchUserInfo(accessToken: String) async throws -> FigmaUser? {
+        guard let url = URL(string: "https://api.figma.com/v1/me") else {
+            return nil
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200
+        else {
+            return nil
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try? decoder.decode(FigmaUser.self, from: data)
     }
 
     /// Cancel OAuth flow.
@@ -213,9 +243,15 @@ final class AuthViewModel {
             do {
                 let tokenData = try tokenStorage.load(forKey: "figma_personal_token")
                 if let token = String(data: tokenData, encoding: .utf8) {
-                    authState = .authenticated(email: nil)
-                    onAuthenticationComplete?(.personalToken(token))
-                    return
+                    // Fetch user info to validate token is still valid
+                    let user = try? await validateToken(token)
+                    if user != nil {
+                        authState = .authenticated(user: user)
+                        onAuthenticationComplete?(.personalToken(token))
+                        return
+                    }
+                    // Token invalid, clean up
+                    try? tokenStorage.delete(forKey: "figma_personal_token")
                 }
             } catch {
                 // Token not found or invalid, continue to check OAuth
@@ -224,7 +260,13 @@ final class AuthViewModel {
 
         // Check for OAuth token
         if let manager = tokenManager, await manager.isAuthenticated() {
-            authState = .authenticated(email: nil)
+            // Try to fetch user info with current token
+            if let accessToken = await manager.currentAccessToken() {
+                let user = try? await fetchUserInfo(accessToken: accessToken)
+                authState = .authenticated(user: user)
+            } else {
+                authState = .authenticated(user: nil)
+            }
             onAuthenticationComplete?(.oauth(manager))
             return
         }

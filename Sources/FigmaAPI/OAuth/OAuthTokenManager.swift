@@ -117,6 +117,14 @@ public actor OAuthTokenManager {
         return try loadToken()
     }
 
+    /// Get the current access token if available (non-throwing).
+    public func currentAccessToken() -> String? {
+        if let cached = cachedToken {
+            return cached.accessToken
+        }
+        return try? loadToken().accessToken
+    }
+
     /// Sign out and delete stored tokens.
     public func signOut() throws {
         try storage.delete(forKey: storageKey)

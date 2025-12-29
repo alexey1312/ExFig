@@ -32,6 +32,7 @@ public enum OAuthScope: String, Sendable, CaseIterable {
     case fileCommentsWrite = "file_comments:write"
     case libraryAnalyticsRead = "library_analytics:read"
     case webhooksWrite = "webhooks:write"
+    case currentUserRead = "current_user:read"
 
     /// OpenID Connect scopes
     case openid

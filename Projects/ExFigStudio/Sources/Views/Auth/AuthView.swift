@@ -161,12 +161,47 @@ struct AuthView: View {
 
     private var authenticatedContent: some View {
         VStack(spacing: 16) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.green)
+            if case let .authenticated(user) = viewModel.authState, let user {
+                // User avatar
+                AsyncImage(url: URL(string: user.imgUrl)) { phase in
+                    switch phase {
+                    case let .success(image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    case .failure:
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                    default:
+                        ProgressView()
+                    }
+                }
+                .frame(width: 64, height: 64)
+                .clipShape(Circle())
 
-            Text("Connected to Figma")
-                .font(.headline)
+                VStack(spacing: 4) {
+                    Text(user.handle)
+                        .font(.headline)
+
+                    if let email = user.email {
+                        Text(email)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Label("Connected", systemImage: "checkmark.circle.fill")
+                    .font(.callout)
+                    .foregroundStyle(.green)
+            } else {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.green)
+
+                Text("Connected to Figma")
+                    .font(.headline)
+            }
 
             Button("Sign Out") {
                 Task {

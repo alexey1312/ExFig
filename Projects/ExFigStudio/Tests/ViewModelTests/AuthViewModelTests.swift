@@ -105,24 +105,19 @@ struct AuthViewModelTests {
 
     // MARK: - Existing Auth Check Tests
 
-    @Test("Check existing auth finds stored personal token")
-    func checkExistingPersonalToken() async {
+    @Test("Check existing auth with invalid token cleans up and stays unauthenticated")
+    func checkExistingInvalidToken() async {
         let storage = MockSecureStorage()
-        try? storage.save(Data("existing-token".utf8), forKey: "figma_personal_token")
+        // Store an invalid token that will fail validation
+        try? storage.save(Data("invalid-token".utf8), forKey: "figma_personal_token")
 
         let viewModel = AuthViewModel(tokenStorage: storage)
-        var receivedAuth = false
-        viewModel.onAuthenticationComplete = { _ in
-            receivedAuth = true
-        }
 
         await viewModel.checkExistingAuth()
 
-        if case .authenticated = viewModel.authState {
-            #expect(receivedAuth)
-        } else {
-            Issue.record("Expected authenticated state when token exists")
-        }
+        // Invalid token should be cleaned up and state should be notAuthenticated
+        #expect(viewModel.authState == .notAuthenticated)
+        #expect(!storage.exists(forKey: "figma_personal_token"))
     }
 
     @Test("Check existing auth with no stored token stays unauthenticated")
@@ -159,15 +154,17 @@ struct AuthMethodTests {
 struct AuthStateTests {
     @Test("AuthState equality works correctly")
     func equalityWorks() {
+        let user1 = FigmaUser(id: "1", handle: "user1", imgUrl: "https://example.com/1.png", email: "a@example.com")
+        let user2 = FigmaUser(id: "2", handle: "user2", imgUrl: "https://example.com/2.png", email: "b@example.com")
+
         #expect(AuthState.notAuthenticated == AuthState.notAuthenticated)
         #expect(AuthState.authenticating == AuthState.authenticating)
-        #expect(AuthState.authenticated(email: "test@example.com") == AuthState
-            .authenticated(email: "test@example.com"))
-        #expect(AuthState.authenticated(email: nil) == AuthState.authenticated(email: nil))
+        #expect(AuthState.authenticated(user: user1) == AuthState.authenticated(user: user1))
+        #expect(AuthState.authenticated(user: nil) == AuthState.authenticated(user: nil))
         #expect(AuthState.error("Error 1") == AuthState.error("Error 1"))
 
         #expect(AuthState.notAuthenticated != AuthState.authenticating)
-        #expect(AuthState.authenticated(email: "a") != AuthState.authenticated(email: "b"))
+        #expect(AuthState.authenticated(user: user1) != AuthState.authenticated(user: user2))
         #expect(AuthState.error("Error 1") != AuthState.error("Error 2"))
     }
 }
