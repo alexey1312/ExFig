@@ -129,8 +129,8 @@ final class DownloadImageLoader: Sendable {
 
     private func loadComponents(fileId: String) async throws -> [Component] {
         // Check pre-fetched components first (batch optimization)
-        if let preFetched = PreFetchedComponentsStorage.components,
-           let components = preFetched.components(for: fileId)
+        if let provider = ComponentsProviderStorage.provider,
+           let components = provider.components(for: fileId)
         {
             return components
         }

@@ -287,7 +287,7 @@ extension ExFigCommand {
             let collector = themeAttributesCollector
             let result: BatchResult = await SharedThemeAttributesStorage.$collector.withValue(collector) {
                 await BatchProgressViewStorage.$progressView.withValue(progressView) {
-                    await PreFetchedNodesStorage.$nodes.withValue(preFetchedNodes) {
+                    await NodesProviderStorage.$provider.withValue(preFetchedNodes) {
                         await withBatchContext(
                             preFetchedVersions: preFetchedVersions,
                             preFetchedComponents: preFetchedComponents,
@@ -500,7 +500,7 @@ extension ExFigCommand {
             // All three contexts
             case let (versions?, components?, cache?):
                 await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await PreFetchedComponentsStorage.$components.withValue(components) {
+                    await ComponentsProviderStorage.$provider.withValue(components) {
                         await SharedGranularCacheStorage.$cache.withValue(cache) {
                             await operation()
                         }
@@ -510,7 +510,7 @@ extension ExFigCommand {
             // Versions + components
             case let (versions?, components?, nil):
                 await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await PreFetchedComponentsStorage.$components.withValue(components) {
+                    await ComponentsProviderStorage.$provider.withValue(components) {
                         await operation()
                     }
                 }
@@ -525,7 +525,7 @@ extension ExFigCommand {
 
             // Components + cache
             case let (nil, components?, cache?):
-                await PreFetchedComponentsStorage.$components.withValue(components) {
+                await ComponentsProviderStorage.$provider.withValue(components) {
                     await SharedGranularCacheStorage.$cache.withValue(cache) {
                         await operation()
                     }
@@ -539,7 +539,7 @@ extension ExFigCommand {
 
             // Only components
             case let (nil, components?, nil):
-                await PreFetchedComponentsStorage.$components.withValue(components) {
+                await ComponentsProviderStorage.$provider.withValue(components) {
                     await operation()
                 }
 

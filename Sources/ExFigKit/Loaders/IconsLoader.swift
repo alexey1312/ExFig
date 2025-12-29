@@ -1,40 +1,69 @@
 import ExFigCore
-import ExFigKit
 import FigmaAPI
 import Foundation
 import Logging
 
 /// Output type for icons loading operations.
-typealias IconsLoaderOutput = (light: [ImagePack], dark: [ImagePack]?)
+public typealias IconsLoaderOutput = (light: [ImagePack], dark: [ImagePack]?)
 
 /// Output type for icons loading with granular cache tracking.
-struct IconsLoaderResultWithHashes {
-    let light: [ImagePack]
-    let dark: [ImagePack]?
+public struct IconsLoaderResultWithHashes: Sendable {
+    public let light: [ImagePack]
+    public let dark: [ImagePack]?
     /// Computed hashes for granular cache update (fileId → (nodeId → hash)).
-    let computedHashes: [String: [NodeId: String]]
+    public let computedHashes: [String: [NodeId: String]]
     /// Whether all icons were skipped by granular cache.
-    let allSkipped: Bool
+    public let allSkipped: Bool
     /// All icon names before filtering (for template generation).
-    let allNames: [String]
+    public let allNames: [String]
+
+    public init(
+        light: [ImagePack],
+        dark: [ImagePack]?,
+        computedHashes: [String: [NodeId: String]],
+        allSkipped: Bool,
+        allNames: [String]
+    ) {
+        self.light = light
+        self.dark = dark
+        self.computedHashes = computedHashes
+        self.allSkipped = allSkipped
+        self.allNames = allNames
+    }
 }
 
 /// Configuration for loading icons, supporting both single-entry and multi-entry modes.
-struct IconsLoaderConfig: Sendable {
+public struct IconsLoaderConfig: Sendable {
     /// Figma frame name to load icons from.
-    let frameName: String
+    public let frameName: String
 
     /// Icon format for iOS (pdf or svg). Android always uses svg.
-    let format: Params.VectorFormat?
+    public let format: Params.VectorFormat?
 
     /// Render mode for iOS icons.
-    let renderMode: XcodeRenderMode?
-    let renderModeDefaultSuffix: String?
-    let renderModeOriginalSuffix: String?
-    let renderModeTemplateSuffix: String?
+    public let renderMode: XcodeRenderMode?
+    public let renderModeDefaultSuffix: String?
+    public let renderModeOriginalSuffix: String?
+    public let renderModeTemplateSuffix: String?
+
+    public init(
+        frameName: String,
+        format: Params.VectorFormat?,
+        renderMode: XcodeRenderMode?,
+        renderModeDefaultSuffix: String?,
+        renderModeOriginalSuffix: String?,
+        renderModeTemplateSuffix: String?
+    ) {
+        self.frameName = frameName
+        self.format = format
+        self.renderMode = renderMode
+        self.renderModeDefaultSuffix = renderModeDefaultSuffix
+        self.renderModeOriginalSuffix = renderModeOriginalSuffix
+        self.renderModeTemplateSuffix = renderModeTemplateSuffix
+    }
 
     /// Creates config for a specific iOS icons entry.
-    static func forIOS(entry: Params.iOS.IconsEntry, params: Params) -> IconsLoaderConfig {
+    public static func forIOS(entry: Params.iOS.IconsEntry, params: Params) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: entry.format,
@@ -46,7 +75,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates config for Android (no iOS-specific fields needed).
-    static func forAndroid(entry: Params.Android.IconsEntry, params: Params) -> IconsLoaderConfig {
+    public static func forAndroid(entry: Params.Android.IconsEntry, params: Params) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -58,7 +87,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates config for Flutter (no iOS-specific fields needed).
-    static func forFlutter(entry: Params.Flutter.IconsEntry, params: Params) -> IconsLoaderConfig {
+    public static func forFlutter(entry: Params.Flutter.IconsEntry, params: Params) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -70,7 +99,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates config for Web (no iOS-specific fields needed).
-    static func forWeb(entry: Params.Web.IconsEntry, params: Params) -> IconsLoaderConfig {
+    public static func forWeb(entry: Params.Web.IconsEntry, params: Params) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -82,7 +111,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates default config using common.icons.figmaFrameName or "Icons".
-    static func defaultConfig(params: Params) -> IconsLoaderConfig {
+    public static func defaultConfig(params: Params) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -95,10 +124,10 @@ struct IconsLoaderConfig: Sendable {
 }
 
 /// Loads icons from Figma files.
-final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
+public final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
     private let config: IconsLoaderConfig
 
-    init(
+    public init(
         client: Client,
         params: Params,
         platform: Platform,
@@ -114,7 +143,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
     }
 
     /// Loads icons from Figma, supporting both single-file and separate light/dark file modes.
-    func load(
+    public func load(
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> IconsLoaderOutput {
@@ -130,7 +159,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
     /// When `granularCacheManager` is set, this method computes hashes for each icon
     /// component and filters to only changed icons. Returns computed hashes for
     /// cache update after successful export.
-    func loadWithGranularCache(
+    public func loadWithGranularCache(
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> IconsLoaderResultWithHashes {
@@ -210,7 +239,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         }
 
         guard let lightIcons = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         return (lightIcons, results["dark"])
@@ -375,7 +404,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
 
         // Extract light and dark icons
         guard let lightResult else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         let darkResult = results.first(where: { $0.key == "dark" })

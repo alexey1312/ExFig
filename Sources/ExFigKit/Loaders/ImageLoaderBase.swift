@@ -1,38 +1,47 @@
-import ExFigKit
-
 // swiftlint:disable file_length type_body_length
 import ExFigCore
 import FigmaAPI
 import Foundation
 import Logging
 
-// BatchProgressCallback is imported from ExFigKit
-
 /// Result containing loaded images and optional granular cache data.
-struct ImageLoaderResult {
-    let light: [ImagePack]
-    let dark: [ImagePack]?
+public struct ImageLoaderResult: Sendable {
+    public let light: [ImagePack]
+    public let dark: [ImagePack]?
 
     /// Node hashes computed during load (for granular cache update).
     /// Map of fileId → (nodeId → hash).
-    let computedHashes: [String: [NodeId: String]]
+    public let computedHashes: [String: [NodeId: String]]
 
     /// Whether granular cache filtered all nodes (nothing to export).
-    let skippedByGranularCache: Bool
+    public let skippedByGranularCache: Bool
+
+    public init(
+        light: [ImagePack],
+        dark: [ImagePack]?,
+        computedHashes: [String: [NodeId: String]],
+        skippedByGranularCache: Bool
+    ) {
+        self.light = light
+        self.dark = dark
+        self.computedHashes = computedHashes
+        self.skippedByGranularCache = skippedByGranularCache
+    }
 }
 
 /// Base class for loading images from Figma.
 /// Provides shared functionality for IconsLoader and ImagesLoader.
-class ImageLoaderBase: @unchecked Sendable {
-    let client: Client
-    let params: Params
-    let platform: Platform
-    let logger: Logger
+open class ImageLoaderBase: @unchecked Sendable {
+    public let client: Client
+    public let params: Params
+    public let platform: Platform
+    public let logger: Logger
 
-    /// Optional granular cache manager for per-node change detection.
-    var granularCacheManager: GranularCacheManager?
+    /// Optional granular cache provider for per-node change detection.
+    /// Set by CLI when using --experimental-granular-cache, nil for GUI or standard mode.
+    public var granularCacheProvider: GranularCacheProvider?
 
-    init(client: Client, params: Params, platform: Platform, logger: Logger) {
+    public init(client: Client, params: Params, platform: Platform, logger: Logger) {
         self.client = client
         self.params = params
         self.platform = platform
@@ -42,7 +51,7 @@ class ImageLoaderBase: @unchecked Sendable {
     // MARK: - Component Loading
 
     /// Fetches image components from a Figma file filtered by frame name and platform.
-    func fetchImageComponents(
+    public func fetchImageComponents(
         fileId: String,
         frameName: String,
         filter: String? = nil
@@ -63,22 +72,34 @@ class ImageLoaderBase: @unchecked Sendable {
     }
 
     /// Result of fetching components with granular cache filtering.
-    struct GranularFilterResult {
-        let components: [NodeId: Component]
-        let computedHashes: [NodeId: String]
-        let allSkipped: Bool
+    public struct GranularFilterResult: Sendable {
+        public let components: [NodeId: Component]
+        public let computedHashes: [NodeId: String]
+        public let allSkipped: Bool
         /// All component names before filtering (for template generation).
-        let allComponentNames: [String]
+        public let allComponentNames: [String]
+
+        public init(
+            components: [NodeId: Component],
+            computedHashes: [NodeId: String],
+            allSkipped: Bool,
+            allComponentNames: [String]
+        ) {
+            self.components = components
+            self.computedHashes = computedHashes
+            self.allSkipped = allSkipped
+            self.allComponentNames = allComponentNames
+        }
     }
 
     /// Fetches components with optional granular cache filtering.
     ///
-    /// If `granularCacheManager` is set, this will:
+    /// If `granularCacheProvider` is set, this will:
     /// 1. Fetch all matching components
     /// 2. Compute hashes for each component
     /// 3. Filter to only components that have changed
     /// 4. Return computed hashes for cache update
-    func fetchImageComponentsWithGranularCache(
+    public func fetchImageComponentsWithGranularCache(
         fileId: String,
         frameName: String,
         filter: String? = nil
@@ -96,7 +117,7 @@ class ImageLoaderBase: @unchecked Sendable {
         // Extract all component names for template generation (sorted to match AssetsProcessor order)
         let allComponentNames = allComponents.values.map(\.name).sorted()
 
-        guard let manager = granularCacheManager, !allComponents.isEmpty else {
+        guard let provider = granularCacheProvider, !allComponents.isEmpty else {
             // No granular cache - return all components
             return GranularFilterResult(
                 components: allComponents,
@@ -107,7 +128,7 @@ class ImageLoaderBase: @unchecked Sendable {
         }
 
         // Apply granular cache filtering
-        let result = try await manager.filterChangedComponents(
+        let result = try await provider.filterChangedComponents(
             fileId: fileId,
             components: allComponents
         )
@@ -144,7 +165,7 @@ class ImageLoaderBase: @unchecked Sendable {
     /// When using `useSingleFile` mode with dark mode suffix, if either the light
     /// or dark version of a component changes, both versions are included in the result.
     /// This ensures that the `ImagesProcessor` validation passes (it requires matching pairs).
-    func fetchImageComponentsWithGranularCacheAndPairing(
+    public func fetchImageComponentsWithGranularCacheAndPairing(
         fileId: String,
         frameName: String,
         filter: String? = nil,
@@ -155,14 +176,14 @@ class ImageLoaderBase: @unchecked Sendable {
         )
         let allComponentNames = allComponents.values.map(\.name).sorted()
 
-        guard let manager = granularCacheManager, !allComponents.isEmpty else {
+        guard let provider = granularCacheProvider, !allComponents.isEmpty else {
             return GranularFilterResult(
                 components: allComponents, computedHashes: [:],
                 allSkipped: false, allComponentNames: allComponentNames
             )
         }
 
-        let result = try await manager.filterChangedComponents(
+        let result = try await provider.filterChangedComponents(
             fileId: fileId, components: allComponents
         )
 
@@ -222,7 +243,7 @@ class ImageLoaderBase: @unchecked Sendable {
     }
 
     /// Loads vector images (SVG/PDF) from Figma.
-    func loadVectorImages(
+    public func loadVectorImages(
         fileId: String,
         frameName: String,
         params: FormatParams,
@@ -237,7 +258,7 @@ class ImageLoaderBase: @unchecked Sendable {
         )
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         // Component name must not be empty
@@ -295,33 +316,47 @@ class ImageLoaderBase: @unchecked Sendable {
     }
 
     /// Result of loading vector images with granular cache tracking.
-    struct VectorImagesWithHashesResult {
-        let packs: [ImagePack]
-        let computedHashes: [NodeId: String]
-        let allSkipped: Bool
+    public struct VectorImagesWithHashesResult: Sendable {
+        public let packs: [ImagePack]
+        public let computedHashes: [NodeId: String]
+        public let allSkipped: Bool
         /// All component names before filtering (for template generation).
-        let allNames: [String]
+        public let allNames: [String]
+
+        public init(packs: [ImagePack], computedHashes: [NodeId: String], allSkipped: Bool, allNames: [String]) {
+            self.packs = packs
+            self.computedHashes = computedHashes
+            self.allSkipped = allSkipped
+            self.allNames = allNames
+        }
     }
 
     /// Result of loading PNG/raster images with granular cache tracking.
-    struct PNGImagesWithHashesResult {
-        let packs: [ImagePack]
-        let computedHashes: [NodeId: String]
-        let allSkipped: Bool
+    public struct PNGImagesWithHashesResult: Sendable {
+        public let packs: [ImagePack]
+        public let computedHashes: [NodeId: String]
+        public let allSkipped: Bool
         /// All component names before filtering (for template generation).
-        let allNames: [String]
+        public let allNames: [String]
+
+        public init(packs: [ImagePack], computedHashes: [NodeId: String], allSkipped: Bool, allNames: [String]) {
+            self.packs = packs
+            self.computedHashes = computedHashes
+            self.allSkipped = allSkipped
+            self.allNames = allNames
+        }
     }
 
     /// Loads vector images with granular cache tracking.
     ///
-    /// When `granularCacheManager` is set, this method:
+    /// When `granularCacheProvider` is set, this method:
     /// 1. Fetches all matching components
     /// 2. Computes content hashes for granular change detection
     /// 3. Filters to only changed components (if cache exists)
     /// 4. Returns computed hashes for cache update after export
     ///
     /// - Returns: Image packs, computed hashes, and whether all were skipped.
-    func loadVectorImagesWithGranularCache( // swiftlint:disable:this function_body_length
+    public func loadVectorImagesWithGranularCache( // swiftlint:disable:this function_body_length
         fileId: String,
         frameName: String,
         params: FormatParams,
@@ -345,7 +380,7 @@ class ImageLoaderBase: @unchecked Sendable {
         var imagesDict = filterResult.components
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         // Component name must not be empty
@@ -422,7 +457,7 @@ class ImageLoaderBase: @unchecked Sendable {
     ///   - darkModeSuffix: The suffix used to identify dark mode components (e.g., "-dark").
     ///   - onBatchProgress: Progress callback.
     /// - Returns: Image packs with paired light/dark versions, computed hashes, and skip status.
-    func loadVectorImagesWithGranularCacheAndPairing( // swiftlint:disable:this function_body_length
+    public func loadVectorImagesWithGranularCacheAndPairing( // swiftlint:disable:this function_body_length
         fileId: String,
         frameName: String,
         params: FormatParams,
@@ -450,7 +485,7 @@ class ImageLoaderBase: @unchecked Sendable {
         var imagesDict = filterResult.components
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         // Component name must not be empty
@@ -514,7 +549,7 @@ class ImageLoaderBase: @unchecked Sendable {
     }
 
     /// Loads PNG images from Figma at multiple scales.
-    func loadPNGImages(
+    public func loadPNGImages(
         fileId: String,
         frameName: String,
         filter: String? = nil,
@@ -529,7 +564,7 @@ class ImageLoaderBase: @unchecked Sendable {
         )
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         // Calculate total batches across all scales for accurate progress
@@ -576,14 +611,14 @@ class ImageLoaderBase: @unchecked Sendable {
 
     /// Loads PNG/raster images with granular cache tracking.
     ///
-    /// When `granularCacheManager` is set, this method:
+    /// When `granularCacheProvider` is set, this method:
     /// 1. Fetches all matching components
     /// 2. Computes content hashes for granular change detection
     /// 3. Filters to only changed components (if cache exists)
     /// 4. Returns computed hashes for cache update after export
     ///
     /// - Returns: Image packs, computed hashes, and whether all were skipped.
-    func loadPNGImagesWithGranularCache(
+    public func loadPNGImagesWithGranularCache(
         fileId: String,
         frameName: String,
         filter: String? = nil,
@@ -607,7 +642,7 @@ class ImageLoaderBase: @unchecked Sendable {
         let imagesDict = filterResult.components
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         // Calculate total batches across all scales for accurate progress
@@ -661,7 +696,7 @@ class ImageLoaderBase: @unchecked Sendable {
     // MARK: - Scale Helpers
 
     /// Returns valid scales for the given platform, optionally filtered by custom scales.
-    func getScales(customScales: [Double]?) -> [Double] {
+    public func getScales(customScales: [Double]?) -> [Double] {
         let validScales: [Double] = platform == .android ? [1, 2, 3, 1.5, 4.0] : [1, 2, 3]
         let filtered = customScales?.filter { validScales.contains($0) } ?? []
         return filtered.isEmpty ? validScales : filtered
@@ -670,7 +705,7 @@ class ImageLoaderBase: @unchecked Sendable {
     // MARK: - Dark Mode Helpers
 
     /// Splits image packs into light and dark based on suffix.
-    func splitByDarkMode(
+    public func splitByDarkMode(
         _ packs: [ImagePack],
         darkSuffix: String
     ) -> (light: [ImagePack], dark: [ImagePack]) {
@@ -690,8 +725,8 @@ class ImageLoaderBase: @unchecked Sendable {
 
     private func loadComponents(fileId: String) async throws -> [Component] {
         // Check pre-fetched components first (batch optimization)
-        if let preFetched = PreFetchedComponentsStorage.components,
-           let components = preFetched.components(for: fileId)
+        if let provider = ComponentsProviderStorage.provider,
+           let components = provider.components(for: fileId)
         {
             logger.debug("Using pre-fetched components for \(fileId) (\(components.count) components)")
             return components
@@ -909,12 +944,14 @@ public extension Component {
 // MARK: - Thread-safe Counter
 
 /// Thread-safe counter for tracking completed batches across concurrent tasks.
-final class CompletedBatchCounter: @unchecked Sendable {
+public final class CompletedBatchCounter: @unchecked Sendable {
     private let lock = NSLock()
     private var count = 0
 
+    public init() {}
+
     /// Increments the counter and returns the new value.
-    func increment() -> Int {
+    public func increment() -> Int {
         lock.lock()
         defer { lock.unlock() }
         count += 1

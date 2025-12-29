@@ -3,20 +3,13 @@ import ExFigKit
 import FigmaAPI
 import Foundation
 
-/// Result of filtering components through granular cache.
-struct GranularCacheResult: Sendable {
-    /// Components that have changed and need re-export.
-    let changedComponents: [NodeId: Component]
-
-    /// Computed hashes for all components (for cache update).
-    let computedHashes: [NodeId: String]
-}
-
 /// Manages per-node hash computation and change detection for granular caching.
 ///
 /// This class fetches node documents from Figma, computes content hashes,
 /// and compares them with cached hashes to determine which nodes have changed.
-final class GranularCacheManager: Sendable {
+///
+/// Conforms to `GranularCacheProvider` protocol for use with ExFigKit loaders.
+final class GranularCacheManager: GranularCacheProvider, Sendable {
     private let client: Client
     private let cache: ImageTrackingCache
 
@@ -41,9 +34,9 @@ final class GranularCacheManager: Sendable {
     func filterChangedComponents(
         fileId: String,
         components: [NodeId: Component]
-    ) async throws -> GranularCacheResult {
+    ) async throws -> GranularCacheFilterResult {
         guard !components.isEmpty else {
-            return GranularCacheResult(changedComponents: [:], computedHashes: [:])
+            return GranularCacheFilterResult(changedComponents: [:], computedHashes: [:])
         }
 
         // Fetch node documents - check pre-fetched storage first
@@ -64,7 +57,7 @@ final class GranularCacheManager: Sendable {
             }
         }
 
-        return GranularCacheResult(
+        return GranularCacheFilterResult(
             changedComponents: changedComponents,
             computedHashes: computedHashes
         )
@@ -79,8 +72,8 @@ final class GranularCacheManager: Sendable {
         nodeIds: [NodeId]
     ) async throws -> [NodeId: Node] {
         // Check pre-fetched nodes first (batch optimization)
-        if let preFetched = PreFetchedNodesStorage.nodes,
-           let preFetchedNodes = preFetched.nodes(for: fileId)
+        if let provider = NodesProviderStorage.provider,
+           let preFetchedNodes = provider.nodes(for: fileId)
         {
             // Filter to only requested nodeIds
             let filteredNodes = preFetchedNodes.filter { nodeIds.contains($0.key) }

@@ -1,14 +1,13 @@
 import ExFigCore
-import ExFigKit
 import FigmaAPI
 
 /// Loads color variables from Figma
-final class ColorsVariablesLoader: Sendable {
+public final class ColorsVariablesLoader: Sendable {
     private let client: Client
     private let variableParams: Params.Common.VariablesColors?
     private let filter: String?
 
-    init(
+    public init(
         client: Client,
         figmaParams: Params.Figma,
         variableParams: Params.Common.VariablesColors?,
@@ -19,16 +18,16 @@ final class ColorsVariablesLoader: Sendable {
         self.filter = filter
     }
 
-    func load() async throws -> ColorsLoaderOutput {
+    public func load() async throws -> ColorsLoaderOutput {
         guard
             let tokensFileId = variableParams?.tokensFileId,
             let tokensCollectionName = variableParams?.tokensCollectionName
-        else { throw ExFigError.custom(errorString: "tokensFileId is nil") }
+        else { throw ExFigKitError.custom(errorString: "tokensFileId is nil") }
 
         let meta = try await loadVariables(fileId: tokensFileId)
 
         guard let tokenCollection = meta.variableCollections.first(where: { $0.value.name == tokensCollectionName })
-        else { throw ExFigError.custom(errorString: "tokensCollectionName not found") }
+        else { throw ExFigKitError.custom(errorString: "tokensCollectionName not found") }
 
         let variables: [Variable] = tokenCollection.value.variableIds.compactMap { tokenId in
             guard let variableMeta = meta.variables[tokenId] else { return nil }

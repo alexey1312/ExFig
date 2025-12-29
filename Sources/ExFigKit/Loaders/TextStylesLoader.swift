@@ -1,18 +1,17 @@
 import ExFigCore
-import ExFigKit
 import FigmaAPI
 
 /// Loads text styles from Figma
-final class TextStylesLoader: Sendable {
+public final class TextStylesLoader: Sendable {
     private let client: Client
     private let params: Params.Figma
 
-    init(client: Client, params: Params.Figma) {
+    public init(client: Client, params: Params.Figma) {
         self.client = client
         self.params = params
     }
 
-    func load() async throws -> [TextStyle] {
+    public func load() async throws -> [TextStyle] {
         try await loadTextStyles(fileId: params.lightFileId)
     }
 
@@ -20,7 +19,7 @@ final class TextStylesLoader: Sendable {
         let styles = try await loadStyles(fileId: fileId)
 
         guard !styles.isEmpty else {
-            throw ExFigError.stylesNotFound
+            throw ExFigKitError.stylesNotFound
         }
 
         let nodes = try await loadNodes(fileId: fileId, nodeIds: styles.map(\.nodeId))

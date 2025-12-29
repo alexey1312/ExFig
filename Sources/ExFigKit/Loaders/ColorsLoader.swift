@@ -1,18 +1,17 @@
 import ExFigCore
-import ExFigKit
 import FigmaAPI
 
 // swiftlint:disable:next large_tuple
-typealias ColorsLoaderOutput = (light: [Color], dark: [Color]?, lightHC: [Color]?, darkHC: [Color]?)
+public typealias ColorsLoaderOutput = (light: [Color], dark: [Color]?, lightHC: [Color]?, darkHC: [Color]?)
 
 /// Loads colors from Figma
-final class ColorsLoader: Sendable {
+public final class ColorsLoader: Sendable {
     private let client: Client
     private let figmaParams: Params.Figma
     private let colorParams: Params.Common.Colors?
     private let filter: String?
 
-    init(
+    public init(
         client: Client,
         figmaParams: Params.Figma,
         colorParams: Params.Common.Colors?,
@@ -24,7 +23,7 @@ final class ColorsLoader: Sendable {
         self.filter = filter
     }
 
-    func load() async throws -> ColorsLoaderOutput {
+    public func load() async throws -> ColorsLoaderOutput {
         guard let useSingleFile = colorParams?.useSingleFile, useSingleFile else {
             return try await loadColorsFromLightAndDarkFile()
         }
@@ -66,7 +65,7 @@ final class ColorsLoader: Sendable {
         }
 
         guard let lightColors = results["light"] else {
-            throw ExFigError.stylesNotFound
+            throw ExFigKitError.stylesNotFound
         }
 
         return (
@@ -118,14 +117,13 @@ final class ColorsLoader: Sendable {
         }
 
         guard !styles.isEmpty else {
-            throw ExFigError.stylesNotFound
+            throw ExFigKitError.stylesNotFound
         }
 
         let nodes = try await loadNodes(fileId: fileId, nodeIds: styles.map(\.nodeId))
         return nodesAndStylesToColors(nodes: nodes, styles: styles)
     }
 
-    /// Соотносит массив Style и Node чтобы получит массив Color
     private func nodesAndStylesToColors(nodes: [NodeId: Node], styles: [Style]) -> [Color] {
         styles.compactMap { style -> Color? in
             guard let node = nodes[style.nodeId] else { return nil }
@@ -154,7 +152,7 @@ final class ColorsLoader: Sendable {
 
     private func useStyle(_ style: Style) -> Bool {
         guard !style.description.isEmpty else {
-            return true // Цвет общий
+            return true
         }
         return !style.description.contains("none")
     }

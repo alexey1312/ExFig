@@ -1,5 +1,3 @@
-import ExFigKit
-
 // swiftlint:disable file_length
 import ExFigCore
 import FigmaAPI
@@ -7,35 +5,47 @@ import Foundation
 import Logging
 
 /// Image format for loader configuration.
-enum ImagesLoaderFormat: Sendable {
+public enum ImagesLoaderFormat: Sendable {
     case svg
     case png
     case webp
 }
 
 /// Source format for fetching from Figma API.
-enum ImagesSourceFormat: Sendable {
+public enum ImagesSourceFormat: Sendable {
     case png // Download PNG from Figma API (default)
     case svg // Download SVG and rasterize locally with resvg
 }
 
 /// Configuration for loading images from a specific Figma frame.
-struct ImagesLoaderConfig: Sendable {
+public struct ImagesLoaderConfig: Sendable {
     /// Figma frame name to load images from.
-    let frameName: String
+    public let frameName: String
 
     /// Custom scales for raster images.
-    let scales: [Double]?
+    public let scales: [Double]?
 
     /// Image format (for Android/Flutter). iOS always uses PNG.
-    let format: ImagesLoaderFormat?
+    public let format: ImagesLoaderFormat?
 
     /// Source format for fetching from Figma API.
     /// When .svg, downloads SVG and rasterizes locally with resvg.
-    let sourceFormat: ImagesSourceFormat
+    public let sourceFormat: ImagesSourceFormat
+
+    public init(
+        frameName: String,
+        scales: [Double]?,
+        format: ImagesLoaderFormat?,
+        sourceFormat: ImagesSourceFormat
+    ) {
+        self.frameName = frameName
+        self.scales = scales
+        self.format = format
+        self.sourceFormat = sourceFormat
+    }
 
     /// Creates config for a specific iOS images entry.
-    static func forIOS(entry: Params.iOS.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    public static func forIOS(entry: Params.iOS.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
@@ -45,7 +55,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates config for a specific Android images entry.
-    static func forAndroid(entry: Params.Android.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    public static func forAndroid(entry: Params.Android.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
@@ -55,7 +65,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates config for a specific Flutter images entry.
-    static func forFlutter(entry: Params.Flutter.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    public static func forFlutter(entry: Params.Flutter.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
@@ -65,7 +75,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates config for a specific Web images entry.
-    static func forWeb(entry: Params.Web.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    public static func forWeb(entry: Params.Web.ImagesEntry, params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
@@ -75,7 +85,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates default config from params (for backward compatibility).
-    static func defaultConfig(params: Params) -> ImagesLoaderConfig {
+    public static func defaultConfig(params: Params) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
@@ -109,25 +119,39 @@ struct ImagesLoaderConfig: Sendable {
 }
 
 /// Output type for images loading operations.
-typealias ImagesLoaderOutput = (light: [ImagePack], dark: [ImagePack]?)
+public typealias ImagesLoaderOutput = (light: [ImagePack], dark: [ImagePack]?)
 
 /// Output type for images loading with granular cache tracking (vector images only).
-struct ImagesLoaderResultWithHashes {
-    let light: [ImagePack]
-    let dark: [ImagePack]?
+public struct ImagesLoaderResultWithHashes: Sendable {
+    public let light: [ImagePack]
+    public let dark: [ImagePack]?
     /// Computed hashes for granular cache update (fileId → (nodeId → hash)).
-    let computedHashes: [String: [NodeId: String]]
+    public let computedHashes: [String: [NodeId: String]]
     /// Whether all images were skipped by granular cache.
-    let allSkipped: Bool
+    public let allSkipped: Bool
     /// All image names before filtering (for template generation).
-    let allNames: [String]
+    public let allNames: [String]
+
+    public init(
+        light: [ImagePack],
+        dark: [ImagePack]?,
+        computedHashes: [String: [NodeId: String]],
+        allSkipped: Bool,
+        allNames: [String]
+    ) {
+        self.light = light
+        self.dark = dark
+        self.computedHashes = computedHashes
+        self.allSkipped = allSkipped
+        self.allNames = allNames
+    }
 }
 
 /// Loads images (illustrations) from Figma files.
-final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:disable:this type_body_length
+public final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:disable:this type_body_length
     private let config: ImagesLoaderConfig
 
-    init(
+    public init(
         client: Client,
         params: Params,
         platform: Platform,
@@ -180,12 +204,12 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
     }
 
     /// The source format to use when fetching from Figma API.
-    var sourceFormat: ImagesSourceFormat {
+    public var sourceFormat: ImagesSourceFormat {
         config.sourceFormat
     }
 
     /// Loads images from Figma, supporting both single-file and separate light/dark file modes.
-    func load(
+    public func load(
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> ImagesLoaderOutput {
@@ -205,7 +229,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
     /// When `granularCacheManager` is set, this method computes hashes for each image
     /// component and filters to only changed images. Returns computed hashes for
     /// cache update after successful export.
-    func loadWithGranularCache(
+    public func loadWithGranularCache(
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> ImagesLoaderResultWithHashes {
@@ -317,7 +341,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         guard let lightImages = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         return (lightImages, results["dark"])
@@ -353,7 +377,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         guard let lightPacks = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         return (lightPacks, results["dark"])
@@ -535,7 +559,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
 
         // Extract light and dark packs
         guard let lightResult else {
-            throw ExFigError.componentsNotFound
+            throw ExFigKitError.componentsNotFound
         }
 
         let darkResult = results.first(where: { $0.key == "dark" })
