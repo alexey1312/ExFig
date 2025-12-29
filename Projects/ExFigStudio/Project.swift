@@ -78,7 +78,9 @@ let project = Project(
             sources: .sourceFilesList(globs: [
                 .glob(.relativeToRoot("Sources/FigmaAPI/**/*.swift")),
             ]),
-            dependencies: []
+            dependencies: [
+                .external(name: "Crypto"),
+            ]
         ),
 
         // MARK: - ExFigKit (shared library for CLI and GUI)
@@ -98,6 +100,135 @@ let project = Project(
                 .target(name: "ExFigCore"),
                 .external(name: "Yams"),
                 .external(name: "Logging"),
+            ]
+        ),
+
+        // MARK: - Resvg (Swift wrapper for CResvg binary)
+
+        .target(
+            name: "Resvg",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.resvg",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/Resvg/**/*.swift")),
+            ]),
+            dependencies: [
+                .xcframework(path: .relativeToRoot("Frameworks/Resvg.xcframework")),
+            ],
+            settings: .settings(base: [
+                // Link iconv required by Resvg
+                "OTHER_LDFLAGS": ["-liconv"],
+            ])
+        ),
+
+        // MARK: - SVGKit (SVG parsing and code generation)
+
+        .target(
+            name: "SVGKit",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.svgkit",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/SVGKit/**/*.swift")),
+            ]),
+            dependencies: [
+                .external(name: "Logging"),
+                .target(name: "Resvg"),
+            ]
+        ),
+
+        // MARK: - XcodeExport (iOS/macOS export)
+
+        .target(
+            name: "XcodeExport",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.xcodeexport",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/XcodeExport/**/*.swift")),
+            ]),
+            resources: .resources([
+                .folderReference(path: .relativeToRoot("Sources/XcodeExport/Resources")),
+            ]),
+            dependencies: [
+                .target(name: "ExFigCore"),
+                .external(name: "Stencil"),
+                .external(name: "StencilSwiftKit"),
+            ]
+        ),
+
+        // MARK: - AndroidExport (Android export)
+
+        .target(
+            name: "AndroidExport",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.androidexport",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/AndroidExport/**/*.swift")),
+            ]),
+            resources: .resources([
+                .folderReference(path: .relativeToRoot("Sources/AndroidExport/Resources")),
+            ]),
+            dependencies: [
+                .target(name: "ExFigCore"),
+                .target(name: "SVGKit"),
+                .external(name: "Stencil"),
+                .external(name: "StencilSwiftKit"),
+                .external(name: "OrderedCollections"),
+            ]
+        ),
+
+        // MARK: - FlutterExport (Flutter export)
+
+        .target(
+            name: "FlutterExport",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.flutterexport",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/FlutterExport/**/*.swift")),
+            ]),
+            resources: .resources([
+                .folderReference(path: .relativeToRoot("Sources/FlutterExport/Resources")),
+            ]),
+            dependencies: [
+                .target(name: "ExFigCore"),
+                .external(name: "Stencil"),
+                .external(name: "StencilSwiftKit"),
+            ]
+        ),
+
+        // MARK: - WebExport (Web/React export)
+
+        .target(
+            name: "WebExport",
+            destinations: .macOS,
+            product: .framework,
+            bundleId: "io.exfig.webexport",
+            deploymentTargets: .macOS("15.0"),
+            infoPlist: .default,
+            sources: .sourceFilesList(globs: [
+                .glob(.relativeToRoot("Sources/WebExport/**/*.swift")),
+            ]),
+            resources: .resources([
+                .folderReference(path: .relativeToRoot("Sources/WebExport/Resources")),
+            ]),
+            dependencies: [
+                .target(name: "ExFigCore"),
+                .external(name: "Stencil"),
+                .external(name: "StencilSwiftKit"),
             ]
         ),
 
@@ -134,6 +265,13 @@ let project = Project(
                 .target(name: "ExFigKit"),
                 .target(name: "FigmaAPI"),
                 .target(name: "ExFigCore"),
+                .target(name: "XcodeExport"),
+                .target(name: "AndroidExport"),
+                .target(name: "FlutterExport"),
+                .target(name: "WebExport"),
+                .target(name: "SVGKit"),
+                .external(name: "WebP"),
+                .external(name: "LibPNG"),
             ]
         ),
 
