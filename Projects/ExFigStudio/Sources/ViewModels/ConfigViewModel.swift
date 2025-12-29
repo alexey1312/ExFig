@@ -194,8 +194,8 @@ struct PlatformConfig: Identifiable {
                     description: "Path for design tokens", type: .path
                 ),
                 ExportOption(
-                    enabled: true, name: "CSS File", value: "colors.css",
-                    description: "CSS file for colors", type: .path
+                    enabled: true, name: "Format", value: "css",
+                    description: "Output format for design tokens", type: .picker(["css", "scss", "json"])
                 ),
                 ExportOption(
                     enabled: true, name: "Icons Format", value: "svg",
@@ -276,7 +276,7 @@ final class ConfigViewModel {
 
         // Figma configuration
         lines.append("figma:")
-        lines.append("  lightFileId: \"\(fileKey)\"")
+        lines.append("  fileId: \"\(fileKey)\"")
         lines.append("")
 
         // Common configuration
@@ -349,7 +349,7 @@ final class ConfigViewModel {
 
     private func applyValue(key: String, value: String, section: String) {
         switch section {
-        case "figma" where key == "lightFileId":
+        case "figma" where key == "fileId" || key == "lightFileId":
             fileKey = value
         case "common" where key == "figmaFrameName":
             figmaFrameName = value
