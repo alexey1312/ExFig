@@ -1,4 +1,4 @@
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 import Foundation
 
 /// Generates Android Vector Drawable XML from parsed SVG
@@ -43,26 +43,7 @@ public struct VectorDrawableXMLGenerator: Sendable {
             lines.append("\(prefix)\(attr)\(suffix)")
         }
 
-        // Generate groups and root-level paths
-        if let groups = svg.groups, !groups.isEmpty {
-            // Collect paths that are inside groups (by path data)
-            let groupPathDatas = collectPathDatasFromGroups(groups)
-
-            // Generate root-level paths that are NOT inside any group (e.g., border rect)
-            for path in svg.paths where !groupPathDatas.contains(path.pathData) {
-                generatePath(path, into: &lines, indent: 1)
-            }
-
-            // Generate groups
-            for group in groups {
-                generateGroup(group, into: &lines, indent: 1)
-            }
-        } else {
-            // No groups - generate all flattened paths
-            for path in svg.paths {
-                generatePath(path, into: &lines, indent: 1)
-            }
-        }
+        generateElements(svg, into: &lines)
 
         // Close vector
         lines.append("</vector>")
@@ -72,6 +53,35 @@ public struct VectorDrawableXMLGenerator: Sendable {
 
     // MARK: - Private Methods
 
+    private func generateElements(_ svg: ParsedSVG, into lines: inout [String]) {
+        if !svg.elements.isEmpty {
+            for element in svg.elements {
+                switch element {
+                case let .path(path):
+                    generatePath(path, into: &lines, indent: 1)
+                case let .group(group):
+                    generateGroup(group, into: &lines, indent: 1)
+                }
+            }
+        } else if let groups = svg.groups, !groups.isEmpty {
+            generateLegacyElements(svg, groups: groups, into: &lines)
+        } else {
+            for path in svg.paths {
+                generatePath(path, into: &lines, indent: 1)
+            }
+        }
+    }
+
+    private func generateLegacyElements(_ svg: ParsedSVG, groups: [SVGGroup], into lines: inout [String]) {
+        let groupPathDatas = collectPathDatasFromGroups(groups)
+        for path in svg.paths where !groupPathDatas.contains(path.pathData) {
+            generatePath(path, into: &lines, indent: 1)
+        }
+        for group in groups {
+            generateGroup(group, into: &lines, indent: 1)
+        }
+    }
+
     private func generateGroup(_ group: SVGGroup, into lines: inout [String], indent: Int) {
         let indentStr = String(repeating: "    ", count: indent)
         let groupAttrs = transformAttributes(from: group.transform)
@@ -79,11 +89,24 @@ public struct VectorDrawableXMLGenerator: Sendable {
         appendGroupOpenTag(groupAttrs, indentStr: indentStr, into: &lines)
         appendClipPath(group.clipPath, indent: indent, into: &lines)
 
-        for path in group.paths {
-            generatePath(path, into: &lines, indent: indent + 1)
-        }
-        for childGroup in group.children {
-            generateGroup(childGroup, into: &lines, indent: indent + 1)
+        // Generate elements in document order (preserves correct layer order)
+        if !group.elements.isEmpty {
+            for element in group.elements {
+                switch element {
+                case let .path(path):
+                    generatePath(path, into: &lines, indent: indent + 1)
+                case let .group(childGroup):
+                    generateGroup(childGroup, into: &lines, indent: indent + 1)
+                }
+            }
+        } else {
+            // Fallback for backward compatibility when elements array is empty
+            for path in group.paths {
+                generatePath(path, into: &lines, indent: indent + 1)
+            }
+            for childGroup in group.children {
+                generateGroup(childGroup, into: &lines, indent: indent + 1)
+            }
         }
 
         lines.append("\(indentStr)</group>")
@@ -292,13 +315,24 @@ public struct VectorDrawableXMLGenerator: Sendable {
     }
 
     private func generateLinearGradient(_ gradient: SVGLinearGradient, into lines: inout [String], indentStr: String) {
+        // Apply gradientTransform if present
+        var x1 = gradient.x1
+        var y1 = gradient.y1
+        var x2 = gradient.x2
+        var y2 = gradient.y2
+
+        if let transform = gradient.gradientTransform {
+            (x1, y1) = applyTransformToPoint(x: x1, y: y1, transform: transform)
+            (x2, y2) = applyTransformToPoint(x: x2, y: y2, transform: transform)
+        }
+
         lines.append("\(indentStr)<aapt:attr name=\"android:fillColor\">")
         lines.append("\(indentStr)    <gradient")
         lines.append("\(indentStr)        android:type=\"linear\"")
-        lines.append("\(indentStr)        android:startX=\"\(formatDouble(gradient.x1))\"")
-        lines.append("\(indentStr)        android:startY=\"\(formatDouble(gradient.y1))\"")
-        lines.append("\(indentStr)        android:endX=\"\(formatDouble(gradient.x2))\"")
-        lines.append("\(indentStr)        android:endY=\"\(formatDouble(gradient.y2))\">")
+        lines.append("\(indentStr)        android:startX=\"\(formatDouble(x1))\"")
+        lines.append("\(indentStr)        android:startY=\"\(formatDouble(y1))\"")
+        lines.append("\(indentStr)        android:endX=\"\(formatDouble(x2))\"")
+        lines.append("\(indentStr)        android:endY=\"\(formatDouble(y2))\">")
 
         for stop in gradient.stops {
             let argb = colorToARGB(stop.color, opacity: stop.opacity)
@@ -312,12 +346,25 @@ public struct VectorDrawableXMLGenerator: Sendable {
     }
 
     private func generateRadialGradient(_ gradient: SVGRadialGradient, into lines: inout [String], indentStr: String) {
+        // Apply gradientTransform if present
+        var cx = gradient.cx
+        var cy = gradient.cy
+        var r = gradient.r
+
+        if let transform = gradient.gradientTransform {
+            (cx, cy) = applyTransformToPoint(x: cx, y: cy, transform: transform)
+            // Scale radius by average of scaleX and scaleY (approximation for non-uniform scaling)
+            let scaleX = transform.scaleX ?? 1.0
+            let scaleY = transform.scaleY ?? 1.0
+            r *= (abs(scaleX) + abs(scaleY)) / 2.0
+        }
+
         lines.append("\(indentStr)<aapt:attr name=\"android:fillColor\">")
         lines.append("\(indentStr)    <gradient")
         lines.append("\(indentStr)        android:type=\"radial\"")
-        lines.append("\(indentStr)        android:centerX=\"\(formatDouble(gradient.cx))\"")
-        lines.append("\(indentStr)        android:centerY=\"\(formatDouble(gradient.cy))\"")
-        lines.append("\(indentStr)        android:gradientRadius=\"\(formatDouble(gradient.r))\">")
+        lines.append("\(indentStr)        android:centerX=\"\(formatDouble(cx))\"")
+        lines.append("\(indentStr)        android:centerY=\"\(formatDouble(cy))\"")
+        lines.append("\(indentStr)        android:gradientRadius=\"\(formatDouble(r))\">")
 
         for stop in gradient.stops {
             let argb = colorToARGB(stop.color, opacity: stop.opacity)
@@ -328,6 +375,44 @@ public struct VectorDrawableXMLGenerator: Sendable {
 
         lines.append("\(indentStr)    </gradient>")
         lines.append("\(indentStr)</aapt:attr>")
+    }
+
+    /// Applies an SVG transform to a point
+    private func applyTransformToPoint(x: Double, y: Double, transform: SVGTransform) -> (Double, Double) {
+        var newX = x
+        var newY = y
+
+        // Apply scale
+        if let scaleX = transform.scaleX {
+            newX *= scaleX
+        }
+        if let scaleY = transform.scaleY {
+            newY *= scaleY
+        }
+
+        // Apply rotation (around origin or pivot point)
+        if let rotation = transform.rotation {
+            let radians = rotation * .pi / 180.0
+            let cosR = cos(radians)
+            let sinR = sin(radians)
+            let pivotX = transform.pivotX ?? 0
+            let pivotY = transform.pivotY ?? 0
+
+            let dx = newX - pivotX
+            let dy = newY - pivotY
+            newX = pivotX + dx * cosR - dy * sinR
+            newY = pivotY + dx * sinR + dy * cosR
+        }
+
+        // Apply translation
+        if let translateX = transform.translateX {
+            newX += translateX
+        }
+        if let translateY = transform.translateY {
+            newY += translateY
+        }
+
+        return (newX, newY)
     }
 
     private func colorToARGB(_ color: SVGColor, opacity: Double) -> String {

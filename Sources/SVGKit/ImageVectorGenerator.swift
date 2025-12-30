@@ -83,6 +83,11 @@ public struct ImageVectorGenerator: Sendable {
         imports.insert("androidx.compose.ui.graphics.vector.path")
         imports.insert("androidx.compose.ui.unit.dp")
 
+        // Check for groups
+        if hasGroups(svg) {
+            imports.insert("androidx.compose.ui.graphics.vector.group")
+        }
+
         // Check for stroke properties and gradients
         for path in svg.paths {
             if path.stroke != nil {
@@ -144,8 +149,28 @@ public struct ImageVectorGenerator: Sendable {
 
         """
 
-        for path in svg.paths {
-            code += generatePath(path)
+        // Generate elements in document order (preserves correct layer order)
+        if !svg.elements.isEmpty {
+            for element in svg.elements {
+                switch element {
+                case let .path(path):
+                    code += generatePath(path, indent: 3)
+                case let .group(group):
+                    code += generateGroup(group, indent: 3)
+                }
+            }
+        } else if let groups = svg.groups, !groups.isEmpty {
+            // Fallback for backward compatibility
+            for path in svg.paths {
+                code += generatePath(path, indent: 3)
+            }
+            for group in groups {
+                code += generateGroup(group, indent: 3)
+            }
+        } else {
+            for path in svg.paths {
+                code += generatePath(path, indent: 3)
+            }
         }
 
         code += """
@@ -166,15 +191,17 @@ public struct ImageVectorGenerator: Sendable {
     }
 
     // swiftlint:disable:next cyclomatic_complexity
-    private func generatePath(_ path: SVGPath) -> String {
+    private func generatePath(_ path: SVGPath, indent: Int = 3) -> String {
+        let indentStr = String(repeating: "    ", count: indent)
+        let innerIndentStr = String(repeating: "    ", count: indent + 1)
         var params: [String] = []
 
         // Fill - check fillType first, fall back to legacy fill
         switch path.fillType {
         case let .linearGradient(gradient):
-            params.append(generateLinearGradientFill(gradient))
+            params.append(generateLinearGradientFill(gradient, indent: indent))
         case let .radialGradient(gradient):
-            params.append(generateRadialGradientFill(gradient))
+            params.append(generateRadialGradientFill(gradient, indent: indent))
         case let .solid(color):
             let colorCode = mapColor(color)
             params.append("fill = SolidColor(\(colorCode))")
@@ -187,6 +214,11 @@ public struct ImageVectorGenerator: Sendable {
                 // SVG spec: missing fill attribute defaults to black
                 params.append("fill = SolidColor(Color.Black)")
             }
+        }
+
+        // Fill alpha (opacity on path level)
+        if let opacity = path.opacity, opacity < 1.0 {
+            params.append("fillAlpha = \(formatDouble(opacity))f")
         }
 
         // Stroke
@@ -229,25 +261,114 @@ public struct ImageVectorGenerator: Sendable {
             params.append("pathFillType = \(ruleValue)")
         }
 
-        var code = "            path(\n"
+        var code = "\(indentStr)path(\n"
         if !params.isEmpty {
-            code += "                " + params.joined(separator: ",\n                ") + ",\n"
+            code += "\(innerIndentStr)" + params.joined(separator: ",\n\(innerIndentStr)") + ",\n"
         }
-        code += "            ) {\n"
+        code += "\(indentStr)) {\n"
 
         // Generate path commands
-        code += generatePathCommands(path.commands)
+        code += generatePathCommands(path.commands, indent: indent)
 
-        code += "            }\n"
+        code += "\(indentStr)}\n"
 
         return code
     }
 
-    private func generatePathCommands(_ commands: [SVGPathCommand]) -> String {
+    private func generateGroup(_ group: SVGGroup, indent: Int) -> String {
+        let indentStr = String(repeating: "    ", count: indent)
+        var params = buildGroupTransformParams(group.transform)
+
+        // Clip path - pass as clipPathData using PathBuilder
+        if let clipPath = group.clipPath {
+            params.append("clipPathData = PathData { \(generateClipPathData(clipPath)) }")
+        }
+
+        var code = "\(indentStr)group(\n"
+        if !params.isEmpty {
+            let innerIndentStr = String(repeating: "    ", count: indent + 1)
+            code += "\(innerIndentStr)" + params.joined(separator: ",\n\(innerIndentStr)") + ",\n"
+        }
+        code += "\(indentStr)) {\n"
+        code += generateGroupContent(group, indent: indent)
+        code += "\(indentStr)}\n"
+
+        return code
+    }
+
+    private func buildGroupTransformParams(_ transform: SVGTransform?) -> [String] {
+        guard let transform else { return [] }
+        var params: [String] = []
+        if let rotation = transform.rotation {
+            params.append("rotate = \(formatDouble(rotation))f")
+        }
+        if let pivotX = transform.pivotX {
+            params.append("pivotX = \(formatDouble(pivotX))f")
+        }
+        if let pivotY = transform.pivotY {
+            params.append("pivotY = \(formatDouble(pivotY))f")
+        }
+        if let scaleX = transform.scaleX, scaleX != 1.0 {
+            params.append("scaleX = \(formatDouble(scaleX))f")
+        }
+        if let scaleY = transform.scaleY, scaleY != 1.0 {
+            params.append("scaleY = \(formatDouble(scaleY))f")
+        }
+        if let translateX = transform.translateX {
+            params.append("translationX = \(formatDouble(translateX))f")
+        }
+        if let translateY = transform.translateY {
+            params.append("translationY = \(formatDouble(translateY))f")
+        }
+        return params
+    }
+
+    private func generateGroupContent(_ group: SVGGroup, indent: Int) -> String {
         var code = ""
+        if !group.elements.isEmpty {
+            for element in group.elements {
+                switch element {
+                case let .path(path):
+                    code += generatePath(path, indent: indent + 1)
+                case let .group(childGroup):
+                    code += generateGroup(childGroup, indent: indent + 1)
+                }
+            }
+        } else {
+            // Fallback for backward compatibility
+            for path in group.paths {
+                code += generatePath(path, indent: indent + 1)
+            }
+            for childGroup in group.children {
+                code += generateGroup(childGroup, indent: indent + 1)
+            }
+        }
+        return code
+    }
+
+    private func generateClipPathData(_ pathData: String) -> String {
+        // Parse path data and convert to Compose path commands
+        // For simplicity, we pass the raw path data string
+        // In a full implementation, this would parse and convert each command
+        pathData
+    }
+
+    private func hasGroups(_ svg: ParsedSVG) -> Bool {
+        if !svg.elements.isEmpty {
+            return svg.elements.contains { element in
+                if case .group = element { return true }
+                return false
+            }
+        }
+        return svg.groups?.isEmpty == false
+    }
+
+    private func generatePathCommands(_ commands: [SVGPathCommand], indent: Int = 3) -> String {
+        var code = ""
+        let innerIndentStr = String(repeating: "    ", count: indent + 1)
 
         for command in commands {
-            code += "                "
+            code += innerIndentStr
             code += generatePathCommand(command)
             code += "\n"
         }
@@ -426,38 +547,106 @@ public struct ImageVectorGenerator: Sendable {
 
     // MARK: - Gradient Generation
 
-    private func generateLinearGradientFill(_ gradient: SVGLinearGradient) -> String {
+    private func generateLinearGradientFill(_ gradient: SVGLinearGradient, indent: Int = 3) -> String {
+        let innerIndentStr = String(repeating: "    ", count: indent + 1)
+        let innerInnerIndentStr = String(repeating: "    ", count: indent + 2)
+
+        // Apply gradientTransform if present
+        var x1 = gradient.x1
+        var y1 = gradient.y1
+        var x2 = gradient.x2
+        var y2 = gradient.y2
+
+        if let transform = gradient.gradientTransform {
+            (x1, y1) = applyTransformToPoint(x: x1, y: y1, transform: transform)
+            (x2, y2) = applyTransformToPoint(x: x2, y: y2, transform: transform)
+        }
+
         var code = "fill = Brush.linearGradient(\n"
-        code += "                    colorStops = arrayOf(\n"
+        code += "\(innerIndentStr)colorStops = arrayOf(\n"
 
         for stop in gradient.stops {
             let colorHex = colorToComposeHex(stop.color, opacity: stop.opacity)
-            code += "                        \(formatDouble(stop.offset))f to Color(\(colorHex)),\n"
+            code += "\(innerInnerIndentStr)\(formatDouble(stop.offset))f to Color(\(colorHex)),\n"
         }
 
-        code += "                    ),\n"
-        code += "                    start = Offset(\(formatDouble(gradient.x1))f, \(formatDouble(gradient.y1))f),\n"
-        code += "                    end = Offset(\(formatDouble(gradient.x2))f, \(formatDouble(gradient.y2))f),\n"
-        code += "                )"
+        code += "\(innerIndentStr)),\n"
+        code += "\(innerIndentStr)start = Offset(\(formatDouble(x1))f, \(formatDouble(y1))f),\n"
+        code += "\(innerIndentStr)end = Offset(\(formatDouble(x2))f, \(formatDouble(y2))f),\n"
+        code += "\(String(repeating: "    ", count: indent)))"
 
         return code
     }
 
-    private func generateRadialGradientFill(_ gradient: SVGRadialGradient) -> String {
+    private func generateRadialGradientFill(_ gradient: SVGRadialGradient, indent: Int = 3) -> String {
+        let innerIndentStr = String(repeating: "    ", count: indent + 1)
+        let innerInnerIndentStr = String(repeating: "    ", count: indent + 2)
+
+        // Apply gradientTransform if present
+        var cx = gradient.cx
+        var cy = gradient.cy
+        var r = gradient.r
+
+        if let transform = gradient.gradientTransform {
+            (cx, cy) = applyTransformToPoint(x: cx, y: cy, transform: transform)
+            // Scale radius by average of scaleX and scaleY
+            let scaleX = transform.scaleX ?? 1.0
+            let scaleY = transform.scaleY ?? 1.0
+            r *= (abs(scaleX) + abs(scaleY)) / 2.0
+        }
+
         var code = "fill = Brush.radialGradient(\n"
-        code += "                    colorStops = arrayOf(\n"
+        code += "\(innerIndentStr)colorStops = arrayOf(\n"
 
         for stop in gradient.stops {
             let colorHex = colorToComposeHex(stop.color, opacity: stop.opacity)
-            code += "                        \(formatDouble(stop.offset))f to Color(\(colorHex)),\n"
+            code += "\(innerInnerIndentStr)\(formatDouble(stop.offset))f to Color(\(colorHex)),\n"
         }
 
-        code += "                    ),\n"
-        code += "                    center = Offset(\(formatDouble(gradient.cx))f, \(formatDouble(gradient.cy))f),\n"
-        code += "                    radius = \(formatDouble(gradient.r))f,\n"
-        code += "                )"
+        code += "\(innerIndentStr)),\n"
+        code += "\(innerIndentStr)center = Offset(\(formatDouble(cx))f, \(formatDouble(cy))f),\n"
+        code += "\(innerIndentStr)radius = \(formatDouble(r))f,\n"
+        code += "\(String(repeating: "    ", count: indent)))"
 
         return code
+    }
+
+    /// Applies an SVG transform to a point
+    private func applyTransformToPoint(x: Double, y: Double, transform: SVGTransform) -> (Double, Double) {
+        var newX = x
+        var newY = y
+
+        // Apply scale
+        if let scaleX = transform.scaleX {
+            newX *= scaleX
+        }
+        if let scaleY = transform.scaleY {
+            newY *= scaleY
+        }
+
+        // Apply rotation (around origin or pivot point)
+        if let rotation = transform.rotation {
+            let radians = rotation * .pi / 180.0
+            let cosR = cos(radians)
+            let sinR = sin(radians)
+            let pivotX = transform.pivotX ?? 0
+            let pivotY = transform.pivotY ?? 0
+
+            let dx = newX - pivotX
+            let dy = newY - pivotY
+            newX = pivotX + dx * cosR - dy * sinR
+            newY = pivotY + dx * sinR + dy * cosR
+        }
+
+        // Apply translation
+        if let translateX = transform.translateX {
+            newX += translateX
+        }
+        if let translateY = transform.translateY {
+            newY += translateY
+        }
+
+        return (newX, newY)
     }
 
     private func colorToComposeHex(_ color: SVGColor, opacity: Double) -> String {

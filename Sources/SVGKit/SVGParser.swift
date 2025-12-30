@@ -16,6 +16,8 @@ public struct ParsedSVG: Equatable, Sendable {
     public let groups: [SVGGroup]?
     public let linearGradients: [String: SVGLinearGradient]
     public let radialGradients: [String: SVGRadialGradient]
+    /// Ordered root elements (preserves SVG document order)
+    public let elements: [SVGElement]
 
     public init(
         width: Double,
@@ -25,7 +27,8 @@ public struct ParsedSVG: Equatable, Sendable {
         paths: [SVGPath],
         groups: [SVGGroup]? = nil,
         linearGradients: [String: SVGLinearGradient] = [:],
-        radialGradients: [String: SVGRadialGradient] = [:]
+        radialGradients: [String: SVGRadialGradient] = [:],
+        elements: [SVGElement] = []
     ) {
         self.width = width
         self.height = height
@@ -35,6 +38,7 @@ public struct ParsedSVG: Equatable, Sendable {
         self.groups = groups
         self.linearGradients = linearGradients
         self.radialGradients = radialGradients
+        self.elements = elements
     }
 }
 
@@ -370,6 +374,9 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         var groups: [SVGGroup] = []
         try collectGroups(from: root, into: &groups, inheritedAttributes: [:])
 
+        // Collect root elements in document order
+        let elements = try collectRootElements(from: root, inheritedAttributes: [:])
+
         return ParsedSVG(
             width: width,
             height: height,
@@ -378,8 +385,41 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             paths: paths,
             groups: groups.isEmpty ? nil : groups,
             linearGradients: linearGradientDefs,
-            radialGradients: radialGradientDefs
+            radialGradients: radialGradientDefs,
+            elements: elements
         )
+    }
+
+    /// Collects root-level elements (paths and groups) in document order
+    private func collectRootElements(
+        from element: XMLElement,
+        inheritedAttributes: [String: String]
+    ) throws -> [SVGElement] {
+        var elements: [SVGElement] = []
+        for child in element.children ?? [] {
+            guard let childElement = child as? XMLElement else { continue }
+            let name = elementName(childElement)
+
+            // Skip defs, style, and other non-renderable elements
+            if name == "defs" || name == "style" || name == "metadata" || name == "title" || name == "desc" {
+                continue
+            }
+
+            if name == "g" {
+                let group = try parseGroup(childElement, inheritedAttributes: inheritedAttributes)
+                elements.append(.group(group))
+            } else if name == "path", let pathData = attributeValue(childElement, forName: "d") {
+                let pathAttrs = mergeAttributes(from: childElement, with: inheritedAttributes)
+                let path = try createSVGPath(pathData: pathData, attributes: pathAttrs)
+                elements.append(.path(path))
+            } else if let path = try convertShapeToPath(
+                childElement,
+                attributes: mergeAttributes(from: childElement, with: inheritedAttributes)
+            ) {
+                elements.append(.path(path))
+            }
+        }
+        return elements
     }
 
     /// Parses SVG from a file URL
@@ -1123,13 +1163,53 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             inheritedClipPath: effectiveClipPath
         )
 
+        // Collect elements in document order
+        let elements = try collectGroupElements(
+            from: element,
+            attributes: attrs,
+            inheritedClipPath: effectiveClipPath
+        )
+
         return SVGGroup(
             transform: transform,
             clipPath: effectiveClipPath,
             paths: paths,
             children: children,
-            opacity: opacity
+            opacity: opacity,
+            elements: elements
         )
+    }
+
+    /// Collects child elements (paths and groups) in document order
+    private func collectGroupElements(
+        from element: XMLElement,
+        attributes: [String: String],
+        inheritedClipPath: String? = nil
+    ) throws -> [SVGElement] {
+        var elements: [SVGElement] = []
+        for child in element.children ?? [] {
+            guard let childElement = child as? XMLElement else { continue }
+            let name = elementName(childElement)
+
+            if name == "g" {
+                let group = try parseGroup(
+                    childElement,
+                    inheritedAttributes: attributes,
+                    inheritedClipPath: inheritedClipPath
+                )
+                elements.append(.group(group))
+            } else if name == "path", let pathData = attributeValue(childElement, forName: "d") {
+                let pathAttrs = overrideAttributes(from: childElement, with: attributes)
+                let path = try createSVGPath(pathData: pathData, attributes: pathAttrs)
+                elements.append(.path(path))
+            } else if let path = try convertShapeToPath(
+                childElement,
+                attributes: overrideAttributes(from: childElement, with: attributes)
+            ) {
+                elements.append(.path(path))
+            }
+        }
+        return elements
     }
 
     private func mergeAttributes(from element: XMLElement, with inherited: [String: String]) -> [String: String] {
@@ -1274,13 +1354,16 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         let y2 = parseGradientCoordinate(attributeValue(element, forName: "y2"), defaultValue: 0)
         let spreadMethod = parseSpreadMethod(attributeValue(element, forName: "spreadMethod"))
         let stops = parseGradientStops(element)
+        let gradientTransform = attributeValue(element, forName: "gradientTransform")
+            .flatMap { SVGTransform.parse($0) }
 
         return SVGLinearGradient(
             id: id,
             x1: x1, y1: y1,
             x2: x2, y2: y2,
             stops: stops,
-            spreadMethod: spreadMethod
+            spreadMethod: spreadMethod,
+            gradientTransform: gradientTransform
         )
     }
 
@@ -1296,13 +1379,16 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         let fy = attributeValue(element, forName: "fy").flatMap { parseGradientCoordinate($0, defaultValue: cy) }
         let spreadMethod = parseSpreadMethod(attributeValue(element, forName: "spreadMethod"))
         let stops = parseGradientStops(element)
+        let gradientTransform = attributeValue(element, forName: "gradientTransform")
+            .flatMap { SVGTransform.parse($0) }
 
         return SVGRadialGradient(
             id: id,
             cx: cx, cy: cy, r: r,
             fx: fx, fy: fy,
             stops: stops,
-            spreadMethod: spreadMethod
+            spreadMethod: spreadMethod,
+            gradientTransform: gradientTransform
         )
     }
 

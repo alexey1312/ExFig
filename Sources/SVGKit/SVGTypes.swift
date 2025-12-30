@@ -204,6 +204,7 @@ public struct SVGLinearGradient: Sendable, Equatable {
     public let x1, y1, x2, y2: Double
     public let stops: [SVGGradientStop]
     public let spreadMethod: SpreadMethod
+    public let gradientTransform: SVGTransform?
 
     public enum SpreadMethod: String, Sendable {
         case pad
@@ -216,7 +217,8 @@ public struct SVGLinearGradient: Sendable, Equatable {
         x1: Double, y1: Double,
         x2: Double, y2: Double,
         stops: [SVGGradientStop],
-        spreadMethod: SpreadMethod = .pad
+        spreadMethod: SpreadMethod = .pad,
+        gradientTransform: SVGTransform? = nil
     ) {
         self.id = id
         self.x1 = x1
@@ -225,6 +227,7 @@ public struct SVGLinearGradient: Sendable, Equatable {
         self.y2 = y2
         self.stops = stops
         self.spreadMethod = spreadMethod
+        self.gradientTransform = gradientTransform
     }
 }
 
@@ -235,6 +238,7 @@ public struct SVGRadialGradient: Sendable, Equatable {
     public let fx, fy: Double?
     public let stops: [SVGGradientStop]
     public let spreadMethod: SVGLinearGradient.SpreadMethod
+    public let gradientTransform: SVGTransform?
 
     public init(
         id: String,
@@ -242,7 +246,8 @@ public struct SVGRadialGradient: Sendable, Equatable {
         r: Double,
         fx: Double? = nil, fy: Double? = nil,
         stops: [SVGGradientStop],
-        spreadMethod: SVGLinearGradient.SpreadMethod = .pad
+        spreadMethod: SVGLinearGradient.SpreadMethod = .pad,
+        gradientTransform: SVGTransform? = nil
     ) {
         self.id = id
         self.cx = cx
@@ -252,6 +257,7 @@ public struct SVGRadialGradient: Sendable, Equatable {
         self.fy = fy
         self.stops = stops
         self.spreadMethod = spreadMethod
+        self.gradientTransform = gradientTransform
     }
 }
 
@@ -272,18 +278,30 @@ public struct SVGGroup: Equatable, Sendable {
     public let paths: [SVGPath]
     public let children: [SVGGroup]
     public let opacity: Double?
+    /// Ordered elements within the group (preserves SVG document order)
+    public let elements: [SVGElement]
 
     public init(
         transform: SVGTransform? = nil,
         clipPath: String? = nil,
         paths: [SVGPath] = [],
         children: [SVGGroup] = [],
-        opacity: Double? = nil
+        opacity: Double? = nil,
+        elements: [SVGElement] = []
     ) {
         self.transform = transform
         self.clipPath = clipPath
         self.paths = paths
         self.children = children
         self.opacity = opacity
+        self.elements = elements
     }
+}
+
+// MARK: - Element Order
+
+/// Represents an element in SVG document order (path or group)
+public enum SVGElement: Equatable, Sendable {
+    case path(SVGPath)
+    case group(SVGGroup)
 }
