@@ -2,6 +2,79 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.16] - 2025-12-30
+
+### Bug Fixes
+
+- **svg**: Preserve element order and support gradientTransform by @alexey1312
+
+
+### Documentation
+
+- **openspec**: Add ExFig Studio GUI app proposal by @alexey1312
+
+
+### Features
+
+- **svg**: Add Tree Traversal API support via swift-resvg upgrade  by @alexey1312 in [#19](https://github.com/alexey1312/ExFig/pull/19)
+
+
+### Other
+
+- ⚡ Bolt: Implement dynamic concurrency in SharedDownloadQueue  by @google-labs-jules[bot] in [#18](https://github.com/alexey1312/ExFig/pull/18)
+
+- 🛡️ Sentinel: Fix XXE vulnerability in SVG parser 
+
+* feat(security): disable external entity loading in SVG parser
+
+- Initializes `XMLDocument` with `.nodeLoadExternalEntitiesNever` in `SVGParser.swift`.
+- Prevents XML External Entity (XXE) attacks when parsing untrusted SVG files.
+- Hardens the codebase against local file inclusion and SSRF vulnerabilities via malicious SVGs.
+
+* feat(security): disable external entity loading in SVG parser
+
+- Initializes `XMLDocument` with `.nodeLoadExternalEntitiesNever` in `SVGParser.swift`.
+- Prevents XML External Entity (XXE) attacks when parsing untrusted SVG files.
+- Hardens the codebase against local file inclusion and SSRF vulnerabilities via malicious SVGs.
+- Verified `XMLDocument` usage across the codebase; `FileWriter.swift` only writes XML and is safe.
+
+* feat(security): disable external entity loading in SVG parser
+
+- Initializes `XMLDocument` with `.nodeLoadExternalEntitiesNever` in `SVGParser.swift`.
+- Prevents XML External Entity (XXE) attacks when parsing untrusted SVG files.
+- Hardens the codebase against local file inclusion and SSRF vulnerabilities via malicious SVGs.
+- Verified `XMLDocument` usage across the codebase; `FileWriter.swift` only writes XML and is safe.
+
+* feat(security): disable external entity loading in SVG parser
+
+- Initializes `XMLDocument` with `.nodeLoadExternalEntitiesNever` in `SVGParser.swift`.
+- Prevents XML External Entity (XXE) attacks when parsing untrusted SVG files.
+- Hardens the codebase against local file inclusion and SSRF vulnerabilities via malicious SVGs.
+- Verified `XMLDocument` usage across the codebase; `FileWriter.swift` only writes XML and is safe.
+- Verified `parse(contentsOf:)` delegates to the patched method.
+
+---------
+
+Co-authored-by: google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com> by @google-labs-jules[bot] in [#21](https://github.com/alexey1312/ExFig/pull/21)
+
+
+### Performance
+
+- **cache**: Parallelize hash computation + improve Sendable safety by @alexey1312
+
+
+### Refactor
+
+- **queue**: Add LRU eviction for unclaimed results + MigrateTests by @alexey1312
+
+- **colors**: Decompose ExportColors.swift into platform files by @alexey1312
+
+
+### Testing
+
+- **cache**: Add tests for parallel hashing and LRU eviction by @alexey1312
+
+
 ## [1.2.15] - 2025-12-27
 
 ### Bug Fixes
