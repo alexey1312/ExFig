@@ -60,11 +60,23 @@ extension ExFigCommand {
             let success = FileManager.default.createFile(atPath: destination, contents: fileData, attributes: nil)
             if success {
                 ui.success("Config file generated: \(destination)")
-                ui.info("Edit the file with your Figma file IDs and project paths, then run:")
-                ui.info("  exfig colors    Export colors")
-                ui.info("  exfig icons     Export icons")
-                ui.info("  exfig images    Export images")
-                ui.info("  exfig typography    Export typography")
+
+                ui.info("")
+                ui.info("👉 Next Steps:")
+                ui.info("1. Edit \(ExFigOptions.defaultConfigFilename) with your Figma file IDs")
+
+                if ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"] == nil {
+                    ui.info("2. Set your Figma token (missing):")
+                    ui.info("   export FIGMA_PERSONAL_TOKEN=your_token_here")
+                } else {
+                    ui.info("2. Figma token detected in environment ✅")
+                }
+
+                ui.info("3. Run export commands:")
+                ui.info("   exfig colors")
+                ui.info("   exfig icons")
+                ui.info("   exfig images")
+                ui.info("   exfig typography")
             } else {
                 throw ExFigError.custom(errorString: "Unable to create config file at: \(destination)")
             }
