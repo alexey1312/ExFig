@@ -166,8 +166,12 @@ public enum SVGParseError: Error, LocalizedError {
 // MARK: - Internal Scanner
 
 private final class PathScanner: @unchecked Sendable {
-    private let input: String
-    private var index: String.Index
+    private let input: String.UTF8View
+    private var index: String.UTF8View.Index
+
+    // Lookup table for whitespace characters
+    // 0x09: tab, 0x0A: line feed, 0x0C: form feed, 0x0D: carriage return, 0x20: space
+    private static let whitespaceBytes: Set<UInt8> = [0x09, 0x0A, 0x0C, 0x0D, 0x20]
 
     var isAtEnd: Bool {
         index >= input.endIndex
@@ -175,18 +179,19 @@ private final class PathScanner: @unchecked Sendable {
 
     var currentCharacter: String? {
         guard !isAtEnd else { return nil }
-        return String(input[index])
+        return String(UnicodeScalar(input[index]))
     }
 
     init(_ input: String) {
-        self.input = input
-        index = input.startIndex
+        self.input = input.utf8
+        index = self.input.startIndex
     }
 
     func skipWhitespaceAndCommas() {
         while !isAtEnd {
-            let char = input[index]
-            if char.isWhitespace || char == "," {
+            let byte = input[index]
+            // Skip whitespace and comma (0x2C)
+            if PathScanner.whitespaceBytes.contains(byte) || byte == 0x2C {
                 index = input.index(after: index)
             } else {
                 break
@@ -197,10 +202,11 @@ private final class PathScanner: @unchecked Sendable {
     func scanCommand() -> String? {
         skipWhitespaceAndCommas()
         guard !isAtEnd else { return nil }
-        let char = input[index]
-        if char.isLetter {
+        let byte = input[index]
+        // Check for ASCII letters (A-Z, a-z)
+        if byte >= 0x41 && byte <= 0x5A || byte >= 0x61 && byte <= 0x7A {
             index = input.index(after: index)
-            return String(char)
+            return String(UnicodeScalar(byte))
         }
         return nil
     }
@@ -210,41 +216,41 @@ private final class PathScanner: @unchecked Sendable {
         skipWhitespaceAndCommas()
         guard !isAtEnd else { return nil }
 
-        var numberStr = ""
-        let firstChar = input[index]
+        let startIndex = index
+        let firstByte = input[index]
 
         // Check if this is a command letter, not a number
-        if firstChar.isLetter {
+        // A-Z (0x41-0x5A) or a-z (0x61-0x7A)
+        // Except 'e' or 'E' which could be part of a number, but not at the start
+        if firstByte >= 0x41 && firstByte <= 0x5A || firstByte >= 0x61 && firstByte <= 0x7A {
             return nil
         }
 
         // Handle sign
-        if firstChar == "-" || firstChar == "+" {
-            numberStr.append(firstChar)
+        // + (0x2B), - (0x2D)
+        if firstByte == 0x2D || firstByte == 0x2B {
             index = input.index(after: index)
         }
 
         // Scan digits and decimal point
         var hasDecimal = false
         var hasExponent = false
+
         while !isAtEnd {
-            let char = input[index]
-            if char.isNumber {
-                numberStr.append(char)
+            let byte = input[index]
+            // 0-9 (0x30-0x39)
+            if byte >= 0x30 && byte <= 0x39 {
                 index = input.index(after: index)
-            } else if char == ".", !hasDecimal, !hasExponent {
+            } else if byte == 0x2E, !hasDecimal, !hasExponent { // .
                 hasDecimal = true
-                numberStr.append(char)
                 index = input.index(after: index)
-            } else if char == "e" || char == "E", !hasExponent {
+            } else if byte == 0x65 || byte == 0x45, !hasExponent { // e or E
                 hasExponent = true
-                numberStr.append(char)
                 index = input.index(after: index)
                 // Handle optional sign after exponent
                 if !isAtEnd {
-                    let nextChar = input[index]
-                    if nextChar == "+" || nextChar == "-" {
-                        numberStr.append(nextChar)
+                    let nextByte = input[index]
+                    if nextByte == 0x2B || nextByte == 0x2D { // + or -
                         index = input.index(after: index)
                     }
                 }
@@ -253,9 +259,13 @@ private final class PathScanner: @unchecked Sendable {
             }
         }
 
-        guard !numberStr.isEmpty, let value = Double(numberStr) else {
-            if numberStr.isEmpty { return nil }
-            throw SVGParseError.invalidNumber(numberStr)
+        let slice = input[startIndex ..< index]
+        guard !slice.isEmpty, let string = String(slice), let value = Double(string) else {
+            if slice.isEmpty { return nil }
+            // Using Array(slice) to create [UInt8] for String decoding
+            let bytes = Array(slice)
+            let errorString = String(bytes: bytes, encoding: .utf8) ?? ""
+            throw SVGParseError.invalidNumber(errorString)
         }
 
         return value
