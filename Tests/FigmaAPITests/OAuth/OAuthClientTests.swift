@@ -9,7 +9,7 @@ struct OAuthClientTests {
         clientId: "test-client-id",
         clientSecret: "test-client-secret",
         redirectURI: "exfig://oauth/callback",
-        scopes: [.filesRead]
+        scopes: [.fileContentRead]
     )
 
     @Test("authorizationURL generates valid URL with required parameters")
@@ -29,7 +29,7 @@ struct OAuthClientTests {
 
         #expect(queryDict["client_id"] == "test-client-id")
         #expect(queryDict["redirect_uri"] == "exfig://oauth/callback")
-        #expect(queryDict["scope"] == "files:read")
+        #expect(queryDict["scope"] == "file_content:read")
         #expect(queryDict["response_type"] == "code")
         #expect(queryDict["state"] == state)
         #expect(queryDict["code_challenge"] != nil)
@@ -90,7 +90,7 @@ struct OAuthClientTests {
         let configWithScopes = OAuthConfig(
             clientId: "test",
             clientSecret: "test",
-            scopes: [.filesRead, .fileCommentsWrite, .openid]
+            scopes: [.fileContentRead, .fileCommentsWrite, .openid]
         )
         let client = OAuthClient(config: configWithScopes)
         let (url, _) = try await client.authorizationURL()
@@ -98,7 +98,7 @@ struct OAuthClientTests {
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let scope = components?.queryItems?.first { $0.name == "scope" }?.value
 
-        #expect(scope == "files:read file_comments:write openid")
+        #expect(scope == "file_content:read file_comments:write openid")
     }
 }
 
@@ -114,14 +114,14 @@ struct OAuthConfigTests {
         #expect(config.redirectURI == "exfig://oauth/callback")
     }
 
-    @Test("default scopes contain filesRead")
+    @Test("default scopes contain fileContentRead")
     func defaultScopes() {
         let config = OAuthConfig(
             clientId: "test",
             clientSecret: "test"
         )
 
-        #expect(config.scopes == [.filesRead])
+        #expect(config.scopes == [.fileContentRead])
     }
 }
 
@@ -129,7 +129,7 @@ struct OAuthConfigTests {
 struct OAuthScopeTests {
     @Test("scope raw values match Figma API")
     func scopeRawValues() {
-        #expect(OAuthScope.filesRead.rawValue == "files:read")
+        #expect(OAuthScope.fileContentRead.rawValue == "file_content:read")
         #expect(OAuthScope.fileCommentsWrite.rawValue == "file_comments:write")
         #expect(OAuthScope.libraryAnalyticsRead.rawValue == "library_analytics:read")
         #expect(OAuthScope.webhooksWrite.rawValue == "webhooks:write")
