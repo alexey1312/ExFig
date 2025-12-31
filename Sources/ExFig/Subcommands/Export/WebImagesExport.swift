@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import FigmaAPI
 import Foundation
 import WebExport
@@ -89,7 +90,7 @@ extension ExFigCommand.ExportImages {
             logger: ExFigCommand.logger,
             config: loaderConfig
         )
-        loader.granularCacheManager = granularCacheManager
+        loader.granularCacheProvider = granularCacheManager
 
         let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
             if granularCacheManager != nil {

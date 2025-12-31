@@ -10,6 +10,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "exfig", targets: ["ExFig"]),
+        .library(name: "ExFigKit", targets: ["ExFigKit"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
@@ -26,12 +27,14 @@ let package = Package(
         .package(url: "https://github.com/toon-format/toon-swift", from: "0.3.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
         .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.3"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
     ],
     targets: [
         // Main target
         .executableTarget(
             name: "ExFig",
             dependencies: [
+                "ExFigKit",
                 "FigmaAPI",
                 "ExFigCore",
                 "XcodeExport",
@@ -58,7 +61,21 @@ let package = Package(
 
         // Loads data via Figma REST API
         .target(
-            name: "FigmaAPI"
+            name: "FigmaAPI",
+            dependencies: [
+                .product(name: "Crypto", package: "swift-crypto"),
+            ]
+        ),
+
+        // Reusable library for CLI and GUI app (config models, errors, common types)
+        .target(
+            name: "ExFigKit",
+            dependencies: [
+                "FigmaAPI",
+                "ExFigCore",
+                .product(name: "Yams", package: "Yams"),
+                .product(name: "Logging", package: "swift-log"),
+            ]
         ),
 
         // Exports resources to Xcode project

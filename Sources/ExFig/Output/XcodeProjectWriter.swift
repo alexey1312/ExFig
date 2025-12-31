@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 import PathKit
 import XcodeProj

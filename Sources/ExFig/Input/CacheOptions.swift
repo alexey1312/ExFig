@@ -1,4 +1,5 @@
 import ArgumentParser
+import ExFigKit
 
 /// CLI options for controlling version tracking cache.
 /// These options can override the YAML configuration.

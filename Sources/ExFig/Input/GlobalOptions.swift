@@ -1,4 +1,5 @@
 import ArgumentParser
+import ExFigKit
 
 /// Global CLI options shared across all subcommands
 struct GlobalOptions: ParsableArguments {

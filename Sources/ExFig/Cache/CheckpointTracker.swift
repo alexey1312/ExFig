@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import Foundation
 
 /// Actor for managing export checkpoints in individual commands.

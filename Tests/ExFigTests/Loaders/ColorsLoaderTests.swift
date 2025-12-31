@@ -1,6 +1,7 @@
 import CustomDump
 @testable import ExFig
 import ExFigCore
+import ExFigKit
 @testable import FigmaAPI
 import XCTest
 

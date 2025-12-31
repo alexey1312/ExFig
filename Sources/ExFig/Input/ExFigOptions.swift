@@ -1,4 +1,5 @@
 import ArgumentParser
+import ExFigKit
 import Foundation
 import Yams
 

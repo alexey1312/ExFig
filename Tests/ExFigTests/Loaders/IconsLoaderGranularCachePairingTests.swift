@@ -1,5 +1,6 @@
 @testable import ExFig
 import ExFigCore
+import ExFigKit
 @testable import FigmaAPI
 import Logging
 import XCTest
@@ -51,7 +52,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader.granularCacheManager = granularManager
+        loader.granularCacheProvider = granularManager
 
         let firstResult = try await loader.loadWithGranularCache()
         XCTAssertFalse(firstResult.allSkipped)
@@ -72,7 +73,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
 
         let granularManager2 = GranularCacheManager(client: mockClient, cache: cache)
         let loader2 = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader2.granularCacheManager = granularManager2
+        loader2.granularCacheProvider = granularManager2
 
         let pairedImageUrls: [NodeId: ImagePath?] = [
             "1:1": "https://figma.com/icon_home.pdf",
@@ -114,7 +115,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader.granularCacheManager = granularManager
+        loader.granularCacheProvider = granularManager
 
         let firstResult = try await loader.loadWithGranularCache()
         for (fileId, hashes) in firstResult.computedHashes {
@@ -130,7 +131,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
 
         let granularManager2 = GranularCacheManager(client: mockClient, cache: cache)
         let loader2 = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader2.granularCacheManager = granularManager2
+        loader2.granularCacheProvider = granularManager2
 
         let secondResult = try await loader2.loadWithGranularCache()
 
@@ -162,7 +163,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader.granularCacheManager = granularManager
+        loader.granularCacheProvider = granularManager
 
         let firstResult = try await loader.loadWithGranularCache()
         XCTAssertEqual(firstResult.light.count, 1)
@@ -181,7 +182,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
 
         let granularManager2 = GranularCacheManager(client: mockClient, cache: cache)
         let loader2 = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader2.granularCacheManager = granularManager2
+        loader2.granularCacheProvider = granularManager2
 
         let secondResult = try await loader2.loadWithGranularCache()
 
@@ -210,7 +211,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader.granularCacheManager = granularManager
+        loader.granularCacheProvider = granularManager
 
         let firstResult = try await loader.loadWithGranularCache()
         for (fileId, hashes) in firstResult.computedHashes {
@@ -219,7 +220,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
 
         let granularManager2 = GranularCacheManager(client: mockClient, cache: cache)
         let loader2 = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
-        loader2.granularCacheManager = granularManager2
+        loader2.granularCacheProvider = granularManager2
 
         let secondResult = try await loader2.loadWithGranularCache()
 

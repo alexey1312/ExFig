@@ -1,3 +1,4 @@
+import ExFigKit
 import FigmaAPI
 
 /// Storage for injected Figma API client using Swift's TaskLocal mechanism.

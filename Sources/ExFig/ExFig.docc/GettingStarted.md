@@ -4,17 +4,36 @@ Install ExFig and configure your first export.
 
 ## Overview
 
-ExFig is a command-line tool that exports design resources from Figma to iOS, Android, and Flutter projects.
+ExFig is available as both a command-line tool (CLI) and a macOS app (ExFig Studio).
+
+- **ExFig CLI**: Best for automation, CI/CD, and scripted workflows
+- **ExFig Studio**: Visual interface with OAuth authentication for interactive exports
 
 ## Requirements
+
+### CLI
 
 - macOS 13.0 or later (or Linux Ubuntu 22.04)
 - Figma account with file access
 - Figma Personal Access Token
 
+### ExFig Studio (macOS App)
+
+- macOS 15.0 (Sequoia) or later
+- Figma account (uses OAuth 2.0 authentication)
+
 ## Installation
 
-### Using Homebrew (Recommended)
+### ExFig Studio (macOS App)
+
+```bash
+# Using Homebrew Cask
+brew install --cask alexey1312/exfig/exfig-studio
+```
+
+Or download the DMG from [GitHub Releases](https://github.com/alexey1312/ExFig/releases).
+
+### ExFig CLI - Using Homebrew (Recommended)
 
 ```bash
 brew install alexey1312/exfig/exfig

@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// Factory for creating HEIC and SVG-to-HEIC converters from format options.

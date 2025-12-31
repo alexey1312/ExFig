@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 /// Formats LocalizedError for terminal display using TOON format.

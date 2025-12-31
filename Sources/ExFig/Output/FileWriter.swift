@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import Foundation
 #if os(Linux)
     import FoundationXML

@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import FigmaAPI
 import FlutterExport
 import Foundation
@@ -95,7 +96,7 @@ extension ExFigCommand.ExportIcons {
                 config: loaderConfig
             )
             if let manager = granularCacheManager {
-                loader.granularCacheManager = manager
+                loader.granularCacheProvider = manager
                 return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
             } else {
                 let output = try await loader.load(filter: filter, onBatchProgress: onProgress)

@@ -28,6 +28,9 @@ swiftformat = "0.58.7" # Swift code formatting
 swiftlint = "0.62.2"   # Swift linting
 xcsift = "1.0.19"      # xcodebuild output filtering
 
+# --- Secrets Management ---
+fnox = "1.7.0" # Encrypted secrets storage (Fort Knox for secrets)
+
 # --- Documentation & Formatting ---
 dprint = "0.50.2" # MD/JSON/YAML formatting (Rust, fast)
 
@@ -38,6 +41,9 @@ git-cliff = "2.10.1" # Changelog generation
 
 # --- Configuration ---
 pkl = "0.30.2" # Configuration language (for hk.pkl)
+
+# --- Xcode Project Generation ---
+tuist = "4.44.0" # Generate Xcode projects for ExFig Studio app
 
 # =============================================================================
 # Tasks
@@ -163,3 +169,63 @@ run = "git-cliff --unreleased"
 [tasks.coverage]
 description = "Run tests, show coverage report, and update README badge"
 run = "./Scripts/coverage.sh --run-tests --update-badge"
+
+# =============================================================================
+# ExFig Studio App Tasks (Tuist)
+# =============================================================================
+
+[tasks."app:generate"]
+description = "Generate Xcode project with Tuist"
+run = """
+./Scripts/generate-secrets.sh
+tuist generate
+"""
+
+[tasks."app:build"]
+description = "Build ExFig Studio app"
+run = """
+./Scripts/generate-secrets.sh
+tuist build ExFigStudio
+"""
+
+[tasks."oauth:setup"]
+description = "Configure OAuth credentials (interactive)"
+run = """
+echo "Setting up Figma OAuth credentials..."
+echo "Get your credentials from: https://www.figma.com/developers/apps"
+echo ""
+fnox set FIGMA_CLIENT_ID
+fnox set FIGMA_CLIENT_SECRET
+echo ""
+echo "Credentials saved (encrypted in fnox.toml)"
+"""
+
+[tasks."app:test"]
+description = "Run ExFig Studio unit tests"
+run = """
+tuist generate
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioTests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
+
+[tasks."app:uitest"]
+description = "Run ExFig Studio UI tests"
+run = """
+tuist generate
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioUITests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
+
+[tasks."app:test:all"]
+description = "Run all ExFig Studio tests (unit + UI)"
+run = """
+tuist generate
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioTests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+xcodebuild test -workspace ExFig.xcworkspace -scheme ExFigStudioUITests -destination 'platform=macOS' 2>&1 | xcsift -w -f toon --toon-key-folding safe
+"""
+
+[tasks."app:open"]
+description = "Open ExFig Studio in Xcode"
+run = "tuist generate && open ExFig.xcworkspace"
+
+[tasks."app:clean"]
+description = "Clean Tuist-generated projects"
+run = "tuist clean && rm -rf *.xcodeproj *.xcworkspace"

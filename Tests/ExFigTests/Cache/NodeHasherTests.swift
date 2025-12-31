@@ -1,4 +1,5 @@
 @testable import ExFig
+import ExFigKit
 @testable import FigmaAPI
 import XCTest
 

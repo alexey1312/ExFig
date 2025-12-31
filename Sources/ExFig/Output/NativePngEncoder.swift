@@ -1,3 +1,4 @@
+import ExFigKit
 import Foundation
 
 #if canImport(CoreGraphics)

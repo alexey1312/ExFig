@@ -1,3 +1,5 @@
+import ExFigKit
+
 // swiftlint:disable file_length closure_parameter_position
 import AndroidExport
 import ExFigCore
@@ -112,7 +114,7 @@ extension ExFigCommand.ExportIcons {
                 config: loaderConfig
             )
             if let manager = granularCacheManager {
-                loader.granularCacheManager = manager
+                loader.granularCacheProvider = manager
                 return try await loader.loadWithGranularCache(
                     filter: filter, onBatchProgress: onProgress
                 )
@@ -345,7 +347,7 @@ extension ExFigCommand.ExportIcons {
                 config: loaderConfig
             )
             if let manager = granularCacheManager {
-                loader.granularCacheManager = manager
+                loader.granularCacheProvider = manager
                 return try await loader.loadWithGranularCache(
                     filter: filter, onBatchProgress: onProgress
                 )

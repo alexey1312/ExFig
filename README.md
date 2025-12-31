@@ -8,11 +8,31 @@
 ![Coverage](https://img.shields.io/badge/coverage-45.99%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
-Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and
-Web (React/TypeScript) projects.
+Command-line utility and macOS app to export colors, typography, icons, and images from Figma to Xcode, Android Studio,
+Flutter, and Web (React/TypeScript) projects.
 
 Automatically sync your design system from Figma to code with support for Dark Mode, SwiftUI, UIKit, Jetpack Compose,
 Flutter, and React/TypeScript.
+
+## ExFig Studio (macOS App)
+
+For users who prefer a graphical interface, **ExFig Studio** provides:
+
+- 🔐 OAuth 2.0 authentication with Figma (no need to manage personal access tokens)
+- 📂 Visual project configuration with real-time preview
+- 🚀 One-click exports with progress tracking
+- 📊 Export history and detailed logs
+
+### Install ExFig Studio
+
+```bash
+# Using Homebrew Cask
+brew install --cask alexey1312/exfig/exfig-studio
+
+# Or download DMG from GitHub Releases
+```
+
+**Requirements:** macOS 15.0 (Sequoia) or later
 
 ## Why ExFig?
 
@@ -20,7 +40,7 @@ Flutter, and React/TypeScript.
 - **Keep design and code in sync**: Automate updates to your component library
 - **Save time**: No more manual color palette management or icon exports
 
-## Features
+## CLI Features
 
 ### Design Assets
 
@@ -570,9 +590,16 @@ flutter_project/
 
 ## Requirements
 
+### CLI (exfig)
+
 - **Swift 6.2+** (for building from source)
 - **macOS 13.0+** or **Linux (Ubuntu 22.04)**
 - **Figma Personal Access Token**
+
+### ExFig Studio (GUI App)
+
+- **macOS 15.0 (Sequoia)** or later
+- **Figma account** (OAuth 2.0 authentication)
 
 ## Contributing
 

@@ -1,4 +1,5 @@
 import ExFigCore
+import ExFigKit
 import Foundation
 
 /// Errors that can occur during HEIC conversion
