@@ -17,7 +17,7 @@ public struct OAuthConfig: Sendable {
         clientId: String,
         clientSecret: String,
         redirectURI: String = "exfig://oauth/callback",
-        scopes: [OAuthScope] = [.filesRead]
+        scopes: [OAuthScope] = [.fileContentRead]
     ) {
         self.clientId = clientId
         self.clientSecret = clientSecret
@@ -27,11 +27,24 @@ public struct OAuthConfig: Sendable {
 }
 
 /// Available Figma OAuth scopes.
+/// See: https://www.figma.com/developers/api#oauth-scopes
 public enum OAuthScope: String, Sendable, CaseIterable {
-    case filesRead = "files:read"
+    // Files
+    case fileContentRead = "file_content:read"
+    case fileMetadataRead = "file_metadata:read"
+    case fileCommentsRead = "file_comments:read"
     case fileCommentsWrite = "file_comments:write"
+    case fileVersionsRead = "file_versions:read"
+    case fileDevResourcesRead = "file_dev_resources:read"
+    case fileDevResourcesWrite = "file_dev_resources:write"
+
+    // Libraries
     case libraryAnalyticsRead = "library_analytics:read"
+
+    // Webhooks
     case webhooksWrite = "webhooks:write"
+
+    // Users
     case currentUserRead = "current_user:read"
 
     /// OpenID Connect scopes

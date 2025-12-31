@@ -160,7 +160,7 @@ final class AuthViewModel {
         let config = OAuthConfig(
             clientId: oauthClientId,
             clientSecret: oauthClientSecret,
-            scopes: [.filesRead, .currentUserRead]
+            scopes: [.fileContentRead, .fileMetadataRead, .currentUserRead]
         )
 
         let client = OAuthClient(config: config)

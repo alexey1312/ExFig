@@ -97,7 +97,7 @@ final class ProjectViewModel {
 
     /// Add a file to recent files.
     func addToRecentFiles(_ item: ProjectItem) {
-        guard let fileKey = item.fileKey else { return }
+        guard item.fileKey != nil else { return }
 
         // Remove if already exists
         recentFiles.removeAll { $0.id == item.id }

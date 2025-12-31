@@ -457,34 +457,46 @@ final class ConfigViewModel {
 
         if config.colorsEnabled {
             let useColorAssets = config.optionBool("usecolorassets", default: true)
-            dict["colors"] = [
+            var colorsDict: [String: Any] = [
                 "useColorAssets": useColorAssets,
                 "assetsFolder": "Colors",
-                "nameStyle": nameStyle.yamlValue,
-            ].compactMapValues { $0 }
+            ]
+            if let style = nameStyle.yamlValue {
+                colorsDict["nameStyle"] = style
+            }
+            dict["colors"] = colorsDict
         }
 
         if config.iconsEnabled {
-            dict["icons"] = [
+            var iconsDict: [String: Any] = [
                 "format": "pdf",
                 "assetsFolder": "Icons",
-                "nameStyle": nameStyle.yamlValue,
-            ].compactMapValues { $0 }
+            ]
+            if let style = nameStyle.yamlValue {
+                iconsDict["nameStyle"] = style
+            }
+            dict["icons"] = iconsDict
         }
 
         if config.imagesEnabled {
-            dict["images"] = [
+            var imagesDict: [String: Any] = [
                 "assetsFolder": "Illustrations",
-                "nameStyle": nameStyle.yamlValue,
                 "scales": [1, 2, 3],
-            ].compactMapValues { $0 }
+            ]
+            if let style = nameStyle.yamlValue {
+                imagesDict["nameStyle"] = style
+            }
+            dict["images"] = imagesDict
         }
 
         if config.typographyEnabled {
-            dict["typography"] = [
+            var typographyDict: [String: Any] = [
                 "generateLabels": false,
-                "nameStyle": nameStyle.yamlValue,
-            ].compactMapValues { $0 }
+            ]
+            if let style = nameStyle.yamlValue {
+                typographyDict["nameStyle"] = style
+            }
+            dict["typography"] = typographyDict
         }
 
         return dict

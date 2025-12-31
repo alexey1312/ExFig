@@ -7,8 +7,15 @@ OUTPUT="Projects/ExFigStudio/Sources/Generated/Secrets.generated.swift"
 mkdir -p "$(dirname "$OUTPUT")"
 
 # Load secrets via fnox if available
-if command -v fnox &> /dev/null && [ -f "fnox.toml" ]; then
-    eval "$(fnox env 2>/dev/null || true)"
+if [ -f "fnox.toml" ]; then
+    # Try fnox directly, then via mise
+    if command -v fnox &> /dev/null; then
+        FIGMA_CLIENT_ID="${FIGMA_CLIENT_ID:-$(fnox get FIGMA_CLIENT_ID 2>/dev/null || true)}"
+        FIGMA_CLIENT_SECRET="${FIGMA_CLIENT_SECRET:-$(fnox get FIGMA_CLIENT_SECRET 2>/dev/null || true)}"
+    elif [ -x "./bin/mise" ]; then
+        FIGMA_CLIENT_ID="${FIGMA_CLIENT_ID:-$(./bin/mise exec -- fnox get FIGMA_CLIENT_ID 2>/dev/null || true)}"
+        FIGMA_CLIENT_SECRET="${FIGMA_CLIENT_SECRET:-$(./bin/mise exec -- fnox get FIGMA_CLIENT_SECRET 2>/dev/null || true)}"
+    fi
 fi
 
 # Check if credentials are set
