@@ -24,26 +24,6 @@ backend = "aqua:orhun/git-cliff"
 "platforms.macos-x64" = { checksum = "sha256:c3111dddaf866a986085f22ff22fa3003645fc69a3b9302c4e1352c4676c398a", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-apple-darwin.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:073c8027da2e055ec83c3609c4195284bd10b2771fcbd806ff0f94e48c310c77", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-pc-windows-msvc.zip"}
 
-[[tools."github:ldomaradzki/xcsift"]]
-version = "1.0.19"
-backend = "github:ldomaradzki/xcsift"
-"platforms.linux-arm64" = { checksum = "sha256:5ad11f6d7a89b08e297b811066f067edea472bfe469686a4e6341635da7c236f", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093021"}
-"platforms.linux-x64" = { checksum = "sha256:5ad11f6d7a89b08e297b811066f067edea472bfe469686a4e6341635da7c236f", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093021"}
-"platforms.macos-arm64" = { checksum = "sha256:472e94b1b7860335ae744509545f7c02962cee1e9833cb9864de00219b8df4c5", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093020"}
-"platforms.macos-x64" = { checksum = "sha256:472e94b1b7860335ae744509545f7c02962cee1e9833cb9864de00219b8df4c5", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093020"}
-
-[[tools."github:nicklockwood/SwiftFormat"]]
-version = "0.58.7"
-backend = "github:nicklockwood/SwiftFormat[asset_pattern=swiftformat.zip]"
-"platforms.linux-arm64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
-"platforms.linux-x64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
-"platforms.macos-arm64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
-"platforms.macos-x64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
-"platforms.windows-x64" = { checksum = "sha256:7e43f8e14e2089eeb83d6958ce162ffa90c9330f3f309ca054693614b2b1b241", url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.58.7/swiftformat.zip", url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/322205686"}
-
-[tools."github:nicklockwood/SwiftFormat".options]
-asset_pattern = "swiftformat.zip"
-
 [[tools.hk]]
 version = "1.28.0"
 backend = "aqua:jdx/hk"
@@ -60,28 +40,6 @@ backend = "aqua:apple/pkl"
 "platforms.macos-arm64" = { checksum = "sha256:f1db44c0f6f859aee88c9d7d272f2371ae40ac95ec9957ae78eff51665158e04", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-macos-aarch64"}
 "platforms.macos-x64" = { checksum = "sha256:5f62ae7a7a34c15b3a83af17bda8e6b98516953f383a492340d4aa090caaa6d9", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-macos-amd64"}
 "platforms.windows-x64" = { checksum = "sha256:19e92aa59bcf4e54963b6e3b419af7e1b939f5793b44f4a08d60bab1217106f4", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-windows-amd64.exe"}
-
-[[tools.pre-commit]]
-version = "4.5.0"
-backend = "aqua:pre-commit/pre-commit"
-"platforms.linux-arm64" = { checksum = "sha256:fbbfa47d19b98e03eb11963094ac3644a97cba105a8c660d8dab4c409c89cebe", url = "https://github.com/pre-commit/pre-commit/releases/download/v4.5.0/pre-commit-4.5.0.pyz"}
-"platforms.linux-x64" = { checksum = "sha256:fbbfa47d19b98e03eb11963094ac3644a97cba105a8c660d8dab4c409c89cebe", url = "https://github.com/pre-commit/pre-commit/releases/download/v4.5.0/pre-commit-4.5.0.pyz"}
-"platforms.macos-arm64" = { checksum = "sha256:fbbfa47d19b98e03eb11963094ac3644a97cba105a8c660d8dab4c409c89cebe", url = "https://github.com/pre-commit/pre-commit/releases/download/v4.5.0/pre-commit-4.5.0.pyz"}
-"platforms.macos-x64" = { checksum = "sha256:fbbfa47d19b98e03eb11963094ac3644a97cba105a8c660d8dab4c409c89cebe", url = "https://github.com/pre-commit/pre-commit/releases/download/v4.5.0/pre-commit-4.5.0.pyz"}
-"platforms.windows-x64" = { checksum = "sha256:fbbfa47d19b98e03eb11963094ac3644a97cba105a8c660d8dab4c409c89cebe", url = "https://github.com/pre-commit/pre-commit/releases/download/v4.5.0/pre-commit-4.5.0.pyz"}
-
-[[tools.python]]
-version = "3.13.0"
-backend = "core:python"
-
-[[tools.python]]
-version = "3.13.11"
-backend = "core:python"
-
-[[tools.swift]]
-version = "6.2.3"
-backend = "core:swift"
-"platforms.linux-x64" = { checksum = "blake3:0857a2267c52dc00ff1b59b93530a4316d3f99884744f4f75661fcbbea8a414b"}
 
 [[tools.swiftformat]]
 version = "0.58.7"

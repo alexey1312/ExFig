@@ -24,9 +24,9 @@ legacy_version_file = false
 
 [tools]
 # --- Swift Development ---
-"github:nicklockwood/SwiftFormat" = { version = "0.58.7", asset_pattern = "swiftformat.zip" } # Swift code formatting
-swiftlint = "0.62.2"                                                                          # Swift linting
-"github:ldomaradzki/xcsift" = "1.0.19"                                                        # xcodebuild output filtering
+swiftformat = "0.58.7" # Swift code formatting
+swiftlint = "0.62.2"   # Swift linting
+xcsift = "1.0.19"      # xcodebuild output filtering
 
 # --- Documentation & Formatting ---
 dprint = "0.50.2" # MD/JSON/YAML formatting (Rust, fast)
@@ -37,7 +37,7 @@ actionlint = "1.7.9" # GitHub Actions linting
 git-cliff = "2.10.1" # Changelog generation
 
 # --- Configuration ---
-pkl = "0.30.2"  # Configuration language (for hk.pkl)
+pkl = "0.30.2" # Configuration language (for hk.pkl)
 
 # =============================================================================
 # Tasks
