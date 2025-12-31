@@ -259,7 +259,7 @@ private final class PathScanner: @unchecked Sendable {
             }
         }
 
-        let slice = input[startIndex..<index]
+        let slice = input[startIndex ..< index]
         guard !slice.isEmpty, let string = String(slice), let value = Double(string) else {
             if slice.isEmpty { return nil }
             // Using Array(slice) to create [UInt8] for String decoding
