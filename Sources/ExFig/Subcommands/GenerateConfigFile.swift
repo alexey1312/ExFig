@@ -21,14 +21,16 @@ extension ExFigCommand {
         @OptionGroup
         var globalOptions: GlobalOptions
 
-        @Option(name: .shortAndLong, help: "Platform: ios or android.")
-        var platform: Platform
+        @Option(name: .shortAndLong, help: "Platform: ios, android, flutter, or web.")
+        var platform: Platform?
 
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let fileContents: String = switch platform {
+            let selectedPlatform = try resolvePlatform(ui: ui)
+
+            let fileContents: String = switch selectedPlatform {
             case .android:
                 androidConfigFileContents
             case .ios:
@@ -49,6 +51,37 @@ extension ExFigCommand {
 
             // Write new config file
             try writeConfigFile(contents: fileContents, to: destination, ui: ui)
+        }
+
+        private func resolvePlatform(ui: TerminalUI) throws -> Platform {
+            if let platform {
+                return platform
+            }
+
+            if !TTYDetector.isTTY {
+                throw ExFigError.custom(errorString: "Missing required argument: --platform")
+            }
+
+            ui.info("Select platform:")
+            ui.info("1. iOS")
+            ui.info("2. Android")
+            ui.info("3. Flutter")
+            ui.info("4. Web")
+            TerminalOutputManager.shared.writeDirect("Choose [1-4]: ")
+            ANSICodes.flushStdout()
+
+            guard let input = readLine()?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                throw ExFigError.custom(errorString: "Operation cancelled")
+            }
+
+            switch input {
+            case "1", "ios", "iOS": return .ios
+            case "2", "android", "Android": return .android
+            case "3", "flutter", "Flutter": return .flutter
+            case "4", "web", "Web": return .web
+            default:
+                throw ExFigError.custom(errorString: "Invalid selection")
+            }
         }
 
         /// Handles existing file: prompts for confirmation and removes if approved.
