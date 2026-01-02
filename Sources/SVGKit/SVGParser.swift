@@ -174,15 +174,18 @@ public struct SVGColor: Equatable, Sendable {
         }
     }
 
+    // swiftlint:disable:next force_try
+    private static let rgbRegex = try! NSRegularExpression(
+        pattern: #"rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)"#,
+        options: []
+    )
+
     private static func parseRGB(_ rgb: String) -> SVGColor? {
-        let pattern = #"rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
-              let match = regex.firstMatch(
-                  in: rgb,
-                  options: [],
-                  range: NSRange(rgb.startIndex..., in: rgb)
-              )
-        else {
+        guard let match = rgbRegex.firstMatch(
+            in: rgb,
+            options: [],
+            range: NSRange(rgb.startIndex..., in: rgb)
+        ) else {
             return nil
         }
 
@@ -274,6 +277,19 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
     /// Logger for warnings and diagnostics
     private let logger = Logger(label: "SVGParser")
+
+    // Compiled regex patterns
+    // swiftlint:disable:next force_try
+    private static let cssRuleRegex = try! NSRegularExpression(
+        pattern: #"([^{]+)\{([^}]+)\}"#,
+        options: []
+    )
+
+    // swiftlint:disable:next force_try
+    private static let urlReferenceRegex = try! NSRegularExpression(
+        pattern: #"url\(#([^)]+)\)"#,
+        options: []
+    )
 
     public init() {}
 
@@ -899,12 +915,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     private func parseCSSRules(_ css: String) {
         // Simple CSS parser: matches selectors { properties }
         // Pattern: ([^{]+)\{([^}]+)\}
-        let pattern = #"([^{]+)\{([^}]+)\}"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return
-        }
-
-        let matches = regex.matches(in: css, options: [], range: NSRange(css.startIndex..., in: css))
+        let matches = Self.cssRuleRegex.matches(in: css, options: [], range: NSRange(css.startIndex..., in: css))
         for match in matches {
             guard let selectorRange = Range(match.range(at: 1), in: css),
                   let propertiesRange = Range(match.range(at: 2), in: css)
@@ -1306,14 +1317,12 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
     private func parseClipPathReference(_ reference: String) -> String? {
         // Parse url(#id) format
-        let pattern = #"url\(#([^)]+)\)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
-              let match = regex.firstMatch(
-                  in: reference,
-                  options: [],
-                  range: NSRange(reference.startIndex..., in: reference)
-              ),
-              let idRange = Range(match.range(at: 1), in: reference)
+        guard let match = Self.urlReferenceRegex.firstMatch(
+            in: reference,
+            options: [],
+            range: NSRange(reference.startIndex..., in: reference)
+        ),
+            let idRange = Range(match.range(at: 1), in: reference)
         else {
             return nil
         }
@@ -1465,10 +1474,12 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
         // Check for gradient reference
         if fill.hasPrefix("url(#") {
-            let pattern = #"url\(#([^)]+)\)"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-               let match = regex.firstMatch(in: fill, options: [], range: NSRange(fill.startIndex..., in: fill)),
-               let idRange = Range(match.range(at: 1), in: fill)
+            if let match = Self.urlReferenceRegex.firstMatch(
+                in: fill,
+                options: [],
+                range: NSRange(fill.startIndex..., in: fill)
+            ),
+                let idRange = Range(match.range(at: 1), in: fill)
             {
                 let id = String(fill[idRange])
 
