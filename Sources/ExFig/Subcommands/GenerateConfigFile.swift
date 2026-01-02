@@ -22,13 +22,27 @@ extension ExFigCommand {
         var globalOptions: GlobalOptions
 
         @Option(name: .shortAndLong, help: "Platform: ios or android.")
-        var platform: Platform
+        var platform: Platform?
 
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let fileContents: String = switch platform {
+            let selectedPlatform: Platform
+            if let platform {
+                selectedPlatform = platform
+            } else if TTYDetector.isTTY {
+                selectedPlatform = try promptForPlatform(ui: ui)
+            } else {
+                throw ExFigError.custom(
+                    errorString: """
+                    Missing required argument '--platform <platform>'. \
+                    Use interactive mode or specify platform.
+                    """
+                )
+            }
+
+            let fileContents: String = switch selectedPlatform {
             case .android:
                 androidConfigFileContents
             case .ios:
@@ -49,6 +63,25 @@ extension ExFigCommand {
 
             // Write new config file
             try writeConfigFile(contents: fileContents, to: destination, ui: ui)
+        }
+
+        private func promptForPlatform(ui: TerminalUI) throws -> Platform {
+            ui.info("Select platform:")
+            let platforms = Platform.allCases
+            for (index, platform) in platforms.enumerated() {
+                ui.info("  \(index + 1). \(platform.rawValue)")
+            }
+
+            TerminalOutputManager.shared.writeDirect("Enter number (1-\(platforms.count)): ")
+            ANSICodes.flushStdout()
+
+            guard let input = readLine(),
+                  let index = Int(input.trimmingCharacters(in: .whitespacesAndNewlines)),
+                  index > 0, index <= platforms.count else {
+                throw ExFigError.custom(errorString: "Invalid selection.")
+            }
+
+            return platforms[index - 1]
         }
 
         /// Handles existing file: prompts for confirmation and removes if approved.
