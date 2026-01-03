@@ -36,7 +36,8 @@ extension BaseEndpoint {
 extension JSONDecoder {
     static let `default`: JSONDecoder = {
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // Performance optimization: Avoid .convertFromSnakeCase as it has significant overhead.
+        // Instead, we use explicit CodingKeys in our models.
         return decoder
     }()
 }
