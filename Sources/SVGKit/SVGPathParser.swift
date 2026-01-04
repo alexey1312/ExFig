@@ -167,6 +167,7 @@ public enum SVGParseError: Error, LocalizedError {
 
 private final class PathScanner: @unchecked Sendable {
     private let input: String.UTF8View
+    private let inputString: String
     private var index: String.UTF8View.Index
 
     // Lookup table for whitespace characters
@@ -183,6 +184,7 @@ private final class PathScanner: @unchecked Sendable {
     }
 
     init(_ input: String) {
+        inputString = input
         self.input = input.utf8
         index = self.input.startIndex
     }
@@ -259,12 +261,11 @@ private final class PathScanner: @unchecked Sendable {
             }
         }
 
-        let slice = input[startIndex ..< index]
-        guard !slice.isEmpty, let string = String(slice), let value = Double(string) else {
+        let slice = inputString[startIndex ..< index]
+        // Double.init(_: StringProtocol) avoids String allocation
+        guard !slice.isEmpty, let value = Double(slice) else {
             if slice.isEmpty { return nil }
-            // Using Array(slice) to create [UInt8] for String decoding
-            let bytes = Array(slice)
-            let errorString = String(bytes: bytes, encoding: .utf8) ?? ""
+            let errorString = String(slice)
             throw SVGParseError.invalidNumber(errorString)
         }
 
