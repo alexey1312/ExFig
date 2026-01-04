@@ -4,7 +4,7 @@ import Foundation
 ///
 /// ExFig supports exporting to both iOS (Xcode) and Android (Android Studio) projects.
 /// The platform affects naming conventions, output formats, and generated code.
-public enum Platform: String, Sendable {
+public enum Platform: String, CaseIterable, Sendable {
     /// iOS/iPadOS/macOS platform (Xcode projects).
     /// Generates xcassets, Swift extensions for UIKit and SwiftUI.
     case ios

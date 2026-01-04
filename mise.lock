@@ -41,6 +41,10 @@ backend = "aqua:apple/pkl"
 "platforms.macos-x64" = { checksum = "sha256:5f62ae7a7a34c15b3a83af17bda8e6b98516953f383a492340d4aa090caaa6d9", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-macos-amd64"}
 "platforms.windows-x64" = { checksum = "sha256:19e92aa59bcf4e54963b6e3b419af7e1b939f5793b44f4a08d60bab1217106f4", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-windows-amd64.exe"}
 
+[[tools.swift]]
+version = "6.2.3"
+backend = "core:swift"
+
 [[tools.swiftformat]]
 version = "0.58.7"
 backend = "asdf:swiftformat"

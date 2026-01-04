@@ -22,13 +22,23 @@ extension ExFigCommand {
         var globalOptions: GlobalOptions
 
         @Option(name: .shortAndLong, help: "Platform: ios or android.")
-        var platform: Platform
+        var platform: Platform?
 
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let fileContents: String = switch platform {
+            let selectedPlatform: Platform
+            if let p = platform {
+                selectedPlatform = p
+            } else {
+                if !TTYDetector.isTTY {
+                    throw ValidationError("Missing expected argument '--platform <platform>'")
+                }
+                selectedPlatform = try promptForPlatform(ui: ui)
+            }
+
+            let fileContents: String = switch selectedPlatform {
             case .android:
                 androidConfigFileContents
             case .ios:
@@ -117,6 +127,31 @@ extension ExFigCommand {
                 ui.info("   exfig typography")
             } else {
                 throw ExFigError.custom(errorString: "Unable to create config file at: \(destination)")
+            }
+        }
+
+        private func promptForPlatform(ui: TerminalUI) throws -> Platform {
+            ui.info("Select a platform:")
+            let platforms = Platform.allCases
+            for (index, platform) in platforms.enumerated() {
+                ui.info("\(index + 1). \(platform.rawValue)")
+            }
+
+            while true {
+                TerminalOutputManager.shared.writeDirect("Enter selection [1-\(platforms.count)]: ")
+                ANSICodes.flushStdout()
+
+                guard let input = readLine() else {
+                    TerminalOutputManager.shared.writeDirect("\n")
+                    throw ExFigError.custom(errorString: "Operation cancelled.")
+                }
+
+                if let index = Int(input.trimmingCharacters(in: .whitespacesAndNewlines)),
+                   index > 0, index <= platforms.count
+                {
+                    return platforms[index - 1]
+                }
+                ui.error("Invalid selection. Please try again.")
             }
         }
     }
