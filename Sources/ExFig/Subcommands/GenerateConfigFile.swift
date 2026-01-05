@@ -22,13 +22,23 @@ extension ExFigCommand {
         var globalOptions: GlobalOptions
 
         @Option(name: .shortAndLong, help: "Platform: ios or android.")
-        var platform: Platform
+        var platform: Platform?
 
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let fileContents: String = switch platform {
+            let selectedPlatform: Platform
+            if let platform {
+                selectedPlatform = platform
+            } else {
+                if !TTYDetector.isTTY {
+                    throw ValidationError("Missing required argument: --platform <ios|android|flutter|web>")
+                }
+                selectedPlatform = try promptForPlatform(ui: ui)
+            }
+
+            let fileContents: String = switch selectedPlatform {
             case .android:
                 androidConfigFileContents
             case .ios:
@@ -117,6 +127,29 @@ extension ExFigCommand {
                 ui.info("   exfig typography")
             } else {
                 throw ExFigError.custom(errorString: "Unable to create config file at: \(destination)")
+            }
+        }
+
+        private func promptForPlatform(ui: TerminalUI) throws -> Platform {
+            ui.info("Select a platform to generate config for:")
+            let platforms = Platform.allCases
+            for (index, platform) in platforms.enumerated() {
+                ui.info("\(index + 1). \(platform.rawValue)")
+            }
+
+            while true {
+                TerminalOutputManager.shared.writeDirect("Enter number [1-\(platforms.count)]: ")
+                ANSICodes.flushStdout()
+
+                guard let input = readLine(),
+                      let index = Int(input.trimmingCharacters(in: .whitespacesAndNewlines)),
+                      index > 0, index <= platforms.count
+                else {
+                    ui.error("Invalid selection. Please enter a number between 1 and \(platforms.count).")
+                    continue
+                }
+
+                return platforms[index - 1]
             }
         }
     }
