@@ -166,6 +166,7 @@ public enum SVGParseError: Error, LocalizedError {
 // MARK: - Internal Scanner
 
 private final class PathScanner: @unchecked Sendable {
+    private let source: String
     private let input: String.UTF8View
     private var index: String.UTF8View.Index
 
@@ -183,6 +184,7 @@ private final class PathScanner: @unchecked Sendable {
     }
 
     init(_ input: String) {
+        source = input
         self.input = input.utf8
         index = self.input.startIndex
     }
@@ -259,9 +261,13 @@ private final class PathScanner: @unchecked Sendable {
             }
         }
 
-        let slice = input[startIndex ..< index]
-        guard !slice.isEmpty, let string = String(slice), let value = Double(string) else {
-            if slice.isEmpty { return nil }
+        // Optimization: Use Double(_: StringProtocol) to avoid allocating a new String
+        guard startIndex < index else { return nil }
+        let substring = source[startIndex ..< index]
+
+        guard let value = Double(substring) else {
+            if substring.isEmpty { return nil }
+            let slice = input[startIndex ..< index]
             // Using Array(slice) to create [UInt8] for String decoding
             let bytes = Array(slice)
             let errorString = String(bytes: bytes, encoding: .utf8) ?? ""
