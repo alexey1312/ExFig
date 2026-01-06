@@ -1,4 +1,4 @@
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 import ExFigCore
 import Foundation
 import Rainbow
@@ -403,6 +403,32 @@ final class TerminalUI: Sendable {
     /// Ensure cursor is visible (call on cleanup/exit)
     func cleanup() {
         showCursor()
+    }
+
+    // MARK: - Input
+
+    /// Prompts the user for confirmation (y/n)
+    func confirm(_ message: String, defaultToYes: Bool = false) -> Bool {
+        guard TTYDetector.isTTY else { return false }
+
+        let options = defaultToYes ? "[Y/n]" : "[y/N]"
+        let text = "\(message) \(options) "
+        let formattedText = useColors ? text.bold : text
+
+        TerminalOutputManager.shared.writeDirect(formattedText)
+        ANSICodes.flushStdout()
+
+        guard let input = readLine() else {
+            TerminalOutputManager.shared.writeDirect("\n")
+            return false
+        }
+
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if trimmed.isEmpty {
+            return defaultToYes
+        }
+
+        return trimmed == "y" || trimmed == "yes"
     }
 }
 

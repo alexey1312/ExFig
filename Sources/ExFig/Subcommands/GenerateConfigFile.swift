@@ -1,6 +1,7 @@
 import ArgumentParser
 import ExFigCore
 import Foundation
+import Rainbow
 
 extension Platform: ExpressibleByArgument {}
 
@@ -63,17 +64,8 @@ extension ExFigCommand {
             }
 
             ui.warning("Config file already exists at: \(destination)")
-            TerminalOutputManager.shared.writeDirect("Overwrite? [y/N] ")
-            ANSICodes.flushStdout()
 
-            guard let input = readLine() else {
-                TerminalOutputManager.shared.writeDirect("\n")
-                ui.error("Operation cancelled.")
-                return false
-            }
-
-            let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            if trimmed != "y", trimmed != "yes" {
+            if !ui.confirm("Overwrite?") {
                 ui.info("Operation cancelled.")
                 return false
             }
@@ -100,21 +92,21 @@ extension ExFigCommand {
                 ui.success("Config file generated: \(destination)")
 
                 ui.info("")
-                ui.info("👉 Next Steps:")
-                ui.info("1. Edit \(ExFigOptions.defaultConfigFilename) with your Figma file IDs")
+                ui.info("👉 Next Steps:".bold)
+                ui.info("1. Edit \(ExFigOptions.defaultConfigFilename.bold) with your Figma file IDs")
 
                 if ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"] == nil {
                     ui.info("2. Set your Figma token (missing):")
-                    ui.info("   export FIGMA_PERSONAL_TOKEN=your_token_here")
+                    ui.info("   export FIGMA_PERSONAL_TOKEN=your_token_here".yellow)
                 } else {
                     ui.info("2. Figma token detected in environment ✅")
                 }
 
                 ui.info("3. Run export commands:")
-                ui.info("   exfig colors")
-                ui.info("   exfig icons")
-                ui.info("   exfig images")
-                ui.info("   exfig typography")
+                ui.info("   exfig colors".cyan)
+                ui.info("   exfig icons".cyan)
+                ui.info("   exfig images".cyan)
+                ui.info("   exfig typography".cyan)
             } else {
                 throw ExFigError.custom(errorString: "Unable to create config file at: \(destination)")
             }
