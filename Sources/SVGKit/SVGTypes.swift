@@ -34,18 +34,18 @@ public struct SVGTransform: Equatable, Sendable {
         self.skewY = skewY
     }
 
+    private static let transformRegex: NSRegularExpression = {
+        // swiftlint:disable:next force_try
+        try! NSRegularExpression(pattern: #"(translate|scale|rotate|matrix|skewX|skewY)\s*\(([^)]+)\)"#, options: [])
+    }()
+
     /// Parses an SVG transform attribute string
     /// Supports: translate, scale, rotate
     public static func parse(_ string: String) -> SVGTransform? {
         let trimmed = string.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return nil }
 
-        let transformPattern = #"(translate|scale|rotate|matrix|skewX|skewY)\s*\(([^)]+)\)"#
-        guard let regex = try? NSRegularExpression(pattern: transformPattern, options: []) else {
-            return nil
-        }
-
-        let matches = regex.matches(in: trimmed, options: [], range: NSRange(trimmed.startIndex..., in: trimmed))
+        let matches = transformRegex.matches(in: trimmed, options: [], range: NSRange(trimmed.startIndex..., in: trimmed))
         guard !matches.isEmpty else { return nil }
 
         var result = ParsedTransformValues()
