@@ -166,8 +166,9 @@ public enum SVGParseError: Error, LocalizedError {
 // MARK: - Internal Scanner
 
 private final class PathScanner: @unchecked Sendable {
+    private let originalInput: String
     private let input: String.UTF8View
-    private var index: String.UTF8View.Index
+    private var index: String.Index
 
     // Lookup table for whitespace characters
     // 0x09: tab, 0x0A: line feed, 0x0C: form feed, 0x0D: carriage return, 0x20: space
@@ -183,6 +184,7 @@ private final class PathScanner: @unchecked Sendable {
     }
 
     init(_ input: String) {
+        originalInput = input
         self.input = input.utf8
         index = self.input.startIndex
     }
@@ -260,7 +262,10 @@ private final class PathScanner: @unchecked Sendable {
         }
 
         let slice = input[startIndex ..< index]
-        guard !slice.isEmpty, let string = String(slice), let value = Double(string) else {
+        // OPTIMIZATION: Use Substring from original string to avoid String allocation from UTF8View slice.
+        // Swift's Double.init<S>(_ text: S) where S : StringProtocol handles Substring efficiently.
+        let substring = originalInput[startIndex ..< index]
+        guard !slice.isEmpty, let value = Double(substring) else {
             if slice.isEmpty { return nil }
             // Using Array(slice) to create [UInt8] for String decoding
             let bytes = Array(slice)
