@@ -48,27 +48,61 @@ enum DownloadImageProcessor {
     ) -> String {
         var result = name
 
-        // Apply regex replacement if both patterns are specified
-        if let validateRegexp, let replaceRegexp {
-            // Normalize path separators first
-            result = result.replacingOccurrences(of: "/", with: "_")
-            // Apply regex replacement
-            if let regex = try? NSRegularExpression(pattern: validateRegexp) {
-                let range = NSRange(result.startIndex..., in: result)
-                result = regex.stringByReplacingMatches(
-                    in: result,
-                    range: range,
-                    withTemplate: replaceRegexp
-                )
-            }
-        } else {
-            // Just normalize path separators
-            result = result.replacingOccurrences(of: "/", with: "_")
+        // 1. Initial sanitization: separators
+        result = result.replacingOccurrences(of: "/", with: "_")
+        result = result.replacingOccurrences(of: "\\", with: "_")
+
+        // 2. Apply regex replacement if both patterns are specified
+        if let validateRegexp, let replaceRegexp,
+           let regex = try? NSRegularExpression(pattern: validateRegexp)
+        {
+            let range = NSRange(result.startIndex..., in: result)
+            result = regex.stringByReplacingMatches(
+                in: result,
+                range: range,
+                withTemplate: replaceRegexp
+            )
         }
 
-        // Apply name style
+        // 3. Apply name style
         if let nameStyle {
             result = applyNameStyle(result, style: nameStyle)
+        }
+
+        // 4. Final strict sanitization
+        // This ensures that even after regex/style application, the result is safe
+        result = sanitizeFilename(result)
+
+        return result
+    }
+
+    /// Strictly sanitizes a filename to prevent path traversal and ensure filesystem safety.
+    ///
+    /// - Parameter name: The name to sanitize
+    /// - Returns: Sanitized name safe for use as a filename
+    private static func sanitizeFilename(_ name: String) -> String {
+        var result = name
+
+        // Replace any remaining path separators (just in case regex introduced them)
+        result = result.replacingOccurrences(of: "/", with: "_")
+        result = result.replacingOccurrences(of: "\\", with: "_")
+
+        // Prevent path traversal
+        result = result.replacingOccurrences(of: "..", with: "__")
+
+        // Remove control characters and other dangerous chars
+        // Reserved chars: : * ? " < > | (Windows) + control chars
+        let illegalChars = CharacterSet(charactersIn: ":*?\"<>|")
+            .union(.controlCharacters)
+            .union(.newlines)
+            .union(.illegalCharacters)
+
+        let components = result.components(separatedBy: illegalChars)
+        result = components.joined(separator: "_")
+
+        // Ensure non-empty result (fallback to "unnamed")
+        if result.isEmpty || result == "." || result == "_" {
+            return "unnamed"
         }
 
         return result

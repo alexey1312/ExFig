@@ -1,4 +1,6 @@
 // swiftlint:disable file_length
+import Foundation
+
 /// Process asset name
 public protocol AssetNameProcessable {
     var nameReplaceRegexp: String? { get }
@@ -114,6 +116,7 @@ public struct ImagesProcessor: AssetsProcessable, Sendable {
                 result = String(split[0])
             } else {
                 result = result.replacingOccurrences(of: "/", with: "_")
+                result = result.replacingOccurrences(of: "\\", with: "_")
             }
 
             // Apply nameReplaceRegexp if configured
@@ -460,6 +463,7 @@ public extension AssetsProcessable {
                 renamedAsset.name = String(split[0])
             } else {
                 renamedAsset.name = renamedAsset.name.replacingOccurrences(of: "/", with: "_")
+                renamedAsset.name = renamedAsset.name.replacingOccurrences(of: "\\", with: "_")
             }
             return renamedAsset
         }
