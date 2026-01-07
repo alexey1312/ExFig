@@ -22,13 +22,15 @@ extension ExFigCommand {
         var globalOptions: GlobalOptions
 
         @Option(name: .shortAndLong, help: "Platform: ios or android.")
-        var platform: Platform
+        var platform: Platform?
 
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let fileContents: String = switch platform {
+            let selectedPlatform = try resolvePlatform(ui: ui)
+
+            let fileContents: String = switch selectedPlatform {
             case .android:
                 androidConfigFileContents
             case .ios:
@@ -49,6 +51,38 @@ extension ExFigCommand {
 
             // Write new config file
             try writeConfigFile(contents: fileContents, to: destination, ui: ui)
+        }
+
+        private func resolvePlatform(ui: TerminalUI) throws -> Platform {
+            if let platform {
+                return platform
+            }
+
+            if !TTYDetector.isTTY {
+                throw ExFigError
+                    .custom(errorString: "Missing expected argument '--platform <platform>'")
+            }
+
+            ui.info("Select a platform:")
+            let platforms = Platform.allCases
+            for (index, p) in platforms.enumerated() {
+                ui.info("\(index + 1). \(p.rawValue)")
+            }
+
+            TerminalOutputManager.shared.writeDirect("Enter number or name: ")
+            ANSICodes.flushStdout()
+
+            guard let input = readLine()?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                throw ExFigError.custom(errorString: "Operation cancelled")
+            }
+
+            if let index = Int(input), index > 0, index <= platforms.count {
+                return platforms[index - 1]
+            } else if let p = Platform(rawValue: input.lowercased()) {
+                return p
+            } else {
+                throw ExFigError.custom(errorString: "Invalid selection")
+            }
         }
 
         /// Handles existing file: prompts for confirmation and removes if approved.
