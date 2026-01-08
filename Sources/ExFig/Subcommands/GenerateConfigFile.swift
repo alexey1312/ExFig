@@ -54,6 +54,7 @@ extension ExFigCommand {
         /// Handles existing file: prompts for confirmation and removes if approved.
         /// - Returns: `true` to proceed with overwrite, `false` if user cancelled
         private func handleExistingFile(at destination: String, ui: TerminalUI) throws -> Bool {
+            // Check non-interactive first to provide specific error
             if !TTYDetector.isTTY {
                 ui.error("Config file already exists at: \(destination)")
                 throw ExFigError
@@ -63,17 +64,8 @@ extension ExFigCommand {
             }
 
             ui.warning("Config file already exists at: \(destination)")
-            TerminalOutputManager.shared.writeDirect("Overwrite? [y/N] ")
-            ANSICodes.flushStdout()
 
-            guard let input = readLine() else {
-                TerminalOutputManager.shared.writeDirect("\n")
-                ui.error("Operation cancelled.")
-                return false
-            }
-
-            let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            if trimmed != "y", trimmed != "yes" {
+            if !ui.confirm("Overwrite?") {
                 ui.info("Operation cancelled.")
                 return false
             }

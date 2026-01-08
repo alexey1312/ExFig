@@ -24,6 +24,30 @@ final class TerminalUI: Sendable {
         return TerminalUI(outputMode: mode)
     }
 
+    // MARK: - Input
+
+    /// Prompt for confirmation
+    /// - Parameters:
+    ///   - message: The message to display
+    /// - Returns: True if confirmed
+    func confirm(_ message: String) -> Bool {
+        if !TTYDetector.isTTY {
+            // Non-interactive mode always returns false for safety
+            return false
+        }
+
+        TerminalOutputManager.shared.writeDirect("\(message) [y/N] ")
+        ANSICodes.flushStdout()
+
+        guard let input = readLine() else {
+            TerminalOutputManager.shared.writeDirect("\n")
+            return false
+        }
+
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return trimmed == "y" || trimmed == "yes"
+    }
+
     // MARK: - Simple Output
 
     /// Print an info message

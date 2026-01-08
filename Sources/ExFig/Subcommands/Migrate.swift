@@ -62,7 +62,7 @@ extension ExFigCommand {
             if FileManager.default.fileExists(atPath: outputPath), !force {
                 ui.info("")
                 ui.info("Output: \(output)")
-                if !promptConfirmation("File already exists. Overwrite?", ui: ui) {
+                if !ui.confirm("File already exists. Overwrite?") {
                     ui.info("Migration cancelled.")
                     return
                 }
@@ -278,12 +278,6 @@ extension ExFigCommand {
             }
 
             ui.info("")
-        }
-
-        private func promptConfirmation(_ message: String, ui: TerminalUI) -> Bool {
-            TerminalOutputManager.shared.writeDirect("\(message) [y/N] ")
-            guard let response = readLine()?.lowercased() else { return false }
-            return response == "y" || response == "yes"
         }
 
         private func writeConfigFile(content: String, to path: String) throws {
