@@ -155,6 +155,8 @@ ios:
     swiftUIImageSwift: "./Source/Image+extension_icons.swift"
     # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing icons from the code (e.g. UIImage.ic24ArrowRight)
     imageSwift: "./Example/Source/UIImage+extension_icons.swift"
+    # [optional] Absolute or relative path to swift file where to generate Figma Code Connect structs
+    codeConnectSwift: "./CodeConnect/Icons.figma.swift"
     # Asset render mode: "template", "original" or "default". Default value is "template".
     renderMode: default
     # Configure the suffix for filtering Icons and to denote a asset render mode: "default".
@@ -175,12 +177,14 @@ ios:
   #     nameStyle: camelCase
   #     preservesVectorRepresentation: ["*"]
   #     imageSwift: "./Generated/ActionsIcons.swift"
+  #     codeConnectSwift: "./CodeConnect/Icons/ActionsIcons.figma.swift"
   #   - figmaFrameName: Navigation  # Export icons from "Navigation" frame
   #     format: svg
   #     assetsFolder: Navigation
   #     nameStyle: camelCase
   #     preservesVectorRepresentation: ["*"]
   #     imageSwift: "./Generated/NavigationIcons.swift"
+  #     codeConnectSwift: "./CodeConnect/Icons/NavigationIcons.figma.swift"
 
   # [optional] Parameters for exporting images (legacy single-object format)
   # Can also be an array of objects — see "Multiple Images Configuration" section below.
@@ -196,6 +200,8 @@ ios:
     swiftUIImageSwift: "./Source/Image+extension_illustrations.swift"
     # [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing illustrations from the code (e.g. UIImage.illZeroNoInternet)
     imageSwift: "./Example/Source/UIImage+extension_illustrations.swift"
+    # [optional] Absolute or relative path to swift file where to generate Figma Code Connect structs
+    # codeConnectSwift: "./CodeConnect/Images/Illustrations.figma.swift"
 
   # [optional] Parameters for exporting typography
   typography:
@@ -449,11 +455,13 @@ ios:
       assetsFolder: Actions
       nameStyle: camelCase
       imageSwift: "./Generated/ActionsIcons.swift"
+      codeConnectSwift: "./CodeConnect/Icons/ActionsIcons.figma.swift"
     - figmaFrameName: Navigation
       format: svg
       assetsFolder: Navigation
       nameStyle: camelCase
       imageSwift: "./Generated/NavigationIcons.swift"
+      codeConnectSwift: "./CodeConnect/Icons/NavigationIcons.figma.swift"
 ```
 
 ### Per-Entry Fields
@@ -466,6 +474,7 @@ Each entry in the array supports all the same fields as the legacy format, plus:
 | `nameValidateRegexp` | RegExp pattern for icon name validation. Overrides `common.icons.nameValidateRegexp`   |
 | `nameReplaceRegexp`  | RegExp pattern for name replacement. Overrides `common.icons.nameReplaceRegexp`        |
 | `nameStyle`          | Name style (camelCase, snake_case, etc.). Platform-specific default applies if not set |
+| `codeConnectSwift`   | (iOS only) Path to Figma Code Connect file for linking assets to Figma components      |
 
 ### Fallback Behavior
 
@@ -688,26 +697,29 @@ ios:
       assetsFolder: Onboarding
       nameStyle: camelCase
       imageSwift: "./Generated/OnboardingImages.swift"
+      codeConnectSwift: "./CodeConnect/Images/OnboardingImages.figma.swift"
     - figmaFrameName: Promo
       assetsFolder: Promo
       nameStyle: camelCase
       scales: [1, 2, 3]
       imageSwift: "./Generated/PromoImages.swift"
+      codeConnectSwift: "./CodeConnect/Images/PromoImages.figma.swift"
 ```
 
 ### Per-Entry Fields (iOS)
 
-| Field               | Description                                                                      |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `figmaFrameName`    | Figma frame name to export images from. Overrides `common.images.figmaFrameName` |
-| `assetsFolder`      | Folder name inside Assets.xcassets                                               |
-| `nameStyle`         | camelCase, snake_case, PascalCase, etc.                                          |
-| `scales`            | Array of scale factors [1, 2, 3] (optional)                                      |
-| `imageSwift`        | Path to UIImage extension file (optional)                                        |
-| `swiftUIImageSwift` | Path to SwiftUI Image extension file (optional)                                  |
-| `sourceFormat`      | Source format from Figma API: `png` (default) or `svg` (optional)                |
-| `outputFormat`      | Output format: `png` (default) or `heic` (optional, macOS only for encoding)     |
-| `heicOptions`       | HEIC encoding options (optional, see below)                                      |
+| Field               | Description                                                                       |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `figmaFrameName`    | Figma frame name to export images from. Overrides `common.images.figmaFrameName`  |
+| `assetsFolder`      | Folder name inside Assets.xcassets                                                |
+| `nameStyle`         | camelCase, snake_case, PascalCase, etc.                                           |
+| `scales`            | Array of scale factors [1, 2, 3] (optional)                                       |
+| `imageSwift`        | Path to UIImage extension file (optional)                                         |
+| `swiftUIImageSwift` | Path to SwiftUI Image extension file (optional)                                   |
+| `codeConnectSwift`  | Path to Figma Code Connect file for linking assets to Figma components (optional) |
+| `sourceFormat`      | Source format from Figma API: `png` (default) or `svg` (optional)                 |
+| `outputFormat`      | Output format: `png` (default) or `heic` (optional, macOS only for encoding)      |
+| `heicOptions`       | HEIC encoding options (optional, see below)                                       |
 
 #### HEIC Options (iOS only)
 

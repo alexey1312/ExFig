@@ -183,6 +183,7 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+            codeConnectSwiftURL: entry.codeConnectSwift,
             templatesPath: ios.templatesPath,
             renderMode: entry.renderMode
         )
@@ -443,6 +444,7 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+            codeConnectSwiftURL: entry.codeConnectSwift,
             templatesPath: ios.templatesPath,
             renderMode: entry.renderMode
         )
@@ -881,6 +883,7 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+            codeConnectSwiftURL: entry.codeConnectSwift,
             templatesPath: ios.templatesPath,
             renderMode: entry.renderMode
         )
@@ -1021,6 +1024,7 @@ extension ExFigCommand.ExportImages {
             addObjcAttribute: ios.addObjcAttribute,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+            codeConnectSwiftURL: entry.codeConnectSwift,
             templatesPath: ios.templatesPath,
             renderMode: entry.renderMode
         )

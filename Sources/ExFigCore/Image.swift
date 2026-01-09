@@ -117,16 +117,34 @@ public struct ImagePack: Asset, Sendable {
     /// The target platform.
     public var platform: Platform?
 
+    /// The Figma node ID for this asset (e.g., "12016:2218").
+    /// Used for Code Connect integration to link back to Figma components.
+    public var nodeId: String?
+
+    /// The Figma file ID containing this asset.
+    /// Used for Code Connect integration to construct Figma URLs.
+    public var fileId: String?
+
     /// Creates an image pack with multiple variants.
     ///
     /// - Parameters:
     ///   - name: The asset name.
     ///   - images: Array of image variants.
     ///   - platform: Optional target platform.
-    public init(name: String, images: [Image], platform: Platform? = nil) {
+    ///   - nodeId: Optional Figma node ID for Code Connect.
+    ///   - fileId: Optional Figma file ID for Code Connect.
+    public init(
+        name: String,
+        images: [Image],
+        platform: Platform? = nil,
+        nodeId: String? = nil,
+        fileId: String? = nil
+    ) {
         self.name = name
         self.images = images
         self.platform = platform
+        self.nodeId = nodeId
+        self.fileId = fileId
     }
 
     /// Creates an image pack from a single image.
@@ -134,9 +152,18 @@ public struct ImagePack: Asset, Sendable {
     /// - Parameters:
     ///   - image: The single image variant.
     ///   - platform: Optional target platform.
-    public init(image: Image, platform: Platform? = nil) {
+    ///   - nodeId: Optional Figma node ID for Code Connect.
+    ///   - fileId: Optional Figma file ID for Code Connect.
+    public init(
+        image: Image,
+        platform: Platform? = nil,
+        nodeId: String? = nil,
+        fileId: String? = nil
+    ) {
         name = image.name
         images = [image]
         self.platform = platform
+        self.nodeId = nodeId
+        self.fileId = fileId
     }
 }

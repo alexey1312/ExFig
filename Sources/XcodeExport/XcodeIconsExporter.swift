@@ -36,6 +36,15 @@ public final class XcodeIconsExporter: XcodeImagesExporterBase {
         let imageNames = allIconNames ?? icons.map { normalizeName($0.light.name) }
         let extensionFiles = try generateExtensions(names: imageNames, append: append)
 
-        return [contentsFile] + imageAssetsFiles + extensionFiles
+        var result = [contentsFile] + imageAssetsFiles + extensionFiles
+
+        // Generate Code Connect file if URL is configured
+        if let codeConnectURL = output.codeConnectSwiftURL {
+            if let codeConnectFile = try generateCodeConnect(imagePacks: icons, url: codeConnectURL) {
+                result.append(codeConnectFile)
+            }
+        }
+
+        return result
     }
 }

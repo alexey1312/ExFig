@@ -212,6 +212,8 @@ struct Params: Decodable {
 
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
+            /// URL to generate Figma Code Connect Swift file.
+            let codeConnectSwift: URL?
 
             let renderMode: XcodeRenderMode?
             let renderModeDefaultSuffix: String?
@@ -234,6 +236,8 @@ struct Params: Decodable {
 
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
+            /// URL to generate Figma Code Connect Swift file.
+            let codeConnectSwift: URL?
 
             let renderMode: XcodeRenderMode?
             let renderModeDefaultSuffix: String?
@@ -272,6 +276,7 @@ struct Params: Decodable {
                         nameReplaceRegexp: nil,
                         imageSwift: icons.imageSwift,
                         swiftUIImageSwift: icons.swiftUIImageSwift,
+                        codeConnectSwift: icons.codeConnectSwift,
                         renderMode: icons.renderMode,
                         renderModeDefaultSuffix: icons.renderModeDefaultSuffix,
                         renderModeOriginalSuffix: icons.renderModeOriginalSuffix,
@@ -297,6 +302,8 @@ struct Params: Decodable {
 
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
+            /// URL to generate Figma Code Connect Swift file.
+            let codeConnectSwift: URL?
 
             let renderMode: XcodeRenderMode?
             let renderModeDefaultSuffix: String?
@@ -313,6 +320,8 @@ struct Params: Decodable {
             let scales: [Double]?
             let imageSwift: URL?
             let swiftUIImageSwift: URL?
+            /// URL to generate Figma Code Connect Swift file.
+            let codeConnectSwift: URL?
             /// Source format for fetching from Figma API. Default: png
             let sourceFormat: SourceFormat?
             /// Output format for asset catalog. Default: png
@@ -351,6 +360,7 @@ struct Params: Decodable {
                         scales: images.scales,
                         imageSwift: images.imageSwift,
                         swiftUIImageSwift: images.swiftUIImageSwift,
+                        codeConnectSwift: images.codeConnectSwift,
                         sourceFormat: nil,
                         outputFormat: nil,
                         heicOptions: nil,
