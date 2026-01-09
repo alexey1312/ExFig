@@ -202,6 +202,44 @@ enum ColorsConfiguration: Decodable {
 **Note:** Colors array format is self-contained—each entry specifies its own Figma Variables source (`tokensFileId`,
 `tokensCollectionName`, mode names) and output paths. Legacy format uses `common.variablesColors` for source.
 
+### Figma codeSyntax Sync
+
+The `CodeSyntaxSyncer` writes generated code names back to Figma Variables so designers see real code names in Dev Mode.
+
+**Key files:**
+
+| File                                                      | Purpose                              |
+| --------------------------------------------------------- | ------------------------------------ |
+| `Sources/ExFig/Sync/CodeSyntaxSyncer.swift`               | Core sync logic with name processing |
+| `Sources/FigmaAPI/Model/VariableUpdate.swift`             | Request/response models for POST API |
+| `Sources/FigmaAPI/Endpoint/UpdateVariablesEndpoint.swift` | POST endpoint implementation         |
+
+**Integration in iOSColorsExport.swift:**
+
+```swift
+// After color export, sync codeSyntax if configured
+if entry.syncCodeSyntax == true, let template = entry.codeSyntaxTemplate {
+    let syncer = CodeSyntaxSyncer(client: client)
+    let count = try await syncer.sync(
+        fileId: tokensFileId,
+        collectionName: tokensCollectionName,
+        template: template,
+        nameStyle: entry.nameStyle,
+        nameValidateRegexp: entry.nameValidateRegexp,
+        nameReplaceRegexp: entry.nameReplaceRegexp
+    )
+    ui.info("Synced codeSyntax for \(count) variables")
+}
+```
+
+**Name processing pipeline** (same as ColorsProcessor):
+
+1. Normalize `/` → `_`, deduplicate `color/color` → `color`
+2. Apply `nameReplaceRegexp` using `nameValidateRegexp` match
+3. Apply `nameStyle` (camelCase, snakeCase, etc.)
+
+**Requirements:** Figma Enterprise plan, `file_variables:write` token scope, Edit file access.
+
 ### Multiple Images Configuration
 
 Images can be configured as a single object (legacy) or array (new format) in `Params.swift`:
@@ -708,13 +746,14 @@ This pattern ensures:
 
 ### Key API Endpoints Used
 
-| Endpoint                        | Purpose                       | File in Project            |
-| ------------------------------- | ----------------------------- | -------------------------- |
-| `GET /v1/files/:key`            | File structure, nodes, styles | `NodesEndpoint.swift`      |
-| `GET /v1/images/:key`           | Export images (PNG/SVG/PDF)   | `ImageEndpoint.swift`      |
-| `GET /v1/files/:key/components` | Components list               | `ComponentsEndpoint.swift` |
-| `GET /v1/files/:key/styles`     | Styles (colors, text)         | `StylesEndpoint.swift`     |
-| `GET /v1/files/:key/variables`  | Figma Variables               | `VariablesEndpoint.swift`  |
+| Endpoint                        | Purpose                       | File in Project                 |
+| ------------------------------- | ----------------------------- | ------------------------------- |
+| `GET /v1/files/:key`            | File structure, nodes, styles | `NodesEndpoint.swift`           |
+| `GET /v1/images/:key`           | Export images (PNG/SVG/PDF)   | `ImageEndpoint.swift`           |
+| `GET /v1/files/:key/components` | Components list               | `ComponentsEndpoint.swift`      |
+| `GET /v1/files/:key/styles`     | Styles (colors, text)         | `StylesEndpoint.swift`          |
+| `GET /v1/files/:key/variables`  | Figma Variables               | `VariablesEndpoint.swift`       |
+| `POST /v1/files/:key/variables` | Update Variables codeSyntax   | `UpdateVariablesEndpoint.swift` |
 
 ### API Response Mapping
 

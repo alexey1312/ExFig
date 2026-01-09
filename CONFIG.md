@@ -136,6 +136,13 @@ ios:
     swiftuiColorSwift: "./Source/Color+extension.swift"
     # [optional] If true and a color style name contains symbol "/" then "/" symbol indicates grouping by folders, and each folder will have the "Provides Namespace" property enabled. Defaults to `false`.
     groupUsingNamespace: true
+    # [optional] Sync generated code names back to Figma Variables codeSyntax.iOS field.
+    # When enabled, designers see real code names in Figma Dev Mode.
+    # Requires: Figma Enterprise plan, file_variables:write token scope, Edit access.
+    syncCodeSyntax: true
+    # [optional] Template for codeSyntax.iOS. Use {name} for variable name.
+    # Examples: "Color.{name}" → "Color.backgroundAccent", "UIColor.{name}" → "UIColor.primary"
+    codeSyntaxTemplate: "Color.{name}"
 
   # [optional] Parameters for exporting icons (legacy single-object format)
   # Can also be an array of objects — see "Multiple Icons Configuration" section below.
@@ -595,23 +602,25 @@ ios:
 
 Each entry in the array includes both source and output fields:
 
-| Field                  | Description                                           |
-| ---------------------- | ----------------------------------------------------- |
-| `tokensFileId`         | Figma file ID containing the Variables                |
-| `tokensCollectionName` | Name of the Variables collection                      |
-| `lightModeName`        | Column name for light mode values                     |
-| `darkModeName`         | Column name for dark mode values (optional)           |
-| `lightHCModeName`      | Column name for light high contrast (optional)        |
-| `darkHCModeName`       | Column name for dark high contrast (optional)         |
-| `primitivesModeName`   | Column name for primitives (optional)                 |
-| `nameValidateRegexp`   | RegExp for name validation (optional)                 |
-| `nameReplaceRegexp`    | RegExp for name replacement (optional)                |
-| `useColorAssets`       | Export to .xcassets (true) or Swift only (false)      |
-| `assetsFolder`         | Folder name inside Assets.xcassets                    |
-| `nameStyle`            | camelCase, snake_case, PascalCase, etc.               |
-| `groupUsingNamespace`  | Enable namespace grouping for "/" in names (optional) |
-| `colorSwift`           | Path to UIColor extension file (optional)             |
-| `swiftuiColorSwift`    | Path to SwiftUI Color extension file (optional)       |
+| Field                  | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| `tokensFileId`         | Figma file ID containing the Variables                  |
+| `tokensCollectionName` | Name of the Variables collection                        |
+| `lightModeName`        | Column name for light mode values                       |
+| `darkModeName`         | Column name for dark mode values (optional)             |
+| `lightHCModeName`      | Column name for light high contrast (optional)          |
+| `darkHCModeName`       | Column name for dark high contrast (optional)           |
+| `primitivesModeName`   | Column name for primitives (optional)                   |
+| `nameValidateRegexp`   | RegExp for name validation (optional)                   |
+| `nameReplaceRegexp`    | RegExp for name replacement (optional)                  |
+| `useColorAssets`       | Export to .xcassets (true) or Swift only (false)        |
+| `assetsFolder`         | Folder name inside Assets.xcassets                      |
+| `nameStyle`            | camelCase, snake_case, PascalCase, etc.                 |
+| `groupUsingNamespace`  | Enable namespace grouping for "/" in names (optional)   |
+| `colorSwift`           | Path to UIColor extension file (optional)               |
+| `swiftuiColorSwift`    | Path to SwiftUI Color extension file (optional)         |
+| `syncCodeSyntax`       | Sync code names back to Figma codeSyntax.iOS (optional) |
+| `codeSyntaxTemplate`   | Template for codeSyntax, e.g. "Color.{name}" (optional) |
 
 ### Android Colors Array Format
 
@@ -666,6 +675,94 @@ web:
       tsFile: theme-variables.ts
       jsonFile: theme-tokens.json
 ```
+
+## Figma codeSyntax Sync (iOS)
+
+ExFig can sync generated Swift code names back to Figma Variables, so designers see real code names in Figma Dev Mode.
+
+### What It Does
+
+When enabled, after exporting colors ExFig sends a POST request to update the `codeSyntax.iOS` field for each variable:
+
+```
+POST /v1/files/:file_key/variables
+{
+  "variables": [
+    {
+      "action": "UPDATE",
+      "id": "VariableID:123:456",
+      "codeSyntax": {
+        "iOS": "Color.backgroundAccent"
+      }
+    }
+  ]
+}
+```
+
+### Result in Figma Dev Mode
+
+After sync, designers see the real code name when inspecting a layer that uses the variable:
+
+```
+Fill: backgroundAccent
+┌──────────────────────────────────────────────┐
+│ iOS      Color.backgroundAccent        [copy]│
+│ Android  (not set)                           │
+│ Web      (not set)                           │
+└──────────────────────────────────────────────┘
+```
+
+### Requirements
+
+| Requirement | Value                  |
+| ----------- | ---------------------- |
+| Figma Plan  | Enterprise             |
+| Token Scope | `file_variables:write` |
+| File Access | Edit                   |
+
+### Configuration
+
+```yaml
+# Legacy single-object format
+ios:
+  colors:
+    useColorAssets: true
+    assetsFolder: Colors
+    nameStyle: camelCase
+    syncCodeSyntax: true
+    codeSyntaxTemplate: "Color.{name}"
+
+# Array format (per-entry)
+ios:
+  colors:
+    - tokensFileId: abc123
+      tokensCollectionName: Base Palette
+      lightModeName: Light
+      useColorAssets: true
+      assetsFolder: BaseColors
+      nameStyle: camelCase
+      syncCodeSyntax: true
+      codeSyntaxTemplate: "ThemeCompatable.colors.{name}"
+```
+
+### Template Examples
+
+| Template                        | Result (for "backgroundAccent")           |
+| ------------------------------- | ----------------------------------------- |
+| `Color.{name}`                  | `Color.backgroundAccent`                  |
+| `UIColor.{name}`                | `UIColor.backgroundAccent`                |
+| `ThemeCompatable.colors.{name}` | `ThemeCompatable.colors.backgroundAccent` |
+| `InDriveColors.{name}`          | `InDriveColors.backgroundAccent`          |
+
+### Name Processing
+
+The `{name}` placeholder is replaced with the processed variable name. Processing follows the same pipeline as color export:
+
+1. **Normalize**: Replace `/` with `_`, remove duplications like `color/color` → `color`
+2. **Regex**: Apply `nameValidateRegexp` and `nameReplaceRegexp` if configured
+3. **Style**: Apply `nameStyle` (camelCase, snakeCase, etc.)
+
+This ensures the code syntax matches the generated Swift code exactly.
 
 ## Multiple Images Configuration
 

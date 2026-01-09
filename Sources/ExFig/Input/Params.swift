@@ -128,6 +128,12 @@ struct Params: Decodable {
 
             let colorSwift: URL?
             let swiftuiColorSwift: URL?
+
+            /// Sync generated code names back to Figma Variables codeSyntax.iOS field.
+            let syncCodeSyntax: Bool?
+            /// Template for codeSyntax.iOS. Use {name} for variable name.
+            /// Example: "Color.{name}" → "Color.backgroundAccent"
+            let codeSyntaxTemplate: String?
         }
 
         /// Colors entry with Figma Variables source for multiple colors configuration.
@@ -150,6 +156,12 @@ struct Params: Decodable {
             let groupUsingNamespace: Bool?
             let colorSwift: URL?
             let swiftuiColorSwift: URL?
+
+            /// Sync generated code names back to Figma Variables codeSyntax.iOS field.
+            let syncCodeSyntax: Bool?
+            /// Template for codeSyntax.iOS. Use {name} for variable name.
+            /// Example: "Color.{name}" → "Color.backgroundAccent"
+            let codeSyntaxTemplate: String?
         }
 
         /// Colors configuration supporting both single object and array formats.
@@ -189,7 +201,9 @@ struct Params: Decodable {
                         nameStyle: colors.nameStyle,
                         groupUsingNamespace: colors.groupUsingNamespace,
                         colorSwift: colors.colorSwift,
-                        swiftuiColorSwift: colors.swiftuiColorSwift
+                        swiftuiColorSwift: colors.swiftuiColorSwift,
+                        syncCodeSyntax: colors.syncCodeSyntax,
+                        codeSyntaxTemplate: colors.codeSyntaxTemplate
                     )]
                 case let .multiple(entries):
                     entries
