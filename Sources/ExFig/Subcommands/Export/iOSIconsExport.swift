@@ -155,6 +155,7 @@ extension ExFigCommand.ExportIcons {
             preservesVectorRepresentation: entry.preservesVectorRepresentation,
             uiKitImageExtensionURL: entry.imageSwift,
             swiftUIImageExtensionURL: entry.swiftUIImageSwift,
+            codeConnectSwiftURL: entry.codeConnectSwift,
             templatesPath: ios.templatesPath
         )
 

@@ -285,7 +285,15 @@ class ImageLoaderBase: @unchecked Sendable {
                     isRTL: isRTL
                 )
             }
-            return ImagePack(name: packName, images: packImages, platform: platform)
+            // Get the primary nodeId from the first component (all variants share the same logical node)
+            let primaryNodeId = components.first?.0
+            return ImagePack(
+                name: packName,
+                images: packImages,
+                platform: platform,
+                nodeId: primaryNodeId,
+                fileId: fileId
+            )
         }
         return imagePacks
     }
@@ -393,7 +401,15 @@ class ImageLoaderBase: @unchecked Sendable {
                     isRTL: isRTL
                 )
             }
-            return ImagePack(name: packName, images: packImages, platform: platform)
+            // Get the primary nodeId from the first component (all variants share the same logical node)
+            let primaryNodeId = components.first?.0
+            return ImagePack(
+                name: packName,
+                images: packImages,
+                platform: platform,
+                nodeId: primaryNodeId,
+                fileId: fileId
+            )
         }
 
         return VectorImagesWithHashesResult(
@@ -498,7 +514,15 @@ class ImageLoaderBase: @unchecked Sendable {
                     isRTL: isRTL
                 )
             }
-            return ImagePack(name: packName, images: packImages, platform: platform)
+            // Get the primary nodeId from the first component (all variants share the same logical node)
+            let primaryNodeId = components.first?.0
+            return ImagePack(
+                name: packName,
+                images: packImages,
+                platform: platform,
+                nodeId: primaryNodeId,
+                fileId: fileId
+            )
         }
 
         return VectorImagesWithHashesResult(
@@ -562,7 +586,15 @@ class ImageLoaderBase: @unchecked Sendable {
                     )
                 }
             }
-            return ImagePack(name: packName, images: packImages, platform: platform)
+            // Get the primary nodeId from the first component (all variants share the same logical node)
+            let primaryNodeId = components.first?.0
+            return ImagePack(
+                name: packName,
+                images: packImages,
+                platform: platform,
+                nodeId: primaryNodeId,
+                fileId: fileId
+            )
         }
         return imagePacks
     }
@@ -640,7 +672,15 @@ class ImageLoaderBase: @unchecked Sendable {
                     )
                 }
             }
-            return ImagePack(name: packName, images: packImages, platform: platform)
+            // Get the primary nodeId from the first component (all variants share the same logical node)
+            let primaryNodeId = components.first?.0
+            return ImagePack(
+                name: packName,
+                images: packImages,
+                platform: platform,
+                nodeId: primaryNodeId,
+                fileId: fileId
+            )
         }
 
         return PNGImagesWithHashesResult(

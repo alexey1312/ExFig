@@ -29,7 +29,16 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
         let imageNames = allAssetNames ?? assets.map { normalizeName($0.light.name) }
         let extensionFiles = try generateExtensions(names: imageNames, append: append)
 
-        return [contentsFile] + imageAssetsFiles + extensionFiles
+        var result = [contentsFile] + imageAssetsFiles + extensionFiles
+
+        // Generate Code Connect file if URL is configured
+        if let codeConnectURL = output.codeConnectSwiftURL {
+            if let codeConnectFile = try generateCodeConnect(imagePacks: assets, url: codeConnectURL) {
+                result.append(codeConnectFile)
+            }
+        }
+
+        return result
     }
 
     /// Exports only Swift extensions without asset catalog files.
@@ -48,7 +57,16 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
         append: Bool
     ) throws -> [FileContents] {
         let imageNames = allAssetNames ?? assets.map { normalizeName($0.light.name) }
-        return try generateExtensions(names: imageNames, append: append)
+        var result = try generateExtensions(names: imageNames, append: append)
+
+        // Generate Code Connect file if URL is configured
+        if let codeConnectURL = output.codeConnectSwiftURL {
+            if let codeConnectFile = try generateCodeConnect(imagePacks: assets, url: codeConnectURL) {
+                result.append(codeConnectFile)
+            }
+        }
+
+        return result
     }
 
     /// Exports images for HEIC conversion (PNG source → HEIC output).
@@ -80,6 +98,15 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
         let imageNames = allAssetNames ?? assets.map { normalizeName($0.light.name) }
         let extensionFiles = try generateExtensions(names: imageNames, append: append)
 
-        return [contentsFile] + imageAssetsFiles + extensionFiles
+        var result = [contentsFile] + imageAssetsFiles + extensionFiles
+
+        // Generate Code Connect file if URL is configured
+        if let codeConnectURL = output.codeConnectSwiftURL {
+            if let codeConnectFile = try generateCodeConnect(imagePacks: assets, url: codeConnectURL) {
+                result.append(codeConnectFile)
+            }
+        }
+
+        return result
     }
 }

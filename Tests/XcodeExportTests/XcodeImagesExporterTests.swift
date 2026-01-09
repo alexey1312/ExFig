@@ -474,6 +474,171 @@ final class XcodeImagesExporterTests: XCTestCase {
         XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("Image+extension.swift"))
         XCTAssertTrue(result[4].destination.url.absoluteString.hasSuffix("UIImage+extension.swift"))
     }
+
+    // MARK: - Code Connect Tests
+
+    /// Tests that Code Connect file is generated when codeConnectSwiftURL is configured
+    /// and images have nodeId/fileId set.
+    func testExportWithCodeConnect_generatesCodeConnectFile() throws {
+        let codeConnectURL = FileManager.default
+            .temporaryDirectory
+            .appendingPathComponent("Images.figma.swift")
+
+        let output = XcodeImagesOutput(
+            assetsFolderURL: URL(string: "~/")!,
+            assetsInMainBundle: true,
+            uiKitImageExtensionURL: uiKitImageExtensionURL,
+            codeConnectSwiftURL: codeConnectURL
+        )
+        let exporter = XcodeImagesExporter(output: output)
+
+        // Create images with nodeId and fileId
+        var img1 = ImagePack(image: image1)
+        img1.nodeId = "12016:2218"
+        img1.fileId = "VXmPoarVoCQSNjdlROoJLO"
+
+        var img2 = ImagePack(image: image2)
+        img2.nodeId = "12016:2219"
+        img2.fileId = "VXmPoarVoCQSNjdlROoJLO"
+
+        let result = try exporter.export(
+            assets: [
+                AssetPair(light: img1, dark: nil),
+                AssetPair(light: img2, dark: nil),
+            ],
+            append: false
+        )
+
+        // Should have 7 files: Contents.json, 2x (imageset/Contents.json + png), extension, codeConnect
+        XCTAssertEqual(result.count, 7)
+
+        // Find the Code Connect file
+        let codeConnectFile = result.first { $0.destination.url.absoluteString.hasSuffix("Images.figma.swift") }
+        XCTAssertNotNil(codeConnectFile)
+
+        let content = try XCTUnwrap(codeConnectFile?.data)
+        let generatedCode = String(data: content, encoding: .utf8)
+
+        let referenceCode = """
+        \(header)
+
+        #if DEBUG
+        import SwiftUI
+
+
+        struct Asset_image1: FigmaConnect {
+            let figmaNodeUrl = "https://www.figma.com/design/VXmPoarVoCQSNjdlROoJLO?node-id=12016-2218"
+
+            var body: some View {
+                Image("image1")
+            }
+        }
+
+
+        struct Asset_image2: FigmaConnect {
+            let figmaNodeUrl = "https://www.figma.com/design/VXmPoarVoCQSNjdlROoJLO?node-id=12016-2219"
+
+            var body: some View {
+                Image("image2")
+            }
+        }
+
+
+        #endif
+
+        """
+        expectNoDifference(generatedCode, referenceCode)
+    }
+
+    /// Tests that Code Connect file is NOT generated when images don't have nodeId/fileId.
+    func testExportWithCodeConnect_noNodeId_skipsCodeConnectFile() throws {
+        let codeConnectURL = FileManager.default
+            .temporaryDirectory
+            .appendingPathComponent("Images.figma.swift")
+
+        let output = XcodeImagesOutput(
+            assetsFolderURL: URL(string: "~/")!,
+            assetsInMainBundle: true,
+            uiKitImageExtensionURL: uiKitImageExtensionURL,
+            codeConnectSwiftURL: codeConnectURL
+        )
+        let exporter = XcodeImagesExporter(output: output)
+
+        // Images without nodeId/fileId
+        let result = try exporter.export(
+            assets: [
+                AssetPair(light: ImagePack(image: image1), dark: nil),
+                AssetPair(light: ImagePack(image: image2), dark: nil),
+            ],
+            append: false
+        )
+
+        // Should have 6 files (no Code Connect file)
+        XCTAssertEqual(result.count, 6)
+
+        // Verify no Code Connect file
+        let codeConnectFile = result.first { $0.destination.url.absoluteString.hasSuffix(".figma.swift") }
+        XCTAssertNil(codeConnectFile)
+    }
+
+    /// Tests that Code Connect file only includes images with valid nodeId/fileId.
+    func testExportWithCodeConnect_mixedImages_onlyIncludesValidOnes() throws {
+        let codeConnectURL = FileManager.default
+            .temporaryDirectory
+            .appendingPathComponent("Images.figma.swift")
+
+        let output = XcodeImagesOutput(
+            assetsFolderURL: URL(string: "~/")!,
+            assetsInMainBundle: true,
+            uiKitImageExtensionURL: uiKitImageExtensionURL,
+            codeConnectSwiftURL: codeConnectURL
+        )
+        let exporter = XcodeImagesExporter(output: output)
+
+        // Mix of images with and without nodeId/fileId
+        var imgWithNodeId = ImagePack(image: image1)
+        imgWithNodeId.nodeId = "12016:2218"
+        imgWithNodeId.fileId = "VXmPoarVoCQSNjdlROoJLO"
+
+        let imgWithoutNodeId = ImagePack(image: image2) // No nodeId/fileId
+
+        let result = try exporter.export(
+            assets: [
+                AssetPair(light: imgWithNodeId, dark: nil),
+                AssetPair(light: imgWithoutNodeId, dark: nil),
+            ],
+            append: false
+        )
+
+        // Find the Code Connect file
+        let codeConnectFile = result.first { $0.destination.url.absoluteString.hasSuffix("Images.figma.swift") }
+        XCTAssertNotNil(codeConnectFile)
+
+        let content = try XCTUnwrap(codeConnectFile?.data)
+        let generatedCode = String(data: content, encoding: .utf8)
+
+        // Should only include image1 (with nodeId), not image2
+        let referenceCode = """
+        \(header)
+
+        #if DEBUG
+        import SwiftUI
+
+
+        struct Asset_image1: FigmaConnect {
+            let figmaNodeUrl = "https://www.figma.com/design/VXmPoarVoCQSNjdlROoJLO?node-id=12016-2218"
+
+            var body: some View {
+                Image("image1")
+            }
+        }
+
+
+        #endif
+
+        """
+        expectNoDifference(generatedCode, referenceCode)
+    }
 }
 
 // MARK: - Helpers

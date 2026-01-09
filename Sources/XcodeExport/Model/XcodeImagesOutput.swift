@@ -12,6 +12,8 @@ public struct XcodeImagesOutput {
 
     let uiKitImageExtensionURL: URL?
     let swiftUIImageExtensionURL: URL?
+    /// URL of the swift file where to generate Figma Code Connect structs.
+    let codeConnectSwiftURL: URL?
 
     let renderMode: XcodeRenderMode?
 
@@ -20,6 +22,7 @@ public struct XcodeImagesOutput {
     ///   - preservesVectorRepresentation: A list of image names which should preserve vector data
     ///   - uiKitImageExtensionURL: URL of the swift file where to generate extension for UIImage class
     ///   - swiftUIImageExtensionURL: URL of the swift file where to generate extension for Image struct
+    ///   - codeConnectSwiftURL: URL of the swift file where to generate Figma Code Connect structs
     ///   - renderMode: Xcode Asset Catalog render mode
     public init(
         assetsFolderURL: URL,
@@ -30,6 +33,7 @@ public struct XcodeImagesOutput {
         preservesVectorRepresentation: [String]? = nil,
         uiKitImageExtensionURL: URL? = nil,
         swiftUIImageExtensionURL: URL? = nil,
+        codeConnectSwiftURL: URL? = nil,
         templatesPath: URL? = nil,
         renderMode: XcodeRenderMode? = nil
     ) {
@@ -41,6 +45,7 @@ public struct XcodeImagesOutput {
         self.preservesVectorRepresentation = preservesVectorRepresentation
         self.uiKitImageExtensionURL = uiKitImageExtensionURL
         self.swiftUIImageExtensionURL = swiftUIImageExtensionURL
+        self.codeConnectSwiftURL = codeConnectSwiftURL
         self.templatesPath = templatesPath
         self.renderMode = renderMode
     }

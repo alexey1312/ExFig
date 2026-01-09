@@ -1,0 +1,15 @@
+{% include "header.stencil" %}
+#if DEBUG
+import SwiftUI
+
+{% for asset in assets %}
+struct {{ asset.structName }}: FigmaConnect {
+    let figmaNodeUrl = "{{ asset.figmaUrl }}"
+
+    var body: some View {
+        Image("{{ asset.name }}")
+    }
+}
+
+{% endfor %}
+#endif

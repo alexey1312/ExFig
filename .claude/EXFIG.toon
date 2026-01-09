@@ -258,7 +258,7 @@ terminalUI:
     callbacks: Callbacks passed to task groups must be @escaping
 
 templates:
-  ios[10]: UIColor+extension, Color+extension, UIFont+extension, Font+extension, UIImage+extension, Image+extension, Label, LabelStyle, LabelStyle+extension, header
+  ios[11]: UIColor+extension, Color+extension, UIFont+extension, Font+extension, UIImage+extension, Image+extension, Label, LabelStyle, LabelStyle+extension, CodeConnect.figma.swift, header
   android[6]: colors.xml, Colors.kt, typography.xml, Typography.kt, Icons.kt, header
   flutter[4]: colors.dart, icons.dart, images.dart, header
   web[8]: theme.css, variables.ts, theme.json, Icon.tsx, types.ts, IconIndex.ts, Image.tsx, ImageIndex.ts, header
