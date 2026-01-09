@@ -2,6 +2,86 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.17] - 2026-01-09
+
+### Features
+
+- **cli**: Improve init command next steps guidance  by @google-labs-jules[bot] in [#24](https://github.com/alexey1312/ExFig/pull/24)
+
+- Add confirmation prompt before overwriting config file in `exfig init`  by @google-labs-jules[bot] in [#26](https://github.com/alexey1312/ExFig/pull/26)
+
+- **ios**: Add Figma Code Connect generation for icons and images  by @alexey1312 in [#44](https://github.com/alexey1312/ExFig/pull/44)
+
+
+### Miscellaneous Tasks
+
+- **tooling**: Simplify mise tool definitions by @alexey1312
+
+- Remove unused .jules agent journal files by @alexey1312
+
+
+### Other
+
+- 🎨 Palette: Improve Update Notification UX 
+
+* feat(cli): ✨ improve update notification UX
+
+Enhanced the update notification message with a colorful box design using box-drawing characters. The new design highlights the new version and download link, making it more noticeable and pleasant. Falls back to plain text when colors are disabled.
+
+- Updated `Sources/ExFig/Subcommands/checkForUpdate.swift` to use `Rainbow` and `TTYDetector`.
+- Updated `.Jules/palette.md` with critical learnings.
+
+* feat(cli): ✨ improve update notification UX
+
+Enhanced the update notification message with a colorful box design using box-drawing characters. The new design highlights the new version and download link, making it more noticeable and pleasant. Falls back to plain text when colors are disabled.
+
+- Updated `Sources/ExFig/Subcommands/checkForUpdate.swift` to use `Rainbow` and `TTYDetector`.
+- Updated `.Jules/palette.md` with critical learnings.
+
+* feat(cli): ✨ improve update notification UX
+
+Enhanced the update notification message with a colorful box design using box-drawing characters. The new design highlights the new version and download link, making it more noticeable and pleasant. Falls back to plain text when colors are disabled.
+
+- Updated `Sources/ExFig/Subcommands/checkForUpdate.swift` to use `Rainbow` and `TTYDetector`.
+- Updated `.Jules/palette.md` with critical learnings.
+
+* feat(cli): ✨ improve update notification UX
+
+Enhanced the update notification message with a colorful box design using box-drawing characters. The new design highlights the new version and download link, making it more noticeable and pleasant. Falls back to plain text when colors are disabled.
+
+- Updated `Sources/ExFig/Subcommands/checkForUpdate.swift` to use `Rainbow` and `TTYDetector`.
+- Updated `.Jules/palette.md` with critical learnings.
+
+---------
+
+Co-authored-by: google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com> by @google-labs-jules[bot] in [#22](https://github.com/alexey1312/ExFig/pull/22)
+
+- ⚡ Bolt: Optimize SVG path parsing using UTF8View 
+
+* feat: Optimize SVG path parsing performance
+
+- Replaced `String` character iteration with `String.UTF8View` in `PathScanner` to avoid Unicode overhead.
+- Implemented byte-level scanning for SVG commands, numbers, and whitespace.
+- Reduced parsing time by approximately 25% in benchmark tests.
+- Maintained existing functionality and test coverage.
+- Optimized for ASCII-based SVG path data processing.
+
+* feat: Optimize SVG path parsing performance
+
+- Replaced `String` character iteration with `String.UTF8View` in `PathScanner` to avoid Unicode overhead.
+- Implemented byte-level scanning for SVG commands, numbers, and whitespace.
+- Reduced parsing time by approximately 25% in benchmark tests.
+- Maintained existing functionality and test coverage.
+- Optimized for ASCII-based SVG path data processing.
+
+* feat: Optimize SVG path parsing performance
+
+---------
+
+Co-authored-by: google-labs-jules[bot] <161369871+google-labs-jules[bot]@users.noreply.github.com>
+Co-authored-by: alexey1312 <alexey1312ru@gmail.com> by @google-labs-jules[bot] in [#25](https://github.com/alexey1312/ExFig/pull/25)
+
+
 ## [1.2.16] - 2025-12-30
 
 ### Bug Fixes
