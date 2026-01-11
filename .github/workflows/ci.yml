@@ -26,10 +26,10 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check formatting (Swift + Markdown)
-        run: bin/mise run format-check
+        run: mise run format-check
 
       - name: Lint (SwiftLint)
-        run: bin/mise run lint
+        run: mise run lint
 
   build-macos:
     name: Build & Test (macOS)
@@ -100,14 +100,10 @@ jobs:
           experimental: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install xcsift via mise
+      - name: Add xcsift to PATH
         run: |
-          ./bin/mise install xcsift
-          # Find and add xcsift binary to PATH
-          XCSIFT_PATH=$(./bin/mise where xcsift)
-          echo "$XCSIFT_PATH" >> "$GITHUB_PATH"
-          echo "xcsift installed at: $XCSIFT_PATH"
-          ls -la "$XCSIFT_PATH"
+          mise install xcsift
+          mise where xcsift >> "$GITHUB_PATH"
 
       - name: Show Swift version
         run: swift --version
