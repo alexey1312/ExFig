@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.18] - 2026-01-11
+
+### Bug Fixes
+
+- **ci**: Add xcsift install path to PATH on Linux  by @alexey1312 in [#45](https://github.com/alexey1312/ExFig/pull/45)
+
+
+### Features
+
+- **ios**: Add codeSyntax sync to Figma Variables by @alexey1312
+
+- **core**: Add Hashable conformance to ImagePack by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **mise**: Update to 2026.1.1 by @alexey1312
+
+- **ci**: Update workflow by @alexey1312
+
+
 ## [1.2.17] - 2026-01-09
 
 ### Features
