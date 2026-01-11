@@ -166,4 +166,14 @@ public struct ImagePack: Asset, Sendable {
         self.nodeId = nodeId
         self.fileId = fileId
     }
+
+    // MARK: Hashable
+
+    public static func == (lhs: ImagePack, rhs: ImagePack) -> Bool {
+        lhs.name == rhs.name
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+    }
 }

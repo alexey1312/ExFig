@@ -105,7 +105,7 @@ jobs:
           ./bin/mise install xcsift
           # Find and add xcsift binary to PATH
           XCSIFT_PATH=$(./bin/mise where xcsift)
-          echo "$XCSIFT_PATH" >> $GITHUB_PATH
+          echo "$XCSIFT_PATH" >> "$GITHUB_PATH"
           echo "xcsift installed at: $XCSIFT_PATH"
           ls -la "$XCSIFT_PATH"
 

@@ -24,8 +24,9 @@ legacy_version_file = false
 
 [tools]
 # --- Swift Development ---
+swift = "6.2.3"        # Swift compiler and toolchain
 swiftformat = "0.58.7" # Swift code formatting
-swiftlint = "0.62.2"   # Swift linting
+swiftlint = "0.63.0"   # Swift linting
 xcsift = "1.0.19"      # xcodebuild output filtering
 
 # --- Documentation & Formatting ---

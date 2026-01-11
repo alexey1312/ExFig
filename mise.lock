@@ -41,17 +41,21 @@ backend = "aqua:apple/pkl"
 "platforms.macos-x64" = { checksum = "sha256:5f62ae7a7a34c15b3a83af17bda8e6b98516953f383a492340d4aa090caaa6d9", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-macos-amd64"}
 "platforms.windows-x64" = { checksum = "sha256:19e92aa59bcf4e54963b6e3b419af7e1b939f5793b44f4a08d60bab1217106f4", url = "https://github.com/apple/pkl/releases/download/0.30.2/pkl-windows-amd64.exe"}
 
+[[tools.swift]]
+version = "6.2.3"
+backend = "core:swift"
+
 [[tools.swiftformat]]
 version = "0.58.7"
 backend = "asdf:swiftformat"
 
 [[tools.swiftlint]]
-version = "0.62.2"
+version = "0.63.0"
 backend = "aqua:realm/SwiftLint"
-"platforms.linux-arm64" = { checksum = "sha256:a90ea84be3675e787c5784e46dcb5d173a3bf0b35b4f4e9e455d7b8eb728947e", url = "https://github.com/realm/SwiftLint/releases/download/0.62.2/swiftlint_linux_arm64.zip"}
-"platforms.linux-x64" = { checksum = "sha256:d44e21c234cded72e1735abb32e8c641fadaf60270ef49ea6abf979a47a31deb", url = "https://github.com/realm/SwiftLint/releases/download/0.62.2/swiftlint_linux_amd64.zip"}
-"platforms.macos-arm64" = { checksum = "sha256:79625bece2716395d955d34a5993e6c948ef57d0256abe5538aaab82f2ad6b68", url = "https://github.com/realm/SwiftLint/releases/download/0.62.2/portable_swiftlint.zip"}
-"platforms.macos-x64" = { checksum = "sha256:79625bece2716395d955d34a5993e6c948ef57d0256abe5538aaab82f2ad6b68", url = "https://github.com/realm/SwiftLint/releases/download/0.62.2/portable_swiftlint.zip"}
+"platforms.linux-arm64" = { checksum = "sha256:8260b6d9e69c94776b6f1631263367ab1b05fe985b8e9726f3ba403efdc9083e", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/swiftlint_linux_arm64.zip"}
+"platforms.linux-x64" = { checksum = "sha256:f77f94ffed467c6f027f4348ca41d99fd6268a02a584f8fb0fa139a48ace39cb", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/swiftlint_linux_amd64.zip"}
+"platforms.macos-arm64" = { checksum = "sha256:6a9cc0e3e09466fce5eabd4b920cd7169e9e56b60e12ee1340a793ea8b60ceb9", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/portable_swiftlint.zip"}
+"platforms.macos-x64" = { checksum = "sha256:6a9cc0e3e09466fce5eabd4b920cd7169e9e56b60e12ee1340a793ea8b60ceb9", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/portable_swiftlint.zip"}
 
 [[tools.xcsift]]
 version = "1.0.19"

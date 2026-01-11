@@ -14,6 +14,11 @@ local generated_excludes = List(".build/**", "docs/**", "CHANGELOG.md")
 // Excludes for template files (stencil templates require specific formatting)
 local template_excludes = List("**/*.stencil", "**/*.stencil.include")
 
+// SourceKit toolchain path for SwiftLint (required for GUI apps: Fork, Xcode, Tower)
+local sourcekit_env = new Mapping<String, String> {
+    ["TOOLCHAIN_DIR"] = read("env:HOME") + "/.local/share/mise/installs/swift/6.2.3"
+}
+
 // =============================================================================
 // Swift Linters (parallel, check_first optimization)
 // =============================================================================
@@ -34,6 +39,7 @@ local swift_linters = new Mapping<String, Step> {
         batch = true
         stage = List("*.swift")
         hide = true
+        env = sourcekit_env
     }
     // Strict check after fix to catch unfixable errors
     ["swiftlint-strict"] {
@@ -42,6 +48,7 @@ local swift_linters = new Mapping<String, Step> {
         batch = true
         depends = "swiftlint"
         hide = true
+        env = sourcekit_env
     }
 }
 
