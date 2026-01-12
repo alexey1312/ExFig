@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.19] - 2026-01-12
+
+### Documentation
+
+- Split CLAUDE.md into modular rules files by @alexey1312
+
+
+### Features
+
+- **core**: Add AssetMetadata for Code Connect generation by @alexey1312
+
+
 ## [1.2.18] - 2026-01-11
 
 ### Bug Fixes
