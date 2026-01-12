@@ -141,7 +141,7 @@ extension ExFigCommand.ExportImages {
                     dark: result.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: []
+                    allAssetMetadata: []
                 )
             }
         }
@@ -151,7 +151,7 @@ extension ExFigCommand.ExportImages {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -189,12 +189,26 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames = granularCacheManager != nil
-            ? processor.processNames(loaderResult.allNames)
-            : nil
+        let allAssetNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if granularCacheManager != nil {
+            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
+            // Process names in metadata for Code Connect
+            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: processor.processNames([meta.name]).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allAssetNames = nil
+            allAssetMetadata = nil
+        }
         let localAndRemoteFiles = try exporter.export(
             assets: images,
             allAssetNames: allAssetNames,
+            allAssetMetadata: allAssetMetadata,
             append: filter != nil
         )
         if filter == nil, granularCacheManager == nil {
@@ -226,7 +240,7 @@ extension ExFigCommand.ExportImages {
         }
 
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - images.count
+            ? loaderResult.allAssetMetadata.count - images.count
             : 0
 
         guard params.ios?.xcassetsInSwiftPackage == false else {
@@ -296,7 +310,7 @@ extension ExFigCommand.ExportImages {
                     dark: result.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: []
+                    allAssetMetadata: []
                 )
             }
         }
@@ -306,7 +320,7 @@ extension ExFigCommand.ExportImages {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -450,12 +464,25 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames = granularCacheManager != nil
-            ? processor.processNames(loaderResult.allNames)
-            : nil
+        let allAssetNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if granularCacheManager != nil {
+            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
+            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: processor.processNames([meta.name]).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allAssetNames = nil
+            allAssetMetadata = nil
+        }
         let extensionFiles = try exporter.exportSwiftExtensions(
             assets: images,
             allAssetNames: allAssetNames,
+            allAssetMetadata: allAssetMetadata,
             append: filter != nil
         )
         allFiles.append(contentsOf: extensionFiles)
@@ -473,7 +500,7 @@ extension ExFigCommand.ExportImages {
         }
 
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - images.count
+            ? loaderResult.allAssetMetadata.count - images.count
             : 0
 
         guard params.ios?.xcassetsInSwiftPackage == false else {
@@ -735,7 +762,7 @@ extension ExFigCommand.ExportImages {
                     dark: result.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: []
+                    allAssetMetadata: []
                 )
             }
         }
@@ -745,7 +772,7 @@ extension ExFigCommand.ExportImages {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -889,12 +916,25 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames = granularCacheManager != nil
-            ? processor.processNames(loaderResult.allNames)
-            : nil
+        let allAssetNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if granularCacheManager != nil {
+            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
+            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: processor.processNames([meta.name]).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allAssetNames = nil
+            allAssetMetadata = nil
+        }
         let extensionFiles = try exporter.exportSwiftExtensions(
             assets: images,
             allAssetNames: allAssetNames,
+            allAssetMetadata: allAssetMetadata,
             append: filter != nil
         )
         allFiles.append(contentsOf: extensionFiles)
@@ -912,7 +952,7 @@ extension ExFigCommand.ExportImages {
         }
 
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - images.count
+            ? loaderResult.allAssetMetadata.count - images.count
             : 0
 
         guard params.ios?.xcassetsInSwiftPackage == false else {
@@ -982,7 +1022,7 @@ extension ExFigCommand.ExportImages {
                     dark: result.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: []
+                    allAssetMetadata: []
                 )
             }
         }
@@ -992,7 +1032,7 @@ extension ExFigCommand.ExportImages {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -1031,12 +1071,25 @@ extension ExFigCommand.ExportImages {
 
         // Use HEIC-aware exporter
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames = granularCacheManager != nil
-            ? processor.processNames(loaderResult.allNames)
-            : nil
+        let allAssetNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if granularCacheManager != nil {
+            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
+            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: processor.processNames([meta.name]).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allAssetNames = nil
+            allAssetMetadata = nil
+        }
         let localAndRemoteFiles = try exporter.exportForHeic(
             assets: images,
             allAssetNames: allAssetNames,
+            allAssetMetadata: allAssetMetadata,
             append: filter != nil
         )
         if filter == nil, granularCacheManager == nil {
@@ -1104,7 +1157,7 @@ extension ExFigCommand.ExportImages {
         }
 
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - images.count
+            ? loaderResult.allAssetMetadata.count - images.count
             : 0
 
         guard params.ios?.xcassetsInSwiftPackage == false else {

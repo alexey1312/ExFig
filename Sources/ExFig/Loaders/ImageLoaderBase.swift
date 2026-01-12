@@ -66,8 +66,9 @@ class ImageLoaderBase: @unchecked Sendable {
         let components: [NodeId: Component]
         let computedHashes: [NodeId: String]
         let allSkipped: Bool
-        /// All component names before filtering (for template generation).
-        let allComponentNames: [String]
+        /// All asset metadata before filtering (for Code Connect and template generation).
+        /// Use `allAssetMetadata.map(\.name)` to get names for template generation.
+        let allAssetMetadata: [AssetMetadata]
     }
 
     /// Fetches components with optional granular cache filtering.
@@ -92,8 +93,11 @@ class ImageLoaderBase: @unchecked Sendable {
             "Granular cache: fileId=\(fileId), frameName=\(frameName), components before filter=\(allComponents.count)"
         )
 
-        // Extract all component names for template generation (sorted to match AssetsProcessor order)
-        let allComponentNames = allComponents.values.map(\.name).sorted()
+        // Build metadata for all assets (for Code Connect and template generation)
+        // Names can be derived with allAssetMetadata.map(\.name)
+        let allAssetMetadata = allComponents.map { nodeId, component in
+            AssetMetadata(name: component.name, nodeId: nodeId, fileId: fileId)
+        }
 
         guard let manager = granularCacheManager, !allComponents.isEmpty else {
             // No granular cache - return all components
@@ -101,7 +105,7 @@ class ImageLoaderBase: @unchecked Sendable {
                 components: allComponents,
                 computedHashes: [:],
                 allSkipped: false,
-                allComponentNames: allComponentNames
+                allAssetMetadata: allAssetMetadata
             )
         }
 
@@ -134,7 +138,7 @@ class ImageLoaderBase: @unchecked Sendable {
             components: result.changedComponents,
             computedHashes: result.computedHashes,
             allSkipped: allSkipped,
-            allComponentNames: allComponentNames
+            allAssetMetadata: allAssetMetadata
         )
     }
 
@@ -152,12 +156,14 @@ class ImageLoaderBase: @unchecked Sendable {
         let allComponents = try await fetchImageComponents(
             fileId: fileId, frameName: frameName, filter: filter
         )
-        let allComponentNames = allComponents.values.map(\.name).sorted()
+        let allAssetMetadata = allComponents.map { nodeId, component in
+            AssetMetadata(name: component.name, nodeId: nodeId, fileId: fileId)
+        }
 
         guard let manager = granularCacheManager, !allComponents.isEmpty else {
             return GranularFilterResult(
                 components: allComponents, computedHashes: [:],
-                allSkipped: false, allComponentNames: allComponentNames
+                allSkipped: false, allAssetMetadata: allAssetMetadata
             )
         }
 
@@ -171,7 +177,7 @@ class ImageLoaderBase: @unchecked Sendable {
             )
             return GranularFilterResult(
                 components: [:], computedHashes: result.computedHashes,
-                allSkipped: true, allComponentNames: allComponentNames
+                allSkipped: true, allAssetMetadata: allAssetMetadata
             )
         }
 
@@ -188,7 +194,7 @@ class ImageLoaderBase: @unchecked Sendable {
 
         return GranularFilterResult(
             components: pairedComponents, computedHashes: result.computedHashes,
-            allSkipped: false, allComponentNames: allComponentNames
+            allSkipped: false, allAssetMetadata: allAssetMetadata
         )
     }
 
@@ -303,8 +309,9 @@ class ImageLoaderBase: @unchecked Sendable {
         let packs: [ImagePack]
         let computedHashes: [NodeId: String]
         let allSkipped: Bool
-        /// All component names before filtering (for template generation).
-        let allNames: [String]
+        /// All asset metadata before filtering (for Code Connect and template generation).
+        /// Use `allAssetMetadata.map(\.name)` to get names for template generation.
+        let allAssetMetadata: [AssetMetadata]
     }
 
     /// Result of loading PNG/raster images with granular cache tracking.
@@ -312,8 +319,9 @@ class ImageLoaderBase: @unchecked Sendable {
         let packs: [ImagePack]
         let computedHashes: [NodeId: String]
         let allSkipped: Bool
-        /// All component names before filtering (for template generation).
-        let allNames: [String]
+        /// All asset metadata before filtering (for Code Connect and template generation).
+        /// Use `allAssetMetadata.map(\.name)` to get names for template generation.
+        let allAssetMetadata: [AssetMetadata]
     }
 
     /// Loads vector images with granular cache tracking.
@@ -342,7 +350,7 @@ class ImageLoaderBase: @unchecked Sendable {
                 packs: [],
                 computedHashes: filterResult.computedHashes,
                 allSkipped: true,
-                allNames: filterResult.allComponentNames
+                allAssetMetadata: filterResult.allAssetMetadata
             )
         }
 
@@ -416,7 +424,7 @@ class ImageLoaderBase: @unchecked Sendable {
             packs: imagePacks,
             computedHashes: filterResult.computedHashes,
             allSkipped: false,
-            allNames: filterResult.allComponentNames
+            allAssetMetadata: filterResult.allAssetMetadata
         )
     }
 
@@ -455,7 +463,7 @@ class ImageLoaderBase: @unchecked Sendable {
                 packs: [],
                 computedHashes: filterResult.computedHashes,
                 allSkipped: true,
-                allNames: filterResult.allComponentNames
+                allAssetMetadata: filterResult.allAssetMetadata
             )
         }
 
@@ -529,7 +537,7 @@ class ImageLoaderBase: @unchecked Sendable {
             packs: imagePacks,
             computedHashes: filterResult.computedHashes,
             allSkipped: false,
-            allNames: filterResult.allComponentNames
+            allAssetMetadata: filterResult.allAssetMetadata
         )
     }
 
@@ -625,7 +633,7 @@ class ImageLoaderBase: @unchecked Sendable {
                 packs: [],
                 computedHashes: filterResult.computedHashes,
                 allSkipped: true,
-                allNames: filterResult.allComponentNames
+                allAssetMetadata: filterResult.allAssetMetadata
             )
         }
 
@@ -687,7 +695,7 @@ class ImageLoaderBase: @unchecked Sendable {
             packs: imagePacks,
             computedHashes: filterResult.computedHashes,
             allSkipped: false,
-            allNames: filterResult.allComponentNames
+            allAssetMetadata: filterResult.allAssetMetadata
         )
     }
 

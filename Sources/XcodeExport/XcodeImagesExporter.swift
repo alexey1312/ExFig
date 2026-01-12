@@ -8,11 +8,14 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
     ///   - assets: Image asset pairs to export (may be filtered subset for granular cache).
     ///   - allAssetNames: Optional complete list of all asset names for Swift extension generation.
     ///                    When provided, extensions include all images even if only a subset is exported.
+    ///   - allAssetMetadata: Optional full asset metadata for Code Connect generation.
+    ///                       When provided, Code Connect includes all images even if only a subset is exported.
     ///   - append: Whether to append to existing extension files.
     /// - Returns: File contents to write.
     public func export(
         assets: [AssetPair<ImagePack>],
         allAssetNames: [String]? = nil,
+        allAssetMetadata: [AssetMetadata]? = nil,
         append: Bool
     ) throws -> [FileContents] {
         // Generate assets
@@ -33,7 +36,11 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
 
         // Generate Code Connect file if URL is configured
         if let codeConnectURL = output.codeConnectSwiftURL {
-            if let codeConnectFile = try generateCodeConnect(imagePacks: assets, url: codeConnectURL) {
+            if let codeConnectFile = try generateCodeConnect(
+                imagePacks: assets,
+                url: codeConnectURL,
+                allAssetMetadata: allAssetMetadata
+            ) {
                 result.append(codeConnectFile)
             }
         }
@@ -49,11 +56,13 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
     /// - Parameters:
     ///   - assets: Image asset pairs (used for name extraction if allAssetNames not provided).
     ///   - allAssetNames: Optional complete list of all asset names.
+    ///   - allAssetMetadata: Optional full asset metadata for Code Connect generation.
     ///   - append: Whether to append to existing extension files.
     /// - Returns: Swift extension file contents.
     public func exportSwiftExtensions(
         assets: [AssetPair<ImagePack>],
         allAssetNames: [String]? = nil,
+        allAssetMetadata: [AssetMetadata]? = nil,
         append: Bool
     ) throws -> [FileContents] {
         let imageNames = allAssetNames ?? assets.map { normalizeName($0.light.name) }
@@ -61,7 +70,11 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
 
         // Generate Code Connect file if URL is configured
         if let codeConnectURL = output.codeConnectSwiftURL {
-            if let codeConnectFile = try generateCodeConnect(imagePacks: assets, url: codeConnectURL) {
+            if let codeConnectFile = try generateCodeConnect(
+                imagePacks: assets,
+                url: codeConnectURL,
+                allAssetMetadata: allAssetMetadata
+            ) {
                 result.append(codeConnectFile)
             }
         }
@@ -77,11 +90,13 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
     /// - Parameters:
     ///   - assets: Image asset pairs to export.
     ///   - allAssetNames: Optional complete list of all asset names for Swift extension generation.
+    ///   - allAssetMetadata: Optional full asset metadata for Code Connect generation.
     ///   - append: Whether to append to existing extension files.
     /// - Returns: File contents to write (PNGs to download, Contents.json with .heic references, extensions).
     public func exportForHeic(
         assets: [AssetPair<ImagePack>],
         allAssetNames: [String]? = nil,
+        allAssetMetadata: [AssetMetadata]? = nil,
         append: Bool
     ) throws -> [FileContents] {
         let assetsFolderURL = output.assetsFolderURL
@@ -102,7 +117,11 @@ public final class XcodeImagesExporter: XcodeImagesExporterBase {
 
         // Generate Code Connect file if URL is configured
         if let codeConnectURL = output.codeConnectSwiftURL {
-            if let codeConnectFile = try generateCodeConnect(imagePacks: assets, url: codeConnectURL) {
+            if let codeConnectFile = try generateCodeConnect(
+                imagePacks: assets,
+                url: codeConnectURL,
+                allAssetMetadata: allAssetMetadata
+            ) {
                 result.append(codeConnectFile)
             }
         }

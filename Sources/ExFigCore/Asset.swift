@@ -19,3 +19,25 @@ public protocol Asset: Hashable, Sendable {
     /// When `nil`, the asset is considered cross-platform.
     var platform: Platform? { get }
 }
+
+/// Metadata for an asset needed for Code Connect generation.
+///
+/// This struct contains the minimal information needed to generate Figma Code Connect
+/// files that link code to design components. It includes the asset name, Figma node ID,
+/// and file ID needed to construct the Figma URL.
+public struct AssetMetadata: Sendable, Hashable {
+    /// The asset name (after processing).
+    public let name: String
+
+    /// The Figma node ID (e.g., "12016:2218").
+    public let nodeId: String
+
+    /// The Figma file ID.
+    public let fileId: String
+
+    public init(name: String, nodeId: String, fileId: String) {
+        self.name = name
+        self.nodeId = nodeId
+        self.fileId = fileId
+    }
+}

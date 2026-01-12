@@ -101,7 +101,7 @@ extension ExFigCommand.ExportImages {
                     dark: result.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: []
+                    allAssetMetadata: []
                 )
             }
         }
@@ -111,7 +111,7 @@ extension ExFigCommand.ExportImages {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -153,7 +153,7 @@ extension ExFigCommand.ExportImages {
         let exporter = WebImagesExporter(output: output, generateReactComponents: generateReactComponents)
 
         // Use allNames for barrel file if granular cache is active
-        let allImageNames = granularCacheManager != nil ? loaderResult.allNames : nil
+        let allImageNames = granularCacheManager != nil ? loaderResult.allAssetMetadata.map(\.name) : nil
         let result = try exporter.export(images: images, allImageNames: allImageNames)
 
         // Collect all files to write
@@ -194,7 +194,7 @@ extension ExFigCommand.ExportImages {
         await checkForUpdate(logger: ExFigCommand.logger)
 
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - images.count
+            ? loaderResult.allAssetMetadata.count - images.count
             : 0
 
         ui.success("Done! Exported \(images.count) images to Web project.")

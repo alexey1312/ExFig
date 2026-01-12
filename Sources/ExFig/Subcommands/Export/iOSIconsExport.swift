@@ -111,7 +111,7 @@ extension ExFigCommand.ExportIcons {
                     dark: output.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: [] // Not needed when not using granular cache
+                    allAssetMetadata: [] // Not needed when not using granular cache
                 )
             }
         }
@@ -122,7 +122,7 @@ extension ExFigCommand.ExportIcons {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -160,13 +160,26 @@ extension ExFigCommand.ExportIcons {
         )
 
         let exporter = XcodeIconsExporter(output: output)
-        // Process allNames with the same transformations applied to icons
-        let allIconNames = granularCacheManager != nil
-            ? processor.processNames(loaderResult.allNames)
-            : nil
+        // Process metadata with the same transformations applied to icons
+        let allIconNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if granularCacheManager != nil {
+            allIconNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
+            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: processor.processNames([meta.name]).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allIconNames = nil
+            allAssetMetadata = nil
+        }
         let localAndRemoteFiles = try exporter.export(
             icons: icons,
             allIconNames: allIconNames,
+            allAssetMetadata: allAssetMetadata,
             append: filter != nil
         )
         if filter == nil, granularCacheManager == nil {
@@ -200,7 +213,7 @@ extension ExFigCommand.ExportIcons {
 
         // Calculate skipped count for granular cache stats
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - icons.count
+            ? loaderResult.allAssetMetadata.count - icons.count
             : 0
 
         guard params.ios?.xcassetsInSwiftPackage == false else {

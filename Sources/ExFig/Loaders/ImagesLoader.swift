@@ -117,8 +117,9 @@ struct ImagesLoaderResultWithHashes {
     let computedHashes: [String: [NodeId: String]]
     /// Whether all images were skipped by granular cache.
     let allSkipped: Bool
-    /// All image names before filtering (for template generation).
-    let allNames: [String]
+    /// All asset metadata before filtering (for Code Connect and template generation).
+    /// Use `allAssetMetadata.map(\.name)` to get names for template generation.
+    let allAssetMetadata: [AssetMetadata]
 }
 
 /// Loads images (illustrations) from Figma files.
@@ -378,8 +379,8 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 onBatchProgress: onBatchProgress
             )
 
-            // Filter out dark mode names - they should not appear as separate properties
-            let lightOnlyNames = result.allNames.filter { !$0.hasSuffix(darkSuffix) }
+            // Filter out dark mode metadata - they should not appear as separate properties
+            let lightOnlyMetadata = result.allAssetMetadata.filter { !$0.name.hasSuffix(darkSuffix) }
 
             if result.allSkipped {
                 return ImagesLoaderResultWithHashes(
@@ -387,7 +388,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                     dark: nil,
                     computedHashes: [fileId: result.computedHashes],
                     allSkipped: true,
-                    allNames: lightOnlyNames
+                    allAssetMetadata: lightOnlyMetadata
                 )
             }
 
@@ -397,7 +398,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 dark: darkImages,
                 computedHashes: [fileId: result.computedHashes],
                 allSkipped: false,
-                allNames: lightOnlyNames
+                allAssetMetadata: lightOnlyMetadata
             )
         } else {
             // SVG source or vector output: fetch SVG with granular cache
@@ -409,8 +410,8 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 onBatchProgress: onBatchProgress
             )
 
-            // Filter out dark mode names - they should not appear as separate properties
-            let lightOnlyNames = result.allNames.filter { !$0.hasSuffix(darkSuffix) }
+            // Filter out dark mode metadata - they should not appear as separate properties
+            let lightOnlyMetadata = result.allAssetMetadata.filter { !$0.name.hasSuffix(darkSuffix) }
 
             if result.allSkipped {
                 return ImagesLoaderResultWithHashes(
@@ -418,7 +419,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                     dark: nil,
                     computedHashes: [fileId: result.computedHashes],
                     allSkipped: true,
-                    allNames: lightOnlyNames
+                    allAssetMetadata: lightOnlyMetadata
                 )
             }
 
@@ -428,7 +429,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 dark: darkPacks,
                 computedHashes: [fileId: result.computedHashes],
                 allSkipped: false,
-                allNames: lightOnlyNames
+                allAssetMetadata: lightOnlyMetadata
             )
         }
     }
@@ -440,7 +441,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         let packs: [ImagePack]
         let hashes: [NodeId: String]
         let allSkipped: Bool
-        let allNames: [String]
+        let allAssetMetadata: [AssetMetadata]
     }
 
     private func loadFromLightAndDarkFileWithGranularCache( // swiftlint:disable:this function_body_length
@@ -479,7 +480,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                             packs: result.packs,
                             hashes: result.computedHashes,
                             allSkipped: result.allSkipped,
-                            allNames: result.allNames
+                            allAssetMetadata: result.allAssetMetadata
                         )
                     } else {
                         // SVG source or vector output: fetch SVG
@@ -496,7 +497,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                             packs: result.packs,
                             hashes: result.computedHashes,
                             allSkipped: result.allSkipped,
-                            allNames: result.allNames
+                            allAssetMetadata: result.allAssetMetadata
                         )
                     }
                 }
@@ -515,9 +516,9 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             computedHashes[result.fileId] = result.hashes
         }
 
-        // Collect all names from light file (primary source for template generation)
+        // Collect all metadata from light file (primary source for template/Code Connect generation)
         let lightResult = results.first(where: { $0.key == "light" })
-        let allNames = lightResult?.allNames ?? []
+        let allAssetMetadata = lightResult?.allAssetMetadata ?? []
 
         // Check if all files were skipped
         let allSkipped = results.allSatisfy(\.allSkipped)
@@ -527,7 +528,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 dark: nil,
                 computedHashes: computedHashes,
                 allSkipped: true,
-                allNames: allNames
+                allAssetMetadata: allAssetMetadata
             )
         }
 
@@ -543,7 +544,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             dark: darkResult?.packs,
             computedHashes: computedHashes,
             allSkipped: false,
-            allNames: allNames
+            allAssetMetadata: allAssetMetadata
         )
     }
 }

@@ -114,37 +114,69 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
     /// - Parameters:
     ///   - imagePacks: Image packs with nodeId and fileId for Code Connect URLs.
     ///   - url: Output URL for the generated .figma.swift file.
+    ///   - allAssetMetadata: Optional full asset metadata for granular cache mode.
+    ///     When provided, generates Code Connect for ALL assets (not just changed ones).
     /// - Returns: File contents to write, or nil if no valid assets with nodeId.
-    func generateCodeConnect(imagePacks: [AssetPair<ImagePack>], url: URL) throws -> FileContents? {
-        // Filter to assets with valid nodeId and fileId
-        let validAssets = imagePacks.filter { pack in
-            pack.light.nodeId != nil && pack.light.fileId != nil
+    func generateCodeConnect(
+        imagePacks: [AssetPair<ImagePack>],
+        url: URL,
+        allAssetMetadata: [AssetMetadata]? = nil
+    ) throws -> FileContents? {
+        // If full metadata is provided (granular cache mode), use it to generate ALL structs
+        let assets: [[String: String]]
+        if let allMetadata = allAssetMetadata, !allMetadata.isEmpty {
+            assets = allMetadata.map { meta in
+                // Convert nodeId format: "12016:2218" -> "12016-2218" for URL
+                let urlNodeId = meta.nodeId.replacingOccurrences(of: ":", with: "-")
+
+                // Create struct name: sanitize for Swift identifier (replace non-alphanumeric with _)
+                let sanitizedName = meta.name.map { $0.isLetter || $0.isNumber ? $0 : Character("_") }
+                let structName = "Asset_\(String(sanitizedName))"
+
+                // Build Figma URL
+                let figmaUrl = "https://www.figma.com/design/\(meta.fileId)?node-id=\(urlNodeId)"
+
+                return [
+                    "name": meta.name,
+                    "structName": structName,
+                    "nodeId": urlNodeId,
+                    "fileId": meta.fileId,
+                    "figmaUrl": figmaUrl,
+                ]
+            }
+        } else {
+            // Filter to assets with valid nodeId and fileId
+            let validAssets = imagePacks.filter { pack in
+                pack.light.nodeId != nil && pack.light.fileId != nil
+            }
+            guard !validAssets.isEmpty else { return nil }
+
+            assets = validAssets.map { pack -> [String: String] in
+                let name = pack.light.name
+                let nodeId = pack.light.nodeId ?? ""
+                let fileId = pack.light.fileId ?? ""
+
+                // Convert nodeId format: "12016:2218" -> "12016-2218" for URL
+                let urlNodeId = nodeId.replacingOccurrences(of: ":", with: "-")
+
+                // Create struct name: sanitize for Swift identifier (replace non-alphanumeric with _)
+                let sanitizedName = name.map { $0.isLetter || $0.isNumber ? $0 : Character("_") }
+                let structName = "Asset_\(String(sanitizedName))"
+
+                // Build Figma URL
+                let figmaUrl = "https://www.figma.com/design/\(fileId)?node-id=\(urlNodeId)"
+
+                return [
+                    "name": name,
+                    "structName": structName,
+                    "nodeId": urlNodeId,
+                    "fileId": fileId,
+                    "figmaUrl": figmaUrl,
+                ]
+            }
         }
-        guard !validAssets.isEmpty else { return nil }
 
-        let assets = validAssets.map { pack -> [String: String] in
-            let name = pack.light.name
-            let nodeId = pack.light.nodeId ?? ""
-            let fileId = pack.light.fileId ?? ""
-
-            // Convert nodeId format: "12016:2218" -> "12016-2218" for URL
-            let urlNodeId = nodeId.replacingOccurrences(of: ":", with: "-")
-
-            // Create struct name: sanitize for Swift identifier (replace non-alphanumeric with _)
-            let sanitizedName = name.map { $0.isLetter || $0.isNumber ? $0 : Character("_") }
-            let structName = "Asset_\(String(sanitizedName))"
-
-            // Build Figma URL
-            let figmaUrl = "https://www.figma.com/design/\(fileId)?node-id=\(urlNodeId)"
-
-            return [
-                "name": name,
-                "structName": structName,
-                "nodeId": urlNodeId,
-                "fileId": fileId,
-                "figmaUrl": figmaUrl,
-            ]
-        }
+        guard !assets.isEmpty else { return nil }
 
         let context: [String: Any] = ["assets": assets]
         let env = makeEnvironment(templatesPath: output.templatesPath)

@@ -101,7 +101,7 @@ extension ExFigCommand.ExportImages {
                     dark: result.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: []
+                    allAssetMetadata: []
                 )
             }
         }
@@ -111,7 +111,7 @@ extension ExFigCommand.ExportImages {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -169,7 +169,7 @@ extension ExFigCommand.ExportImages {
         }
 
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - images.count
+            ? loaderResult.allAssetMetadata.count - images.count
             : 0
 
         ui.success("Done! Exported \(images.count) images.")

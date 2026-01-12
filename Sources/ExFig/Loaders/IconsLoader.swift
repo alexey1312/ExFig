@@ -14,8 +14,9 @@ struct IconsLoaderResultWithHashes {
     let computedHashes: [String: [NodeId: String]]
     /// Whether all icons were skipped by granular cache.
     let allSkipped: Bool
-    /// All icon names before filtering (for template generation).
-    let allNames: [String]
+    /// All asset metadata before filtering (for Code Connect and template generation).
+    /// Use `allAssetMetadata.map(\.name)` to get names for template generation.
+    let allAssetMetadata: [AssetMetadata]
 }
 
 /// Configuration for loading icons, supporting both single-entry and multi-entry modes.
@@ -270,8 +271,8 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
             onBatchProgress: onBatchProgress
         )
 
-        // Filter out dark mode names - they should not appear as separate properties
-        let lightOnlyNames = result.allNames.filter { !$0.hasSuffix(darkSuffix) }
+        // Filter out dark mode metadata - they should not appear as separate properties
+        let lightOnlyMetadata = result.allAssetMetadata.filter { !$0.name.hasSuffix(darkSuffix) }
 
         if result.allSkipped {
             return IconsLoaderResultWithHashes(
@@ -279,7 +280,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
                 dark: nil,
                 computedHashes: [fileId: result.computedHashes],
                 allSkipped: true,
-                allNames: lightOnlyNames
+                allAssetMetadata: lightOnlyMetadata
             )
         }
 
@@ -290,7 +291,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
             dark: darkIcons.map { updateRenderMode($0) },
             computedHashes: [fileId: result.computedHashes],
             allSkipped: false,
-            allNames: lightOnlyNames
+            allAssetMetadata: lightOnlyMetadata
         )
     }
 
@@ -301,7 +302,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         let packs: [ImagePack]
         let hashes: [NodeId: String]
         let allSkipped: Bool
-        let allNames: [String]
+        let allAssetMetadata: [AssetMetadata]
     }
 
     // swiftlint:disable:next function_body_length
@@ -338,7 +339,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
                         packs: packs,
                         hashes: result.computedHashes,
                         allSkipped: result.allSkipped,
-                        allNames: result.allNames
+                        allAssetMetadata: result.allAssetMetadata
                     )
                 }
             }
@@ -356,9 +357,9 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
             computedHashes[result.fileId] = result.hashes
         }
 
-        // Collect all names from light file (primary source for template generation)
+        // Collect all metadata from light file (primary source for template/Code Connect generation)
         let lightResult = results.first(where: { $0.key == "light" })
-        let allNames = lightResult?.allNames ?? []
+        let allAssetMetadata = lightResult?.allAssetMetadata ?? []
 
         // Check if all files were skipped
         let allSkipped = results.allSatisfy(\.allSkipped)
@@ -368,7 +369,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
                 dark: nil,
                 computedHashes: computedHashes,
                 allSkipped: true,
-                allNames: allNames
+                allAssetMetadata: allAssetMetadata
             )
         }
 
@@ -384,7 +385,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
             dark: darkResult?.packs,
             computedHashes: computedHashes,
             allSkipped: false,
-            allNames: allNames
+            allAssetMetadata: allAssetMetadata
         )
     }
 }

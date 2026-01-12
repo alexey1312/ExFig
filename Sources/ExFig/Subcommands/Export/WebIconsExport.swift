@@ -104,7 +104,7 @@ extension ExFigCommand.ExportIcons {
                     dark: output.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: [] // Not needed when not using granular cache
+                    allAssetMetadata: [] // Not needed when not using granular cache
                 )
             }
         }
@@ -115,7 +115,7 @@ extension ExFigCommand.ExportIcons {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -165,7 +165,7 @@ extension ExFigCommand.ExportIcons {
         )
 
         // Use allNames for barrel file if granular cache is active
-        let allIconNames = granularCacheManager != nil ? loaderResult.allNames : nil
+        let allIconNames = granularCacheManager != nil ? loaderResult.allAssetMetadata.map(\.name) : nil
         let result = try exporter.export(icons: icons, allIconNames: allIconNames)
 
         // 4. Download SVGs first (needed for TSX component generation)
@@ -243,7 +243,7 @@ extension ExFigCommand.ExportIcons {
 
         // Calculate skipped count for granular cache stats
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - icons.count
+            ? loaderResult.allAssetMetadata.count - icons.count
             : 0
 
         ui.success("Done! Exported \(icons.count) icons to Web project.")

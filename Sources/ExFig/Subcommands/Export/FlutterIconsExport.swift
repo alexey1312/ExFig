@@ -104,7 +104,7 @@ extension ExFigCommand.ExportIcons {
                     dark: output.dark,
                     computedHashes: [:],
                     allSkipped: false,
-                    allNames: [] // Not needed when not using granular cache
+                    allAssetMetadata: [] // Not needed when not using granular cache
                 )
             }
         }
@@ -115,7 +115,7 @@ extension ExFigCommand.ExportIcons {
             return PlatformExportResult(
                 count: 0,
                 hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allNames.count
+                skippedCount: loaderResult.allAssetMetadata.count
             )
         }
 
@@ -150,7 +150,7 @@ extension ExFigCommand.ExportIcons {
         let exporter = FlutterIconsExporter(output: output, outputFileName: entry.dartFile)
         // Process allNames with the same transformations applied to icons
         let allIconNames = granularCacheManager != nil
-            ? processor.processNames(loaderResult.allNames)
+            ? processor.processNames(loaderResult.allAssetMetadata.map(\.name))
             : nil
         let (dartFile, assetFiles) = try exporter.export(icons: icons, allIconNames: allIconNames)
 
@@ -192,7 +192,7 @@ extension ExFigCommand.ExportIcons {
 
         // Calculate skipped count for granular cache stats
         let skippedCount = granularCacheManager != nil
-            ? loaderResult.allNames.count - icons.count
+            ? loaderResult.allAssetMetadata.count - icons.count
             : 0
 
         ui.success("Done! Exported \(icons.count) icons to Flutter project.")
