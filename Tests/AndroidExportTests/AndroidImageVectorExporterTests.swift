@@ -196,8 +196,8 @@ final class AndroidImageVectorExporterTests: XCTestCase {
         let fileContents = try exporter.exportSingle(name: "circle", svgData: svgData)
         let code = String(data: fileContents.data!, encoding: .utf8)!
 
-        // Circle is converted to arc commands
-        XCTAssertTrue(code.contains("arcTo") || code.contains("arcToRelative"))
+        // Circle is converted to cubic Bezier curves for better Android compatibility
+        XCTAssertTrue(code.contains("curveTo"))
         XCTAssertTrue(code.contains("Color(0xFFFF0000)"))
     }
 

@@ -115,13 +115,14 @@ public struct VectorDrawableXMLGenerator: Sendable {
     private func transformAttributes(from transform: SVGTransform?) -> [String] {
         guard let transform else { return [] }
         var attrs: [String] = []
-        if let v = transform.translateX { attrs.append("android:translateX=\"\(formatDouble(v))\"") }
-        if let v = transform.translateY { attrs.append("android:translateY=\"\(formatDouble(v))\"") }
-        if let v = transform.scaleX { attrs.append("android:scaleX=\"\(formatDouble(v))\"") }
-        if let v = transform.scaleY { attrs.append("android:scaleY=\"\(formatDouble(v))\"") }
-        if let v = transform.rotation { attrs.append("android:rotation=\"\(formatDouble(v))\"") }
-        if let v = transform.pivotX { attrs.append("android:pivotX=\"\(formatDouble(v))\"") }
-        if let v = transform.pivotY { attrs.append("android:pivotY=\"\(formatDouble(v))\"") }
+        // Only output non-default transform values
+        if let v = transform.translateX, v != 0 { attrs.append("android:translateX=\"\(formatDouble(v))\"") }
+        if let v = transform.translateY, v != 0 { attrs.append("android:translateY=\"\(formatDouble(v))\"") }
+        if let v = transform.scaleX, v != 1 { attrs.append("android:scaleX=\"\(formatDouble(v))\"") }
+        if let v = transform.scaleY, v != 1 { attrs.append("android:scaleY=\"\(formatDouble(v))\"") }
+        if let v = transform.rotation, v != 0 { attrs.append("android:rotation=\"\(formatDouble(v))\"") }
+        if let v = transform.pivotX, v != 0 { attrs.append("android:pivotX=\"\(formatDouble(v))\"") }
+        if let v = transform.pivotY, v != 0 { attrs.append("android:pivotY=\"\(formatDouble(v))\"") }
         return attrs
     }
 
@@ -173,8 +174,10 @@ public struct VectorDrawableXMLGenerator: Sendable {
             }
         }
 
-        // Fill alpha (opacity on path level)
-        if let opacity = path.opacity {
+        // Fill alpha (fillOpacity or general opacity)
+        if let fillOpacity = path.fillOpacity {
+            pathAttrs.append("android:fillAlpha=\"\(formatDouble(fillOpacity))\"")
+        } else if let opacity = path.opacity {
             pathAttrs.append("android:fillAlpha=\"\(formatDouble(opacity))\"")
         }
 

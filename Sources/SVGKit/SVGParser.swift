@@ -56,6 +56,7 @@ public struct SVGPath: Equatable, Sendable {
     public let strokeDashOffset: Double?
     public let fillRule: FillRule?
     public let opacity: Double?
+    public let fillOpacity: Double?
 
     public init(
         pathData: String,
@@ -69,7 +70,8 @@ public struct SVGPath: Equatable, Sendable {
         strokeDashArray: [Double]? = nil,
         strokeDashOffset: Double? = nil,
         fillRule: FillRule?,
-        opacity: Double?
+        opacity: Double?,
+        fillOpacity: Double? = nil
     ) {
         self.pathData = pathData
         self.commands = commands
@@ -83,6 +85,7 @@ public struct SVGPath: Equatable, Sendable {
         self.strokeDashOffset = strokeDashOffset
         self.fillRule = fillRule
         self.opacity = opacity
+        self.fillOpacity = fillOpacity
     }
 
     public enum StrokeCap: String, Sendable {
@@ -240,7 +243,7 @@ public struct SVGColor: Equatable, Sendable {
 public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this type_body_length
     private static let inheritableAttributes = [
         "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
-        "stroke-dasharray", "stroke-dashoffset", "fill-rule", "opacity",
+        "stroke-dasharray", "stroke-dashoffset", "fill-rule", "opacity", "fill-opacity",
     ]
 
     private let pathParser = SVGPathParser()
@@ -412,11 +415,11 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
                 let pathAttrs = mergeAttributes(from: childElement, with: inheritedAttributes)
                 let path = try createSVGPath(pathData: pathData, attributes: pathAttrs)
                 elements.append(.path(path))
-            } else if let path = try convertShapeToPath(
+            } else if let element = try convertShapeToElement(
                 childElement,
                 attributes: mergeAttributes(from: childElement, with: inheritedAttributes)
             ) {
-                elements.append(.path(path))
+                elements.append(element)
             }
         }
         return elements
@@ -576,6 +579,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         }
 
         let opacity = attributes["opacity"].flatMap { Double($0) }
+        let fillOpacity = attributes["fill-opacity"].flatMap { Double($0) }
 
         return SVGPath(
             pathData: pathData,
@@ -589,7 +593,8 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             strokeDashArray: strokeDashArray,
             strokeDashOffset: strokeDashOffset,
             fillRule: fillRule,
-            opacity: opacity
+            opacity: opacity,
+            fillOpacity: fillOpacity
         )
     }
 
@@ -629,6 +634,31 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         return try createSVGPath(pathData: path, attributes: attributes)
     }
 
+    /// Converts a shape element to an SVGElement, preserving transform as a group wrapper if present
+    private func convertShapeToElement(
+        _ element: XMLElement,
+        attributes: [String: String]
+    ) throws -> SVGElement? {
+        guard let path = try convertShapeToPath(element, attributes: attributes) else {
+            return nil
+        }
+
+        // Check if the element has a transform attribute
+        if let transformStr = attributeValue(element, forName: "transform"),
+           let transform = SVGTransform.parse(transformStr)
+        {
+            // Wrap the path in a group with the transform
+            let group = SVGGroup(
+                transform: transform,
+                paths: [path],
+                elements: [.path(path)]
+            )
+            return .group(group)
+        }
+
+        return .path(path)
+    }
+
     private func convertRectToPath(_ element: XMLElement) -> String? {
         let xStr = attributeValue(element, forName: "x") ?? "0"
         let yStr = attributeValue(element, forName: "y") ?? "0"
@@ -645,24 +675,67 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         let rx = attributeValue(element, forName: "rx").flatMap { Double($0) } ?? 0
         let ry = attributeValue(element, forName: "ry").flatMap { Double($0) } ?? rx
 
+        // Use absolute commands (L, C) instead of relative (h, v, a) for better Android compatibility
         if rx == 0, ry == 0 {
-            return "M\(x),\(y)h\(w)v\(h)h\(-w)Z"
+            // Simple rect: M x,y L x+w,y L x+w,y+h L x,y+h Z
+            return "M\(formatCoord(x)),\(formatCoord(y))" +
+                "L\(formatCoord(x + w)),\(formatCoord(y))" +
+                "L\(formatCoord(x + w)),\(formatCoord(y + h))" +
+                "L\(formatCoord(x)),\(formatCoord(y + h))Z"
         } else {
+            // Rounded rect using cubic Bezier curves instead of arcs
+            // Arc approximation constant for 90-degree arcs: ~0.5523
+            let k = 0.5523
             let clampedRx = min(rx, w / 2)
             let clampedRy = min(ry, h / 2)
-            return """
-            M\(x + clampedRx),\(y)\
-            h\(w - 2 * clampedRx)\
-            a\(clampedRx),\(clampedRy) 0 0 1 \(clampedRx),\(clampedRy)\
-            v\(h - 2 * clampedRy)\
-            a\(clampedRx),\(clampedRy) 0 0 1 \(-clampedRx),\(clampedRy)\
-            h\(-w + 2 * clampedRx)\
-            a\(clampedRx),\(clampedRy) 0 0 1 \(-clampedRx),\(-clampedRy)\
-            v\(-h + 2 * clampedRy)\
-            a\(clampedRx),\(clampedRy) 0 0 1 \(clampedRx),\(-clampedRy)\
-            Z
-            """
+
+            // Calculate corner control points
+            let kx = clampedRx * k
+            let ky = clampedRy * k
+
+            // Start at top-left corner (after the rounded part)
+            return "M\(formatCoord(x + clampedRx)),\(formatCoord(y))" +
+                // Top edge
+                "L\(formatCoord(x + w - clampedRx)),\(formatCoord(y))" +
+                // Top-right corner (cubic Bezier)
+                "C\(formatCoord(x + w - clampedRx + kx)),\(formatCoord(y)) " +
+                "\(formatCoord(x + w)),\(formatCoord(y + clampedRy - ky)) " +
+                "\(formatCoord(x + w)),\(formatCoord(y + clampedRy))" +
+                // Right edge
+                "L\(formatCoord(x + w)),\(formatCoord(y + h - clampedRy))" +
+                // Bottom-right corner
+                "C\(formatCoord(x + w)),\(formatCoord(y + h - clampedRy + ky)) " +
+                "\(formatCoord(x + w - clampedRx + kx)),\(formatCoord(y + h)) " +
+                "\(formatCoord(x + w - clampedRx)),\(formatCoord(y + h))" +
+                // Bottom edge
+                "L\(formatCoord(x + clampedRx)),\(formatCoord(y + h))" +
+                // Bottom-left corner
+                "C\(formatCoord(x + clampedRx - kx)),\(formatCoord(y + h)) " +
+                "\(formatCoord(x)),\(formatCoord(y + h - clampedRy + ky)) " +
+                "\(formatCoord(x)),\(formatCoord(y + h - clampedRy))" +
+                // Left edge
+                "L\(formatCoord(x)),\(formatCoord(y + clampedRy))" +
+                // Top-left corner
+                "C\(formatCoord(x)),\(formatCoord(y + clampedRy - ky)) " +
+                "\(formatCoord(x + clampedRx - kx)),\(formatCoord(y)) " +
+                "\(formatCoord(x + clampedRx)),\(formatCoord(y))Z"
         }
+    }
+
+    /// Formats a coordinate value, removing unnecessary decimal places
+    private func formatCoord(_ value: Double) -> String {
+        if value == value.rounded(), abs(value) < 10000 {
+            return String(Int(value))
+        }
+        let formatted = String(format: "%.3f", value)
+        var result = formatted
+        while result.hasSuffix("0"), !result.hasSuffix(".0") {
+            result.removeLast()
+        }
+        if result.hasSuffix(".") {
+            result.removeLast()
+        }
+        return result
     }
 
     private func convertCircleToPath(_ element: XMLElement) -> String? {
@@ -676,12 +749,28 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             return nil
         }
 
-        return """
-        M\(cx - r),\(cy)\
-        a\(r),\(r) 0 1 0 \(2 * r),0\
-        a\(r),\(r) 0 1 0 \(-2 * r),0\
-        Z
-        """
+        // Use absolute cubic Bezier curves instead of arcs for better Android VectorDrawable compatibility
+        // k ≈ 0.5523 is the magic number for approximating a circle with 4 cubic Bezier curves
+        let k = 0.5523 * r
+
+        // Start at left point (cx - r, cy) and draw 4 quadrants
+        return "M\(formatCoord(cx - r)),\(formatCoord(cy))" +
+            // Left to bottom
+            "C\(formatCoord(cx - r)),\(formatCoord(cy + k)) " +
+            "\(formatCoord(cx - k)),\(formatCoord(cy + r)) " +
+            "\(formatCoord(cx)),\(formatCoord(cy + r))" +
+            // Bottom to right
+            "C\(formatCoord(cx + k)),\(formatCoord(cy + r)) " +
+            "\(formatCoord(cx + r)),\(formatCoord(cy + k)) " +
+            "\(formatCoord(cx + r)),\(formatCoord(cy))" +
+            // Right to top
+            "C\(formatCoord(cx + r)),\(formatCoord(cy - k)) " +
+            "\(formatCoord(cx + k)),\(formatCoord(cy - r)) " +
+            "\(formatCoord(cx)),\(formatCoord(cy - r))" +
+            // Top to left
+            "C\(formatCoord(cx - k)),\(formatCoord(cy - r)) " +
+            "\(formatCoord(cx - r)),\(formatCoord(cy - k)) " +
+            "\(formatCoord(cx - r)),\(formatCoord(cy))Z"
     }
 
     private func convertEllipseToPath(_ element: XMLElement) -> String? {
@@ -697,12 +786,29 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
             return nil
         }
 
-        return """
-        M\(cx - rx),\(cy)\
-        a\(rx),\(ry) 0 1 0 \(2 * rx),0\
-        a\(rx),\(ry) 0 1 0 \(-2 * rx),0\
-        Z
-        """
+        // Use absolute cubic Bezier curves instead of arcs for better Android VectorDrawable compatibility
+        // k ≈ 0.5523 is the magic number for approximating an ellipse with 4 cubic Bezier curves
+        let kx = 0.5523 * rx
+        let ky = 0.5523 * ry
+
+        // Start at left point (cx - rx, cy) and draw 4 quadrants
+        return "M\(formatCoord(cx - rx)),\(formatCoord(cy))" +
+            // Left to bottom
+            "C\(formatCoord(cx - rx)),\(formatCoord(cy + ky)) " +
+            "\(formatCoord(cx - kx)),\(formatCoord(cy + ry)) " +
+            "\(formatCoord(cx)),\(formatCoord(cy + ry))" +
+            // Bottom to right
+            "C\(formatCoord(cx + kx)),\(formatCoord(cy + ry)) " +
+            "\(formatCoord(cx + rx)),\(formatCoord(cy + ky)) " +
+            "\(formatCoord(cx + rx)),\(formatCoord(cy))" +
+            // Right to top
+            "C\(formatCoord(cx + rx)),\(formatCoord(cy - ky)) " +
+            "\(formatCoord(cx + kx)),\(formatCoord(cy - ry)) " +
+            "\(formatCoord(cx)),\(formatCoord(cy - ry))" +
+            // Top to left
+            "C\(formatCoord(cx - kx)),\(formatCoord(cy - ry)) " +
+            "\(formatCoord(cx - rx)),\(formatCoord(cy - ky)) " +
+            "\(formatCoord(cx - rx)),\(formatCoord(cy))Z"
     }
 
     private func convertLineToPath(_ element: XMLElement) -> String? {
@@ -1202,11 +1308,11 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
                 let pathAttrs = overrideAttributes(from: childElement, with: attributes)
                 let path = try createSVGPath(pathData: pathData, attributes: pathAttrs)
                 elements.append(.path(path))
-            } else if let path = try convertShapeToPath(
+            } else if let element = try convertShapeToElement(
                 childElement,
                 attributes: overrideAttributes(from: childElement, with: attributes)
             ) {
-                elements.append(.path(path))
+                elements.append(element)
             }
         }
         return elements

@@ -190,49 +190,66 @@ public struct ImageVectorGenerator: Sendable {
         """
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     private func generatePath(_ path: SVGPath, indent: Int = 3) -> String {
         let indentStr = String(repeating: "    ", count: indent)
         let innerIndentStr = String(repeating: "    ", count: indent + 1)
+
+        var params: [String] = []
+        params.append(contentsOf: buildFillParams(path, indent: indent))
+        params.append(contentsOf: buildStrokeParams(path))
+        if let fillRuleParam = buildFillRuleParam(path.fillRule) {
+            params.append(fillRuleParam)
+        }
+
+        var code = "\(indentStr)path(\n"
+        if !params.isEmpty {
+            code += "\(innerIndentStr)" + params.joined(separator: ",\n\(innerIndentStr)") + ",\n"
+        }
+        code += "\(indentStr)) {\n"
+        code += generatePathCommands(path.commands, indent: indent)
+        code += "\(indentStr)}\n"
+
+        return code
+    }
+
+    private func buildFillParams(_ path: SVGPath, indent: Int) -> [String] {
         var params: [String] = []
 
-        // Fill - check fillType first, fall back to legacy fill
         switch path.fillType {
         case let .linearGradient(gradient):
             params.append(generateLinearGradientFill(gradient, indent: indent))
         case let .radialGradient(gradient):
             params.append(generateRadialGradientFill(gradient, indent: indent))
         case let .solid(color):
-            let colorCode = mapColor(color)
-            params.append("fill = SolidColor(\(colorCode))")
+            params.append("fill = SolidColor(\(mapColor(color)))")
         case .none:
-            // Check legacy fill property for backward compatibility
             if let fill = path.fill {
-                let colorCode = mapColor(fill)
-                params.append("fill = SolidColor(\(colorCode))")
+                params.append("fill = SolidColor(\(mapColor(fill)))")
             } else if path.stroke == nil {
-                // SVG spec: missing fill attribute defaults to black
                 params.append("fill = SolidColor(Color.Black)")
             }
         }
 
-        // Fill alpha (opacity on path level)
-        if let opacity = path.opacity, opacity < 1.0 {
+        if let fillOpacity = path.fillOpacity, fillOpacity < 1.0 {
+            params.append("fillAlpha = \(formatDouble(fillOpacity))f")
+        } else if let opacity = path.opacity, opacity < 1.0 {
             params.append("fillAlpha = \(formatDouble(opacity))f")
         }
 
-        // Stroke
+        return params
+    }
+
+    private func buildStrokeParams(_ path: SVGPath) -> [String] {
+        var params: [String] = []
+
         if let stroke = path.stroke {
-            let colorCode = mapColor(stroke)
-            params.append("stroke = SolidColor(\(colorCode))")
+            params.append("stroke = SolidColor(\(mapColor(stroke)))")
         }
 
-        // Stroke width
         if let strokeWidth = path.strokeWidth {
             params.append("strokeLineWidth = \(formatDouble(strokeWidth))f")
         }
 
-        // Stroke line cap
         if let cap = path.strokeLineCap {
             let capValue = switch cap {
             case .butt: "StrokeCap.Butt"
@@ -242,7 +259,6 @@ public struct ImageVectorGenerator: Sendable {
             params.append("strokeLineCap = \(capValue)")
         }
 
-        // Stroke line join
         if let join = path.strokeLineJoin {
             let joinValue = switch join {
             case .miter: "StrokeJoin.Miter"
@@ -252,27 +268,16 @@ public struct ImageVectorGenerator: Sendable {
             params.append("strokeLineJoin = \(joinValue)")
         }
 
-        // Fill rule
-        if let fillRule = path.fillRule {
-            let ruleValue = switch fillRule {
-            case .nonZero: "PathFillType.NonZero"
-            case .evenOdd: "PathFillType.EvenOdd"
-            }
-            params.append("pathFillType = \(ruleValue)")
+        return params
+    }
+
+    private func buildFillRuleParam(_ fillRule: SVGPath.FillRule?) -> String? {
+        guard let fillRule else { return nil }
+        let ruleValue = switch fillRule {
+        case .nonZero: "PathFillType.NonZero"
+        case .evenOdd: "PathFillType.EvenOdd"
         }
-
-        var code = "\(indentStr)path(\n"
-        if !params.isEmpty {
-            code += "\(innerIndentStr)" + params.joined(separator: ",\n\(innerIndentStr)") + ",\n"
-        }
-        code += "\(indentStr)) {\n"
-
-        // Generate path commands
-        code += generatePathCommands(path.commands, indent: indent)
-
-        code += "\(indentStr)}\n"
-
-        return code
+        return "pathFillType = \(ruleValue)"
     }
 
     private func generateGroup(_ group: SVGGroup, indent: Int) -> String {
