@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.21] - 2026-01-13
+
+### Features
+
+- **android**: Add pathData validation for VectorDrawables by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- **hooks**: Migrate git hooks to tracked .githooks directory by @alexey1312
+
+
 ## [1.2.20] - 2026-01-13
 
 ### Features
