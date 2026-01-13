@@ -1,5 +1,6 @@
 import ExFigCore
 import Foundation
+import Logging
 import SVGKit
 
 /// Exports SVG icons as Jetpack Compose ImageVector Kotlin files
@@ -12,6 +13,8 @@ public final class AndroidImageVectorExporter: Sendable {
         public let colorMappings: [String: String]
         public let normalize: Bool
         public let maxConcurrent: Int
+        public let validatePathData: Bool
+        public let strictPathValidation: Bool
 
         /// - Parameters:
         ///   - packageName: Kotlin package name for generated files
@@ -21,13 +24,17 @@ public final class AndroidImageVectorExporter: Sendable {
         ///   - normalize: If true, normalizes SVG via usvg before parsing.
         ///                Default is false to preserve mask/clip-path structure from Figma.
         ///   - maxConcurrent: Maximum concurrent conversions
+        ///   - validatePathData: If true, validates pathData length and logs warnings
+        ///   - strictPathValidation: If true, throws error when pathData exceeds 32,767 bytes
         public init(
             packageName: String,
             extensionTarget: String? = nil,
             generatePreview: Bool = true,
             colorMappings: [String: String] = [:],
             normalize: Bool = false,
-            maxConcurrent: Int = 4
+            maxConcurrent: Int = 4,
+            validatePathData: Bool = true,
+            strictPathValidation: Bool = false
         ) {
             self.packageName = packageName
             self.extensionTarget = extensionTarget
@@ -35,11 +42,15 @@ public final class AndroidImageVectorExporter: Sendable {
             self.colorMappings = colorMappings
             self.normalize = normalize
             self.maxConcurrent = maxConcurrent
+            self.validatePathData = validatePathData
+            self.strictPathValidation = strictPathValidation
         }
     }
 
     private let outputDirectory: URL
     private let config: Config
+    private let validator = PathDataValidator()
+    private let logger = Logger(label: "com.alexey1312.exfig.imagevector-exporter")
 
     public init(outputDirectory: URL, config: Config) {
         self.outputDirectory = outputDirectory
@@ -125,6 +136,20 @@ public final class AndroidImageVectorExporter: Sendable {
     public func exportSingle(name: String, svgData: Data) throws -> FileContents {
         let svg = try SVGParser().parse(svgData, normalize: config.normalize)
 
+        // Validate pathData if enabled
+        if config.validatePathData {
+            let issues = validator.validate(svg: svg, iconName: name)
+            validator.logIssues(issues, iconName: name)
+
+            // Check for critical issues if strict mode enabled
+            if config.strictPathValidation, let critical = issues.first(where: { $0.isCritical }) {
+                throw ImageVectorExportError.pathDataExceedsCriticalLimit(
+                    iconName: name,
+                    byteLength: critical.result.byteLength
+                )
+            }
+        }
+
         let generator = ImageVectorGenerator(config: .init(
             packageName: config.packageName,
             extensionTarget: config.extensionTarget,
@@ -151,6 +176,7 @@ public final class AndroidImageVectorExporter: Sendable {
 public enum ImageVectorExportError: Error, LocalizedError {
     case invalidFileName(String)
     case svgParsingFailed(String, Error)
+    case pathDataExceedsCriticalLimit(iconName: String, byteLength: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -158,6 +184,11 @@ public enum ImageVectorExportError: Error, LocalizedError {
             "Invalid file name: \(name)"
         case let .svgParsingFailed(name, error):
             "SVG parsing failed: \(name) - \(error.localizedDescription)"
+        case let .pathDataExceedsCriticalLimit(iconName, byteLength):
+            """
+            pathData exceeds 32,767 bytes (\(byteLength) bytes) in \(iconName). \
+            This will cause STRING_TOO_LARGE error during Android build.
+            """
         }
     }
 
@@ -167,6 +198,8 @@ public enum ImageVectorExportError: Error, LocalizedError {
             "Use alphanumeric characters, underscores, and hyphens only"
         case .svgParsingFailed:
             "Re-export SVG from Figma or check SVG syntax"
+        case .pathDataExceedsCriticalLimit:
+            "Simplify the path in Figma or use raster format (PNG/WebP)"
         }
     }
 }

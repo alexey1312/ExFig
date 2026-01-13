@@ -30,6 +30,12 @@ extension ExFigCommand {
         """)
         var filter: String?
 
+        @Flag(help: """
+        Exit with error if any Android icon pathData exceeds 32,767 bytes (AAPT limit). \
+        Overrides strictPathValidation in config. Default: only log warnings.
+        """)
+        var strictPathValidation: Bool = false
+
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
@@ -138,7 +144,8 @@ extension ExFigCommand {
                     client: client,
                     params: options.params,
                     ui: ui,
-                    granularCacheManager: granularCacheManager
+                    granularCacheManager: granularCacheManager,
+                    strictPathValidationOverride: strictPathValidation
                 )
                 totalIcons += result.count
                 totalSkipped += result.skippedCount

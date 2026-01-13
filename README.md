@@ -5,7 +5,7 @@
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
 [![Docs](https://github.com/alexey1312/ExFig/actions/workflows/deploy-docc.yml/badge.svg)](https://alexey1312.github.io/ExFig/documentation/exfig)
-![Coverage](https://img.shields.io/badge/coverage-46.70%25-yellow)
+![Coverage](https://img.shields.io/badge/coverage-47.38%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and
@@ -38,6 +38,7 @@ Flutter, and React/TypeScript.
 - 📱 SwiftUI and UIKit (iOS/macOS)
 - 🔗 Figma Code Connect integration (iOS)
 - 🤖 Jetpack Compose and XML resources (Android)
+- ⚠️ Android pathData validation (errors on 32,767 bytes AAPT limit)
 - 🦋 Flutter / Dart
 - 🌐 React / TypeScript (CSS variables, TSX components)
 - 🔧 Customizable code templates (Stencil)
@@ -492,6 +493,28 @@ If an export is interrupted (Ctrl+C, crash, etc.):
 1. Run with `--resume` to continue from the last checkpoint
 2. Checkpoint validates config hashes — if configs changed, export restarts
 3. Delete `.exfig-batch-checkpoint.json` to force a fresh start
+
+**Android pathData Too Long**
+
+Android has a strict limit on pathData string length in VectorDrawable XML:
+
+- **32,767+ bytes**: AAPT build failure (STRING_TOO_LARGE error)
+
+ExFig automatically validates pathData and logs errors. To make builds fail on critical issues:
+
+```bash
+# CLI flag
+exfig icons --strict-path-validation
+
+# Or in config (android.icons)
+strictPathValidation: true
+```
+
+**Solutions:**
+
+1. Simplify paths in Figma (Flatten, Outline Stroke, reduce detail)
+2. Use raster format (PNG/WebP) for complex illustrations
+3. Split complex icons into multiple paths
 
 ## Documentation
 

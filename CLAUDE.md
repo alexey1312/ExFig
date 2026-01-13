@@ -143,13 +143,14 @@ Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after 
 
 ## Troubleshooting
 
-| Problem            | Solution                                       |
-| ------------------ | ---------------------------------------------- |
-| Build fails        | `swift package clean && swift build`           |
-| Tests fail         | Check `FIGMA_PERSONAL_TOKEN` is set            |
-| Formatting fails   | Run `./bin/mise run setup` to install tools    |
-| Template errors    | Check Stencil syntax and context variables     |
-| Linux test crashes | Use `--num-workers 1` for test parallelization |
+| Problem               | Solution                                            |
+| --------------------- | --------------------------------------------------- |
+| Build fails           | `swift package clean && swift build`                |
+| Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                 |
+| Formatting fails      | Run `./bin/mise run setup` to install tools         |
+| Template errors       | Check Stencil syntax and context variables          |
+| Linux test crashes    | Use `--num-workers 1` for test parallelization      |
+| Android pathData long | Simplify in Figma or use `--strict-path-validation` |
 
 ## Additional Rules
 

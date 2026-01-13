@@ -55,6 +55,8 @@ struct Params: Decodable {
             let nameReplaceRegexp: String?
             let useSingleFile: Bool?
             let darkModeSuffix: String?
+            /// If true, exit with error when pathData exceeds 32,767 bytes (AAPT limit).
+            let strictPathValidation: Bool?
         }
 
         struct Images: Decodable {
@@ -433,6 +435,10 @@ struct Params: Decodable {
             let composeFormat: ComposeIconFormat?
             /// Extension target for ImageVector (e.g., "com.example.app.ui.AppIcons")
             let composeExtensionTarget: String?
+            /// Coordinate precision for pathData (1-6, default 4). Lower values reduce file size.
+            let pathPrecision: Int?
+            /// If true, exit with error when pathData exceeds 32,767 bytes (AAPT limit).
+            let strictPathValidation: Bool?
         }
 
         /// Icons entry with figmaFrameName for multiple icons configuration.
@@ -449,6 +455,10 @@ struct Params: Decodable {
             let nameValidateRegexp: String?
             /// Replacement pattern using captured groups. Overrides common.icons.nameReplaceRegexp.
             let nameReplaceRegexp: String?
+            /// Coordinate precision for pathData (1-6, default 4). Lower values reduce file size.
+            let pathPrecision: Int?
+            /// If true, exit with error when pathData exceeds 32,767 bytes (AAPT limit).
+            let strictPathValidation: Bool?
         }
 
         /// Icons configuration supporting both single object and array formats.
@@ -476,7 +486,9 @@ struct Params: Decodable {
                         composeExtensionTarget: icons.composeExtensionTarget,
                         nameStyle: nil,
                         nameValidateRegexp: nil,
-                        nameReplaceRegexp: nil
+                        nameReplaceRegexp: nil,
+                        pathPrecision: icons.pathPrecision,
+                        strictPathValidation: icons.strictPathValidation
                     )]
                 case let .multiple(entries):
                     entries

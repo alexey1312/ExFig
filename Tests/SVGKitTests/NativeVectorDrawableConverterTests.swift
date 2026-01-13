@@ -270,4 +270,117 @@ final class NativeVectorDrawableConverterTests: XCTestCase {
         XCTAssertTrue(xmlContent.contains("android:strokeLineCap=\"round\""))
         XCTAssertTrue(xmlContent.contains("android:strokeLineJoin=\"bevel\""))
     }
+
+    // MARK: - Strict Path Validation Tests
+
+    func testStrictPathValidationDisabledContinuesOnCriticalPath() throws {
+        // Create SVG with pathData exceeding 32,767 bytes
+        let longPath = String(repeating: "L1,1 ", count: 8000) // ~40,000 chars
+        let svgContent = """
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,0 \(longPath)" fill="#000000"/>
+        </svg>
+        """
+        let svgFile = tempDirectory.appendingPathComponent("critical.svg")
+        try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
+
+        // With strictPathValidation: false (default), should NOT throw
+        let converter = NativeVectorDrawableConverter(normalize: false, strictPathValidation: false)
+        XCTAssertNoThrow(try converter.convert(inputDirectoryUrl: tempDirectory))
+
+        // File should be converted (even though it will fail on Android build)
+        let xmlFile = tempDirectory.appendingPathComponent("critical.xml")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: xmlFile.path))
+    }
+
+    func testStrictPathValidationEnabledThrowsOnCriticalPath() throws {
+        // Create SVG with pathData exceeding 32,767 bytes
+        let longPath = String(repeating: "L1,1 ", count: 8000) // ~40,000 chars
+        let svgContent = """
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,0 \(longPath)" fill="#000000"/>
+        </svg>
+        """
+        let svgFile = tempDirectory.appendingPathComponent("critical.svg")
+        try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
+
+        // With strictPathValidation: true, should throw
+        let converter = NativeVectorDrawableConverter(normalize: false, strictPathValidation: true)
+
+        XCTAssertThrowsError(try converter.convert(inputDirectoryUrl: tempDirectory)) { error in
+            guard let converterError = error as? VectorDrawableConverterError else {
+                XCTFail("Expected VectorDrawableConverterError, got \(type(of: error))")
+                return
+            }
+            if case let .pathDataExceedsCriticalLimit(iconName, byteLength) = converterError {
+                XCTAssertEqual(iconName, "critical")
+                XCTAssertGreaterThan(byteLength, 32767)
+            } else {
+                XCTFail("Expected pathDataExceedsCriticalLimit error")
+            }
+        }
+    }
+
+    func testStrictPathValidationAsyncThrowsOnCriticalPath() async throws {
+        // Create SVG with pathData exceeding 32,767 bytes
+        let longPath = String(repeating: "L1,1 ", count: 8000) // ~40,000 chars
+        let svgContent = """
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,0 \(longPath)" fill="#000000"/>
+        </svg>
+        """
+        let svgFile = tempDirectory.appendingPathComponent("critical.svg")
+        try svgContent.write(to: svgFile, atomically: true, encoding: .utf8)
+
+        let converter = NativeVectorDrawableConverter(normalize: false, strictPathValidation: true)
+
+        do {
+            try await converter.convertAsync(inputDirectoryUrl: tempDirectory)
+            XCTFail("Expected error to be thrown")
+        } catch let error as VectorDrawableConverterError {
+            if case let .pathDataExceedsCriticalLimit(iconName, byteLength) = error {
+                XCTAssertEqual(iconName, "critical")
+                XCTAssertGreaterThan(byteLength, 32767)
+            } else {
+                XCTFail("Expected pathDataExceedsCriticalLimit error, got \(error)")
+            }
+        } catch {
+            XCTFail("Expected VectorDrawableConverterError, got \(type(of: error))")
+        }
+    }
+
+    func testStrictPathValidationConvertsOtherFilesBeforeThrowing() async throws {
+        // Create a valid SVG and a critical SVG
+        let validSvg = """
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,0 L24,24" fill="#000000"/>
+        </svg>
+        """
+        let longPath = String(repeating: "L1,1 ", count: 8000)
+        let criticalSvg = """
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,0 \(longPath)" fill="#000000"/>
+        </svg>
+        """
+
+        try validSvg.write(to: tempDirectory.appendingPathComponent("aaa_valid.svg"), atomically: true, encoding: .utf8)
+        try criticalSvg.write(
+            to: tempDirectory.appendingPathComponent("zzz_critical.svg"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let converter = NativeVectorDrawableConverter(normalize: false, strictPathValidation: true)
+
+        do {
+            try await converter.convertAsync(inputDirectoryUrl: tempDirectory)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            // Error is expected
+        }
+
+        // Valid file should still be converted before error was thrown
+        XCTAssertTrue(FileManager.default
+            .fileExists(atPath: tempDirectory.appendingPathComponent("aaa_valid.xml").path))
+    }
 }

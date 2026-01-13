@@ -192,6 +192,43 @@ fun MyScreen() {
 - Complex gradients
 - External images
 
+## pathData Length Validation
+
+Android has strict limits on `pathData` string length in VectorDrawable XML:
+
+| Limit | Type | Effect |
+| ----- | ---- | ------ |
+| 32,767 bytes | AAPT critical error | STRING_TOO_LARGE build failure |
+
+ExFig automatically validates pathData and logs errors when limits are exceeded.
+
+### Enable Strict Validation
+
+To fail the build when critical limits are exceeded:
+
+**CLI flag:**
+```bash
+exfig icons --strict-path-validation
+```
+
+**Config:**
+```yaml
+android:
+  icons:
+    strictPathValidation: true
+```
+
+### Solutions for Long Paths
+
+1. **Simplify in Figma**: Use Flatten, Outline Stroke, reduce anchor points
+2. **Use raster format**: Switch to PNG/WebP for complex illustrations
+3. **Split complex icons**: Divide into multiple smaller paths
+
+### Reference
+
+- [Android Lint VectorPath Check](https://googlesamples.github.io/android-custom-lint-rules/checks/VectorPath.md.html)
+- [STRING_TOO_LARGE Error](https://brightinventions.pl/blog/string-too-large-in-android-resources/)
+
 ## Dark Mode Icons
 
 ### Separate Files

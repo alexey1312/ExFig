@@ -11,11 +11,14 @@ extension ExFigCommand.ExportIcons {
     // swiftlint:disable function_body_length
 
     /// Exports Android icons from Figma.
+    /// - Parameters:
+    ///   - strictPathValidationOverride: If true, overrides per-entry strictPathValidation config.
     func exportAndroidIcons(
         client: Client,
         params: Params,
         ui: TerminalUI,
-        granularCacheManager: GranularCacheManager?
+        granularCacheManager: GranularCacheManager?,
+        strictPathValidationOverride: Bool = false
     ) async throws -> PlatformExportResult {
         guard let android = params.android, let iconsConfig = android.icons else {
             ui.warning(.configMissing(platform: "android", assetType: "icons"))
@@ -33,7 +36,8 @@ extension ExFigCommand.ExportIcons {
                 client: client,
                 params: params,
                 ui: ui,
-                granularCacheManager: granularCacheManager
+                granularCacheManager: granularCacheManager,
+                strictPathValidationOverride: strictPathValidationOverride
             )
         }
 
@@ -48,7 +52,8 @@ extension ExFigCommand.ExportIcons {
                 client: client,
                 params: params,
                 ui: ui,
-                granularCacheManager: granularCacheManager
+                granularCacheManager: granularCacheManager,
+                strictPathValidationOverride: strictPathValidationOverride
             )
         }
     }
@@ -61,7 +66,8 @@ extension ExFigCommand.ExportIcons {
         client: Client,
         params: Params,
         ui: TerminalUI,
-        granularCacheManager: GranularCacheManager?
+        granularCacheManager: GranularCacheManager?,
+        strictPathValidationOverride: Bool
     ) async throws -> PlatformExportResult {
         try await EntryProcessor.processEntries(entries: entries) { entry in
             try await exportAndroidIconsEntry(
@@ -70,7 +76,8 @@ extension ExFigCommand.ExportIcons {
                 client: client,
                 params: params,
                 ui: ui,
-                granularCacheManager: granularCacheManager
+                granularCacheManager: granularCacheManager,
+                strictPathValidationOverride: strictPathValidationOverride
             )
         }
     }
@@ -83,7 +90,8 @@ extension ExFigCommand.ExportIcons {
         client: Client,
         params: Params,
         ui: TerminalUI,
-        granularCacheManager: GranularCacheManager?
+        granularCacheManager: GranularCacheManager?,
+        strictPathValidationOverride: Bool = false
     ) async throws -> PlatformExportResult {
         // Check if ImageVector format is requested
         let composeFormat = entry.composeFormat ?? .resourceReference
@@ -95,7 +103,8 @@ extension ExFigCommand.ExportIcons {
                 client: client,
                 params: params,
                 ui: ui,
-                granularCacheManager: granularCacheManager
+                granularCacheManager: granularCacheManager,
+                strictPathValidationOverride: strictPathValidationOverride
             )
         }
 
@@ -217,14 +226,23 @@ extension ExFigCommand.ExportIcons {
                 $0.destination.file.deletingPathExtension().lastPathComponent
             })
 
+        // Create converter with config options (CLI flag overrides entry, entry overrides common)
+        let strictValidation = strictPathValidationOverride
+            || entry.strictPathValidation
+            ?? params.common?.icons?.strictPathValidation
+            ?? false
+        let svgConverter = NativeVectorDrawableConverter(
+            strictPathValidation: strictValidation
+        )
+
         try await ui.withSpinner("Converting SVGs to vector drawables...") {
             if FileManager.default.fileExists(atPath: tempDirectoryLightURL.path) {
-                try await ExFigCommand.svgFileConverter.convertAsync(
+                try await svgConverter.convertAsync(
                     inputDirectoryUrl: tempDirectoryLightURL, rtlFiles: rtlFileNames
                 )
             }
             if FileManager.default.fileExists(atPath: tempDirectoryDarkURL.path) {
-                try await ExFigCommand.svgFileConverter.convertAsync(
+                try await svgConverter.convertAsync(
                     inputDirectoryUrl: tempDirectoryDarkURL, rtlFiles: rtlFileNames
                 )
             }
@@ -320,7 +338,8 @@ extension ExFigCommand.ExportIcons {
         client: Client,
         params: Params,
         ui: TerminalUI,
-        granularCacheManager: GranularCacheManager?
+        granularCacheManager: GranularCacheManager?,
+        strictPathValidationOverride: Bool = false
     ) async throws -> PlatformExportResult {
         guard let packageName = entry.composePackageName else {
             ui.warning(.composeRequirementMissing(requirement: "composePackageName"))
@@ -432,13 +451,19 @@ extension ExFigCommand.ExportIcons {
                 packageName.replacingOccurrences(of: ".", with: "/")
             )
 
+            // CLI flag overrides entry, entry overrides common
+            let strictValidation = strictPathValidationOverride
+                || entry.strictPathValidation
+                ?? params.common?.icons?.strictPathValidation
+                ?? false
             let exporter = AndroidImageVectorExporter(
                 outputDirectory: outputDirectory,
                 config: .init(
                     packageName: packageName,
                     extensionTarget: entry.composeExtensionTarget,
                     generatePreview: true,
-                    colorMappings: [:]
+                    colorMappings: [:],
+                    strictPathValidation: strictValidation
                 )
             )
 

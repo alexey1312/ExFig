@@ -277,6 +277,9 @@ android:
     composeFormat: resourceReference
     # [optional] Extension target for ImageVector (e.g., "com.example.app.ui.AppIcons")
     composeExtensionTarget: "com.example.app.ui.AppIcons"
+    # [optional] Exit with error if pathData exceeds 32,767 bytes (AAPT limit).
+    # Default: false (only logs warnings). Can be overridden with --strict-path-validation CLI flag.
+    strictPathValidation: false
 
   # Array format (multiple icons configurations from different Figma frames):
   # icons:
