@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.20] - 2026-01-13
+
+### Features
+
+- **SVGKit**: Add fill-opacity support and shape transforms by @alexey1312
+
+
 ## [1.2.19] - 2026-01-12
 
 ### Documentation
