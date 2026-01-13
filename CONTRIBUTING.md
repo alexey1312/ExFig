@@ -12,9 +12,10 @@ Thank you for your interest in contributing to ExFig!
 
 1. Fork and clone the repository
 2. Install dependencies: `./bin/mise install`
-3. Setup pre-commit hooks: `./bin/mise run setup`
-4. Build: `./bin/mise run build`
-5. Test: `./bin/mise run test`
+3. Build: `./bin/mise run build`
+4. Test: `./bin/mise run test`
+
+Git hooks are auto-configured via `mise` when entering the project directory.
 
 ## Before Submitting
 
