@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.22] - 2026-01-14
+
+### Bug Fixes
+
+- **xcode**: Sort CodeConnect assets for stable output by @alexey1312
+
+
 ## [1.2.21] - 2026-01-13
 
 ### Features
