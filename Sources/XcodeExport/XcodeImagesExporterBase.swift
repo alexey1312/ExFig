@@ -178,7 +178,10 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
 
         guard !assets.isEmpty else { return nil }
 
-        let context: [String: Any] = ["assets": assets]
+        // Sort by asset name for stable output across regenerations
+        let sortedAssets = assets.sorted { ($0["name"] ?? "") < ($1["name"] ?? "") }
+
+        let context: [String: Any] = ["assets": sortedAssets]
         let env = makeEnvironment(templatesPath: output.templatesPath)
         let contents = try env.renderTemplate(name: "CodeConnect.figma.swift.stencil", context: context)
 
