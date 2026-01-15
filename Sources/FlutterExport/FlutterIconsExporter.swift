@@ -5,11 +5,29 @@ import Stencil
 public final class FlutterIconsExporter: FlutterExporter {
     private let output: FlutterOutput
     private let outputFileName: String
+    private let nameStyle: NameStyle
 
-    public init(output: FlutterOutput, outputFileName: String?) {
+    public init(output: FlutterOutput, outputFileName: String?, nameStyle: NameStyle = .snakeCase) {
         self.output = output
         self.outputFileName = outputFileName ?? "icons.dart"
+        self.nameStyle = nameStyle
         super.init(templatesPath: output.templatesPath)
+    }
+
+    /// Transforms a name according to the configured naming style.
+    private func transformName(_ name: String) -> String {
+        switch nameStyle {
+        case .camelCase:
+            name.lowerCamelCased()
+        case .snakeCase:
+            name.snakeCased()
+        case .pascalCase:
+            name.camelCased()
+        case .kebabCase:
+            name.kebabCased()
+        case .screamingSnakeCase:
+            name.screamingSnakeCased()
+        }
     }
 
     /// Exports icons as SVG assets + Dart constants file.
@@ -64,27 +82,27 @@ public final class FlutterIconsExporter: FlutterExporter {
             // When using allIconNames, dark mode is not tracked (simplified for granular cache)
             allNames.map { name in
                 let camelName = name.lowerCamelCased()
-                let snakeName = name.snakeCased()
+                let styledName = transformName(name)
                 return [
                     "name": camelName,
-                    "lightPath": "\(relativePath)/\(snakeName).svg",
+                    "lightPath": "\(relativePath)/\(styledName).svg",
                     "hasDark": false,
                 ] as [String: Any]
             }
         } else {
             icons.map { iconPair in
                 let name = iconPair.light.name.lowerCamelCased()
-                let snakeName = iconPair.light.name.snakeCased()
+                let styledName = transformName(iconPair.light.name)
                 let hasDark = iconPair.dark != nil
 
                 var result: [String: Any] = [
                     "name": name,
-                    "lightPath": "\(relativePath)/\(snakeName).svg",
+                    "lightPath": "\(relativePath)/\(styledName).svg",
                     "hasDark": hasDark,
                 ]
 
                 if hasDark {
-                    result["darkPath"] = "\(relativePath)/\(snakeName)_dark.svg"
+                    result["darkPath"] = "\(relativePath)/\(styledName)\(nameStyle.darkSuffix).svg"
                 }
 
                 return result
@@ -110,8 +128,8 @@ public final class FlutterIconsExporter: FlutterExporter {
         for iconPair in icons {
             // Light icon
             if let image = iconPair.light.images.first {
-                let snakeName = iconPair.light.name.snakeCased()
-                let fileName = "\(snakeName).svg"
+                let styledName = transformName(iconPair.light.name)
+                let fileName = "\(styledName).svg"
                 if let fileURL = URL(string: fileName) {
                     let file = FileContents(
                         destination: Destination(directory: assetsDirectory, file: fileURL),
@@ -123,8 +141,8 @@ public final class FlutterIconsExporter: FlutterExporter {
 
             // Dark icon
             if let dark = iconPair.dark, let image = dark.images.first {
-                let snakeName = dark.name.snakeCased()
-                let fileName = "\(snakeName)_dark.svg"
+                let styledName = transformName(dark.name)
+                let fileName = "\(styledName)\(nameStyle.darkSuffix).svg"
                 if let fileURL = URL(string: fileName) {
                     let file = FileContents(
                         destination: Destination(directory: assetsDirectory, file: fileURL),

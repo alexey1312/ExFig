@@ -857,6 +857,8 @@ struct Params: Decodable {
             let webpOptions: Android.Images.FormatOptions?
             /// Source format for fetching from Figma API. Default: png
             let sourceFormat: SourceFormat?
+            /// Naming style for generated assets. Default: snake_case
+            let nameStyle: NameStyle?
         }
 
         /// Images entry with figmaFrameName for multiple images configuration.
@@ -871,6 +873,8 @@ struct Params: Decodable {
             let webpOptions: Android.Images.FormatOptions?
             /// Source format for fetching from Figma API. Default: png
             let sourceFormat: SourceFormat?
+            /// Naming style for generated assets. Default: snake_case
+            let nameStyle: NameStyle?
         }
 
         /// Images configuration supporting both single object and array formats.
@@ -898,7 +902,8 @@ struct Params: Decodable {
                         scales: images.scales,
                         format: images.format,
                         webpOptions: images.webpOptions,
-                        sourceFormat: images.sourceFormat
+                        sourceFormat: images.sourceFormat,
+                        nameStyle: images.nameStyle
                     )]
                 case let .multiple(entries):
                     entries

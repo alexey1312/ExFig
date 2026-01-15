@@ -123,7 +123,7 @@ extension ExFigCommand.ExportImages {
                     platform: .flutter,
                     nameValidateRegexp: params.common?.images?.nameValidateRegexp,
                     nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-                    nameStyle: .snakeCase
+                    nameStyle: entry.nameStyle ?? .snakeCase
                 )
                 let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
                 return try (result.get(), result.warning)
@@ -188,7 +188,7 @@ extension ExFigCommand.ExportImages {
 
     // MARK: - SVG Output
 
-    // swiftlint:disable:next function_parameter_count
+    // swiftlint:disable:next function_parameter_count function_body_length
     func exportFlutterSVGImagesEntry(
         images: [AssetPair<ImagesProcessor.AssetType>],
         entry: Params.Flutter.ImagesEntry,
@@ -239,17 +239,19 @@ extension ExFigCommand.ExportImages {
             imagesClassName: entry.className
         )
 
+        let nameStyle = entry.nameStyle ?? .snakeCase
         let exporter = FlutterImagesExporter(
             output: output,
             outputFileName: entry.dartFile,
             scales: [1.0], // SVG doesn't need scales
-            format: "svg"
+            format: "svg",
+            nameStyle: nameStyle
         )
         let processor = ImagesProcessor(
             platform: .flutter,
             nameValidateRegexp: params.common?.images?.nameValidateRegexp,
             nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-            nameStyle: .snakeCase
+            nameStyle: nameStyle
         )
         let allImageNames = granularCacheManager != nil
             ? processor.processNames(loaderResult.allAssetMetadata.map(\.name))
@@ -336,17 +338,19 @@ extension ExFigCommand.ExportImages {
             imagesClassName: entry.className
         )
 
+        let nameStyle = entry.nameStyle ?? .snakeCase
         let exporter = FlutterImagesExporter(
             output: output,
             outputFileName: entry.dartFile,
             scales: entry.scales,
-            format: "webp"
+            format: "webp",
+            nameStyle: nameStyle
         )
         let processor = ImagesProcessor(
             platform: .flutter,
             nameValidateRegexp: params.common?.images?.nameValidateRegexp,
             nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-            nameStyle: .snakeCase
+            nameStyle: nameStyle
         )
         let allImageNames = granularCacheManager != nil
             ? processor.processNames(loaderResult.allAssetMetadata.map(\.name))
@@ -386,17 +390,19 @@ extension ExFigCommand.ExportImages {
             imagesClassName: entry.className
         )
 
+        let nameStyle = entry.nameStyle ?? .snakeCase
         let exporter = FlutterImagesExporter(
             output: output,
             outputFileName: entry.dartFile,
             scales: entry.scales,
-            format: formatString
+            format: formatString,
+            nameStyle: nameStyle
         )
         let processor = ImagesProcessor(
             platform: .flutter,
             nameValidateRegexp: params.common?.images?.nameValidateRegexp,
             nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-            nameStyle: .snakeCase
+            nameStyle: nameStyle
         )
         let allImageNames = granularCacheManager != nil
             ? processor.processNames(loaderResult.allAssetMetadata.map(\.name))

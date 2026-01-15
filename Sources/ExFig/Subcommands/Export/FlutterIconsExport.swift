@@ -122,11 +122,12 @@ extension ExFigCommand.ExportIcons {
         let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
 
         // 2. Process images
+        let nameStyle = entry.nameStyle ?? .snakeCase
         let processor = ImagesProcessor(
             platform: .flutter,
             nameValidateRegexp: entry.nameValidateRegexp ?? params.common?.icons?.nameValidateRegexp,
             nameReplaceRegexp: entry.nameReplaceRegexp ?? params.common?.icons?.nameReplaceRegexp,
-            nameStyle: entry.nameStyle ?? .snakeCase
+            nameStyle: nameStyle
         )
 
         let (icons, iconsWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
@@ -147,7 +148,7 @@ extension ExFigCommand.ExportIcons {
             iconsClassName: entry.className
         )
 
-        let exporter = FlutterIconsExporter(output: output, outputFileName: entry.dartFile)
+        let exporter = FlutterIconsExporter(output: output, outputFileName: entry.dartFile, nameStyle: nameStyle)
         // Process allNames with the same transformations applied to icons
         let allIconNames = granularCacheManager != nil
             ? processor.processNames(loaderResult.allAssetMetadata.map(\.name))

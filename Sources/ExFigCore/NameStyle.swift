@@ -23,4 +23,23 @@ public enum NameStyle: String, Decodable, Sendable, CaseIterable {
 
     /// SCREAMING_SNAKE_CASE: `MY_IMAGE_NAME`
     case screamingSnakeCase = "SCREAMING_SNAKE_CASE"
+
+    /// Returns the appropriate dark mode suffix for this naming style.
+    ///
+    /// - `camelCase`/`pascalCase`: `Dark` (appended directly)
+    /// - `snakeCase`: `_dark`
+    /// - `kebabCase`: `-dark`
+    /// - `screamingSnakeCase`: `_DARK`
+    public var darkSuffix: String {
+        switch self {
+        case .camelCase, .pascalCase:
+            "Dark"
+        case .snakeCase:
+            "_dark"
+        case .kebabCase:
+            "-dark"
+        case .screamingSnakeCase:
+            "_DARK"
+        }
+    }
 }

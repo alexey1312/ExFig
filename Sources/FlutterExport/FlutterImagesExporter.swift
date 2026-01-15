@@ -7,13 +7,37 @@ public final class FlutterImagesExporter: FlutterExporter {
     private let outputFileName: String
     private let scales: [Double]
     private let format: String
+    private let nameStyle: NameStyle
 
-    public init(output: FlutterOutput, outputFileName: String?, scales: [Double]?, format: String?) {
+    public init(
+        output: FlutterOutput,
+        outputFileName: String?,
+        scales: [Double]?,
+        format: String?,
+        nameStyle: NameStyle = .snakeCase
+    ) {
         self.output = output
         self.outputFileName = outputFileName ?? "images.dart"
         self.scales = scales ?? [1, 2, 3]
         self.format = format ?? "png"
+        self.nameStyle = nameStyle
         super.init(templatesPath: output.templatesPath)
+    }
+
+    /// Transforms a name according to the configured naming style.
+    private func transformName(_ name: String) -> String {
+        switch nameStyle {
+        case .camelCase:
+            name.lowerCamelCased()
+        case .snakeCase:
+            name.snakeCased()
+        case .pascalCase:
+            name.camelCased()
+        case .kebabCase:
+            name.kebabCased()
+        case .screamingSnakeCase:
+            name.screamingSnakeCased()
+        }
     }
 
     /// Exports images as multi-scale assets + Dart constants file.
@@ -72,27 +96,27 @@ public final class FlutterImagesExporter: FlutterExporter {
             // When using allImageNames, dark mode is not tracked (simplified for granular cache)
             allNames.map { name in
                 let camelName = name.lowerCamelCased()
-                let snakeName = name.snakeCased()
+                let styledName = transformName(name)
                 return [
                     "name": camelName,
-                    "lightPath": "\(relativePath)/\(snakeName).\(format)",
+                    "lightPath": "\(relativePath)/\(styledName).\(format)",
                     "hasDark": false,
                 ] as [String: Any]
             }
         } else {
             images.map { imagePair in
                 let name = imagePair.light.name.lowerCamelCased()
-                let snakeName = imagePair.light.name.snakeCased()
+                let styledName = transformName(imagePair.light.name)
                 let hasDark = imagePair.dark != nil
 
                 var result: [String: Any] = [
                     "name": name,
-                    "lightPath": "\(relativePath)/\(snakeName).\(format)",
+                    "lightPath": "\(relativePath)/\(styledName).\(format)",
                     "hasDark": hasDark,
                 ]
 
                 if hasDark {
-                    result["darkPath"] = "\(relativePath)/\(snakeName)_dark.\(format)"
+                    result["darkPath"] = "\(relativePath)/\(styledName)\(nameStyle.darkSuffix).\(format)"
                 }
 
                 return result
@@ -178,9 +202,9 @@ public final class FlutterImagesExporter: FlutterExporter {
         assetsDirectory: URL,
         isDark: Bool
     ) -> FileContents? {
-        let snakeName = imagePack.name.snakeCased()
-        let suffix = isDark ? "_dark" : ""
-        let fileName = "\(snakeName)\(suffix).\(format)"
+        let styledName = transformName(imagePack.name)
+        let suffix = isDark ? nameStyle.darkSuffix : ""
+        let fileName = "\(styledName)\(suffix).\(format)"
 
         // Flutter scale directories: 1x at root, 2x at 2.0x/, 3x at 3.0x/
         let scaleDirectory = scale == 1
