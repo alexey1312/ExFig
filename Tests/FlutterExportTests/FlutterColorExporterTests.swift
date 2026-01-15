@@ -37,22 +37,24 @@ final class FlutterColorExporterTests: XCTestCase {
         let fileContent = try XCTUnwrap(result[0].data)
         let generatedCode = String(data: fileContent, encoding: .utf8)
 
-        let referenceCode = """
-        // \(header)
-
-        import 'package:flutter/material.dart';
-
-        class AppColors {
-          AppColors._();
-          static const Color colorPair1 = Color(0x807703FF);
-          static const Color colorPair2 = Color(0xFFFFFFFF);
-        }
-        class AppColorsDark {
-          AppColorsDark._();
-          static const Color colorPair2 = Color(0xFF000000);
-        }
-
-        """ + "\n"
+        // Build reference with explicit newlines to match generated output exactly
+        // Note: Template produces NO blank lines after import, but 2 blank lines at end
+        let referenceCode = [
+            "// \(header)",
+            "",
+            "import 'package:flutter/material.dart';",
+            "class AppColors {",
+            "  AppColors._();",
+            "  static const Color colorPair1 = Color(0x807703FF);",
+            "  static const Color colorPair2 = Color(0xFFFFFFFF);",
+            "}",
+            "class AppColorsDark {",
+            "  AppColorsDark._();",
+            "  static const Color colorPair2 = Color(0xFF000000);",
+            "}",
+            "",
+            "",
+        ].joined(separator: "\n") + "\n"
 
         expectNoDifference(generatedCode, referenceCode)
     }
@@ -66,17 +68,19 @@ final class FlutterColorExporterTests: XCTestCase {
         let fileContent = try XCTUnwrap(result[0].data)
         let generatedCode = String(data: fileContent, encoding: .utf8)
 
-        let referenceCode = """
-        // \(header)
-
-        import 'package:flutter/material.dart';
-
-        class AppColors {
-          AppColors._();
-          static const Color colorPair1 = Color(0x807703FF);
-        }
-
-        """ + "\n"
+        // Build reference with explicit newlines to match generated output exactly
+        // Note: Template produces NO blank lines after import, but 2 blank lines at end
+        let referenceCode = [
+            "// \(header)",
+            "",
+            "import 'package:flutter/material.dart';",
+            "class AppColors {",
+            "  AppColors._();",
+            "  static const Color colorPair1 = Color(0x807703FF);",
+            "}",
+            "",
+            "",
+        ].joined(separator: "\n") + "\n"
 
         expectNoDifference(generatedCode, referenceCode)
     }

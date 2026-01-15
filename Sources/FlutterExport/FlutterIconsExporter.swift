@@ -19,21 +19,25 @@ public final class FlutterIconsExporter: FlutterExporter {
     ///   - allIconNames: Optional complete list of all icon names for Dart file generation.
     ///                   When provided, Dart file includes all icons even if only a subset is exported.
     ///                   Note: When using allIconNames, dark mode variants are not included.
+    ///   - assetsPath: Optional relative path for generated Dart code (e.g., "assets/icons").
+    ///                 When provided, overrides the path extracted from iconsAssetsDirectory URL.
     /// - Returns: FileContents for both the Dart file and the SVG asset files.
     public func export(
         icons: [AssetPair<ImagePack>],
-        allIconNames: [String]? = nil
+        allIconNames: [String]? = nil,
+        assetsPath: String? = nil
     ) throws -> (dartFile: FileContents, assetFiles: [FileContents]) {
-        let dartFile = try makeIconsDartFileContents(icons: icons, allIconNames: allIconNames)
+        let dartFile = try makeIconsDartFileContents(icons: icons, allIconNames: allIconNames, assetsPath: assetsPath)
         let assetFiles = makeIconsAssetFiles(icons: icons)
         return (dartFile, assetFiles)
     }
 
     private func makeIconsDartFileContents(
         icons: [AssetPair<ImagePack>],
-        allIconNames: [String]? = nil
+        allIconNames: [String]? = nil,
+        assetsPath: String? = nil
     ) throws -> FileContents {
-        let contents = try makeIconsDartContents(icons, allIconNames: allIconNames)
+        let contents = try makeIconsDartContents(icons, allIconNames: allIconNames, assetsPath: assetsPath)
 
         guard let fileURL = URL(string: outputFileName) else {
             fatalError("Invalid file URL: \(outputFileName)")
@@ -44,7 +48,8 @@ public final class FlutterIconsExporter: FlutterExporter {
 
     private func makeIconsDartContents(
         _ icons: [AssetPair<ImagePack>],
-        allIconNames: [String]? = nil
+        allIconNames: [String]? = nil,
+        assetsPath: String? = nil
     ) throws -> String {
         let className = output.iconsClassName ?? "AppIcons"
 
@@ -52,7 +57,7 @@ public final class FlutterIconsExporter: FlutterExporter {
             fatalError("iconsAssetsDirectory is required for icon export")
         }
 
-        let relativePath = assetsDirectory.path
+        let relativePath = assetsPath ?? assetsDirectory.path
 
         // Use allIconNames if provided (for granular cache), otherwise derive from icons
         let iconsList: [[String: Any]] = if let allNames = allIconNames {

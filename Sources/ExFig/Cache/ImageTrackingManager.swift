@@ -245,7 +245,7 @@ extension ImageTrackingManager {
         force: Bool = false
     ) async throws -> VersionCheckResult {
         var fileIds = [lightFileId]
-        if let darkFileId {
+        if let darkFileId, darkFileId != lightFileId {
             fileIds.append(darkFileId)
         }
         return try await checkForChanges(fileIds: fileIds, force: force)

@@ -152,7 +152,11 @@ extension ExFigCommand.ExportIcons {
         let allIconNames = granularCacheManager != nil
             ? processor.processNames(loaderResult.allAssetMetadata.map(\.name))
             : nil
-        let (dartFile, assetFiles) = try exporter.export(icons: icons, allIconNames: allIconNames)
+        let (dartFile, assetFiles) = try exporter.export(
+            icons: icons,
+            allIconNames: allIconNames,
+            assetsPath: entry.output
+        )
 
         // 4. Download SVG files
         let remoteFiles = assetFiles.filter { $0.sourceURL != nil }

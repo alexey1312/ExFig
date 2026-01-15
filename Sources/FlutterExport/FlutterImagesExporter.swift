@@ -23,21 +23,29 @@ public final class FlutterImagesExporter: FlutterExporter {
     ///   - allImageNames: Optional complete list of all image names for Dart file generation.
     ///                    When provided, Dart file includes all images even if only a subset is exported.
     ///                    Note: When using allImageNames, dark mode variants are not included.
+    ///   - assetsPath: Optional relative path for generated Dart code (e.g., "assets/images").
+    ///                 When provided, overrides the path extracted from imagesAssetsDirectory URL.
     /// - Returns: FileContents for both the Dart file and the image asset files.
     public func export(
         images: [AssetPair<ImagePack>],
-        allImageNames: [String]? = nil
+        allImageNames: [String]? = nil,
+        assetsPath: String? = nil
     ) throws -> (dartFile: FileContents, assetFiles: [FileContents]) {
-        let dartFile = try makeImagesDartFileContents(images: images, allImageNames: allImageNames)
+        let dartFile = try makeImagesDartFileContents(
+            images: images,
+            allImageNames: allImageNames,
+            assetsPath: assetsPath
+        )
         let assetFiles = makeImagesAssetFiles(images: images)
         return (dartFile, assetFiles)
     }
 
     private func makeImagesDartFileContents(
         images: [AssetPair<ImagePack>],
-        allImageNames: [String]? = nil
+        allImageNames: [String]? = nil,
+        assetsPath: String? = nil
     ) throws -> FileContents {
-        let contents = try makeImagesDartContents(images, allImageNames: allImageNames)
+        let contents = try makeImagesDartContents(images, allImageNames: allImageNames, assetsPath: assetsPath)
 
         guard let fileURL = URL(string: outputFileName) else {
             fatalError("Invalid file URL: \(outputFileName)")
@@ -48,7 +56,8 @@ public final class FlutterImagesExporter: FlutterExporter {
 
     private func makeImagesDartContents(
         _ images: [AssetPair<ImagePack>],
-        allImageNames: [String]? = nil
+        allImageNames: [String]? = nil,
+        assetsPath: String? = nil
     ) throws -> String {
         let className = output.imagesClassName ?? "AppImages"
 
@@ -56,7 +65,7 @@ public final class FlutterImagesExporter: FlutterExporter {
             fatalError("imagesAssetsDirectory is required for image export")
         }
 
-        let relativePath = assetsDirectory.path
+        let relativePath = assetsPath ?? assetsDirectory.path
 
         // Use allImageNames if provided (for granular cache), otherwise derive from images
         let imagesList: [[String: Any]] = if let allNames = allImageNames {
