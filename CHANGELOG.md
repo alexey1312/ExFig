@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.24] - 2026-01-15
+
+### Features
+
+- **flutter**: Add hc colors supported by @alexey1312
+
+- **flutter**: Update image by @alexey1312
+
+- **flutter**: Add image name style by @alexey1312
+
+
 ## [1.2.23] - 2026-01-15
 
 ### Bug Fixes
