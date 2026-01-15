@@ -45,7 +45,12 @@ extension ExFigCommand.ExportColors {
                     nameReplaceRegexp: entry.nameReplaceRegexp,
                     nameStyle: .camelCase
                 )
-                let result = processor.process(light: colors.light, dark: colors.dark)
+                let result = processor.process(
+                    light: colors.light,
+                    dark: colors.dark,
+                    lightHC: colors.lightHC,
+                    darkHC: colors.darkHC
+                )
                 if let warning = result.warning {
                     ui.warning(warning)
                 }
@@ -90,7 +95,12 @@ extension ExFigCommand.ExportColors {
                 nameReplaceRegexp: finalNameReplaceRegexp,
                 nameStyle: .camelCase
             )
-            let result = processor.process(light: colors.light, dark: colors.dark)
+            let result = processor.process(
+                light: colors.light,
+                dark: colors.dark,
+                lightHC: colors.lightHC,
+                darkHC: colors.darkHC
+            )
             if let warning = result.warning {
                 config.ui.warning(warning)
             }

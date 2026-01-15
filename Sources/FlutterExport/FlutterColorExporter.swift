@@ -28,35 +28,59 @@ public final class FlutterColorExporter: FlutterExporter {
     }
 
     private func makeColorsContents(_ colorPairs: [AssetPair<Color>]) throws -> String {
+        let hasHighContrastColors = colorPairs.contains { $0.lightHC != nil || $0.darkHC != nil }
         let hasDarkColors = colorPairs.contains { $0.dark != nil }
         let className = output.colorsClassName ?? "AppColors"
 
-        let lightColors: [[String: String]] = colorPairs.map { colorPair in
-            [
-                "name": colorPair.light.name.lowerCamelCased(),
-                "hex": colorPair.light.flutterHex,
+        let context: [String: Any]
+        let env = makeEnvironment()
+
+        if hasHighContrastColors {
+            // Unified 4-mode approach: single class with all variants
+            let unifiedColors: [[String: Any]] = colorPairs.map { pair in
+                [
+                    "name": pair.light.name.lowerCamelCased(),
+                    "lightHex": pair.light.flutterHex,
+                    "darkHex": (pair.dark ?? pair.light).flutterHex,
+                    "lightHCHex": (pair.lightHC ?? pair.light).flutterHex,
+                    "darkHCHex": (pair.darkHC ?? pair.dark ?? pair.light).flutterHex,
+                ]
+            }
+
+            context = [
+                "className": className,
+                "isUnifiedMode": true,
+                "unifiedColors": unifiedColors,
+            ]
+        } else {
+            // Legacy 2-class approach: separate light and dark classes
+            let lightColors: [[String: String]] = colorPairs.map { colorPair in
+                [
+                    "name": colorPair.light.name.lowerCamelCased(),
+                    "hex": colorPair.light.flutterHex,
+                ]
+            }
+
+            var darkColors: [[String: String]] = []
+            if hasDarkColors {
+                darkColors = colorPairs.compactMap { colorPair -> [String: String]? in
+                    guard let dark = colorPair.dark else { return nil }
+                    return [
+                        "name": dark.name.lowerCamelCased(),
+                        "hex": dark.flutterHex,
+                    ]
+                }
+            }
+
+            context = [
+                "className": className,
+                "isUnifiedMode": false,
+                "colors": lightColors,
+                "hasDarkColors": hasDarkColors,
+                "darkColors": darkColors,
             ]
         }
 
-        var darkColors: [[String: String]] = []
-        if hasDarkColors {
-            darkColors = colorPairs.compactMap { colorPair -> [String: String]? in
-                guard let dark = colorPair.dark else { return nil }
-                return [
-                    "name": dark.name.lowerCamelCased(),
-                    "hex": dark.flutterHex,
-                ]
-            }
-        }
-
-        let context: [String: Any] = [
-            "className": className,
-            "colors": lightColors,
-            "hasDarkColors": hasDarkColors,
-            "darkColors": darkColors,
-        ]
-
-        let env = makeEnvironment()
         return try env.renderTemplate(name: "colors.dart.stencil", context: context)
     }
 }

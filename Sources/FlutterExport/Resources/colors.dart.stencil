@@ -1,8 +1,29 @@
 // {% include "header.stencil" %}
 
 import 'package:flutter/material.dart';
-
+{% if isUnifiedMode %}
 class {{ className }} {
+  final Color light;
+  final Color dark;
+  final Color lightHighContrast;
+  final Color darkHighContrast;
+
+  const {{ className }}({
+    required this.light,
+    required this.dark,
+    required this.lightHighContrast,
+    required this.darkHighContrast,
+  });
+{% for color in unifiedColors %}
+  static const {{ color.name }} = {{ className }}(
+    light: Color({{ color.lightHex }}),
+    dark: Color({{ color.darkHex }}),
+    lightHighContrast: Color({{ color.lightHCHex }}),
+    darkHighContrast: Color({{ color.darkHCHex }}),
+  );
+{% endfor %}
+}
+{% else %}class {{ className }} {
   {{ className }}._();
 {% for color in colors %}  static const Color {{ color.name }} = Color({{ color.hex }});
 {% endfor %}}
@@ -10,4 +31,5 @@ class {{ className }} {
   {{ className }}Dark._();
 {% for color in darkColors %}  static const Color {{ color.name }} = Color({{ color.hex }});
 {% endfor %}}
+{% endif %}
 {% endif %}
