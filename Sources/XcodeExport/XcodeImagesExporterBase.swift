@@ -79,12 +79,14 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
     }
 
     private func makeExtensionContents(names: [String], templateName: String) throws -> String {
+        // Sort names for stable output across regenerations
+        let sortedNames = names.sorted()
         let context: [String: Any] = [
             "addObjcPrefix": output.addObjcAttribute,
             "assetsInSwiftPackage": output.assetsInSwiftPackage,
             "resourceBundleNames": output.resourceBundleNames ?? [],
             "assetsInMainBundle": output.assetsInMainBundle,
-            "images": names.map { ["name": $0] },
+            "images": sortedNames.map { ["name": $0] },
         ]
         let env = makeEnvironment(templatesPath: output.templatesPath)
         return try env.renderTemplate(name: templateName, context: context)
