@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.27] - 2026-01-19
+
+### Features
+
+- **android**: Add xmlDisabled option for Compose-only projects by @alexey1312
+
+
 ## [1.2.26] - 2026-01-19
 
 ### Bug Fixes
