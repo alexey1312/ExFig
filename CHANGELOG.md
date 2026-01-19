@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.26] - 2026-01-19
+
+### Bug Fixes
+
+- **export**: Sort assets alphabetically for stable output by @alexey1312
+
+
 ## [1.2.25] - 2026-01-19
 
 ### Features
