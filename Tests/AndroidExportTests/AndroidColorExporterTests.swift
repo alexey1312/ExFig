@@ -172,4 +172,86 @@ final class AndroidColorExporterTests: XCTestCase {
         XCTAssertEqual(kotlinFile.destination.directory.lastPathComponent, "theme")
         XCTAssertEqual(kotlinFile.destination.file.absoluteString, "CustomColors.kt")
     }
+
+    // MARK: - XML Disabled Tests
+
+    func testExportWithXmlDisabled_noXmlFilesGenerated() throws {
+        let customURL = URL(string: "./custom/Ds3Colors.kt")!
+        let outputWithXmlDisabled = AndroidOutput(
+            xmlOutputDirectory: URL(string: "~/")!,
+            xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
+            srcDirectory: nil,
+            packageName: AndroidColorExporterTests.packageName,
+            colorKotlinURL: customURL,
+            templatesPath: nil,
+            xmlDisabled: true
+        )
+
+        let exporter = AndroidColorExporter(output: outputWithXmlDisabled, xmlOutputFileName: nil)
+        let result = try exporter.export(colorPairs: [colorPair1, colorPair2])
+
+        // Should only have Kotlin file, no XML files
+        XCTAssertEqual(result.count, 1)
+
+        let kotlinFile = result[0]
+        XCTAssertEqual(kotlinFile.destination.file.absoluteString, "Ds3Colors.kt")
+    }
+
+    func testExportWithXmlDisabled_kotlinOnlyGenerated() throws {
+        let customURL = URL(string: "./app/compose/Colors.kt")!
+        let outputWithXmlDisabled = AndroidOutput(
+            xmlOutputDirectory: URL(string: "~/res/")!,
+            xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
+            srcDirectory: nil,
+            packageName: "com.example.compose",
+            colorKotlinURL: customURL,
+            templatesPath: nil,
+            xmlDisabled: true
+        )
+
+        let exporter = AndroidColorExporter(output: outputWithXmlDisabled, xmlOutputFileName: nil)
+        let result = try exporter.export(colorPairs: [colorPair1, colorPair2])
+
+        // Verify only Kotlin is generated
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result[0].destination.file.absoluteString, "Colors.kt")
+
+        // Verify no XML file names in result
+        let hasXmlFile = result.contains { $0.destination.file.absoluteString.hasSuffix(".xml") }
+        XCTAssertFalse(hasXmlFile, "No XML files should be generated when xmlDisabled is true")
+    }
+
+    func testExportWithXmlDisabledFalse_generatesXml() throws {
+        let outputWithXmlEnabled = AndroidOutput(
+            xmlOutputDirectory: URL(string: "~/")!,
+            xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
+            srcDirectory: URL(string: "~/"),
+            packageName: AndroidColorExporterTests.packageName,
+            colorKotlinURL: nil,
+            templatesPath: nil,
+            xmlDisabled: false
+        )
+
+        let exporter = AndroidColorExporter(output: outputWithXmlEnabled, xmlOutputFileName: nil)
+        let result = try exporter.export(colorPairs: [colorPair1, colorPair2])
+
+        // Should have light XML, dark XML, and Kotlin
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(result[0].destination.file.absoluteString, "colors.xml")
+        XCTAssertEqual(result[1].destination.file.absoluteString, "colors.xml")
+        XCTAssertEqual(result[2].destination.file.absoluteString, "Colors.kt")
+    }
+
+    func testExportWithXmlDisabledDefault_generatesXml() throws {
+        // Test that default behavior (not specifying xmlDisabled) generates XML
+        let exporter = AndroidColorExporter(output: output, xmlOutputFileName: nil)
+        let result = try exporter.export(colorPairs: [colorPair1, colorPair2])
+
+        // Should have light XML, dark XML, and Kotlin (same as existing behavior)
+        XCTAssertEqual(result.count, 3)
+
+        // Verify XML files are generated
+        let xmlFiles = result.filter { $0.destination.file.absoluteString.hasSuffix(".xml") }
+        XCTAssertEqual(xmlFiles.count, 2, "Default behavior should generate XML files")
+    }
 }

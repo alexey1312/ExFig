@@ -72,7 +72,7 @@ enum ColorsConfiguration: Decodable {
 
 // Each platform has its own ColorsEntry with platform-specific output fields
 // iOS: useColorAssets, assetsFolder, colorSwift, swiftuiColorSwift
-// Android: xmlOutputFileName, composePackageName, colorKotlin
+// Android: xmlOutputFileName, xmlDisabled, composePackageName, colorKotlin
 // Flutter: output, className
 ```
 

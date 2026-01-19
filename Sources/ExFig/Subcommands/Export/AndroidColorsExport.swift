@@ -125,7 +125,8 @@ extension ExFigCommand.ExportColors {
             srcDirectory: android.mainSrc,
             packageName: entry.composePackageName,
             colorKotlinURL: entry.colorKotlin,
-            templatesPath: android.templatesPath
+            templatesPath: android.templatesPath,
+            xmlDisabled: entry.xmlDisabled ?? false
         )
         let exporter = AndroidColorExporter(
             output: output,
@@ -133,15 +134,18 @@ extension ExFigCommand.ExportColors {
         )
         let files = try exporter.export(colorPairs: colorPairs)
 
-        let fileName = entry.xmlOutputFileName ?? "colors.xml"
+        // Clean up old XML files (unless XML generation is disabled)
+        if !(entry.xmlDisabled ?? false) {
+            let fileName = entry.xmlOutputFileName ?? "colors.xml"
 
-        let lightColorsFileURL = android.mainRes.appendingPathComponent(
-            "values/" + fileName)
-        let darkColorsFileURL = android.mainRes.appendingPathComponent(
-            "values-night/" + fileName)
+            let lightColorsFileURL = android.mainRes.appendingPathComponent(
+                "values/" + fileName)
+            let darkColorsFileURL = android.mainRes.appendingPathComponent(
+                "values-night/" + fileName)
 
-        try? FileManager.default.removeItem(atPath: lightColorsFileURL.path)
-        try? FileManager.default.removeItem(atPath: darkColorsFileURL.path)
+            try? FileManager.default.removeItem(atPath: lightColorsFileURL.path)
+            try? FileManager.default.removeItem(atPath: darkColorsFileURL.path)
+        }
 
         try ExFigCommand.fileWriter.write(files: files)
 

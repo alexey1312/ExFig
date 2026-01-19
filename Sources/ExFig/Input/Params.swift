@@ -559,6 +559,8 @@ struct Params: Decodable {
         /// Uses common.variablesColors for Figma Variables source.
         struct Colors: Decodable {
             let xmlOutputFileName: String?
+            /// When true, skip XML generation entirely. Useful for Compose-only projects with custom templates.
+            let xmlDisabled: Bool?
             let composePackageName: String?
             let colorKotlin: URL?
             let themeAttributes: ThemeAttributes?
@@ -579,6 +581,8 @@ struct Params: Decodable {
 
             // Output (Android-specific)
             let xmlOutputFileName: String?
+            /// When true, skip XML generation entirely. Useful for Compose-only projects with custom templates.
+            let xmlDisabled: Bool?
             let composePackageName: String?
             let colorKotlin: URL?
 
@@ -614,6 +618,7 @@ struct Params: Decodable {
                         nameValidateRegexp: nil,
                         nameReplaceRegexp: nil,
                         xmlOutputFileName: colors.xmlOutputFileName,
+                        xmlDisabled: colors.xmlDisabled,
                         composePackageName: colors.composePackageName,
                         colorKotlin: colors.colorKotlin,
                         themeAttributes: colors.themeAttributes

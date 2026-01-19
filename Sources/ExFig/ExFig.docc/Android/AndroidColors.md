@@ -30,6 +30,10 @@ android:
     # Custom output path for Colors.kt file (optional)
     # When set, overrides the automatic path computed from mainSrc + composePackageName
     colorKotlin: "./app/src/main/java/com/example/app/ui/theme/Ds3Colors.kt"
+
+    # Skip XML generation entirely (optional)
+    # Useful for Compose-only projects with custom templates
+    xmlDisabled: false
 ```
 
 ## Export Process

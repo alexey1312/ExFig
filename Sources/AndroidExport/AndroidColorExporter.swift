@@ -14,14 +14,19 @@ public final class AndroidColorExporter: AndroidExporter {
     }
 
     public func export(colorPairs: [AssetPair<Color>]) throws -> [FileContents] {
-        // values/colors.xml
-        let lightFile = try makeColorsFileContents(colorPairs: colorPairs, dark: false)
-        var result = [lightFile]
+        var result: [FileContents] = []
 
-        // values-night/colors.xml
-        if colorPairs.contains(where: { $0.dark != nil }) {
-            let darkFile = try makeColorsFileContents(colorPairs: colorPairs, dark: true)
-            result.append(darkFile)
+        // XML generation (unless disabled)
+        if !output.xmlDisabled {
+            // values/colors.xml
+            let lightFile = try makeColorsFileContents(colorPairs: colorPairs, dark: false)
+            result.append(lightFile)
+
+            // values-night/colors.xml
+            if colorPairs.contains(where: { $0.dark != nil }) {
+                let darkFile = try makeColorsFileContents(colorPairs: colorPairs, dark: true)
+                result.append(darkFile)
+            }
         }
 
         // Colors.kt (custom path or computed from package)

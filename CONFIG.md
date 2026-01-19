@@ -242,6 +242,9 @@ android:
     composePackageName: "com.example"
     # [optional] Custom output path for Colors.kt file. When set, overrides the automatic path computed from mainSrc + composePackageName
     colorKotlin: "./app/src/main/java/com/example/theme/Ds3Colors.kt"
+    # [optional] Skip XML generation entirely. Useful for Compose-only projects with custom templates.
+    # When true, only Kotlin code is generated (requires colorKotlin or composePackageName).
+    xmlDisabled: false
     # [optional] Theme attributes configuration for generating attrs.xml and styles.xml
     themeAttributes:
       # Enable theme attributes export
@@ -643,6 +646,14 @@ android:
       xmlOutputFileName: theme_colors.xml
       composePackageName: com.example.theme
       colorKotlin: ./app/src/main/java/com/example/theme/Ds3Colors.kt
+    # Compose-only entry (no XML generation)
+    - tokensFileId: ghi789
+      tokensCollectionName: DS3 Colors
+      lightModeName: Light
+      darkModeName: Dark
+      xmlDisabled: true  # Skip XML, generate only Kotlin
+      composePackageName: com.example.ds3
+      colorKotlin: ./app/src/main/java/com/example/ds3/Ds3Colors.kt
 ```
 
 ### Flutter Colors Array Format

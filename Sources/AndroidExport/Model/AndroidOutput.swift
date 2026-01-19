@@ -7,6 +7,8 @@ public struct AndroidOutput {
     let colorKotlinURL: URL?
     let packageName: String?
     let templatesPath: URL?
+    /// When true, skip XML generation entirely. Useful for Compose-only projects with custom templates.
+    let xmlDisabled: Bool
 
     public init(
         xmlOutputDirectory: URL,
@@ -14,13 +16,15 @@ public struct AndroidOutput {
         srcDirectory: URL?,
         packageName: String?,
         colorKotlinURL: URL?,
-        templatesPath: URL?
+        templatesPath: URL?,
+        xmlDisabled: Bool = false
     ) {
         self.xmlOutputDirectory = xmlOutputDirectory
         self.xmlResourcePackage = xmlResourcePackage
         self.colorKotlinURL = colorKotlinURL
         self.packageName = packageName
         self.templatesPath = templatesPath
+        self.xmlDisabled = xmlDisabled
         if let srcDirectory, let packageName {
             composeOutputDirectory = srcDirectory.appendingPathComponent(packageName.replacingOccurrences(
                 of: ".",
