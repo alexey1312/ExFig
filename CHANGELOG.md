@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.25] - 2026-01-19
+
+### Features
+
+- **android**: Add colorKotlin config for custom Compose output path by @alexey1312
+
+
 ## [1.2.24] - 2026-01-15
 
 ### Features
