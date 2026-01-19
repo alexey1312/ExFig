@@ -206,7 +206,8 @@ final class ColorsConfigurationTests: XCTestCase {
             "nameValidateRegexp": "^color_.*",
             "nameReplaceRegexp": "color_",
             "xmlOutputFileName": "design_colors.xml",
-            "composePackageName": "com.example.colors"
+            "composePackageName": "com.example.colors",
+            "colorKotlin": "./app/src/main/java/com/example/Ds3Colors.kt"
         }
         """
 
@@ -226,6 +227,30 @@ final class ColorsConfigurationTests: XCTestCase {
         XCTAssertEqual(entry.nameReplaceRegexp, "color_")
         XCTAssertEqual(entry.xmlOutputFileName, "design_colors.xml")
         XCTAssertEqual(entry.composePackageName, "com.example.colors")
+        XCTAssertEqual(entry.colorKotlin?.lastPathComponent, "Ds3Colors.kt")
+    }
+
+    func testAndroidColorsEntryColorKotlinInSingleConfig() throws {
+        let json = """
+        {
+            "composePackageName": "com.example.colors",
+            "colorKotlin": "./Generated/CustomColors.kt"
+        }
+        """
+
+        let config = try JSONDecoder().decode(
+            Params.Android.ColorsConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        guard case .single = config else {
+            XCTFail("Expected .single case")
+            return
+        }
+
+        XCTAssertEqual(config.entries.count, 1)
+        XCTAssertEqual(config.entries[0].composePackageName, "com.example.colors")
+        XCTAssertEqual(config.entries[0].colorKotlin?.lastPathComponent, "CustomColors.kt")
     }
 
     // MARK: - Flutter ColorsConfiguration

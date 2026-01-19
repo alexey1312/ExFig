@@ -26,6 +26,10 @@ android:
 
     # Jetpack Compose package name (optional)
     composePackageName: "com.example.app.ui.theme"
+
+    # Custom output path for Colors.kt file (optional)
+    # When set, overrides the automatic path computed from mainSrc + composePackageName
+    colorKotlin: "./app/src/main/java/com/example/app/ui/theme/Ds3Colors.kt"
 ```
 
 ## Export Process

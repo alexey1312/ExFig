@@ -4,6 +4,7 @@ public struct AndroidOutput {
     let xmlOutputDirectory: URL
     let xmlResourcePackage: String?
     let composeOutputDirectory: URL?
+    let colorKotlinURL: URL?
     let packageName: String?
     let templatesPath: URL?
 
@@ -12,10 +13,12 @@ public struct AndroidOutput {
         xmlResourcePackage: String?,
         srcDirectory: URL?,
         packageName: String?,
+        colorKotlinURL: URL?,
         templatesPath: URL?
     ) {
         self.xmlOutputDirectory = xmlOutputDirectory
         self.xmlResourcePackage = xmlResourcePackage
+        self.colorKotlinURL = colorKotlinURL
         self.packageName = packageName
         self.templatesPath = templatesPath
         if let srcDirectory, let packageName {

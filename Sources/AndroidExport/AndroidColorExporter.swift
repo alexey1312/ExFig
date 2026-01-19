@@ -24,11 +24,23 @@ public final class AndroidColorExporter: AndroidExporter {
             result.append(darkFile)
         }
 
-        // Colors.kt
-        if let packageName = output.packageName,
-           let outputDirectory = output.composeOutputDirectory,
-           let xmlResourcePackage = output.xmlResourcePackage
+        // Colors.kt (custom path or computed from package)
+        if let colorKotlinURL = output.colorKotlinURL,
+           let packageName = output.packageName
         {
+            // Custom colorKotlin path: use it directly
+            let composeFile = try makeComposeColorsFileContents(
+                colorPairs: colorPairs,
+                package: packageName,
+                xmlResourcePackage: output.xmlResourcePackage,
+                colorKotlinURL: colorKotlinURL
+            )
+            result.append(composeFile)
+        } else if let packageName = output.packageName,
+                  let outputDirectory = output.composeOutputDirectory,
+                  let xmlResourcePackage = output.xmlResourcePackage
+        {
+            // Legacy behavior: compute path from mainSrc + package
             let composeFile = try makeComposeColorsFileContents(
                 colorPairs: colorPairs,
                 package: packageName,
@@ -73,6 +85,39 @@ public final class AndroidColorExporter: AndroidExporter {
         xmlResourcePackage: String,
         outputDirectory: URL
     ) throws -> FileContents {
+        try makeComposeColorsFileContentsInternal(
+            colorPairs: colorPairs,
+            package: package,
+            xmlResourcePackage: xmlResourcePackage,
+            outputDirectory: outputDirectory,
+            fileName: "Colors.kt"
+        )
+    }
+
+    private func makeComposeColorsFileContents(
+        colorPairs: [AssetPair<Color>],
+        package: String,
+        xmlResourcePackage: String?,
+        colorKotlinURL: URL
+    ) throws -> FileContents {
+        let outputDirectory = colorKotlinURL.deletingLastPathComponent()
+        let fileName = colorKotlinURL.lastPathComponent
+        return try makeComposeColorsFileContentsInternal(
+            colorPairs: colorPairs,
+            package: package,
+            xmlResourcePackage: xmlResourcePackage,
+            outputDirectory: outputDirectory,
+            fileName: fileName
+        )
+    }
+
+    private func makeComposeColorsFileContentsInternal(
+        colorPairs: [AssetPair<Color>],
+        package: String,
+        xmlResourcePackage: String?,
+        outputDirectory: URL,
+        fileName: String
+    ) throws -> FileContents {
         let colors: [[String: String]] = colorPairs.map { colorPair in
             let lightKotlinHex = colorPair.light.kotlinHex
             let darkKotlinHex = colorPair.dark?.kotlinHex ?? lightKotlinHex
@@ -86,17 +131,19 @@ public final class AndroidColorExporter: AndroidExporter {
             ]
         }
 
-        let context: [String: Any] = [
+        var context: [String: Any] = [
             "package": package,
-            "xmlResourcePackage": xmlResourcePackage,
             "colors": colors,
         ]
+        if let xmlResourcePackage {
+            context["xmlResourcePackage"] = xmlResourcePackage
+        }
 
         let env = makeEnvironment()
         let string = try env.renderTemplate(name: "Colors.kt.stencil", context: context)
 
-        guard let fileURL = URL(string: "Colors.kt") else {
-            fatalError("Invalid file URL: Colors.kt")
+        guard let fileURL = URL(string: fileName) else {
+            fatalError("Invalid file URL: \(fileName)")
         }
         return try makeFileContents(for: string, directory: outputDirectory, file: fileURL)
     }

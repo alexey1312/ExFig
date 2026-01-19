@@ -240,6 +240,8 @@ android:
   colors:
     # [optional] The package to export the Jetpack Compose color code to. Note: To export Jetpack Compose code, also `mainSrc` and `resourcePackage` above must be set
     composePackageName: "com.example"
+    # [optional] Custom output path for Colors.kt file. When set, overrides the automatic path computed from mainSrc + composePackageName
+    colorKotlin: "./app/src/main/java/com/example/theme/Ds3Colors.kt"
     # [optional] Theme attributes configuration for generating attrs.xml and styles.xml
     themeAttributes:
       # Enable theme attributes export
@@ -640,6 +642,7 @@ android:
       darkModeName: Dark
       xmlOutputFileName: theme_colors.xml
       composePackageName: com.example.theme
+      colorKotlin: ./app/src/main/java/com/example/theme/Ds3Colors.kt
 ```
 
 ### Flutter Colors Array Format

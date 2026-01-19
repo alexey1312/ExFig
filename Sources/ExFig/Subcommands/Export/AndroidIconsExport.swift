@@ -289,6 +289,7 @@ extension ExFigCommand.ExportIcons {
             xmlResourcePackage: android.resourcePackage,
             srcDirectory: android.mainSrc,
             packageName: entry.composePackageName,
+            colorKotlinURL: nil,
             templatesPath: android.templatesPath
         )
         let composeExporter = AndroidComposeIconExporter(output: output)

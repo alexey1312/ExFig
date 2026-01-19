@@ -560,6 +560,7 @@ struct Params: Decodable {
         struct Colors: Decodable {
             let xmlOutputFileName: String?
             let composePackageName: String?
+            let colorKotlin: URL?
             let themeAttributes: ThemeAttributes?
         }
 
@@ -579,6 +580,7 @@ struct Params: Decodable {
             // Output (Android-specific)
             let xmlOutputFileName: String?
             let composePackageName: String?
+            let colorKotlin: URL?
 
             // Theme attributes
             let themeAttributes: ThemeAttributes?
@@ -613,6 +615,7 @@ struct Params: Decodable {
                         nameReplaceRegexp: nil,
                         xmlOutputFileName: colors.xmlOutputFileName,
                         composePackageName: colors.composePackageName,
+                        colorKotlin: colors.colorKotlin,
                         themeAttributes: colors.themeAttributes
                     )]
                 case let .multiple(entries):

@@ -14,6 +14,7 @@ final class AndroidColorExporterTests: XCTestCase {
         xmlResourcePackage: resourcePackage,
         srcDirectory: URL(string: "~/"),
         packageName: packageName,
+        colorKotlinURL: nil,
         templatesPath: nil
     )
 
@@ -125,5 +126,50 @@ final class AndroidColorExporterTests: XCTestCase {
     func testKotlinHex_blackColor() {
         let color = Color(name: "black", red: 0, green: 0, blue: 0, alpha: 1)
         XCTAssertEqual(color.kotlinHex, "0xFF000000")
+    }
+
+    // MARK: - Custom Color Kotlin Path Tests
+
+    func testExportWithCustomColorKotlinPath() throws {
+        let customURL = URL(string: "./custom/path/Ds3Colors.kt")!
+        let outputWithCustomPath = AndroidOutput(
+            xmlOutputDirectory: URL(string: "~/")!,
+            xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
+            srcDirectory: nil,
+            packageName: AndroidColorExporterTests.packageName,
+            colorKotlinURL: customURL,
+            templatesPath: nil
+        )
+
+        let exporter = AndroidColorExporter(output: outputWithCustomPath, xmlOutputFileName: nil)
+        let result = try exporter.export(colorPairs: [colorPair1])
+
+        // Should have 2 XML files + 1 Kotlin file
+        XCTAssertEqual(result.count, 2) // Only light XML + Kotlin (no dark since colorPair1 has no dark)
+
+        // Last file should be the Kotlin file with custom name
+        let kotlinFile = result.last!
+        XCTAssertEqual(kotlinFile.destination.directory.lastPathComponent, "path")
+        XCTAssertEqual(kotlinFile.destination.file.absoluteString, "Ds3Colors.kt")
+    }
+
+    func testExportWithCustomColorKotlinPath_overridesPackageDirectory() throws {
+        let customURL = URL(string: "./app/src/main/java/com/example/ui/theme/CustomColors.kt")!
+        let outputWithCustomPath = AndroidOutput(
+            xmlOutputDirectory: URL(string: "~/")!,
+            xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
+            srcDirectory: URL(string: "~/src"),
+            packageName: "com.different.package",
+            colorKotlinURL: customURL,
+            templatesPath: nil
+        )
+
+        let exporter = AndroidColorExporter(output: outputWithCustomPath, xmlOutputFileName: nil)
+        let result = try exporter.export(colorPairs: [colorPair1])
+
+        // Last file should use custom path, not computed from package
+        let kotlinFile = result.last!
+        XCTAssertEqual(kotlinFile.destination.directory.lastPathComponent, "theme")
+        XCTAssertEqual(kotlinFile.destination.file.absoluteString, "CustomColors.kt")
     }
 }

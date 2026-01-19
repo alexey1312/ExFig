@@ -13,6 +13,7 @@ final class AndroidComposeIconExporterTests: XCTestCase {
         xmlResourcePackage: resourcePackage,
         srcDirectory: URL(string: "~/"),
         packageName: packageName,
+        colorKotlinURL: nil,
         templatesPath: nil
     )
 

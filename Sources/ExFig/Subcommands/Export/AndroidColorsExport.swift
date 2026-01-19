@@ -124,6 +124,7 @@ extension ExFigCommand.ExportColors {
             xmlResourcePackage: android.resourcePackage,
             srcDirectory: android.mainSrc,
             packageName: entry.composePackageName,
+            colorKotlinURL: entry.colorKotlin,
             templatesPath: android.templatesPath
         )
         let exporter = AndroidColorExporter(

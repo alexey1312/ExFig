@@ -176,6 +176,7 @@ extension ExFigCommand {
                 xmlResourcePackage: androidParams.resourcePackage,
                 srcDirectory: androidParams.mainSrc,
                 packageName: androidParams.typography?.composePackageName,
+                colorKotlinURL: nil,
                 templatesPath: androidParams.templatesPath
             )
             let exporter = AndroidTypographyExporter(output: output)
