@@ -56,24 +56,24 @@ final class XcodeTypographyExporterTests: XCTestCase {
 
         public extension UIFont {
 
-            static func largeTitle() -> UIFont {
-                customFont("PTSans-Bold", size: 34.0, textStyle: .largeTitle, scaled: true)
-            }
-
-            static func titleSection() -> UIFont {
-                customFont("PTSans-Bold", size: 20.0)
-            }
-
-            static func header() -> UIFont {
-                customFont("PTSans-Bold", size: 20.0)
-            }
-
             static func body() -> UIFont {
                 customFont("PTSans-Regular", size: 16.0, textStyle: .body, scaled: true)
             }
 
             static func caption() -> UIFont {
                 customFont("PTSans-Regular", size: 14.0, textStyle: .footnote, scaled: true)
+            }
+
+            static func header() -> UIFont {
+                customFont("PTSans-Bold", size: 20.0)
+            }
+
+            static func largeTitle() -> UIFont {
+                customFont("PTSans-Bold", size: 34.0, textStyle: .largeTitle, scaled: true)
+            }
+
+            static func titleSection() -> UIFont {
+                customFont("PTSans-Bold", size: 20.0)
             }
 
             private static func customFont(
@@ -149,24 +149,24 @@ final class XcodeTypographyExporterTests: XCTestCase {
 
         public extension UIFont {
 
-            @objc static func largeTitle() -> UIFont {
-                customFont("PTSans-Bold", size: 34.0, textStyle: .largeTitle, scaled: true)
-            }
-
-            @objc static func titleSection() -> UIFont {
-                customFont("PTSans-Bold", size: 20.0)
-            }
-
-            @objc static func header() -> UIFont {
-                customFont("PTSans-Bold", size: 20.0)
-            }
-
             @objc static func body() -> UIFont {
                 customFont("PTSans-Regular", size: 16.0, textStyle: .body, scaled: true)
             }
 
             @objc static func caption() -> UIFont {
                 customFont("PTSans-Regular", size: 14.0, textStyle: .footnote, scaled: true)
+            }
+
+            @objc static func header() -> UIFont {
+                customFont("PTSans-Bold", size: 20.0)
+            }
+
+            @objc static func largeTitle() -> UIFont {
+                customFont("PTSans-Bold", size: 34.0, textStyle: .largeTitle, scaled: true)
+            }
+
+            @objc static func titleSection() -> UIFont {
+                customFont("PTSans-Bold", size: 20.0)
             }
 
             private static func customFont(
@@ -240,19 +240,6 @@ final class XcodeTypographyExporterTests: XCTestCase {
 
         public extension Font {
 
-            static func largeTitle() -> Font {
-                if #available(iOS 14.0, *) {
-                    return Font.custom("PTSans-Bold", size: 34.0, relativeTo: .largeTitle)
-                } else {
-                    return Font.custom("PTSans-Bold", size: 34.0)
-                }
-            }
-            static func titleSection() -> Font {
-                Font.custom("PTSans-Bold", size: 20.0)
-            }
-            static func header() -> Font {
-                Font.custom("PTSans-Bold", size: 20.0)
-            }
             static func body() -> Font {
                 if #available(iOS 14.0, *) {
                     return Font.custom("PTSans-Regular", size: 16.0, relativeTo: .body)
@@ -266,6 +253,19 @@ final class XcodeTypographyExporterTests: XCTestCase {
                 } else {
                     return Font.custom("PTSans-Regular", size: 14.0)
                 }
+            }
+            static func header() -> Font {
+                Font.custom("PTSans-Bold", size: 20.0)
+            }
+            static func largeTitle() -> Font {
+                if #available(iOS 14.0, *) {
+                    return Font.custom("PTSans-Bold", size: 34.0, relativeTo: .largeTitle)
+                } else {
+                    return Font.custom("PTSans-Bold", size: 34.0)
+                }
+            }
+            static func titleSection() -> Font {
+                Font.custom("PTSans-Bold", size: 20.0)
             }
         }
 
@@ -397,27 +397,6 @@ final class XcodeTypographyExporterTests: XCTestCase {
             }
         }
 
-        public final class LargeTitleLabel: Label {
-
-            override var style: LabelStyle? {
-                .largeTitle()
-            }
-        }
-
-        public final class TitleSectionLabel: Label {
-
-            override var style: LabelStyle? {
-                .titleSection()
-            }
-        }
-
-        public final class HeaderLabel: Label {
-
-            override var style: LabelStyle? {
-                .header()
-            }
-        }
-
         public final class BodyLabel: Label {
 
             override var style: LabelStyle? {
@@ -429,6 +408,27 @@ final class XcodeTypographyExporterTests: XCTestCase {
 
             override var style: LabelStyle? {
                 .caption()
+            }
+        }
+
+        public final class HeaderLabel: Label {
+
+            override var style: LabelStyle? {
+                .header()
+            }
+        }
+
+        public final class LargeTitleLabel: Label {
+
+            override var style: LabelStyle? {
+                .largeTitle()
+            }
+        }
+
+        public final class TitleSectionLabel: Label {
+
+            override var style: LabelStyle? {
+                .titleSection()
             }
         }
 
@@ -518,26 +518,6 @@ final class XcodeTypographyExporterTests: XCTestCase {
 
         public extension LabelStyle {
 
-            static func largeTitle() -> LabelStyle {
-                LabelStyle(
-                    font: UIFont.largeTitle(),
-                    fontMetrics: UIFontMetrics(forTextStyle: .largeTitle)
-                )
-            }
-
-            static func titleSection() -> LabelStyle {
-                LabelStyle(
-                    font: UIFont.titleSection(),
-                    textCase: .uppercased
-                )
-            }
-
-            static func header() -> LabelStyle {
-                LabelStyle(
-                    font: UIFont.header()
-                )
-            }
-
             static func body() -> LabelStyle {
                 LabelStyle(
                     font: UIFont.body(),
@@ -551,6 +531,26 @@ final class XcodeTypographyExporterTests: XCTestCase {
                     font: UIFont.caption(),
                     fontMetrics: UIFontMetrics(forTextStyle: .footnote),
                     lineHeight: 20.0
+                )
+            }
+
+            static func header() -> LabelStyle {
+                LabelStyle(
+                    font: UIFont.header()
+                )
+            }
+
+            static func largeTitle() -> LabelStyle {
+                LabelStyle(
+                    font: UIFont.largeTitle(),
+                    fontMetrics: UIFontMetrics(forTextStyle: .largeTitle)
+                )
+            }
+
+            static func titleSection() -> LabelStyle {
+                LabelStyle(
+                    font: UIFont.titleSection(),
+                    textCase: .uppercased
                 )
             }
 
@@ -708,35 +708,6 @@ final class XcodeTypographyExporterTests: XCTestCase {
             }
         }
 
-        public final class LargeTitleLabel: Label {
-
-            override var style: LabelStyle? {
-                LabelStyle(
-                    font: UIFont.largeTitle(),
-                    fontMetrics: UIFontMetrics(forTextStyle: .largeTitle)
-                )
-            }
-        }
-
-        public final class TitleSectionLabel: Label {
-
-            override var style: LabelStyle? {
-                LabelStyle(
-                    font: UIFont.titleSection(),
-                    textCase: .uppercased
-                )
-            }
-        }
-
-        public final class HeaderLabel: Label {
-
-            override var style: LabelStyle? {
-                LabelStyle(
-                    font: UIFont.header()
-                )
-            }
-        }
-
         public final class BodyLabel: Label {
 
             override var style: LabelStyle? {
@@ -755,6 +726,35 @@ final class XcodeTypographyExporterTests: XCTestCase {
                     font: UIFont.caption(),
                     fontMetrics: UIFontMetrics(forTextStyle: .footnote),
                     lineHeight: 20.0
+                )
+            }
+        }
+
+        public final class HeaderLabel: Label {
+
+            override var style: LabelStyle? {
+                LabelStyle(
+                    font: UIFont.header()
+                )
+            }
+        }
+
+        public final class LargeTitleLabel: Label {
+
+            override var style: LabelStyle? {
+                LabelStyle(
+                    font: UIFont.largeTitle(),
+                    fontMetrics: UIFontMetrics(forTextStyle: .largeTitle)
+                )
+            }
+        }
+
+        public final class TitleSectionLabel: Label {
+
+            override var style: LabelStyle? {
+                LabelStyle(
+                    font: UIFont.titleSection(),
+                    textCase: .uppercased
                 )
             }
         }

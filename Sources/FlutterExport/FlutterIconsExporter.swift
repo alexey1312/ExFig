@@ -80,7 +80,7 @@ public final class FlutterIconsExporter: FlutterExporter {
         // Use allIconNames if provided (for granular cache), otherwise derive from icons
         let iconsList: [[String: Any]] = if let allNames = allIconNames {
             // When using allIconNames, dark mode is not tracked (simplified for granular cache)
-            allNames.map { name in
+            allNames.sorted().map { name in
                 let camelName = name.lowerCamelCased()
                 let styledName = transformName(name)
                 return [
@@ -90,7 +90,7 @@ public final class FlutterIconsExporter: FlutterExporter {
                 ] as [String: Any]
             }
         } else {
-            icons.map { iconPair in
+            icons.sorted { $0.light.name < $1.light.name }.map { iconPair in
                 let name = iconPair.light.name.lowerCamelCased()
                 let styledName = transformName(iconPair.light.name)
                 let hasDark = iconPair.dark != nil

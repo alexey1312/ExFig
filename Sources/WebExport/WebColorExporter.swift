@@ -56,7 +56,7 @@ public final class WebColorExporter: WebExporter {
     private func makeCSSContents(_ colorPairs: [AssetPair<Color>]) throws -> String {
         let hasDarkColors = colorPairs.contains { $0.dark != nil }
 
-        let lightColors: [[String: String]] = colorPairs.map { colorPair in
+        let lightColors: [[String: String]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
             [
                 "cssName": colorPair.light.name.kebabCased(),
                 "value": colorPair.light.cssValue,
@@ -65,13 +65,14 @@ public final class WebColorExporter: WebExporter {
 
         var darkColors: [[String: String]] = []
         if hasDarkColors {
-            darkColors = colorPairs.compactMap { colorPair -> [String: String]? in
-                guard let dark = colorPair.dark else { return nil }
-                return [
-                    "cssName": dark.name.kebabCased(),
-                    "value": dark.cssValue,
-                ]
-            }
+            darkColors = colorPairs.sorted { $0.light.name < $1.light.name }
+                .compactMap { colorPair -> [String: String]? in
+                    guard let dark = colorPair.dark else { return nil }
+                    return [
+                        "cssName": dark.name.kebabCased(),
+                        "value": dark.cssValue,
+                    ]
+                }
         }
 
         let context: [String: Any] = [
@@ -97,7 +98,7 @@ public final class WebColorExporter: WebExporter {
     }
 
     private func makeTSContents(_ colorPairs: [AssetPair<Color>]) throws -> String {
-        let colors: [[String: String]] = colorPairs.map { colorPair in
+        let colors: [[String: String]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
             [
                 "camelName": colorPair.light.name.lowerCamelCased(),
                 "cssName": colorPair.light.name.kebabCased(),
@@ -127,7 +128,7 @@ public final class WebColorExporter: WebExporter {
     private func makeJSONContents(_ colorPairs: [AssetPair<Color>]) throws -> String {
         let hasDarkColors = colorPairs.contains { $0.dark != nil }
 
-        let lightColors: [[String: String]] = colorPairs.map { colorPair in
+        let lightColors: [[String: String]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
             [
                 "cssName": colorPair.light.name.kebabCased(),
                 "value": colorPair.light.cssValue,
@@ -136,13 +137,14 @@ public final class WebColorExporter: WebExporter {
 
         var darkColors: [[String: String]] = []
         if hasDarkColors {
-            darkColors = colorPairs.compactMap { colorPair -> [String: String]? in
-                guard let dark = colorPair.dark else { return nil }
-                return [
-                    "cssName": dark.name.kebabCased(),
-                    "value": dark.cssValue,
-                ]
-            }
+            darkColors = colorPairs.sorted { $0.light.name < $1.light.name }
+                .compactMap { colorPair -> [String: String]? in
+                    guard let dark = colorPair.dark else { return nil }
+                    return [
+                        "cssName": dark.name.kebabCased(),
+                        "value": dark.cssValue,
+                    ]
+                }
         }
 
         let context: [String: Any] = [

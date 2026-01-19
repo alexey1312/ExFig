@@ -94,7 +94,7 @@ public final class FlutterImagesExporter: FlutterExporter {
         // Use allImageNames if provided (for granular cache), otherwise derive from images
         let imagesList: [[String: Any]] = if let allNames = allImageNames {
             // When using allImageNames, dark mode is not tracked (simplified for granular cache)
-            allNames.map { name in
+            allNames.sorted().map { name in
                 let camelName = name.lowerCamelCased()
                 let styledName = transformName(name)
                 return [
@@ -104,7 +104,7 @@ public final class FlutterImagesExporter: FlutterExporter {
                 ] as [String: Any]
             }
         } else {
-            images.map { imagePair in
+            images.sorted { $0.light.name < $1.light.name }.map { imagePair in
                 let name = imagePair.light.name.lowerCamelCased()
                 let styledName = transformName(imagePair.light.name)
                 let hasDark = imagePair.dark != nil

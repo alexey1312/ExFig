@@ -234,7 +234,7 @@ public final class WebIconsExporter: WebExporter {
     ) throws -> FileContents {
         // Use allIconNames if provided, otherwise derive from icons
         let iconsList: [[String: String]] = if let allNames = allIconNames {
-            allNames.map { name in
+            allNames.sorted().map { name in
                 let componentName = name.camelCased()
                 return [
                     "componentName": componentName,
@@ -242,7 +242,7 @@ public final class WebIconsExporter: WebExporter {
                 ]
             }
         } else {
-            icons.map { iconPair in
+            icons.sorted { $0.light.name < $1.light.name }.map { iconPair in
                 let componentName = iconPair.light.name.camelCased()
                 return [
                     "componentName": componentName,

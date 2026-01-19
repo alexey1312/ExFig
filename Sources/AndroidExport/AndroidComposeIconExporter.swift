@@ -29,7 +29,7 @@ public final class AndroidComposeIconExporter: AndroidExporter {
             fatalError("Invalid file URL: Icons.kt")
         }
         // Use allIconNames if provided, otherwise use iconNames
-        let namesForTemplate = allIconNames ?? iconNames
+        let namesForTemplate = (allIconNames ?? iconNames).sorted()
         let contents = try makeComposeIconsContents(namesForTemplate, package: packageName, xmlResourcePackage: package)
         return try makeFileContents(for: contents, directory: outputDirectory, file: fileURL)
     }

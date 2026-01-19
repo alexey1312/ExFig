@@ -65,7 +65,7 @@ public final class AndroidColorExporter: AndroidExporter {
     }
 
     private func makeColorsContents(_ colorPairs: [AssetPair<Color>], dark: Bool) throws -> String {
-        let colors: [[String: String]] = colorPairs.map { colorPair in
+        let colors: [[String: String]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
             [
                 "name": colorPair.light.name,
                 "hex": (dark ? colorPair.dark?.hex : nil) ?? colorPair.light.hex,
@@ -118,7 +118,7 @@ public final class AndroidColorExporter: AndroidExporter {
         outputDirectory: URL,
         fileName: String
     ) throws -> FileContents {
-        let colors: [[String: String]] = colorPairs.map { colorPair in
+        let colors: [[String: String]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
             let lightKotlinHex = colorPair.light.kotlinHex
             let darkKotlinHex = colorPair.dark?.kotlinHex ?? lightKotlinHex
             return [

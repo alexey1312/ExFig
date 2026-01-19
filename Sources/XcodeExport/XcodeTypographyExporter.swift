@@ -47,7 +47,7 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
     }
 
     private func makeUIFontExtension(textStyles: [TextStyle], fontExtensionURL: URL) throws -> FileContents {
-        let textStyles: [[String: Any]] = textStyles.map {
+        let textStyles: [[String: Any]] = textStyles.sorted { $0.name < $1.name }.map {
             [
                 "name": $0.name,
                 "fontName": $0.fontName,
@@ -65,7 +65,7 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
     }
 
     private func makeFontExtension(textStyles: [TextStyle], swiftUIFontExtensionURL: URL) throws -> FileContents {
-        let textStyles: [[String: Any]] = textStyles.map {
+        let textStyles: [[String: Any]] = textStyles.sorted { $0.name < $1.name }.map {
             [
                 "name": $0.name,
                 "fontName": $0.fontName,
@@ -85,7 +85,7 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
         textStyles: [TextStyle],
         labelStyleExtensionURL: URL
     ) throws -> FileContents {
-        let dict = textStyles.map { style -> [String: Any] in
+        let dict = textStyles.sorted { $0.name < $1.name }.map { style -> [String: Any] in
             let type: String = style.fontStyle?.uiKitStyleName ?? ""
             return [
                 "className": (style.name.first?.uppercased() ?? "") + style.name.dropFirst(),
@@ -106,7 +106,7 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
     }
 
     private func makeLabel(textStyles: [TextStyle], labelsDirectory: URL, separateStyles: Bool) throws -> FileContents {
-        let dict = textStyles.map { style -> [String: Any] in
+        let dict = textStyles.sorted { $0.name < $1.name }.map { style -> [String: Any] in
             let type: String = style.fontStyle?.uiKitStyleName ?? ""
             return [
                 "className": (style.name.first?.uppercased() ?? "") + style.name.dropFirst(),

@@ -34,7 +34,7 @@ public final class AndroidTypographyExporter: AndroidExporter {
     }
 
     private func makeTypographyXMLFileContents(textStyles: [TextStyle]) throws -> FileContents {
-        let fonts: [[String: Any]] = textStyles.map { textStyle in
+        let fonts: [[String: Any]] = textStyles.sorted { $0.name < $1.name }.map { textStyle in
             [
                 "name": textStyle.name,
                 "fontFamily": androidFontResource(from: textStyle.fontName),
@@ -64,7 +64,7 @@ public final class AndroidTypographyExporter: AndroidExporter {
         package: String,
         xmlResourcePackage: String
     ) throws -> FileContents {
-        let fonts: [[String: Any]] = textStyles.map { textStyle in
+        let fonts: [[String: Any]] = textStyles.sorted { $0.name < $1.name }.map { textStyle in
             var dict: [String: Any] = [
                 "name": textStyle.name,
                 "fontFamily": androidFontName(from: textStyle.fontName),

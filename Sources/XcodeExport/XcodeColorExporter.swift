@@ -50,7 +50,7 @@ public final class XcodeColorExporter: XcodeExporterBase {
     private func makeColorExtensionContents(_ colorPairs: [AssetPair<Color>]) throws -> String {
         let useAssets = output.assetsColorsURL != nil
 
-        let colors: [[String: Any]] = colorPairs.map { colorPair in
+        let colors: [[String: Any]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
             var obj: [String: Any] = [:]
 
             let name = normalizeName(colorPair.light.name)
@@ -85,7 +85,7 @@ public final class XcodeColorExporter: XcodeExporterBase {
 
     private func makeUIColorExtensionContents(_ colorPairs: [AssetPair<Color>]) throws -> String {
         let useAssets = output.assetsColorsURL != nil
-        let colors: [[String: Any]] = colorPairs.map { colorPair in
+        let colors: [[String: Any]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
             let name = normalizeName(colorPair.light.name)
 
             var obj: [String: Any] = [:]
@@ -149,7 +149,7 @@ public final class XcodeColorExporter: XcodeExporterBase {
         for colorPairs: [AssetPair<Color>],
         assetCatalogURL: URL
     ) throws -> [FileContents] {
-        try colorPairs.flatMap { colorPair -> [FileContents] in
+        try colorPairs.sorted { $0.light.name < $1.light.name }.flatMap { colorPair -> [FileContents] in
             var files = [FileContents]()
 
             var name = colorPair.light.name

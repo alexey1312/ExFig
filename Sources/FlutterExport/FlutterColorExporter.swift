@@ -37,7 +37,7 @@ public final class FlutterColorExporter: FlutterExporter {
 
         if hasHighContrastColors {
             // Unified 4-mode approach: single class with all variants
-            let unifiedColors: [[String: Any]] = colorPairs.map { pair in
+            let unifiedColors: [[String: Any]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { pair in
                 [
                     "name": pair.light.name.lowerCamelCased(),
                     "lightHex": pair.light.flutterHex,
@@ -54,7 +54,7 @@ public final class FlutterColorExporter: FlutterExporter {
             ]
         } else {
             // Legacy 2-class approach: separate light and dark classes
-            let lightColors: [[String: String]] = colorPairs.map { colorPair in
+            let lightColors: [[String: String]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { colorPair in
                 [
                     "name": colorPair.light.name.lowerCamelCased(),
                     "hex": colorPair.light.flutterHex,
@@ -63,13 +63,14 @@ public final class FlutterColorExporter: FlutterExporter {
 
             var darkColors: [[String: String]] = []
             if hasDarkColors {
-                darkColors = colorPairs.compactMap { colorPair -> [String: String]? in
-                    guard let dark = colorPair.dark else { return nil }
-                    return [
-                        "name": dark.name.lowerCamelCased(),
-                        "hex": dark.flutterHex,
-                    ]
-                }
+                darkColors = colorPairs.sorted { $0.light.name < $1.light.name }
+                    .compactMap { colorPair -> [String: String]? in
+                        guard let dark = colorPair.dark else { return nil }
+                        return [
+                            "name": dark.name.lowerCamelCased(),
+                            "hex": dark.flutterHex,
+                        ]
+                    }
             }
 
             context = [

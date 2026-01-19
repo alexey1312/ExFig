@@ -64,8 +64,11 @@ public final class AndroidImageVectorExporter: Sendable {
     public func exportAsync(svgFiles: [String: Data]) async throws -> [FileContents] {
         guard !svgFiles.isEmpty else { return [] }
 
+        // Sort by key for stable output order
+        let sortedSvgFiles = svgFiles.sorted { $0.key < $1.key }
+
         return try await withThrowingTaskGroup(of: FileContents?.self) { [self] group in
-            var iterator = svgFiles.makeIterator()
+            var iterator = sortedSvgFiles.makeIterator()
             var results: [FileContents] = []
             results.reserveCapacity(svgFiles.count)
 
@@ -109,7 +112,7 @@ public final class AndroidImageVectorExporter: Sendable {
 
         var files: [FileContents] = []
 
-        for (name, svgData) in svgFiles {
+        for (name, svgData) in svgFiles.sorted(by: { $0.key < $1.key }) {
             let svg = try svgParser.parse(svgData, normalize: config.normalize)
             let kotlinCode = generator.generate(name: name, svg: svg)
 

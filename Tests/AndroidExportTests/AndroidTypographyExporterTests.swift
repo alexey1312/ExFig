@@ -55,15 +55,15 @@ final class AndroidTypographyExporterTests: XCTestCase {
         \(header)
         -->
         <resources>
-            <style name="title">
-                <item name="android:fontFamily">@font/test_font</item>
-                <item name="android:textSize">20.0sp</item>
-                <item name="android:letterSpacing">0.01</item>
-            </style>
             <style name="subtitle">
                 <item name="android:fontFamily">@font/test_font</item>
                 <item name="android:textSize">19.5sp</item>
                 <item name="android:letterSpacing">0.00</item>
+            </style>
+            <style name="title">
+                <item name="android:fontFamily">@font/test_font</item>
+                <item name="android:textSize">20.0sp</item>
+                <item name="android:letterSpacing">0.01</item>
             </style>
         </resources>
 
@@ -87,16 +87,16 @@ final class AndroidTypographyExporterTests: XCTestCase {
 
         object Typography {
 
-            val title = TextStyle(
-                fontFamily = FontFamily(Font(R.font.test_font)),
-                fontSize = 20.0.sp,
-                letterSpacing = 0.25.sp,
-            )
             val subtitle = TextStyle(
                 fontFamily = FontFamily(Font(R.font.test_font)),
                 fontSize = 19.5.sp,
                 letterSpacing = 0.0.sp,
                 lineHeight = 20.0.sp,
+            )
+            val title = TextStyle(
+                fontFamily = FontFamily(Font(R.font.test_font)),
+                fontSize = 20.0.sp,
+                letterSpacing = 0.25.sp,
             )
         }
 

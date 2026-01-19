@@ -138,7 +138,7 @@ public final class WebImagesExporter: WebExporter {
     ) throws -> FileContents {
         // Use allImageNames if provided, otherwise derive from images
         let imagesList: [[String: String]] = if let allNames = allImageNames {
-            allNames.map { name in
+            allNames.sorted().map { name in
                 let componentName = name.camelCased()
                 return [
                     "componentName": componentName,
@@ -146,7 +146,7 @@ public final class WebImagesExporter: WebExporter {
                 ]
             }
         } else {
-            images.map { imagePair in
+            images.sorted { $0.light.name < $1.light.name }.map { imagePair in
                 let componentName = imagePair.light.name.camelCased()
                 return [
                     "componentName": componentName,
