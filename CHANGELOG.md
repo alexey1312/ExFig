@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.28] - 2026-01-20
+
+### Bug Fixes
+
+- **batch**: Initialize strictPathValidation in ExportIcons by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- Add .xcsift.toml by @alexey1312
+
+
 ## [1.2.27] - 2026-01-19
 
 ### Features
