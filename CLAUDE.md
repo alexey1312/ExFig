@@ -49,6 +49,34 @@ When adding lists of items (modules, commands, files, etc.), always use TOON tab
 
 This applies to: Swift packages, CLI tools (mise, hk, swiftlint, etc.), Figma API, and any third-party dependency.
 
+## mgrep — Default Search Tool
+
+**Use mgrep as the first choice for ALL code search.** Replaces the Glob → Grep → Read chain with a single command. mgrep uses AI embeddings and understands intent better than keyword matching.
+
+```bash
+# Basic usage
+./bin/mise exec -- mgrep "your query" Sources
+
+# Web search for external docs
+./bin/mise exec -- mgrep --web --answer "Swift async/await best practices"
+```
+
+**Query formulation tips:**
+
+| Question Type    | Bad Query    | Good Query                                     |
+| ---------------- | ------------ | ---------------------------------------------- |
+| Find file/struct | "iOS config" | "iOS colors icons images configuration struct" |
+| Find flow        | "export"     | "how images are exported to xcassets"          |
+| Find handler     | "error"      | "where errors from Figma API are handled"      |
+
+Key insight: **include domain terms** (colors, icons, iOS, Android) and **describe what you're looking for** (struct, handler, flow, processing).
+
+**Workflow:**
+
+1. Start with mgrep for any search — replaces Glob + Grep + Read
+2. If results miss the target, refine query with more specific terms
+3. Fall back to Grep/Glob only for exact matches (`class FigmaClient`, `*.swift` in specific dir)
+
 # CLAUDE.md
 
 Agent instructions for ExFig - a CLI tool that exports colors, typography, icons, and images from Figma to iOS, Android,
@@ -70,10 +98,26 @@ and Flutter projects.
 ./bin/mise run format:md            # Format Markdown only
 ./bin/mise run lint                 # SwiftLint + actionlint
 
+# Docs & Coverage
+./bin/mise run docs                 # Generate DocC documentation
+./bin/mise run docs:preview         # Preview docs in browser
+./bin/mise run coverage             # Run tests with coverage report
+
+# Maintenance
+./bin/mise run setup                # Install required tools
+./bin/mise run clean                # Clean build artifacts
+./bin/mise run clean:all            # Clean build + derived data
+
 # Run CLI
 .build/debug/exfig --help
-.build/debug/exfig colors -i config.yaml
+.build/debug/exfig colors -i exfig.yaml
+.build/debug/exfig icons -i exfig.yaml
 .build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
+
+# Search (mgrep) — use for ANY code search
+./bin/mise exec -- mgrep "iOS config struct colors icons" Sources
+./bin/mise exec -- mgrep "how images exported to xcassets" Sources
+./bin/mise exec -- mgrep --web --answer "Swift Codable best practices"
 ```
 
 ## Project Context
@@ -92,7 +136,7 @@ and Flutter projects.
 
 ## Architecture
 
-Seven modules in `Sources/`:
+Eight modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
@@ -102,6 +146,7 @@ Seven modules in `Sources/`:
 | `XcodeExport`   | iOS export (.xcassets, Swift extensions)                  |
 | `AndroidExport` | Android export (XML resources, Compose, Vector Drawables) |
 | `FlutterExport` | Flutter export (Dart code, SVG/PNG assets)                |
+| `WebExport`     | Web/React export (CSS variables, JSX icons)               |
 | `SVGKit`        | SVG parsing, ImageVector/VectorDrawable generation        |
 
 **Data flow:** CLI -> Config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform export -> File write
@@ -119,6 +164,7 @@ Sources/ExFig/
 ├── Cache/           # Version tracking, granular cache (GranularCacheHelper, GranularCacheManager)
 ├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
 ├── Batch/           # Batch processing (executor, runner, checkpoint)
+├── Sync/            # Figma sync functionality (state tracking, diff detection)
 └── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger, EntryProcessor)
 
 Sources/*/Resources/ # Stencil templates for code generation
@@ -159,6 +205,9 @@ Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after 
 | libwebp               | 1.4.1+  | WebP encoding              |
 | libpng                | 1.6.45+ | PNG decoding               |
 | swift-custom-dump     | 1.3.0+  | Test assertions            |
+| toon-swift            | 0.3.0+  | TOON format encoding       |
+| swift-resvg           | 0.45.1  | SVG parsing/rendering      |
+| swift-docc-plugin     | 1.4.5+  | DocC documentation         |
 
 ## Troubleshooting
 

@@ -1,6 +1,6 @@
 # ExFig configuration file
 
-Argument `-i` or `-input` specifies path to configuration file where all the properties stores: figma, ios, android.
+Argument `-i` or `--input` specifies path to configuration file where all the properties stores: figma, ios, android.
 
 If no `-i` option is specified, ExFig looks for config files in this order:
 
