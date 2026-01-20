@@ -399,6 +399,7 @@ private extension SubcommandConfigExporter {
         cmd.cacheOptions = cacheOptions
         cmd.faultToleranceOptions = faultToleranceOptions
         cmd.filter = nil
+        cmd.strictPathValidation = false
         return cmd
     }
 

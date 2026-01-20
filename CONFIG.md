@@ -769,7 +769,7 @@ ios:
 | `Color.{name}`                  | `Color.backgroundAccent`                  |
 | `UIColor.{name}`                | `UIColor.backgroundAccent`                |
 | `ThemeCompatable.colors.{name}` | `ThemeCompatable.colors.backgroundAccent` |
-| `InDriveColors.{name}`          | `InDriveColors.backgroundAccent`          |
+| `SomeColors.{name}`             | `SomeColors.backgroundAccent`             |
 
 ### Name Processing
 
