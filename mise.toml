@@ -50,7 +50,7 @@ git-cliff = "2.10.1" # Changelog generation
 pkl = "0.30.2" # Configuration language (for hk.pkl)
 
 # --- Search ---
-"npm:@mixedbread/mgrep" = "0.1.8" # Semantic grep for code
+"npm:@mixedbread/mgrep" = { version = "0.1.8", os = ["macos"] } # Semantic grep for code (macOS only - requires Node.js)
 
 # =============================================================================
 # Tasks
