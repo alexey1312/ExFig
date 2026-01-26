@@ -24,6 +24,12 @@ backend = "aqua:orhun/git-cliff"
 "platforms.macos-x64" = { checksum = "sha256:c3111dddaf866a986085f22ff22fa3003645fc69a3b9302c4e1352c4676c398a", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-apple-darwin.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:073c8027da2e055ec83c3609c4195284bd10b2771fcbd806ff0f94e48c310c77", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-pc-windows-msvc.zip"}
 
+[[tools."github:alexey1312/swift-index"]]
+version = "0.2.10"
+backend = "github:alexey1312/swift-index"
+"platforms.macos-arm64" = { checksum = "sha256:c120d504e268196fd55ce8c22ddfcdf54c618ccb6b093e3e2ebc2c15772a9d93", url = "https://github.com/alexey1312/swift-index/releases/download/v0.2.10/swiftindex-macos.zip", url_api = "https://api.github.com/repos/alexey1312/swift-index/releases/assets/346093431"}
+"platforms.macos-x64" = { checksum = "sha256:c120d504e268196fd55ce8c22ddfcdf54c618ccb6b093e3e2ebc2c15772a9d93", url = "https://github.com/alexey1312/swift-index/releases/download/v0.2.10/swiftindex-macos.zip", url_api = "https://api.github.com/repos/alexey1312/swift-index/releases/assets/346093431"}
+
 [[tools.hk]]
 version = "1.28.0"
 backend = "aqua:jdx/hk"

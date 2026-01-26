@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "swiftindex": {
+      "type": "stdio",
+      "command": "./bin/mise",
+      "args": ["exec", "--", "swiftindex", "serve"]
+    }
+  }
+}

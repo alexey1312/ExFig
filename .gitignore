@@ -100,3 +100,6 @@ docs/
 
 # resvg build artifacts
 .resvg-build/
+
+# SwiftIndex
+.swiftindex/

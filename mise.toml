@@ -25,7 +25,11 @@ legacy_version_file = false
 # Auto-configures on directory entry via hooks.enter
 
 [hooks.enter]
-run = "git config core.hooksPath .githooks 2>/dev/null || true"
+run = """
+git config core.hooksPath .githooks 2>/dev/null || true
+# Auto-index on directory entry (incremental, background)
+[ -f .swiftindex.toml ] && swiftindex index . &>/dev/null &
+"""
 
 # =============================================================================
 # Tools
@@ -50,7 +54,9 @@ git-cliff = "2.10.1" # Changelog generation
 pkl = "0.30.2" # Configuration language (for hk.pkl)
 
 # --- Search ---
-"npm:@mixedbread/mgrep" = { version = "0.1.8", os = ["macos"] } # Semantic grep for code (macOS only - requires Node.js)
+"github:alexey1312/swift-index" = { version = "0.2.10", os = [
+  "macos",
+] } # Semantic code search (MLX, Swift-optimized)
 
 # =============================================================================
 # Tasks

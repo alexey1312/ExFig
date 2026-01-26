@@ -49,16 +49,16 @@ When adding lists of items (modules, commands, files, etc.), always use TOON tab
 
 This applies to: Swift packages, CLI tools (mise, hk, swiftlint, etc.), Figma API, and any third-party dependency.
 
-## mgrep — Default Search Tool
+## swiftindex — Semantic Code Search
 
-**Use mgrep as the first choice for ALL code search.** Replaces the Glob → Grep → Read chain with a single command. mgrep uses AI embeddings and understands intent better than keyword matching.
+**Use swiftindex for ALL code search.** Local, private, Swift-optimized with MLX embeddings.
 
 ```bash
-# Basic usage
-./bin/mise exec -- mgrep "your query" Sources
+# Semantic search (conceptual queries)
+./bin/mise exec -- swiftindex search "iOS colors export" Sources
 
-# Web search for external docs
-./bin/mise exec -- mgrep --web --answer "Swift async/await best practices"
+# Exact symbol search (semantic_weight=0.0)
+./bin/mise exec -- swiftindex search --semantic-weight 0.0 "FigmaClient"
 ```
 
 **Query formulation tips:**
@@ -69,13 +69,11 @@ This applies to: Swift packages, CLI tools (mise, hk, swiftlint, etc.), Figma AP
 | Find flow        | "export"     | "how images are exported to xcassets"          |
 | Find handler     | "error"      | "where errors from Figma API are handled"      |
 
-Key insight: **include domain terms** (colors, icons, iOS, Android) and **describe what you're looking for** (struct, handler, flow, processing).
-
 **Workflow:**
 
-1. Start with mgrep for any search — replaces Glob + Grep + Read
-2. If results miss the target, refine query with more specific terms
-3. Fall back to Grep/Glob only for exact matches (`class FigmaClient`, `*.swift` in specific dir)
+1. Start with swiftindex for any search — replaces Glob + Grep + Read
+2. Use `--semantic-weight 0.0` for exact symbol lookup
+3. Fall back to Grep/Glob only for regex patterns or non-Swift files
 
 # CLAUDE.md
 
@@ -114,10 +112,10 @@ and Flutter projects.
 .build/debug/exfig icons -i exfig.yaml
 .build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
 
-# Search (mgrep) — use for ANY code search
-./bin/mise exec -- mgrep "iOS config struct colors icons" Sources
-./bin/mise exec -- mgrep "how images exported to xcassets" Sources
-./bin/mise exec -- mgrep --web --answer "Swift Codable best practices"
+# Search (swiftindex) — use for ANY code search
+./bin/mise exec -- swiftindex search "iOS config struct colors icons" Sources
+./bin/mise exec -- swiftindex search "how images exported to xcassets" Sources
+./bin/mise exec -- swiftindex search --semantic-weight 0.0 "FigmaClient"  # exact symbol
 ```
 
 ## Project Context
