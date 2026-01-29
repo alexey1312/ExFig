@@ -152,9 +152,10 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderOutput {
         let formatParams = makeFormatParams()
+        let fileId = try requireLightFileId()
 
         let icons = try await loadVectorImages(
-            fileId: params.figma.lightFileId,
+            fileId: fileId,
             frameName: frameName,
             params: formatParams,
             filter: filter,
@@ -175,10 +176,11 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderOutput {
         // Build list of files to load
+        let lightFileId = try requireLightFileId()
         var filesToLoad: [(key: String, fileId: String)] = [
-            ("light", params.figma.lightFileId),
+            ("light", lightFileId),
         ]
-        if let darkFileId = params.figma.darkFileId {
+        if let darkFileId = params.figma?.darkFileId {
             filesToLoad.append(("dark", darkFileId))
         }
 
@@ -258,7 +260,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderResultWithHashes {
         let formatParams = makeFormatParams()
-        let fileId = params.figma.lightFileId
+        let fileId = try requireLightFileId()
         let darkSuffix = params.common?.icons?.darkModeSuffix ?? "_dark"
 
         // Use pairing-aware method to ensure light/dark pairs are exported together
@@ -311,10 +313,11 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderResultWithHashes {
         // Build list of files to load
+        let lightFileId = try requireLightFileId()
         var filesToLoad: [(key: String, fileId: String)] = [
-            ("light", params.figma.lightFileId),
+            ("light", lightFileId),
         ]
-        if let darkFileId = params.figma.darkFileId {
+        if let darkFileId = params.figma?.darkFileId {
             filesToLoad.append(("dark", darkFileId))
         }
 

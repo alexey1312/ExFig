@@ -60,7 +60,7 @@ extension ExFigCommand.Download {
         // MARK: - Export Methods
 
         private func exportColors(outputDir: URL, ui: TerminalUI) async throws {
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
             let figmaParams = options.params.figma
             let commonParams = options.params.common
 
@@ -68,12 +68,17 @@ extension ExFigCommand.Download {
                 if let variableParams = commonParams?.variablesColors {
                     let loader = ColorsVariablesLoader(
                         client: client,
-                        figmaParams: figmaParams,
                         variableParams: variableParams,
                         filter: nil
                     )
                     return try await loader.load()
                 } else {
+                    guard let figmaParams else {
+                        throw ExFigError.custom(errorString:
+                            "figma section is required for legacy Styles API colors export. " +
+                                "Use common.variablesColors for Variables API instead."
+                        )
+                    }
                     let loader = ColorsLoader(
                         client: client,
                         figmaParams: figmaParams,
@@ -95,9 +100,14 @@ extension ExFigCommand.Download {
                 )
 
             case .raw:
+                guard let fileId = figmaParams?.lightFileId else {
+                    throw ExFigError.custom(errorString:
+                        "figma.lightFileId is required for raw colors export."
+                    )
+                }
                 try ColorExportHelper.exportRaw(
                     colors: colors,
-                    fileId: figmaParams.lightFileId,
+                    fileId: fileId,
                     outputURL: outputURL,
                     compact: jsonOptions.compact
                 )
@@ -105,8 +115,10 @@ extension ExFigCommand.Download {
         }
 
         private func exportTypography(outputDir: URL, ui: TerminalUI) async throws {
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
-            let figmaParams = options.params.figma
+            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
+            guard let figmaParams = options.params.figma else {
+                throw ExFigError.custom(errorString: "figma section is required for typography export.")
+            }
 
             let textStyles = try await ui.withSpinner("Fetching text styles...") {
                 let loader = TextStylesLoader(client: client, params: figmaParams)
@@ -124,9 +136,14 @@ extension ExFigCommand.Download {
                 )
 
             case .raw:
+                guard let fileId = figmaParams.lightFileId else {
+                    throw ExFigError.custom(errorString:
+                        "figma.lightFileId is required for raw typography export."
+                    )
+                }
                 try TypographyExportHelper.exportRaw(
                     textStyles: textStyles,
-                    fileId: figmaParams.lightFileId,
+                    fileId: fileId,
                     outputURL: outputURL,
                     compact: jsonOptions.compact
                 )
@@ -134,12 +151,16 @@ extension ExFigCommand.Download {
         }
 
         private func exportIcons(outputDir: URL, ui: TerminalUI) async throws {
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
-            let figmaParams = options.params.figma
+            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
+            guard let figmaParams = options.params.figma else {
+                throw ExFigError.custom(errorString: "figma section is required for icons export.")
+            }
             let effectiveFrameName = iconsFrameName
                 ?? options.params.common?.icons?.figmaFrameName
                 ?? "Icons"
-            let fileId = figmaParams.lightFileId
+            guard let fileId = figmaParams.lightFileId else {
+                throw ExFigError.custom(errorString: "figma.lightFileId is required for icons download.")
+            }
             let formatString = assetOptions.assetFormat.rawValue
             let scaleValue = Double(assetOptions.scale)
 
@@ -192,12 +213,16 @@ extension ExFigCommand.Download {
         }
 
         private func exportImages(outputDir: URL, ui: TerminalUI) async throws {
-            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
-            let figmaParams = options.params.figma
+            let client = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
+            guard let figmaParams = options.params.figma else {
+                throw ExFigError.custom(errorString: "figma section is required for images export.")
+            }
             let effectiveFrameName = imagesFrameName
                 ?? options.params.common?.images?.figmaFrameName
                 ?? "Illustrations"
-            let fileId = figmaParams.lightFileId
+            guard let fileId = figmaParams.lightFileId else {
+                throw ExFigError.custom(errorString: "figma.lightFileId is required for images download.")
+            }
             let formatString = assetOptions.assetFormat.rawValue
             let scaleValue = Double(assetOptions.scale)
 

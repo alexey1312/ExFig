@@ -296,7 +296,7 @@ struct BatchConfigRunner: Sendable {
 
             // CLI timeout takes precedence over per-config YAML timeout
             let effectiveTimeout: TimeInterval? = cliTimeout.map { TimeInterval($0) }
-                ?? options.params.figma.timeout
+                ?? options.params.figma?.timeout
 
             let baseClient = FigmaClient(
                 accessToken: options.accessToken,

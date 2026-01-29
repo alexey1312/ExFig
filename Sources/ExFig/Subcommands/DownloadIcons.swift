@@ -60,7 +60,7 @@ extension ExFigCommand.Download {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
             let rateLimiter = faultToleranceOptions.createRateLimiter()
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,
@@ -75,13 +75,14 @@ extension ExFigCommand.Download {
             let outputPath = jsonOptions.output ?? "icons.json"
             let outputURL = URL(fileURLWithPath: outputPath)
 
-            let figmaParams = options.params.figma
             let effectiveFrameName = frameName
                 ?? options.params.common?.icons?.figmaFrameName
                 ?? "Icons"
 
             let filterValue = filter
-            let fileId = figmaParams.lightFileId
+            guard let fileId = options.params.figma?.lightFileId else {
+                throw ExFigError.custom(errorString: "figma.lightFileId is required for icons download.")
+            }
             let formatString = assetOptions.assetFormat.rawValue
             let scaleValue = Double(assetOptions.scale)
 

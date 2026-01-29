@@ -29,7 +29,7 @@ extension ExFigCommand.Download {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
             let rateLimiter = faultToleranceOptions.createRateLimiter()
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,
@@ -44,7 +44,9 @@ extension ExFigCommand.Download {
             let outputPath = jsonOptions.output ?? "typography.json"
             let outputURL = URL(fileURLWithPath: outputPath)
 
-            let figmaParams = options.params.figma
+            guard let figmaParams = options.params.figma else {
+                throw ExFigError.custom(errorString: "figma section is required for typography download.")
+            }
 
             let textStyles = try await ui.withSpinner("Fetching text styles...") {
                 let loader = TextStylesLoader(client: client, params: figmaParams)
@@ -60,9 +62,14 @@ extension ExFigCommand.Download {
                 )
 
             case .raw:
+                guard let fileId = figmaParams.lightFileId else {
+                    throw ExFigError.custom(errorString:
+                        "figma.lightFileId is required for raw typography download."
+                    )
+                }
                 try TypographyExportHelper.exportRaw(
                     textStyles: textStyles,
-                    fileId: figmaParams.lightFileId,
+                    fileId: fileId,
                     outputURL: outputURL,
                     compact: jsonOptions.compact
                 )

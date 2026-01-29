@@ -129,10 +129,25 @@ extension ExFigCommand {
                 throw ExFigError.custom(errorString: "Missing required 'figma' section")
             }
 
-            // Validate 'figma.lightFileId'
+            // Validate 'figma.lightFileId' - required unless using only variablesColors
             if let figma = yaml["figma"] as? [String: Any] {
-                guard figma["lightFileId"] != nil else {
-                    throw ExFigError.custom(errorString: "Missing required 'figma.lightFileId'")
+                if figma["lightFileId"] == nil {
+                    // Check if config uses only variablesColors (no icons/images/typography)
+                    let common = yaml["common"] as? [String: Any]
+                    let ios = yaml["ios"] as? [String: Any]
+                    let android = yaml["android"] as? [String: Any]
+
+                    let hasVariablesColors = common?["variablesColors"] != nil
+                    let hasIcons = ios?["icons"] != nil || android?["icons"] != nil
+                    let hasImages = ios?["images"] != nil || android?["images"] != nil
+                    let hasTypography = ios?["typography"] != nil || android?["typography"] != nil
+                    let hasLegacyColors = common?["colors"] != nil
+
+                    if !hasVariablesColors || hasIcons || hasImages || hasTypography || hasLegacyColors {
+                        let msg = "Missing 'figma.lightFileId'. " +
+                            "Required for icons, images, typography, or legacy colors export."
+                        throw ExFigError.custom(errorString: msg)
+                    }
                 }
             }
 

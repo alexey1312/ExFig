@@ -9,7 +9,6 @@ final class ColorsVariablesLoader: Sendable {
 
     init(
         client: Client,
-        figmaParams: Params.Figma,
         variableParams: Params.Common.VariablesColors?,
         filter: String?
     ) {

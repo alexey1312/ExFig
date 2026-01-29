@@ -123,7 +123,7 @@ final class FileIdExtractorTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
-    func testReturnsEmptySetForMissingLightFileId() throws {
+    func testExtractsDarkFileIdWhenLightFileIdMissing() throws {
         let configURL = try createConfig("""
         figma:
           darkFileId: "only-dark"
@@ -131,8 +131,9 @@ final class FileIdExtractorTests: XCTestCase {
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
 
-        // lightFileId is required, so parsing should fail
-        XCTAssertTrue(result.isEmpty)
+        // lightFileId is now optional, so config parses successfully
+        // Only darkFileId should be extracted
+        XCTAssertEqual(result, Set(["only-dark"]))
     }
 
     func testReturnsEmptySetForNonexistentFile() {

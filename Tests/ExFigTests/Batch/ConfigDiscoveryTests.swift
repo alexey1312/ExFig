@@ -126,6 +126,50 @@ final class ConfigDiscoveryTests: XCTestCase {
         XCTAssertFalse(isValid)
     }
 
+    func testValidateConfigWithVariablesColors() throws {
+        // Given: A YAML file with common.variablesColors (Variables API)
+        try createFile(name: "variables-colors.yaml", content: """
+        common:
+          variablesColors:
+            tokensFileId: "abc123"
+            tokensCollectionName: "Colors"
+            lightModeName: "Light"
+            darkModeName: "Dark"
+        ios:
+          colors:
+            output: "Colors.swift"
+        """)
+
+        // When: Validating
+        let discovery = ConfigDiscovery()
+        let url = tempDirectory.appendingPathComponent("variables-colors.yaml")
+        let isValid = discovery.isValidExFigConfig(at: url)
+
+        // Then: Config is valid (Variables API doesn't require figma section)
+        XCTAssertTrue(isValid)
+    }
+
+    func testValidateConfigWithPlatformColors() throws {
+        // Given: A YAML file with platform-specific colors but no figma section
+        try createFile(name: "platform-colors.yaml", content: """
+        ios:
+          colors:
+            output: "Colors.swift"
+            entries:
+              - variablesColors:
+                  tokensFileId: "abc123"
+                  tokensCollectionName: "Colors"
+        """)
+
+        // When: Validating
+        let discovery = ConfigDiscovery()
+        let url = tempDirectory.appendingPathComponent("platform-colors.yaml")
+        let isValid = discovery.isValidExFigConfig(at: url)
+
+        // Then: Config is valid (multi-entry colors doesn't require figma section)
+        XCTAssertTrue(isValid)
+    }
+
     // MARK: - Output Path Conflict Detection Tests
 
     func testDetectOutputPathConflicts() throws {

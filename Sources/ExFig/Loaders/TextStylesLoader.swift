@@ -12,7 +12,12 @@ final class TextStylesLoader: Sendable {
     }
 
     func load() async throws -> [TextStyle] {
-        try await loadTextStyles(fileId: params.lightFileId)
+        guard let fileId = params.lightFileId else {
+            throw ExFigError.custom(errorString:
+                "figma.lightFileId is required for typography export."
+            )
+        }
+        return try await loadTextStyles(fileId: fileId)
     }
 
     private func loadTextStyles(fileId: String) async throws -> [TextStyle] {

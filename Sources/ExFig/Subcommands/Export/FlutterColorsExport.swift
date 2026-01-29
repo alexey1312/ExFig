@@ -21,7 +21,6 @@ extension ExFigCommand.ExportColors {
             ) {
                 let loader = ColorsVariablesLoader(
                     client: client,
-                    figmaParams: options.params.figma,
                     variableParams: Params.Common.VariablesColors(
                         tokensFileId: entry.tokensFileId,
                         tokensCollectionName: entry.tokensCollectionName,

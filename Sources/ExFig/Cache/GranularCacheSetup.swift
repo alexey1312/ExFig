@@ -37,8 +37,8 @@ enum GranularCacheHelper {
 
         // Clear node hashes if --force flag is set
         if cacheOptions.force, enabled {
-            let fileIds = [params.figma.lightFileId] +
-                (params.figma.darkFileId.map { [$0] } ?? [])
+            let fileIds = (params.figma?.lightFileId.map { [$0] } ?? []) +
+                (params.figma?.darkFileId.map { [$0] } ?? [])
             for fileId in fileIds {
                 try trackingManager.clearNodeHashes(fileId: fileId)
             }

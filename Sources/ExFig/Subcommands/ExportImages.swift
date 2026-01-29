@@ -40,7 +40,7 @@ extension ExFigCommand {
 
             let client = resolveClient(
                 accessToken: options.accessToken,
-                timeout: options.params.figma.timeout,
+                timeout: options.params.figma?.timeout,
                 options: faultToleranceOptions,
                 ui: ui
             )

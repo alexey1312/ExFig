@@ -226,13 +226,14 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderOutput {
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
+        let fileId = try requireLightFileId()
 
         if isRasterFormat, !useSVGSource {
             // PNG source: fetch PNG at multiple scales from Figma
             let scales = getScales(customScales: configScales)
 
             let images = try await loadPNGImages(
-                fileId: params.figma.lightFileId,
+                fileId: fileId,
                 frameName: frameName,
                 filter: filter,
                 scales: scales,
@@ -244,7 +245,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             // SVG source or vector output: fetch SVG from Figma
             // For SVG source with raster output, export code will rasterize locally
             let pack = try await loadVectorImages(
-                fileId: params.figma.lightFileId,
+                fileId: fileId,
                 frameName: frameName,
                 params: SVGParams(),
                 filter: filter,
@@ -260,10 +261,11 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderOutput {
         // Build list of files to load
+        let lightFileId = try requireLightFileId()
         var filesToLoad: [(key: String, fileId: String)] = [
-            ("light", params.figma.lightFileId),
+            ("light", lightFileId),
         ]
-        if let darkFileId = params.figma.darkFileId {
+        if let darkFileId = params.figma?.darkFileId {
             filesToLoad.append(("dark", darkFileId))
         }
 
@@ -364,7 +366,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderResultWithHashes {
-        let fileId = params.figma.lightFileId
+        let fileId = try requireLightFileId()
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
         if isRasterFormat, !useSVGSource {
@@ -449,10 +451,11 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderResultWithHashes {
         // Build list of files to load
+        let lightFileId = try requireLightFileId()
         var filesToLoad: [(key: String, fileId: String)] = [
-            ("light", params.figma.lightFileId),
+            ("light", lightFileId),
         ]
-        if let darkFileId = params.figma.darkFileId {
+        if let darkFileId = params.figma?.darkFileId {
             filesToLoad.append(("dark", darkFileId))
         }
 

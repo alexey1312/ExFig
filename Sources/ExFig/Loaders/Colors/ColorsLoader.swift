@@ -24,6 +24,12 @@ final class ColorsLoader: Sendable {
     }
 
     func load() async throws -> ColorsLoaderOutput {
+        guard figmaParams.lightFileId != nil else {
+            throw ExFigError.custom(errorString:
+                "figma.lightFileId is required for legacy Styles API colors export. " +
+                    "Use common.variablesColors or multi-entry colors format instead."
+            )
+        }
         guard let useSingleFile = colorParams?.useSingleFile, useSingleFile else {
             return try await loadColorsFromLightAndDarkFile()
         }
@@ -32,8 +38,9 @@ final class ColorsLoader: Sendable {
 
     private func loadColorsFromLightAndDarkFile() async throws -> ColorsLoaderOutput {
         // Build list of files to load
+        // swiftlint:disable:next force_unwrapping
         var filesToLoad: [(key: String, fileId: String)] = [
-            ("light", figmaParams.lightFileId),
+            ("light", figmaParams.lightFileId!),
         ]
 
         if let darkFileId = figmaParams.darkFileId {
@@ -77,7 +84,8 @@ final class ColorsLoader: Sendable {
     }
 
     private func loadColorsFromSingleFile() async throws -> ColorsLoaderOutput {
-        let colors = try await loadColors(fileId: figmaParams.lightFileId)
+        // swiftlint:disable:next force_unwrapping
+        let colors = try await loadColors(fileId: figmaParams.lightFileId!)
 
         let darkSuffix = colorParams?.darkModeSuffix ?? "_dark"
         let lightHCSuffix = colorParams?.lightHCModeSuffix ?? "_lightHC"

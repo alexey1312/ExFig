@@ -1,7 +1,9 @@
 let iosConfigFileContents = #"""
 ---
 figma:
-  # Identifier of the file containing light color palette, icons and light images. To obtain a file id, open the file in the browser. The file id will be present in the URL after the word file and before the file name.
+  # Identifier of the file containing light color palette, icons and light images.
+  # Required for icons, images, typography export. Optional when using only variablesColors for colors.
+  # To obtain a file id, open the file in the browser. The file id will be present in the URL after the word file and before the file name.
   lightFileId: shPilWnVdJfo10YF12345
   # [optional] Identifier of the file containing dark color palette and dark images.
   darkFileId: KfF6DnJTWHGZzC912345

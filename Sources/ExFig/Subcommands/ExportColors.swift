@@ -40,7 +40,7 @@ extension ExFigCommand {
 
             let client = resolveClient(
                 accessToken: options.accessToken,
-                timeout: options.params.figma.timeout,
+                timeout: options.params.figma?.timeout,
                 options: faultToleranceOptions,
                 ui: ui
             )
@@ -102,7 +102,7 @@ extension ExFigCommand {
         /// Configuration for legacy colors export (using common.variablesColors or common.colors).
         struct LegacyExportConfig {
             let commonParams: Params.Common?
-            let figmaParams: Params.Figma
+            let figmaParams: Params.Figma?
             let client: Client
             let ui: TerminalUI
         }
@@ -126,15 +126,20 @@ extension ExFigCommand {
                 if let variableParams = config.commonParams?.variablesColors {
                     let loader = ColorsVariablesLoader(
                         client: config.client,
-                        figmaParams: config.figmaParams,
                         variableParams: variableParams,
                         filter: filter
                     )
                     return try await loader.load()
                 } else {
+                    guard let figmaParams = config.figmaParams else {
+                        throw ExFigError.custom(errorString:
+                            "figma section is required for legacy Styles API colors export. " +
+                                "Use common.variablesColors for Variables API instead."
+                        )
+                    }
                     let loader = ColorsLoader(
                         client: config.client,
-                        figmaParams: config.figmaParams,
+                        figmaParams: figmaParams,
                         colorParams: config.commonParams?.colors,
                         filter: filter
                     )

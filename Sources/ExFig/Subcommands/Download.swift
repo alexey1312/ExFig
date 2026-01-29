@@ -92,7 +92,7 @@ extension ExFigCommand.Download {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma.timeout)
+            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
             let rateLimiter = faultToleranceOptions.createRateLimiter()
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,
@@ -144,7 +144,7 @@ extension ExFigCommand.Download {
 
         private func exportW3C(
             client: Client,
-            figmaParams: Params.Figma,
+            figmaParams: Params.Figma?,
             commonParams: Params.Common?,
             outputURL: URL,
             ui: TerminalUI
@@ -155,12 +155,17 @@ extension ExFigCommand.Download {
                 if let variableParams = commonParams?.variablesColors {
                     let loader = ColorsVariablesLoader(
                         client: client,
-                        figmaParams: figmaParams,
                         variableParams: variableParams,
                         filter: filterValue
                     )
                     return try await loader.load()
                 } else {
+                    guard let figmaParams else {
+                        throw ExFigError.custom(errorString:
+                            "figma section is required for legacy Styles API colors export. " +
+                                "Use common.variablesColors for Variables API instead."
+                        )
+                    }
                     let loader = ColorsLoader(
                         client: client,
                         figmaParams: figmaParams,
@@ -182,7 +187,7 @@ extension ExFigCommand.Download {
 
         private func exportRaw(
             client: Client,
-            figmaParams: Params.Figma,
+            figmaParams: Params.Figma?,
             commonParams: Params.Common?,
             outputURL: URL,
             ui: TerminalUI
@@ -194,6 +199,12 @@ extension ExFigCommand.Download {
                     outputURL: outputURL
                 )
             } else {
+                guard let figmaParams else {
+                    throw ExFigError.custom(errorString:
+                        "figma section is required for raw Styles API export. " +
+                            "Use common.variablesColors for Variables API instead."
+                    )
+                }
                 try await exportRawStyles(
                     client: client,
                     figmaParams: figmaParams,
@@ -214,7 +225,7 @@ extension ExFigCommand.Download {
             let variablesMeta = try await client.request(endpoint)
 
             let metadata = RawExportMetadata(
-                name: options.params.figma.lightFileId,
+                name: options.params.figma?.lightFileId ?? fileId,
                 fileId: fileId,
                 exfigVersion: ExFigCommand.version
             )
@@ -245,9 +256,11 @@ extension ExFigCommand.Download {
                 return try await loader.load()
             }
 
+            // ColorsLoader requires lightFileId, so it's safe to force unwrap here
+            // swiftlint:disable:next force_unwrapping
             try ColorExportHelper.exportRaw(
                 colors: colors,
-                fileId: figmaParams.lightFileId,
+                fileId: figmaParams.lightFileId!,
                 outputURL: outputURL,
                 compact: jsonOptions.compact
             )

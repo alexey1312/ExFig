@@ -97,6 +97,11 @@ struct ConfigDiscovery {
     /// Check if a YAML file is a valid ExFig config.
     /// - Parameter url: URL to the YAML file.
     /// - Returns: `true` if the file is a valid ExFig config.
+    ///
+    /// A config is valid if it has:
+    /// - `figma` section (required for icons, images, typography, legacy colors), OR
+    /// - `common.variablesColors` section (Variables API for colors), OR
+    /// - Platform-specific colors with multi-entry format (ios.colors, android.colors, etc.)
     func isValidExFigConfig(at url: URL) -> Bool {
         do {
             let data = try Data(contentsOf: url)
@@ -106,11 +111,33 @@ struct ConfigDiscovery {
                 return false
             }
 
-            // Try to parse as YAML and check for required 'figma' section
             guard let yaml = try Yams.load(yaml: content) as? [String: Any] else {
                 return false
             }
-            return yaml["figma"] != nil
+
+            // Has figma section (required for icons, images, typography, legacy colors)
+            if yaml["figma"] != nil {
+                return true
+            }
+
+            // Has common.variablesColors (Variables API for colors)
+            if let common = yaml["common"] as? [String: Any],
+               common["variablesColors"] != nil
+            {
+                return true
+            }
+
+            // Has platform-specific colors with multi-entry format
+            let platforms = ["ios", "android", "flutter", "web"]
+            for platform in platforms {
+                if let platformConfig = yaml[platform] as? [String: Any],
+                   platformConfig["colors"] != nil
+                {
+                    return true
+                }
+            }
+
+            return false
         } catch {
             return false
         }

@@ -4,7 +4,10 @@ import Foundation
 // swiftlint:disable nesting type_name type_body_length file_length
 struct Params: Decodable {
     struct Figma: Decodable {
-        let lightFileId: String
+        /// Figma file ID for light mode colors, icons, images, and typography.
+        /// Required for legacy Styles API exports (icons, images, typography).
+        /// Optional when using only Variables API for colors (common.variablesColors or multi-entry colors).
+        let lightFileId: String?
         let darkFileId: String?
         let lightHighContrastFileId: String?
         let darkHighContrastFileId: String?
@@ -1127,7 +1130,9 @@ struct Params: Decodable {
         let templatesPath: URL?
     }
 
-    let figma: Figma
+    /// Figma file configuration. Required for icons, images, typography, or legacy Styles API colors.
+    /// Optional when using only Variables API for colors (common.variablesColors or multi-entry colors).
+    let figma: Figma?
     let common: Common?
     let ios: iOS?
     let android: Android?

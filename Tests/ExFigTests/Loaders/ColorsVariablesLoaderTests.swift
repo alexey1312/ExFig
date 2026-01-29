@@ -48,7 +48,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -96,7 +95,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -148,7 +146,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: "button/*"
         )
@@ -197,7 +194,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -220,7 +216,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
     func testThrowsWhenTokensFileIdMissing() async {
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: nil,
             filter: nil
         )
@@ -255,7 +250,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -312,7 +306,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -384,7 +377,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -442,7 +434,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -505,7 +496,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )
@@ -545,7 +535,6 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let loader = ColorsVariablesLoader(
             client: mockClient,
-            figmaParams: .make(lightFileId: "test-file"),
             variableParams: variablesParams,
             filter: nil
         )

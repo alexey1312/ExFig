@@ -32,7 +32,7 @@ extension ExFigCommand {
 
             let client = resolveClient(
                 accessToken: options.accessToken,
-                timeout: options.params.figma.timeout,
+                timeout: options.params.figma?.timeout,
                 options: faultToleranceOptions,
                 ui: ui
             )
@@ -65,8 +65,12 @@ extension ExFigCommand {
                 ui.info("Using ExFig \(ExFigCommand.version) to export typography.")
             }
 
+            guard let figmaParams = options.params.figma else {
+                throw ExFigError.custom(errorString: "figma section is required for typography export.")
+            }
+
             let textStyles = try await ui.withSpinner("Fetching text styles from Figma...") {
-                let loader = TextStylesLoader(client: client, params: options.params.figma)
+                let loader = TextStylesLoader(client: client, params: figmaParams)
                 return try await loader.load()
             }
 

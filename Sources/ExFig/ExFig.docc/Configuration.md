@@ -24,7 +24,9 @@ exfig colors -i path/to/config.yaml
 
 ```yaml
 figma:
-  # Required: Figma file ID for light mode assets
+  # Figma file ID for light mode assets.
+  # Required for icons, images, and typography export.
+  # Optional when using only variablesColors (or multi-entry colors) for colors export.
   lightFileId: "ABC123xyz"
 
   # Optional: Separate file for dark mode assets

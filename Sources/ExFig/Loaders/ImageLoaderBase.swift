@@ -38,6 +38,22 @@ class ImageLoaderBase: @unchecked Sendable {
         self.logger = logger
     }
 
+    /// Returns the light file ID, throwing an error if not configured.
+    /// Use this for operations that require lightFileId.
+    func requireLightFileId() throws -> String {
+        guard let figmaParams = params.figma else {
+            throw ExFigError.custom(errorString:
+                "figma section is required for icons/images export."
+            )
+        }
+        guard let fileId = figmaParams.lightFileId else {
+            throw ExFigError.custom(errorString:
+                "figma.lightFileId is required for icons/images export."
+            )
+        }
+        return fileId
+    }
+
     // MARK: - Component Loading
 
     /// Fetches image components from a Figma file filtered by frame name and platform.

@@ -65,10 +65,10 @@ extension Params: FileIdProvider {
         var ids = Set<String>()
 
         // Base Figma file IDs (design files)
-        ids.insert(figma.lightFileId)
-        if let id = figma.darkFileId { ids.insert(id) }
-        if let id = figma.lightHighContrastFileId { ids.insert(id) }
-        if let id = figma.darkHighContrastFileId { ids.insert(id) }
+        if let id = figma?.lightFileId { ids.insert(id) }
+        if let id = figma?.darkFileId { ids.insert(id) }
+        if let id = figma?.lightHighContrastFileId { ids.insert(id) }
+        if let id = figma?.darkHighContrastFileId { ids.insert(id) }
 
         // Variables API tokensFileId (PRIMARY for colors)
         if let id = common?.variablesColors?.tokensFileId {

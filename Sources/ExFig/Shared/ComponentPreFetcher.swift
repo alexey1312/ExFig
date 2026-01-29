@@ -19,7 +19,10 @@ enum ComponentPreFetcher {
 
         if needsLocalPreFetch {
             var componentsMap: [String: [Component]] = [:]
-            let fileIds = Set([params.figma.lightFileId] + (params.figma.darkFileId.map { [$0] } ?? []))
+            let fileIds = Set(
+                (params.figma?.lightFileId.flatMap { [$0] } ?? []) +
+                    (params.figma?.darkFileId.flatMap { [$0] } ?? [])
+            )
 
             for fileId in fileIds {
                 let components = try await client.request(ComponentsEndpoint(fileId: fileId))
