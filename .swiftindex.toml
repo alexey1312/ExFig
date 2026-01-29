@@ -3,9 +3,8 @@
 
 [embedding]
 # Provider options: mlx, swift, ollama, voyage, openai
-provider = "mlx"
-model = "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ"
-dimension = 1024
+provider = "openai"
+model = "text-embedding-3-small"
 
 # Provider examples and defaults:
 # MLX (Apple Silicon + Metal toolchain)
@@ -48,13 +47,13 @@ enabled = true  # opt-in - enable for LLM-powered features
 
 # Utility tier - fast operations (query expansion, follow-ups)
 [search.enhancement.utility]
-provider = "mlx"  # mlx | claude-code-cli | codex-cli | ollama | openai
+provider = "anthropic"  # mlx | claude-code-cli | codex-cli | ollama | openai
 # model = "haiku"  # default: haiku (cost-efficient for descriptions)
 timeout = 60
 
 # Synthesis tier - deep analysis (result summarization)
 [search.enhancement.synthesis]
-provider = "mlx"  # mlx | claude-code-cli | codex-cli | ollama | openai
+provider = "anthropic"  # mlx | claude-code-cli | codex-cli | ollama | openai
 # model = "claude-sonnet-4-20250514"  # optional override
 timeout = 120
 

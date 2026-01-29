@@ -39,14 +39,14 @@ git config core.hooksPath .githooks 2>/dev/null || true
 # --- Swift Development ---
 swift = "6.2.3"        # Swift compiler and toolchain
 swiftformat = "0.58.7" # Swift code formatting
-swiftlint = "0.63.0"   # Swift linting
-xcsift = "1.0.19"      # xcodebuild output filtering
+swiftlint = "0.63.2"   # Swift linting
+xcsift = "1.1.0"       # xcodebuild output filtering
 
 # --- Documentation & Formatting ---
 dprint = "0.50.2" # MD/JSON/YAML formatting (Rust, fast)
 
 # --- Git & CI ---
-hk = "1.28.0"        # Git hooks manager
+hk = "1.34.0"        # Git hooks manager
 actionlint = "1.7.9" # GitHub Actions linting
 git-cliff = "2.10.1" # Changelog generation
 
@@ -54,7 +54,7 @@ git-cliff = "2.10.1" # Changelog generation
 pkl = "0.30.2" # Configuration language (for hk.pkl)
 
 # --- Search ---
-"github:alexey1312/swift-index" = { version = "0.2.10", os = [
+"github:alexey1312/swift-index" = { version = "0.2.14", os = [
   "macos",
 ] } # Semantic code search (MLX, Swift-optimized)
 

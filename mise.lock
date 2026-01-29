@@ -25,18 +25,18 @@ backend = "aqua:orhun/git-cliff"
 "platforms.windows-x64" = { checksum = "sha256:073c8027da2e055ec83c3609c4195284bd10b2771fcbd806ff0f94e48c310c77", url = "https://github.com/orhun/git-cliff/releases/download/v2.10.1/git-cliff-2.10.1-x86_64-pc-windows-msvc.zip"}
 
 [[tools."github:alexey1312/swift-index"]]
-version = "0.2.10"
+version = "0.2.14"
 backend = "github:alexey1312/swift-index"
-"platforms.macos-arm64" = { checksum = "sha256:c120d504e268196fd55ce8c22ddfcdf54c618ccb6b093e3e2ebc2c15772a9d93", url = "https://github.com/alexey1312/swift-index/releases/download/v0.2.10/swiftindex-macos.zip", url_api = "https://api.github.com/repos/alexey1312/swift-index/releases/assets/346093431"}
-"platforms.macos-x64" = { checksum = "sha256:c120d504e268196fd55ce8c22ddfcdf54c618ccb6b093e3e2ebc2c15772a9d93", url = "https://github.com/alexey1312/swift-index/releases/download/v0.2.10/swiftindex-macos.zip", url_api = "https://api.github.com/repos/alexey1312/swift-index/releases/assets/346093431"}
+"platforms.macos-arm64" = { checksum = "sha256:a30c50cde1e6e2ffe978349f4ae66e56575b8618575b5f45b2e14910102151aa", url = "https://github.com/alexey1312/swift-index/releases/download/v0.2.14/swiftindex-macos.zip", url_api = "https://api.github.com/repos/alexey1312/swift-index/releases/assets/347530279"}
+"platforms.macos-x64" = { checksum = "sha256:a30c50cde1e6e2ffe978349f4ae66e56575b8618575b5f45b2e14910102151aa", url = "https://github.com/alexey1312/swift-index/releases/download/v0.2.14/swiftindex-macos.zip", url_api = "https://api.github.com/repos/alexey1312/swift-index/releases/assets/347530279"}
 
 [[tools.hk]]
-version = "1.28.0"
+version = "1.34.0"
 backend = "aqua:jdx/hk"
-"platforms.linux-arm64" = { checksum = "sha256:d1f50df29386046b815929d2947ebd84fcd7cb0d6f3cc6db991961271b80aede", url = "https://github.com/jdx/hk/releases/download/v1.28.0/hk-aarch64-unknown-linux-gnu.tar.gz"}
-"platforms.linux-x64" = { checksum = "sha256:13682c829780ccd333935f57210f1ecc02afdecb5829d99542e82cf25166ba53", url = "https://github.com/jdx/hk/releases/download/v1.28.0/hk-x86_64-unknown-linux-gnu.tar.gz"}
-"platforms.macos-arm64" = { checksum = "sha256:7b0ad12e5b6efa4ca55feec2e90ef5eb166f50293d109805d4938f708713e784", url = "https://github.com/jdx/hk/releases/download/v1.28.0/hk-aarch64-apple-darwin.tar.gz"}
-"platforms.windows-x64" = { checksum = "sha256:7c5c719e847637ff2477aa89b95c2c94db192894453aacc659d15056c351a3e2", url = "https://github.com/jdx/hk/releases/download/v1.28.0/hk-x86_64-pc-windows-msvc.zip"}
+"platforms.linux-arm64" = { checksum = "sha256:a60fb915665b802d004b527867754c99b0b8564eb29603aa60c2fda40ea9dafc", url = "https://github.com/jdx/hk/releases/download/v1.34.0/hk-aarch64-unknown-linux-gnu.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:9d769118f49407c9dd1de7d7bca3b9d2db1af95a882cd34c34217548b0c014f8", url = "https://github.com/jdx/hk/releases/download/v1.34.0/hk-x86_64-unknown-linux-gnu.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:68ebb33e8d88848384c488aaf6f7a4eb8baf8426a2bc1b0837353ccece5c4e0e", url = "https://github.com/jdx/hk/releases/download/v1.34.0/hk-aarch64-apple-darwin.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:8d8690a58dc3fc1d0aa04688f4bbb9e93c11ec7070de44c02f619b185dc0a0fd", url = "https://github.com/jdx/hk/releases/download/v1.34.0/hk-x86_64-pc-windows-msvc.zip"}
 
 [[tools."npm:@mixedbread/mgrep"]]
 version = "0.1.8"
@@ -60,17 +60,17 @@ version = "0.58.7"
 backend = "asdf:swiftformat"
 
 [[tools.swiftlint]]
-version = "0.63.0"
+version = "0.63.2"
 backend = "aqua:realm/SwiftLint"
-"platforms.linux-arm64" = { checksum = "sha256:8260b6d9e69c94776b6f1631263367ab1b05fe985b8e9726f3ba403efdc9083e", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/swiftlint_linux_arm64.zip"}
-"platforms.linux-x64" = { checksum = "sha256:f77f94ffed467c6f027f4348ca41d99fd6268a02a584f8fb0fa139a48ace39cb", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/swiftlint_linux_amd64.zip"}
-"platforms.macos-arm64" = { checksum = "sha256:6a9cc0e3e09466fce5eabd4b920cd7169e9e56b60e12ee1340a793ea8b60ceb9", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/portable_swiftlint.zip"}
-"platforms.macos-x64" = { checksum = "sha256:6a9cc0e3e09466fce5eabd4b920cd7169e9e56b60e12ee1340a793ea8b60ceb9", url = "https://github.com/realm/SwiftLint/releases/download/0.63.0/portable_swiftlint.zip"}
+"platforms.linux-arm64" = { checksum = "sha256:104dedff762157f5cff7752f1cc2a289b60f3ea677e72d651c6f3a3287fdd948", url = "https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_arm64.zip"}
+"platforms.linux-x64" = { checksum = "sha256:dd1017cfd20a1457f264590bcb5875a6ee06cd75b9a9d4f77cd43a552499143b", url = "https://github.com/realm/SwiftLint/releases/download/0.63.2/swiftlint_linux_amd64.zip"}
+"platforms.macos-arm64" = { checksum = "sha256:c59a405c85f95b92ced677a500804e081596a4cae4a6a485af76065557d6ed29", url = "https://github.com/realm/SwiftLint/releases/download/0.63.2/portable_swiftlint.zip"}
+"platforms.macos-x64" = { checksum = "sha256:c59a405c85f95b92ced677a500804e081596a4cae4a6a485af76065557d6ed29", url = "https://github.com/realm/SwiftLint/releases/download/0.63.2/portable_swiftlint.zip"}
 
 [[tools.xcsift]]
-version = "1.0.19"
+version = "1.1.0"
 backend = "github:ldomaradzki/xcsift"
-"platforms.linux-arm64" = { checksum = "sha256:5ad11f6d7a89b08e297b811066f067edea472bfe469686a4e6341635da7c236f", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093021"}
-"platforms.linux-x64" = { checksum = "sha256:5ad11f6d7a89b08e297b811066f067edea472bfe469686a4e6341635da7c236f", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093021"}
-"platforms.macos-arm64" = { checksum = "sha256:472e94b1b7860335ae744509545f7c02962cee1e9833cb9864de00219b8df4c5", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093020"}
-"platforms.macos-x64" = { checksum = "sha256:472e94b1b7860335ae744509545f7c02962cee1e9833cb9864de00219b8df4c5", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.0.19/xcsift-v1.0.19-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/333093020"}
+"platforms.linux-arm64" = { checksum = "sha256:584e6ba342f6140863be97b9a22a6fd0f6be7e19912ccc8843d93b5ff74fb889", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.0/xcsift-v1.1.0-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/343884290"}
+"platforms.linux-x64" = { checksum = "sha256:584e6ba342f6140863be97b9a22a6fd0f6be7e19912ccc8843d93b5ff74fb889", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.0/xcsift-v1.1.0-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/343884290"}
+"platforms.macos-arm64" = { checksum = "sha256:413207378e1dd6e7a2122005ba11dc6bad1ecc3e8a01b8c9be3d2baae9cfabad", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.0/xcsift-v1.1.0-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/343884289"}
+"platforms.macos-x64" = { checksum = "sha256:413207378e1dd6e7a2122005ba11dc6bad1ecc3e8a01b8c9be3d2baae9cfabad", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.0/xcsift-v1.1.0-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/343884289"}
