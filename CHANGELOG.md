@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.29] - 2026-01-29
+
+### Documentation
+
+- Add mgrep as default semantic search tool by @alexey1312
+
+
+### Features
+
+- Implement FileIdProvider for comprehensive file ID extraction by @alexey1312
+
+- Make `lightFileId` optional, improve error handling by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- Fix mgrep install by @alexey1312
+
+- Replace mgrep with swiftindex for code search by @alexey1312
+
+- Update dev tools and swiftindex config by @alexey1312
+
+
 ## [1.2.28] - 2026-01-20
 
 ### Bug Fixes
