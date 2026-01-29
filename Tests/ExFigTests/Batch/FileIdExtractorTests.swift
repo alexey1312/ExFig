@@ -164,6 +164,117 @@ final class FileIdExtractorTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
+    // MARK: - High Contrast File IDs
+
+    func testExtractsHighContrastFileIds() throws {
+        let configURL = try createConfig("""
+        figma:
+          lightFileId: "light-file"
+          darkFileId: "dark-file"
+          lightHighContrastFileId: "light-hc"
+          darkHighContrastFileId: "dark-hc"
+        """)
+
+        let result = extractor.extractUniqueFileIds(from: [configURL])
+
+        XCTAssertEqual(result.count, 4)
+        XCTAssertTrue(result.contains("light-file"))
+        XCTAssertTrue(result.contains("dark-file"))
+        XCTAssertTrue(result.contains("light-hc"))
+        XCTAssertTrue(result.contains("dark-hc"))
+    }
+
+    // MARK: - Multi-Entry Colors
+
+    func testExtractsMultiEntryColorsTokensFileIds() throws {
+        let configURL = try createConfig("""
+        figma:
+          lightFileId: "design-file"
+        ios:
+          xcodeprojPath: "Test.xcodeproj"
+          target: "Test"
+          xcassetsPath: "Assets.xcassets"
+          xcassetsInMainBundle: true
+          colors:
+            - tokensFileId: "ios-tokens-1"
+              tokensCollectionName: "Colors"
+              lightModeName: "Light"
+              useColorAssets: true
+              nameStyle: camelCase
+            - tokensFileId: "ios-tokens-2"
+              tokensCollectionName: "Brand"
+              lightModeName: "Light"
+              useColorAssets: true
+              nameStyle: camelCase
+        """)
+
+        let result = extractor.extractUniqueFileIds(from: [configURL])
+
+        XCTAssertTrue(result.contains("design-file"))
+        XCTAssertTrue(result.contains("ios-tokens-1"))
+        XCTAssertTrue(result.contains("ios-tokens-2"))
+    }
+
+    func testExtractsMultiPlatformMultiEntryColors() throws {
+        let configURL = try createConfig("""
+        figma:
+          lightFileId: "design-file"
+        ios:
+          xcodeprojPath: "Test.xcodeproj"
+          target: "Test"
+          xcassetsPath: "Assets.xcassets"
+          xcassetsInMainBundle: true
+          colors:
+            - tokensFileId: "ios-tokens"
+              tokensCollectionName: "Colors"
+              lightModeName: "Light"
+              useColorAssets: true
+              nameStyle: camelCase
+        android:
+          mainRes: "./res"
+          colors:
+            - tokensFileId: "android-tokens"
+              tokensCollectionName: "Colors"
+              lightModeName: "Light"
+        """)
+
+        let result = extractor.extractUniqueFileIds(from: [configURL])
+
+        XCTAssertTrue(result.contains("design-file"))
+        XCTAssertTrue(result.contains("ios-tokens"))
+        XCTAssertTrue(result.contains("android-tokens"))
+    }
+
+    func testCombinesCommonAndMultiEntryTokens() throws {
+        let configURL = try createConfig("""
+        figma:
+          lightFileId: "design-file"
+        common:
+          variablesColors:
+            tokensFileId: "common-tokens"
+            tokensCollectionName: "Shared"
+            lightModeName: "Light"
+        ios:
+          xcodeprojPath: "Test.xcodeproj"
+          target: "Test"
+          xcassetsPath: "Assets.xcassets"
+          xcassetsInMainBundle: true
+          colors:
+            - tokensFileId: "ios-specific"
+              tokensCollectionName: "Brand"
+              lightModeName: "Light"
+              useColorAssets: true
+              nameStyle: camelCase
+        """)
+
+        let result = extractor.extractUniqueFileIds(from: [configURL])
+
+        XCTAssertEqual(result.count, 3)
+        XCTAssertTrue(result.contains("design-file"))
+        XCTAssertTrue(result.contains("common-tokens"))
+        XCTAssertTrue(result.contains("ios-specific"))
+    }
+
     // MARK: - Helpers
 
     private func createConfig(_ content: String, name: String = "test.yaml") throws -> URL {

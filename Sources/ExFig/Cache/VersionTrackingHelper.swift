@@ -76,12 +76,11 @@ enum VersionTrackingHelper {
             batchMode: config.batchMode
         )
 
+        // Collect all file IDs from configuration using FileIdProvider protocol
+        let fileIds = Array(config.params.getFileIds())
+
         let result = try await config.ui.withSpinner("Checking for changes...") {
-            try await manager.checkForChanges(
-                lightFileId: config.params.figma.lightFileId,
-                darkFileId: config.params.figma.darkFileId,
-                force: config.cacheOptions.force
-            )
+            try await manager.checkForChanges(fileIds: fileIds, force: config.cacheOptions.force)
         }
 
         return handleResult(

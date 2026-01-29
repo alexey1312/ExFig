@@ -9,10 +9,13 @@ import Yams
 struct FileIdExtractor {
     /// Extract all unique file IDs from a list of config URLs.
     ///
-    /// Parses each config file and extracts:
+    /// Parses each config file and extracts all file IDs using the `FileIdProvider` protocol:
     /// - `figma.lightFileId` (required)
     /// - `figma.darkFileId` (optional)
+    /// - `figma.lightHighContrastFileId` (optional)
+    /// - `figma.darkHighContrastFileId` (optional)
     /// - `common.variablesColors.tokensFileId` (optional)
+    /// - Multi-entry colors `tokensFileId` for all platforms (optional)
     ///
     /// - Parameter configURLs: URLs to config files.
     /// - Returns: Set of unique file IDs found across all configs.
@@ -20,69 +23,29 @@ struct FileIdExtractor {
         var fileIds = Set<String>()
 
         for configURL in configURLs {
-            let ids = extractFileIds(from: configURL)
-            fileIds.formUnion(ids)
+            if let params = parseParams(from: configURL) {
+                fileIds.formUnion(params.getFileIds())
+            }
         }
 
         return fileIds
     }
 
-    /// Extract file IDs from a single config file.
+    /// Parse Params from a config file URL.
     ///
-    /// - Parameter configURL: URL to the config file.
-    /// - Returns: Array of file IDs found in this config.
-    private func extractFileIds(from configURL: URL) -> [String] {
+    /// - Parameter url: URL to the config file.
+    /// - Returns: Parsed Params or nil if parsing fails.
+    private func parseParams(from url: URL) -> Params? {
         do {
-            let data = try Data(contentsOf: configURL)
+            let data = try Data(contentsOf: url)
             guard let content = String(data: data, encoding: .utf8) else {
-                return []
+                return nil
             }
-
-            let decoder = YAMLDecoder()
-            let config = try decoder.decode(PartialConfig.self, from: content)
-
-            var ids: [String] = []
-
-            // Extract figma.lightFileId (required)
-            ids.append(config.figma.lightFileId)
-
-            // Extract figma.darkFileId (optional)
-            if let darkFileId = config.figma.darkFileId {
-                ids.append(darkFileId)
-            }
-
-            // Extract common.variablesColors.tokensFileId (optional)
-            if let tokensFileId = config.common?.variablesColors?.tokensFileId {
-                ids.append(tokensFileId)
-            }
-
-            return ids
+            return try YAMLDecoder().decode(Params.self, from: content)
         } catch {
             // Config parsing failed, skip this file
             // The actual batch processing will report this error later
-            return []
+            return nil
         }
-    }
-}
-
-// MARK: - Partial Config Models
-
-/// Minimal config structure for extracting file IDs.
-/// Only decodes the fields we need, ignoring everything else.
-private struct PartialConfig: Decodable {
-    let figma: FigmaConfig
-    let common: CommonConfig?
-
-    struct FigmaConfig: Decodable {
-        let lightFileId: String
-        let darkFileId: String?
-    }
-
-    struct CommonConfig: Decodable {
-        let variablesColors: VariablesColorsConfig?
-    }
-
-    struct VariablesColorsConfig: Decodable {
-        let tokensFileId: String
     }
 }
