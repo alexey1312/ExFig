@@ -15,21 +15,28 @@ config processing. This avoids redundant API calls when multiple configs referen
 
 **Key files:**
 
-- `Sources/ExFig/Batch/PreFetchedFileVersions.swift` - Storage struct with `@TaskLocal` injection
+- `Sources/ExFig/Batch/BatchContext.swift` - Unified context struct with `@TaskLocal` injection
+- `Sources/ExFig/Batch/PreFetchedFileVersions.swift` - Storage struct for file metadata
 - `Sources/ExFig/Batch/FileIdExtractor.swift` - Extracts unique fileIds from YAML configs
 - `Sources/ExFig/Batch/FileVersionPreFetcher.swift` - Parallel pre-fetching with spinner
-- `Sources/ExFig/Cache/ImageTrackingManager.swift` - Checks `PreFetchedVersionsStorage` before API call
+- `Sources/ExFig/Cache/ImageTrackingManager.swift` - Checks `BatchContextStorage` before API call
 
 **Pattern:**
 
 ```swift
-// Pre-fetched versions are injected via @TaskLocal (same pattern as InjectedClientStorage)
-let result = await PreFetchedVersionsStorage.$versions.withValue(preFetchedVersions) {
+// All batch data is consolidated into BatchContext and injected via single @TaskLocal
+let batchContext = BatchContext(
+    versions: preFetchedVersions,
+    components: preFetchedComponents,
+    granularCache: sharedGranularCache,
+    nodes: preFetchedNodes
+)
+let result = await BatchContextStorage.$context.withValue(batchContext) {
     await executor.execute(configs: configs) { ... }
 }
 
 // ImageTrackingManager checks TaskLocal first, falls back to API
-if let preFetched = PreFetchedVersionsStorage.versions,
+if let preFetched = BatchContextStorage.context?.versions,
    let metadata = preFetched.metadata(for: fileId) {
     return metadata  // Use pre-fetched
 }

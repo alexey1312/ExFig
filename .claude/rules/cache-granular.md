@@ -52,7 +52,8 @@ exfig batch --cache --experimental-granular-cache --force
 - `Sources/ExFig/Cache/FNV1aHasher.swift` - Pure Swift FNV-1a 64-bit implementation
 - `Sources/FigmaAPI/Model/NodeHashableProperties.swift` - Hashable visual properties struct
 - `Sources/FigmaAPI/Model/FloatNormalization.swift` - Float normalization for stable hashing
-- `Sources/ExFig/Batch/SharedGranularCache.swift` - TaskLocal storage for batch mode cache sharing
+- `Sources/ExFig/Batch/SharedGranularCache.swift` - Shared cache struct for batch mode
+- `Sources/ExFig/Batch/BatchContext.swift` - Unified TaskLocal storage for all batch data
 
 ## Batch Mode Behavior
 
