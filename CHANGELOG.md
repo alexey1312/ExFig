@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.32] - 2026-02-02
+
+### Refactor
+
+- Remove @Sendable to fix Linux runtime issue by @alexey1312
+
+
 ## [1.2.31] - 2026-02-02
 
 ### Bug Fixes
