@@ -30,7 +30,13 @@ enum ComponentPreFetcher {
             }
 
             let preFetched = PreFetchedComponents(components: componentsMap)
-            let localContext = BatchContext(components: preFetched)
+            let existingContext = BatchContextStorage.context
+            let localContext = BatchContext(
+                versions: existingContext?.versions,
+                components: preFetched,
+                granularCache: existingContext?.granularCache,
+                nodes: existingContext?.nodes
+            )
 
             return try await BatchContextStorage.$context.withValue(localContext) {
                 try await process()

@@ -28,7 +28,7 @@ struct FileVersionInfo: Sendable {
 ///
 /// ## Batch Mode
 ///
-/// When `batchMode` is true (detected via `BatchContextStorage.context?.granularCache`),
+/// When `batchMode` is true (detected via `BatchContextStorage.context?.isBatchMode`),
 /// the manager uses shared cache instead of loading from disk, and defers
 /// cache updates to the batch orchestrator.
 final class ImageTrackingManager: @unchecked Sendable {

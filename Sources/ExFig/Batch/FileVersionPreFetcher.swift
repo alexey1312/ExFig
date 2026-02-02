@@ -1,6 +1,7 @@
 // swiftlint:disable file_length
 import FigmaAPI
 import Foundation
+import Logging
 
 /// Configuration for pre-fetch operation.
 struct PreFetchConfiguration {
@@ -48,6 +49,8 @@ struct PreFetchResult: Sendable {
 struct FileVersionPreFetcher: Sendable {
     let client: Client
     let ui: TerminalUI
+
+    private let logger = Logger(label: "com.alexey1312.exfig.file-version-prefetcher")
 
     // MARK: - Static Factory
 
@@ -316,14 +319,13 @@ struct FileVersionPreFetcher: Sendable {
     private func fetchAllMetadata(fileIds: [String]) async throws -> PreFetchedFileVersions {
         try await withThrowingTaskGroup(of: (String, FileMetadata?).self) { group in
             for fileId in fileIds {
-                group.addTask { [client] in
+                group.addTask { [client, logger] in
                     do {
                         let endpoint = FileMetadataEndpoint(fileId: fileId)
                         let metadata = try await client.request(endpoint)
                         return (fileId, metadata)
                     } catch {
-                        // Individual file fetch failed, return nil
-                        // Will be handled as partial failure
+                        logger.warning("Pre-fetch metadata failed for file \(fileId): \(error.localizedDescription)")
                         return (fileId, nil)
                     }
                 }
@@ -425,13 +427,13 @@ struct FileVersionPreFetcher: Sendable {
     private func fetchAllComponents(fileIds: [String]) async throws -> PreFetchedComponents {
         try await withThrowingTaskGroup(of: (String, [Component]?).self) { group in
             for fileId in fileIds {
-                group.addTask { [client] in
+                group.addTask { [client, logger] in
                     do {
                         let endpoint = ComponentsEndpoint(fileId: fileId)
                         let components = try await client.request(endpoint)
                         return (fileId, components)
                     } catch {
-                        // Individual file fetch failed, return nil
+                        logger.warning("Pre-fetch components failed for file \(fileId): \(error.localizedDescription)")
                         return (fileId, nil)
                     }
                 }

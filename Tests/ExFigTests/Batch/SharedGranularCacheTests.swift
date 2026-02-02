@@ -1,4 +1,5 @@
 @testable import ExFig
+@testable import FigmaAPI
 import XCTest
 
 final class SharedGranularCacheTests: XCTestCase {
@@ -231,6 +232,42 @@ final class BatchContextStorageTests: XCTestCase {
 
         BatchContextStorage.$context.withValue(context) {
             XCTAssertFalse(BatchContextStorage.context?.isBatchMode ?? true)
+        }
+    }
+
+    func testBatchContextWithAllFieldsPopulated() {
+        // Create test data for all four fields
+        let versions = PreFetchedFileVersions(versions: [:])
+        let components = PreFetchedComponents(components: [:])
+        let nodes = PreFetchedNodes(nodes: [:])
+
+        var cache = ImageTrackingCache()
+        cache.updateFileVersion(fileId: "fileA", version: "v1")
+        let cachePath = tempDirectory.appendingPathComponent("test-cache.json")
+        let granularCache = SharedGranularCache(cache: cache, cachePath: cachePath)
+
+        // Create context with all fields
+        let context = BatchContext(
+            versions: versions,
+            components: components,
+            granularCache: granularCache,
+            nodes: nodes
+        )
+
+        BatchContextStorage.$context.withValue(context) {
+            let ctx = BatchContextStorage.context
+
+            // Verify all fields are accessible
+            XCTAssertNotNil(ctx?.versions)
+            XCTAssertNotNil(ctx?.components)
+            XCTAssertNotNil(ctx?.granularCache)
+            XCTAssertNotNil(ctx?.nodes)
+
+            // Verify isBatchMode is true
+            XCTAssertTrue(ctx?.isBatchMode ?? false)
+
+            // Verify hasGranularCache is true
+            XCTAssertTrue(ctx?.hasGranularCache ?? false)
         }
     }
 }
