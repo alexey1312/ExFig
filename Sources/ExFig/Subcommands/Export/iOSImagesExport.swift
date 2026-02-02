@@ -121,90 +121,39 @@ extension ExFigCommand.ExportImages {
             )
         }
 
-        let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
-        let loader = ImagesLoader(
-            client: client,
+        let context = IOSImagesExportContext(
+            entry: entry,
+            ios: ios,
             params: params,
-            platform: .ios,
-            logger: ExFigCommand.logger,
-            config: loaderConfig
-        )
-        loader.granularCacheManager = granularCacheManager
-
-        let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
-            if granularCacheManager != nil {
-                return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
-            } else {
-                let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
-                return ImagesLoaderResultWithHashes(
-                    light: result.light,
-                    dark: result.dark,
-                    computedHashes: [:],
-                    allSkipped: false,
-                    allAssetMetadata: []
-                )
-            }
-        }
-
-        if loaderResult.allSkipped {
-            ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
-            return PlatformExportResult(
-                count: 0,
-                hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allAssetMetadata.count
-            )
-        }
-
-        let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
-
-        let processor = ImagesProcessor(
-            platform: .ios,
-            nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-            nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-            nameStyle: entry.nameStyle
+            granularCacheManager: granularCacheManager
         )
 
-        let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
-            try await ui.withSpinner("Processing images...") {
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                return try (result.get(), result.warning)
-            }
-        if let imagesWarning {
-            ui.warning(imagesWarning)
+        let loaderResult = try await loadImagesWithGranularCache(
+            context: context,
+            client: client,
+            ui: ui
+        )
+
+        if let earlyReturn = checkAllSkipped(loaderResult: loaderResult, ui: ui) {
+            return earlyReturn
         }
+
+        let (images, processor) = try await processImages(
+            loaderResult: loaderResult,
+            context: context,
+            ui: ui
+        )
 
         let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: assetsURL,
-            assetsInMainBundle: ios.xcassetsInMainBundle,
-            assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
-            resourceBundleNames: ios.resourceBundleNames,
-            addObjcAttribute: ios.addObjcAttribute,
-            uiKitImageExtensionURL: entry.imageSwift,
-            swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            codeConnectSwiftURL: entry.codeConnectSwift,
-            templatesPath: ios.templatesPath,
-            renderMode: entry.renderMode
-        )
+        let output = makeXcodeImagesOutput(context: context, assetsURL: assetsURL)
 
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames: [String]?
-        let allAssetMetadata: [AssetMetadata]?
-        if granularCacheManager != nil {
-            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
-            // Process names in metadata for Code Connect
-            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
-                AssetMetadata(
-                    name: processor.processNames([meta.name]).first ?? meta.name,
-                    nodeId: meta.nodeId,
-                    fileId: meta.fileId
-                )
-            }
-        } else {
-            allAssetNames = nil
-            allAssetMetadata = nil
-        }
+        let (allAssetNames, allAssetMetadata) = buildAssetNamesAndMetadata(
+            processor: processor,
+            loaderResult: loaderResult,
+            granularCacheManager: granularCacheManager
+        )
         let localAndRemoteFiles = try exporter.export(
             assets: images,
             allAssetNames: allAssetNames,
@@ -215,67 +164,31 @@ extension ExFigCommand.ExportImages {
             try? FileManager.default.removeItem(atPath: assetsURL.path)
         }
 
-        let remoteFilesCount = localAndRemoteFiles.filter { $0.sourceURL != nil }.count
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
-
-        let localFiles: [FileContents] = if remoteFilesCount > 0 {
-            try await ui.withProgress("Downloading images", total: remoteFilesCount) { progress in
-                try await PipelinedDownloader.download(
-                    files: localAndRemoteFiles,
-                    fileDownloader: fileDownloader
-                ) { current, total in
-                    progress.update(current: current)
-                    // Report to batch progress if in batch mode
-                    if let callback = BatchProgressViewStorage.downloadProgressCallback {
-                        Task { await callback(current, total) }
-                    }
-                }
-            }
-        } else {
-            localAndRemoteFiles
-        }
+        let localFiles = try await downloadRemoteFiles(
+            files: localAndRemoteFiles,
+            ui: ui,
+            progressTitle: "Downloading images"
+        )
 
         try await ui.withSpinner("Writing files to Xcode project...") {
             try ExFigCommand.fileWriter.write(files: localFiles)
         }
 
-        let skippedCount = granularCacheManager != nil
-            ? loaderResult.allAssetMetadata.count - images.count
-            : 0
+        let skippedCount = calculateSkippedCount(
+            loaderResult: loaderResult,
+            imagesCount: images.count,
+            granularCacheManager: granularCacheManager
+        )
 
-        guard params.ios?.xcassetsInSwiftPackage == false else {
-            if BatchProgressViewStorage.progressView == nil {
-                await checkForUpdate(logger: ExFigCommand.logger)
-            }
-            ui.success("Done! Exported \(images.count) images.")
-            return PlatformExportResult(
-                count: images.count,
-                hashes: loaderResult.computedHashes,
-                skippedCount: skippedCount
-            )
-        }
-
-        do {
-            let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
-            try localFiles.forEach { file in
-                if file.destination.file.pathExtension == "swift" {
-                    try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
-                }
-            }
-            try xcodeProject.save()
-        } catch {
-            ui.warning(.xcodeProjectUpdateFailed)
-        }
-
-        if BatchProgressViewStorage.progressView == nil {
-            await checkForUpdate(logger: ExFigCommand.logger)
-        }
-
-        ui.success("Done! Exported \(images.count) images.")
-        return PlatformExportResult(
-            count: images.count,
-            hashes: loaderResult.computedHashes,
-            skippedCount: skippedCount
+        return try await finalizeExport(
+            files: localFiles,
+            images: images,
+            loaderResult: loaderResult,
+            skippedCount: skippedCount,
+            ios: ios,
+            params: params,
+            ui: ui,
+            successMessage: "Done! Exported \(images.count) images."
         )
     }
 
@@ -290,57 +203,28 @@ extension ExFigCommand.ExportImages {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
-        let loader = ImagesLoader(
-            client: client,
+        let context = IOSImagesExportContext(
+            entry: entry,
+            ios: ios,
             params: params,
-            platform: .ios,
-            logger: ExFigCommand.logger,
-            config: loaderConfig
-        )
-        loader.granularCacheManager = granularCacheManager
-
-        let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
-            if granularCacheManager != nil {
-                return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
-            } else {
-                let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
-                return ImagesLoaderResultWithHashes(
-                    light: result.light,
-                    dark: result.dark,
-                    computedHashes: [:],
-                    allSkipped: false,
-                    allAssetMetadata: []
-                )
-            }
-        }
-
-        if loaderResult.allSkipped {
-            ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
-            return PlatformExportResult(
-                count: 0,
-                hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allAssetMetadata.count
-            )
-        }
-
-        let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
-
-        let processor = ImagesProcessor(
-            platform: .ios,
-            nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-            nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-            nameStyle: entry.nameStyle
+            granularCacheManager: granularCacheManager
         )
 
-        let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
-            try await ui.withSpinner("Processing images...") {
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                return try (result.get(), result.warning)
-            }
-        if let imagesWarning {
-            ui.warning(imagesWarning)
+        let loaderResult = try await loadImagesWithGranularCache(
+            context: context,
+            client: client,
+            ui: ui
+        )
+
+        if let earlyReturn = checkAllSkipped(loaderResult: loaderResult, ui: ui) {
+            return earlyReturn
         }
+
+        let (images, processor) = try await processImages(
+            loaderResult: loaderResult,
+            context: context,
+            ui: ui
+        )
 
         let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
 
@@ -351,23 +235,11 @@ extension ExFigCommand.ExportImages {
         )
 
         // Download SVG files
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
-        let downloadedSVGs: [FileContents] = if !svgRemoteFiles.isEmpty {
-            try await ui.withProgress("Downloading SVGs from Figma", total: svgRemoteFiles.count) { progress in
-                try await PipelinedDownloader.download(
-                    files: svgRemoteFiles,
-                    fileDownloader: fileDownloader
-                ) { current, total in
-                    progress.update(current: current)
-                    // Report to batch progress if in batch mode
-                    if let callback = BatchProgressViewStorage.downloadProgressCallback {
-                        Task { await callback(current, total) }
-                    }
-                }
-            }
-        } else {
-            []
-        }
+        let downloadedSVGs = try await downloadRemoteFiles(
+            files: svgRemoteFiles,
+            ui: ui,
+            progressTitle: "Downloading SVGs from Figma"
+        )
 
         // iOS uses 1x, 2x, 3x scales
         let scales: [Double] = entry.scales ?? [1.0, 2.0, 3.0]
@@ -379,53 +251,13 @@ extension ExFigCommand.ExportImages {
         }
 
         // Rasterize SVGs to PNG at each scale
-        let pngFiles: [FileContents] = try await ui.withProgress(
-            "Rasterizing SVGs to PNG",
-            total: downloadedSVGs.count * scales.count
-        ) { progress in
-            var results: [FileContents] = []
-
-            for fileContents in downloadedSVGs {
-                // Read SVG data from memory or temp file
-                let svgData: Data
-                if let data = fileContents.data {
-                    svgData = data
-                } else if let dataFile = fileContents.dataFile {
-                    svgData = try Data(contentsOf: dataFile)
-                } else {
-                    continue
-                }
-                let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
-                let imagesetDir = fileContents.destination.directory
-
-                for scale in scales {
-                    let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
-                    let pngFileName = "\(baseName)\(scaleSuffix).png"
-
-                    do {
-                        let pngData = try converter.convert(
-                            svgData: svgData,
-                            scale: scale,
-                            fileName: baseName
-                        )
-
-                        results.append(FileContents(
-                            destination: Destination(
-                                directory: imagesetDir,
-                                file: URL(fileURLWithPath: pngFileName)
-                            ),
-                            data: pngData
-                        ))
-                    } catch {
-                        ExFigCommand.logger.error("Failed to rasterize \(baseName) at \(scale)x: \(error)")
-                        throw error
-                    }
-
-                    progress.increment()
-                }
-            }
-
-            return results
+        let pngFiles = try await rasterizeSVGs(
+            downloadedSVGs: downloadedSVGs,
+            scales: scales,
+            ui: ui,
+            progressTitle: "Rasterizing SVGs to PNG"
+        ) { svgData, scale, baseName in
+            try converter.convert(svgData: svgData, scale: scale, fileName: baseName)
         }
 
         // Generate Contents.json for each imageset
@@ -433,52 +265,26 @@ extension ExFigCommand.ExportImages {
             for: images,
             scales: scales,
             assetsURL: assetsURL,
-            renderMode: entry.renderMode
+            renderMode: entry.renderMode,
+            fileExtension: "png"
         )
 
         // Generate folder Contents.json
-        let folderContentsFile = FileContents(
-            destination: Destination(
-                directory: assetsURL,
-                file: URL(fileURLWithPath: "Contents.json")
-            ),
-            data: Data(#"{"info":{"author":"xcode","version":1}}"#.utf8)
-        )
+        let folderContentsFile = makeFolderContentsJson(assetsURL: assetsURL)
 
         // Combine all files to write
         var allFiles = pngFiles + contentsJsonFiles
         allFiles.append(folderContentsFile)
 
         // Generate Swift extensions
-        let output = XcodeImagesOutput(
-            assetsFolderURL: assetsURL,
-            assetsInMainBundle: ios.xcassetsInMainBundle,
-            assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
-            resourceBundleNames: ios.resourceBundleNames,
-            addObjcAttribute: ios.addObjcAttribute,
-            uiKitImageExtensionURL: entry.imageSwift,
-            swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            codeConnectSwiftURL: entry.codeConnectSwift,
-            templatesPath: ios.templatesPath,
-            renderMode: entry.renderMode
-        )
+        let output = makeXcodeImagesOutput(context: context, assetsURL: assetsURL)
 
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames: [String]?
-        let allAssetMetadata: [AssetMetadata]?
-        if granularCacheManager != nil {
-            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
-            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
-                AssetMetadata(
-                    name: processor.processNames([meta.name]).first ?? meta.name,
-                    nodeId: meta.nodeId,
-                    fileId: meta.fileId
-                )
-            }
-        } else {
-            allAssetNames = nil
-            allAssetMetadata = nil
-        }
+        let (allAssetNames, allAssetMetadata) = buildAssetNamesAndMetadata(
+            processor: processor,
+            loaderResult: loaderResult,
+            granularCacheManager: granularCacheManager
+        )
         let extensionFiles = try exporter.exportSwiftExtensions(
             assets: images,
             allAssetNames: allAssetNames,
@@ -499,43 +305,21 @@ extension ExFigCommand.ExportImages {
             try? FileManager.default.removeItem(atPath: heicPath)
         }
 
-        let skippedCount = granularCacheManager != nil
-            ? loaderResult.allAssetMetadata.count - images.count
-            : 0
+        let skippedCount = calculateSkippedCount(
+            loaderResult: loaderResult,
+            imagesCount: images.count,
+            granularCacheManager: granularCacheManager
+        )
 
-        guard params.ios?.xcassetsInSwiftPackage == false else {
-            if BatchProgressViewStorage.progressView == nil {
-                await checkForUpdate(logger: ExFigCommand.logger)
-            }
-            ui.success("Done! Exported \(images.count) images (SVG source).")
-            return PlatformExportResult(
-                count: images.count,
-                hashes: loaderResult.computedHashes,
-                skippedCount: skippedCount
-            )
-        }
-
-        do {
-            let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
-            try allFiles.forEach { file in
-                if file.destination.file.pathExtension == "swift" {
-                    try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
-                }
-            }
-            try xcodeProject.save()
-        } catch {
-            ui.warning(.xcodeProjectUpdateFailed)
-        }
-
-        if BatchProgressViewStorage.progressView == nil {
-            await checkForUpdate(logger: ExFigCommand.logger)
-        }
-
-        ui.success("Done! Exported \(images.count) images (SVG source).")
-        return PlatformExportResult(
-            count: images.count,
-            hashes: loaderResult.computedHashes,
-            skippedCount: skippedCount
+        return try await finalizeExport(
+            files: allFiles,
+            images: images,
+            loaderResult: loaderResult,
+            skippedCount: skippedCount,
+            ios: ios,
+            params: params,
+            ui: ui,
+            successMessage: "Done! Exported \(images.count) images (SVG source)."
         )
     }
 
@@ -577,12 +361,13 @@ extension ExFigCommand.ExportImages {
         return files
     }
 
-    /// Creates Contents.json files for each imageset.
+    /// Creates Contents.json files for each imageset with the specified file extension.
     func makeImagesetContentsJson(
         for images: [AssetPair<ImagePack>],
         scales: [Double],
         assetsURL: URL,
-        renderMode: XcodeRenderMode? = nil
+        renderMode: XcodeRenderMode? = nil,
+        fileExtension: String
     ) -> [FileContents] {
         var files: [FileContents] = []
 
@@ -596,7 +381,7 @@ extension ExFigCommand.ExportImages {
                 let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
                 let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
                 imagesArray.append([
-                    "filename": "\(pair.light.name)\(scaleSuffix).png",
+                    "filename": "\(pair.light.name)\(scaleSuffix).\(fileExtension)",
                     "idiom": "universal",
                     "scale": scaleString,
                 ])
@@ -610,7 +395,7 @@ extension ExFigCommand.ExportImages {
                     let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
                     imagesArray.append([
                         "appearances": [["appearance": "luminosity", "value": "dark"]],
-                        "filename": "\(pair.light.name)D\(scaleSuffix).png",
+                        "filename": "\(pair.light.name)D\(scaleSuffix).\(fileExtension)",
                         "idiom": "universal",
                         "scale": scaleString,
                     ])
@@ -664,73 +449,6 @@ extension ExFigCommand.ExportImages {
         return .heic
     }
 
-    /// Creates Contents.json files for each imageset with HEIC extension.
-    func makeImagesetContentsJsonForHeic(
-        for images: [AssetPair<ImagePack>],
-        scales: [Double],
-        assetsURL: URL,
-        renderMode: XcodeRenderMode? = nil
-    ) -> [FileContents] {
-        var files: [FileContents] = []
-
-        for pair in images {
-            let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
-
-            var imagesArray: [[String: Any]] = []
-
-            // Add light variants at each scale
-            for scale in scales {
-                let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
-                let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
-                imagesArray.append([
-                    "filename": "\(pair.light.name)\(scaleSuffix).heic",
-                    "idiom": "universal",
-                    "scale": scaleString,
-                ])
-            }
-
-            // Add dark variants if they exist
-            // Use "D" suffix to match standard iOS naming convention
-            if pair.dark != nil {
-                for scale in scales {
-                    let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
-                    let scaleString = scale == 1.0 ? "1x" : "\(Int(scale))x"
-                    imagesArray.append([
-                        "appearances": [["appearance": "luminosity", "value": "dark"]],
-                        "filename": "\(pair.light.name)D\(scaleSuffix).heic",
-                        "idiom": "universal",
-                        "scale": scaleString,
-                    ])
-                }
-            }
-
-            var contentsJson: [String: Any] = [
-                "images": imagesArray,
-                "info": ["author": "xcode", "version": 1],
-            ]
-
-            // Add properties if renderMode is set
-            if let renderMode, renderMode == .original || renderMode == .template {
-                contentsJson["properties"] = ["template-rendering-intent": renderMode.rawValue]
-            }
-
-            if let jsonData = try? JSONSerialization.data(
-                withJSONObject: contentsJson,
-                options: [.prettyPrinted, .sortedKeys]
-            ) {
-                files.append(FileContents(
-                    destination: Destination(
-                        directory: imagesetDir,
-                        file: URL(fileURLWithPath: "Contents.json")
-                    ),
-                    data: jsonData
-                ))
-            }
-        }
-
-        return files
-    }
-
     // MARK: - iOS SVG Source + HEIC Output Export
 
     // swiftlint:disable:next cyclomatic_complexity function_parameter_count
@@ -742,57 +460,28 @@ extension ExFigCommand.ExportImages {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
-        let loader = ImagesLoader(
-            client: client,
+        let context = IOSImagesExportContext(
+            entry: entry,
+            ios: ios,
             params: params,
-            platform: .ios,
-            logger: ExFigCommand.logger,
-            config: loaderConfig
-        )
-        loader.granularCacheManager = granularCacheManager
-
-        let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
-            if granularCacheManager != nil {
-                return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
-            } else {
-                let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
-                return ImagesLoaderResultWithHashes(
-                    light: result.light,
-                    dark: result.dark,
-                    computedHashes: [:],
-                    allSkipped: false,
-                    allAssetMetadata: []
-                )
-            }
-        }
-
-        if loaderResult.allSkipped {
-            ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
-            return PlatformExportResult(
-                count: 0,
-                hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allAssetMetadata.count
-            )
-        }
-
-        let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
-
-        let processor = ImagesProcessor(
-            platform: .ios,
-            nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-            nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-            nameStyle: entry.nameStyle
+            granularCacheManager: granularCacheManager
         )
 
-        let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
-            try await ui.withSpinner("Processing images...") {
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                return try (result.get(), result.warning)
-            }
-        if let imagesWarning {
-            ui.warning(imagesWarning)
+        let loaderResult = try await loadImagesWithGranularCache(
+            context: context,
+            client: client,
+            ui: ui
+        )
+
+        if let earlyReturn = checkAllSkipped(loaderResult: loaderResult, ui: ui) {
+            return earlyReturn
         }
+
+        let (images, processor) = try await processImages(
+            loaderResult: loaderResult,
+            context: context,
+            ui: ui
+        )
 
         let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
 
@@ -803,23 +492,11 @@ extension ExFigCommand.ExportImages {
         )
 
         // Download SVG files
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
-        let downloadedSVGs: [FileContents] = if !svgRemoteFiles.isEmpty {
-            try await ui.withProgress("Downloading SVGs from Figma", total: svgRemoteFiles.count) { progress in
-                try await PipelinedDownloader.download(
-                    files: svgRemoteFiles,
-                    fileDownloader: fileDownloader
-                ) { current, total in
-                    progress.update(current: current)
-                    // Report to batch progress if in batch mode
-                    if let callback = BatchProgressViewStorage.downloadProgressCallback {
-                        Task { await callback(current, total) }
-                    }
-                }
-            }
-        } else {
-            []
-        }
+        let downloadedSVGs = try await downloadRemoteFiles(
+            files: svgRemoteFiles,
+            ui: ui,
+            progressTitle: "Downloading SVGs from Figma"
+        )
 
         // iOS uses 1x, 2x, 3x scales
         let scales: [Double] = entry.scales ?? [1.0, 2.0, 3.0]
@@ -831,106 +508,40 @@ extension ExFigCommand.ExportImages {
         }
 
         // Rasterize SVGs to HEIC at each scale
-        let heicFiles: [FileContents] = try await ui.withProgress(
-            "Rasterizing SVGs to HEIC",
-            total: downloadedSVGs.count * scales.count
-        ) { progress in
-            var results: [FileContents] = []
-
-            for fileContents in downloadedSVGs {
-                // Read SVG data from memory or temp file
-                let svgData: Data
-                if let data = fileContents.data {
-                    svgData = data
-                } else if let dataFile = fileContents.dataFile {
-                    svgData = try Data(contentsOf: dataFile)
-                } else {
-                    continue
-                }
-                let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
-                let imagesetDir = fileContents.destination.directory
-
-                for scale in scales {
-                    let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
-                    let heicFileName = "\(baseName)\(scaleSuffix).heic"
-
-                    do {
-                        let heicData = try converter.convert(
-                            svgData: svgData,
-                            scale: scale,
-                            fileName: baseName
-                        )
-
-                        results.append(FileContents(
-                            destination: Destination(
-                                directory: imagesetDir,
-                                file: URL(fileURLWithPath: heicFileName)
-                            ),
-                            data: heicData
-                        ))
-                    } catch {
-                        ExFigCommand.logger.error("Failed to rasterize \(baseName) at \(scale)x: \(error)")
-                        throw error
-                    }
-
-                    progress.increment()
-                }
-            }
-
-            return results
+        let heicFiles = try await rasterizeSVGs(
+            downloadedSVGs: downloadedSVGs,
+            scales: scales,
+            ui: ui,
+            progressTitle: "Rasterizing SVGs to HEIC"
+        ) { svgData, scale, baseName in
+            try converter.convert(svgData: svgData, scale: scale, fileName: baseName)
         }
 
         // Generate Contents.json for each imageset (with .heic extension)
-        let contentsJsonFiles = makeImagesetContentsJsonForHeic(
+        let contentsJsonFiles = makeImagesetContentsJson(
             for: images,
             scales: scales,
             assetsURL: assetsURL,
-            renderMode: entry.renderMode
+            renderMode: entry.renderMode,
+            fileExtension: "heic"
         )
 
         // Generate folder Contents.json
-        let folderContentsFile = FileContents(
-            destination: Destination(
-                directory: assetsURL,
-                file: URL(fileURLWithPath: "Contents.json")
-            ),
-            data: Data(#"{"info":{"author":"xcode","version":1}}"#.utf8)
-        )
+        let folderContentsFile = makeFolderContentsJson(assetsURL: assetsURL)
 
         // Combine all files to write
         var allFiles = heicFiles + contentsJsonFiles
         allFiles.append(folderContentsFile)
 
         // Generate Swift extensions
-        let output = XcodeImagesOutput(
-            assetsFolderURL: assetsURL,
-            assetsInMainBundle: ios.xcassetsInMainBundle,
-            assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
-            resourceBundleNames: ios.resourceBundleNames,
-            addObjcAttribute: ios.addObjcAttribute,
-            uiKitImageExtensionURL: entry.imageSwift,
-            swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            codeConnectSwiftURL: entry.codeConnectSwift,
-            templatesPath: ios.templatesPath,
-            renderMode: entry.renderMode
-        )
+        let output = makeXcodeImagesOutput(context: context, assetsURL: assetsURL)
 
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames: [String]?
-        let allAssetMetadata: [AssetMetadata]?
-        if granularCacheManager != nil {
-            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
-            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
-                AssetMetadata(
-                    name: processor.processNames([meta.name]).first ?? meta.name,
-                    nodeId: meta.nodeId,
-                    fileId: meta.fileId
-                )
-            }
-        } else {
-            allAssetNames = nil
-            allAssetMetadata = nil
-        }
+        let (allAssetNames, allAssetMetadata) = buildAssetNamesAndMetadata(
+            processor: processor,
+            loaderResult: loaderResult,
+            granularCacheManager: granularCacheManager
+        )
         let extensionFiles = try exporter.exportSwiftExtensions(
             assets: images,
             allAssetNames: allAssetNames,
@@ -951,43 +562,21 @@ extension ExFigCommand.ExportImages {
             try? FileManager.default.removeItem(atPath: pngPath)
         }
 
-        let skippedCount = granularCacheManager != nil
-            ? loaderResult.allAssetMetadata.count - images.count
-            : 0
+        let skippedCount = calculateSkippedCount(
+            loaderResult: loaderResult,
+            imagesCount: images.count,
+            granularCacheManager: granularCacheManager
+        )
 
-        guard params.ios?.xcassetsInSwiftPackage == false else {
-            if BatchProgressViewStorage.progressView == nil {
-                await checkForUpdate(logger: ExFigCommand.logger)
-            }
-            ui.success("Done! Exported \(images.count) images (SVG source, HEIC output).")
-            return PlatformExportResult(
-                count: images.count,
-                hashes: loaderResult.computedHashes,
-                skippedCount: skippedCount
-            )
-        }
-
-        do {
-            let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
-            try allFiles.forEach { file in
-                if file.destination.file.pathExtension == "swift" {
-                    try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
-                }
-            }
-            try xcodeProject.save()
-        } catch {
-            ui.warning(.xcodeProjectUpdateFailed)
-        }
-
-        if BatchProgressViewStorage.progressView == nil {
-            await checkForUpdate(logger: ExFigCommand.logger)
-        }
-
-        ui.success("Done! Exported \(images.count) images (SVG source, HEIC output).")
-        return PlatformExportResult(
-            count: images.count,
-            hashes: loaderResult.computedHashes,
-            skippedCount: skippedCount
+        return try await finalizeExport(
+            files: allFiles,
+            images: images,
+            loaderResult: loaderResult,
+            skippedCount: skippedCount,
+            ios: ios,
+            params: params,
+            ui: ui,
+            successMessage: "Done! Exported \(images.count) images (SVG source, HEIC output)."
         )
     }
 
@@ -1002,90 +591,40 @@ extension ExFigCommand.ExportImages {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let loaderConfig = ImagesLoaderConfig.forIOS(entry: entry, params: params)
-        let loader = ImagesLoader(
-            client: client,
+        let context = IOSImagesExportContext(
+            entry: entry,
+            ios: ios,
             params: params,
-            platform: .ios,
-            logger: ExFigCommand.logger,
-            config: loaderConfig
-        )
-        loader.granularCacheManager = granularCacheManager
-
-        let loaderResult = try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
-            if granularCacheManager != nil {
-                return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
-            } else {
-                let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
-                return ImagesLoaderResultWithHashes(
-                    light: result.light,
-                    dark: result.dark,
-                    computedHashes: [:],
-                    allSkipped: false,
-                    allAssetMetadata: []
-                )
-            }
-        }
-
-        if loaderResult.allSkipped {
-            ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
-            return PlatformExportResult(
-                count: 0,
-                hashes: loaderResult.computedHashes,
-                skippedCount: loaderResult.allAssetMetadata.count
-            )
-        }
-
-        let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
-
-        let processor = ImagesProcessor(
-            platform: .ios,
-            nameValidateRegexp: params.common?.images?.nameValidateRegexp,
-            nameReplaceRegexp: params.common?.images?.nameReplaceRegexp,
-            nameStyle: entry.nameStyle
+            granularCacheManager: granularCacheManager
         )
 
-        let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
-            try await ui.withSpinner("Processing images...") {
-                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
-                return try (result.get(), result.warning)
-            }
-        if let imagesWarning {
-            ui.warning(imagesWarning)
+        let loaderResult = try await loadImagesWithGranularCache(
+            context: context,
+            client: client,
+            ui: ui
+        )
+
+        if let earlyReturn = checkAllSkipped(loaderResult: loaderResult, ui: ui) {
+            return earlyReturn
         }
+
+        let (images, processor) = try await processImages(
+            loaderResult: loaderResult,
+            context: context,
+            ui: ui
+        )
 
         let assetsURL = ios.xcassetsPath.appendingPathComponent(entry.assetsFolder)
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: assetsURL,
-            assetsInMainBundle: ios.xcassetsInMainBundle,
-            assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
-            resourceBundleNames: ios.resourceBundleNames,
-            addObjcAttribute: ios.addObjcAttribute,
-            uiKitImageExtensionURL: entry.imageSwift,
-            swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            codeConnectSwiftURL: entry.codeConnectSwift,
-            templatesPath: ios.templatesPath,
-            renderMode: entry.renderMode
-        )
+        let output = makeXcodeImagesOutput(context: context, assetsURL: assetsURL)
 
         // Use HEIC-aware exporter
         let exporter = XcodeImagesExporter(output: output)
-        let allAssetNames: [String]?
-        let allAssetMetadata: [AssetMetadata]?
-        if granularCacheManager != nil {
-            allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
-            allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
-                AssetMetadata(
-                    name: processor.processNames([meta.name]).first ?? meta.name,
-                    nodeId: meta.nodeId,
-                    fileId: meta.fileId
-                )
-            }
-        } else {
-            allAssetNames = nil
-            allAssetMetadata = nil
-        }
+        let (allAssetNames, allAssetMetadata) = buildAssetNamesAndMetadata(
+            processor: processor,
+            loaderResult: loaderResult,
+            granularCacheManager: granularCacheManager
+        )
         let localAndRemoteFiles = try exporter.exportForHeic(
             assets: images,
             allAssetNames: allAssetNames,
@@ -1096,25 +635,11 @@ extension ExFigCommand.ExportImages {
             try? FileManager.default.removeItem(atPath: assetsURL.path)
         }
 
-        let remoteFilesCount = localAndRemoteFiles.filter { $0.sourceURL != nil }.count
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
-
-        var localFiles: [FileContents] = if remoteFilesCount > 0 {
-            try await ui.withProgress("Downloading images", total: remoteFilesCount) { progress in
-                try await PipelinedDownloader.download(
-                    files: localAndRemoteFiles,
-                    fileDownloader: fileDownloader
-                ) { current, total in
-                    progress.update(current: current)
-                    // Report to batch progress if in batch mode
-                    if let callback = BatchProgressViewStorage.downloadProgressCallback {
-                        Task { await callback(current, total) }
-                    }
-                }
-            }
-        } else {
-            localAndRemoteFiles
-        }
+        var localFiles = try await downloadRemoteFiles(
+            files: localAndRemoteFiles,
+            ui: ui,
+            progressTitle: "Downloading images"
+        )
 
         // Convert PNGs to HEIC
         let pngFiles = localFiles.filter { $0.destination.file.pathExtension == "png" }
@@ -1156,15 +681,274 @@ extension ExFigCommand.ExportImages {
             try ExFigCommand.fileWriter.write(files: filesToWrite)
         }
 
-        let skippedCount = granularCacheManager != nil
-            ? loaderResult.allAssetMetadata.count - images.count
-            : 0
+        let skippedCount = calculateSkippedCount(
+            loaderResult: loaderResult,
+            imagesCount: images.count,
+            granularCacheManager: granularCacheManager
+        )
 
+        return try await finalizeExport(
+            files: filesToWrite,
+            images: images,
+            loaderResult: loaderResult,
+            skippedCount: skippedCount,
+            ios: ios,
+            params: params,
+            ui: ui,
+            successMessage: "Done! Exported \(images.count) images (HEIC output)."
+        )
+    }
+
+    // swiftlint:enable function_body_length
+}
+
+// MARK: - Shared Helpers
+
+private extension ExFigCommand.ExportImages {
+    /// Context holding common export parameters to reduce parameter passing.
+    struct IOSImagesExportContext {
+        let entry: Params.iOS.ImagesEntry
+        let ios: Params.iOS
+        let params: Params
+        let granularCacheManager: GranularCacheManager?
+    }
+
+    /// Creates and configures an ImagesLoader, then loads images with granular cache support.
+    func loadImagesWithGranularCache(
+        context: IOSImagesExportContext,
+        client: Client,
+        ui: TerminalUI
+    ) async throws -> ImagesLoaderResultWithHashes {
+        let loaderConfig = ImagesLoaderConfig.forIOS(entry: context.entry, params: context.params)
+        let loader = ImagesLoader(
+            client: client,
+            params: context.params,
+            platform: .ios,
+            logger: ExFigCommand.logger,
+            config: loaderConfig
+        )
+        loader.granularCacheManager = context.granularCacheManager
+
+        return try await ui.withSpinnerProgress("Fetching images from Figma...") { onProgress in
+            if context.granularCacheManager != nil {
+                return try await loader.loadWithGranularCache(filter: filter, onBatchProgress: onProgress)
+            } else {
+                let result = try await loader.load(filter: filter, onBatchProgress: onProgress)
+                return ImagesLoaderResultWithHashes(
+                    light: result.light,
+                    dark: result.dark,
+                    computedHashes: [:],
+                    allSkipped: false,
+                    allAssetMetadata: []
+                )
+            }
+        }
+    }
+
+    /// Checks if all images were skipped due to granular cache hit and returns early result if so.
+    func checkAllSkipped(
+        loaderResult: ImagesLoaderResultWithHashes,
+        ui: TerminalUI
+    ) -> PlatformExportResult? {
+        guard loaderResult.allSkipped else { return nil }
+
+        ui.success("All images unchanged (granular cache hit). Skipping iOS export.")
+        return PlatformExportResult(
+            count: 0,
+            hashes: loaderResult.computedHashes,
+            skippedCount: loaderResult.allAssetMetadata.count
+        )
+    }
+
+    /// Processes loaded images through ImagesProcessor.
+    func processImages(
+        loaderResult: ImagesLoaderResultWithHashes,
+        context: IOSImagesExportContext,
+        ui: TerminalUI
+    ) async throws -> ([AssetPair<ImagePack>], ImagesProcessor) {
+        let imagesTuple = (light: loaderResult.light, dark: loaderResult.dark)
+
+        let processor = ImagesProcessor(
+            platform: .ios,
+            nameValidateRegexp: context.params.common?.images?.nameValidateRegexp,
+            nameReplaceRegexp: context.params.common?.images?.nameReplaceRegexp,
+            nameStyle: context.entry.nameStyle
+        )
+
+        let (images, imagesWarning): ([AssetPair<ImagesProcessor.AssetType>], AssetsValidatorWarning?) =
+            try await ui.withSpinner("Processing images...") {
+                let result = processor.process(light: imagesTuple.light, dark: imagesTuple.dark)
+                return try (result.get(), result.warning)
+            }
+        if let imagesWarning {
+            ui.warning(imagesWarning)
+        }
+
+        return (images, processor)
+    }
+
+    /// Creates XcodeImagesOutput configuration.
+    func makeXcodeImagesOutput(
+        context: IOSImagesExportContext,
+        assetsURL: URL
+    ) -> XcodeImagesOutput {
+        XcodeImagesOutput(
+            assetsFolderURL: assetsURL,
+            assetsInMainBundle: context.ios.xcassetsInMainBundle,
+            assetsInSwiftPackage: context.ios.xcassetsInSwiftPackage,
+            resourceBundleNames: context.ios.resourceBundleNames,
+            addObjcAttribute: context.ios.addObjcAttribute,
+            uiKitImageExtensionURL: context.entry.imageSwift,
+            swiftUIImageExtensionURL: context.entry.swiftUIImageSwift,
+            codeConnectSwiftURL: context.entry.codeConnectSwift,
+            templatesPath: context.ios.templatesPath,
+            renderMode: context.entry.renderMode
+        )
+    }
+
+    /// Builds asset names and metadata for granular cache support.
+    func buildAssetNamesAndMetadata(
+        processor: ImagesProcessor,
+        loaderResult: ImagesLoaderResultWithHashes,
+        granularCacheManager: GranularCacheManager?
+    ) -> (allAssetNames: [String]?, allAssetMetadata: [AssetMetadata]?) {
+        guard granularCacheManager != nil else {
+            return (nil, nil)
+        }
+
+        let allAssetNames = processor.processNames(loaderResult.allAssetMetadata.map(\.name))
+        let allAssetMetadata = loaderResult.allAssetMetadata.map { meta in
+            AssetMetadata(
+                name: processor.processNames([meta.name]).first ?? meta.name,
+                nodeId: meta.nodeId,
+                fileId: meta.fileId
+            )
+        }
+        return (allAssetNames, allAssetMetadata)
+    }
+
+    /// Downloads remote files with progress reporting.
+    func downloadRemoteFiles(
+        files: [FileContents],
+        ui: TerminalUI,
+        progressTitle: String
+    ) async throws -> [FileContents] {
+        let remoteFilesCount = files.filter { $0.sourceURL != nil }.count
+
+        guard remoteFilesCount > 0 else {
+            return files
+        }
+
+        let fileDownloader = faultToleranceOptions.createFileDownloader()
+        return try await ui.withProgress(progressTitle, total: remoteFilesCount) { progress in
+            try await PipelinedDownloader.download(
+                files: files,
+                fileDownloader: fileDownloader
+            ) { current, total in
+                progress.update(current: current)
+                // Report to batch progress if in batch mode
+                if let callback = BatchProgressViewStorage.downloadProgressCallback {
+                    Task { await callback(current, total) }
+                }
+            }
+        }
+    }
+
+    /// Calculates the number of skipped assets.
+    func calculateSkippedCount(
+        loaderResult: ImagesLoaderResultWithHashes,
+        imagesCount: Int,
+        granularCacheManager: GranularCacheManager?
+    ) -> Int {
+        granularCacheManager != nil
+            ? loaderResult.allAssetMetadata.count - imagesCount
+            : 0
+    }
+
+    /// Rasterizes SVGs to raster format (PNG or HEIC) at each scale.
+    func rasterizeSVGs(
+        downloadedSVGs: [FileContents],
+        scales: [Double],
+        ui: TerminalUI,
+        progressTitle: String,
+        convert: @Sendable (Data, Double, String) throws -> Data
+    ) async throws -> [FileContents] {
+        try await ui.withProgress(
+            progressTitle,
+            total: downloadedSVGs.count * scales.count
+        ) { progress in
+            var results: [FileContents] = []
+
+            for fileContents in downloadedSVGs {
+                // Read SVG data from memory or temp file
+                let svgData: Data
+                if let data = fileContents.data {
+                    svgData = data
+                } else if let dataFile = fileContents.dataFile {
+                    svgData = try Data(contentsOf: dataFile)
+                } else {
+                    continue
+                }
+                let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
+                let imagesetDir = fileContents.destination.directory
+
+                // Determine output extension from progress title
+                let outputExtension = progressTitle.contains("HEIC") ? "heic" : "png"
+
+                for scale in scales {
+                    let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
+                    let outputFileName = "\(baseName)\(scaleSuffix).\(outputExtension)"
+
+                    do {
+                        let outputData = try convert(svgData, scale, baseName)
+
+                        results.append(FileContents(
+                            destination: Destination(
+                                directory: imagesetDir,
+                                file: URL(fileURLWithPath: outputFileName)
+                            ),
+                            data: outputData
+                        ))
+                    } catch {
+                        ExFigCommand.logger.error("Failed to rasterize \(baseName) at \(scale)x: \(error)")
+                        throw error
+                    }
+
+                    progress.increment()
+                }
+            }
+
+            return results
+        }
+    }
+
+    /// Creates the folder Contents.json file.
+    func makeFolderContentsJson(assetsURL: URL) -> FileContents {
+        FileContents(
+            destination: Destination(
+                directory: assetsURL,
+                file: URL(fileURLWithPath: "Contents.json")
+            ),
+            data: Data(#"{"info":{"author":"xcode","version":1}}"#.utf8)
+        )
+    }
+
+    /// Finalizes export by updating Xcode project and returning result.
+    func finalizeExport( // swiftlint:disable:this function_parameter_count
+        files: [FileContents],
+        images: [AssetPair<ImagePack>],
+        loaderResult: ImagesLoaderResultWithHashes,
+        skippedCount: Int,
+        ios: Params.iOS,
+        params: Params,
+        ui: TerminalUI,
+        successMessage: String
+    ) async throws -> PlatformExportResult {
         guard params.ios?.xcassetsInSwiftPackage == false else {
             if BatchProgressViewStorage.progressView == nil {
                 await checkForUpdate(logger: ExFigCommand.logger)
             }
-            ui.success("Done! Exported \(images.count) images (HEIC output).")
+            ui.success(successMessage)
             return PlatformExportResult(
                 count: images.count,
                 hashes: loaderResult.computedHashes,
@@ -1174,7 +958,7 @@ extension ExFigCommand.ExportImages {
 
         do {
             let xcodeProject = try XcodeProjectWriter(xcodeProjPath: ios.xcodeprojPath, target: ios.target)
-            try filesToWrite.forEach { file in
+            try files.forEach { file in
                 if file.destination.file.pathExtension == "swift" {
                     try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
                 }
@@ -1188,13 +972,11 @@ extension ExFigCommand.ExportImages {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        ui.success("Done! Exported \(images.count) images (HEIC output).")
+        ui.success(successMessage)
         return PlatformExportResult(
             count: images.count,
             hashes: loaderResult.computedHashes,
             skippedCount: skippedCount
         )
     }
-
-    // swiftlint:enable function_body_length
 }
