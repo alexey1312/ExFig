@@ -160,17 +160,15 @@ extension ExFigCommand {
             ui: TerminalUI
         ) -> ([ConfigFile], BatchCheckpoint) {
             var configs = validConfigs.map { ConfigFile(url: $0) }
-            var checkpoint = loadCheckpointIfResuming(workingDirectory: workingDirectory, ui: ui)
 
-            if let existing = checkpoint {
+            if let existing = loadCheckpointIfResuming(workingDirectory: workingDirectory, ui: ui) {
                 let skipped = existing.completedConfigs.count
                 configs = configs.filter { !existing.isCompleted($0.url.path) }
                 ui.info("Resuming: \(skipped) config(s) already completed, \(configs.count) remaining")
-            } else {
-                checkpoint = BatchCheckpoint(requestedPaths: paths)
+                return (configs, existing)
             }
 
-            return (configs, checkpoint!)
+            return (configs, BatchCheckpoint(requestedPaths: paths))
         }
 
         private func loadCheckpointIfResuming(workingDirectory: URL, ui: TerminalUI) -> BatchCheckpoint? {
@@ -488,70 +486,32 @@ extension ExFigCommand {
         }
 
         /// Wraps execution with TaskLocal context for pre-fetched data and shared granular cache.
-        private func withBatchContext<T>(
+        /// Each context is injected only if the corresponding value is non-nil.
+        private func withBatchContext<T: Sendable>(
             preFetchedVersions: PreFetchedFileVersions?,
             preFetchedComponents: PreFetchedComponents?,
             sharedGranularCache: SharedGranularCache?,
-            operation: () async -> T
+            operation: @Sendable () async -> T
         ) async -> T {
-            // Nested TaskLocal injection based on what's available
-            switch (preFetchedVersions, preFetchedComponents, sharedGranularCache) {
-            // All three contexts
-            case let (versions?, components?, cache?):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await PreFetchedComponentsStorage.$components.withValue(components) {
-                        await SharedGranularCacheStorage.$cache.withValue(cache) {
-                            await operation()
-                        }
-                    }
-                }
-
-            // Versions + components
-            case let (versions?, components?, nil):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await PreFetchedComponentsStorage.$components.withValue(components) {
+            await withOptionalContext(PreFetchedVersionsStorage.$versions, preFetchedVersions) {
+                await withOptionalContext(PreFetchedComponentsStorage.$components, preFetchedComponents) {
+                    await withOptionalContext(SharedGranularCacheStorage.$cache, sharedGranularCache) {
                         await operation()
                     }
                 }
-
-            // Versions + cache
-            case let (versions?, nil, cache?):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await SharedGranularCacheStorage.$cache.withValue(cache) {
-                        await operation()
-                    }
-                }
-
-            // Components + cache
-            case let (nil, components?, cache?):
-                await PreFetchedComponentsStorage.$components.withValue(components) {
-                    await SharedGranularCacheStorage.$cache.withValue(cache) {
-                        await operation()
-                    }
-                }
-
-            // Only versions
-            case let (versions?, nil, nil):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await operation()
-                }
-
-            // Only components
-            case let (nil, components?, nil):
-                await PreFetchedComponentsStorage.$components.withValue(components) {
-                    await operation()
-                }
-
-            // Only cache
-            case let (nil, nil, cache?):
-                await SharedGranularCacheStorage.$cache.withValue(cache) {
-                    await operation()
-                }
-
-            // None
-            case (nil, nil, nil):
-                await operation()
             }
+        }
+
+        /// Helper to conditionally inject a TaskLocal value.
+        private func withOptionalContext<V, T: Sendable>(
+            _ taskLocal: TaskLocal<V?>,
+            _ value: V?,
+            operation: @Sendable () async -> T
+        ) async -> T {
+            if let value {
+                return await taskLocal.withValue(value, operation: operation)
+            }
+            return await operation()
         }
 
         /// Saves granular cache after batch completes by merging all computed hashes.
@@ -562,30 +522,22 @@ extension ExFigCommand {
         ) {
             var updatedCache = sharedCache.cache
 
-            // First, merge all file versions from successful configs
+            // Merge file versions and computed hashes from all successful configs
             for success in result.successes {
-                if let versions = success.stats.fileVersions {
-                    for version in versions {
-                        updatedCache.updateFileVersion(
-                            fileId: version.fileId,
-                            version: version.currentVersion,
-                            fileName: version.fileName
-                        )
-                    }
+                for version in success.stats.fileVersions ?? [] {
+                    updatedCache.updateFileVersion(
+                        fileId: version.fileId,
+                        version: version.currentVersion,
+                        fileName: version.fileName
+                    )
                 }
-            }
 
-            // Then merge all computed hashes from successful configs
-            for success in result.successes {
                 for (fileId, hashes) in success.stats.computedNodeHashes {
-                    let nodeHashes = hashes.reduce(into: [NodeId: String]()) { result, pair in
-                        result[pair.key] = pair.value
-                    }
+                    let nodeHashes = Dictionary(uniqueKeysWithValues: hashes.map { ($0.key, $0.value) })
                     updatedCache.updateNodeHashes(fileId: fileId, hashes: nodeHashes)
                 }
             }
 
-            // Save merged cache
             do {
                 try updatedCache.save(to: sharedCache.cachePath)
                 if globalOptions.verbose {
@@ -610,6 +562,13 @@ extension ExFigCommand {
             guard !collections.isEmpty else { return }
 
             // Group collections by target file URL
+            var fileGroups: [(
+                url: URL,
+                collections: [ThemeAttributesCollection],
+                keyPath: KeyPath<ThemeAttributesCollection, String>,
+                isAttrs: Bool
+            )] = []
+
             var attrsByFile: [URL: [ThemeAttributesCollection]] = [:]
             var stylesByFile: [URL: [ThemeAttributesCollection]] = [:]
             var stylesNightByFile: [URL: [ThemeAttributesCollection]] = [:]
@@ -622,39 +581,30 @@ extension ExFigCommand {
                 }
             }
 
-            // Update each file with all its theme sections
-            for (fileURL, fileCollections) in attrsByFile {
-                updateSharedThemeAttributesFile(
-                    url: fileURL,
-                    collections: fileCollections,
-                    contentKeyPath: \.attrsContent,
-                    isAttrsFile: true,
-                    ui: ui
-                )
+            // Collect all file groups to process
+            for (url, items) in attrsByFile {
+                fileGroups.append((url, items, \.attrsContent, true))
+            }
+            for (url, items) in stylesByFile {
+                fileGroups.append((url, items, \.stylesContent, false))
+            }
+            for (url, items) in stylesNightByFile {
+                fileGroups.append((url, items, \.stylesContent, false))
             }
 
-            for (fileURL, fileCollections) in stylesByFile {
+            // Update all files with their theme sections
+            for group in fileGroups {
                 updateSharedThemeAttributesFile(
-                    url: fileURL,
-                    collections: fileCollections,
-                    contentKeyPath: \.stylesContent,
-                    isAttrsFile: false,
-                    ui: ui
-                )
-            }
-
-            for (fileURL, fileCollections) in stylesNightByFile {
-                updateSharedThemeAttributesFile(
-                    url: fileURL,
-                    collections: fileCollections,
-                    contentKeyPath: \.stylesContent,
-                    isAttrsFile: false,
+                    url: group.url,
+                    collections: group.collections,
+                    contentKeyPath: group.keyPath,
+                    isAttrsFile: group.isAttrs,
                     ui: ui
                 )
             }
 
             if globalOptions.verbose {
-                let uniqueFiles = Set(attrsByFile.keys).union(stylesByFile.keys).union(stylesNightByFile.keys)
+                let uniqueFiles = Set(fileGroups.map(\.url))
                 ui.info("Theme attributes: merged \(collections.count) configs into \(uniqueFiles.count) files")
             }
         }
