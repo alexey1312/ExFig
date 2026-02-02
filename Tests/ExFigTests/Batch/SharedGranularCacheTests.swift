@@ -131,9 +131,9 @@ final class SharedGranularCacheTests: XCTestCase {
     }
 }
 
-// MARK: - TaskLocal Storage Tests
+// MARK: - BatchContext Storage Tests
 
-final class SharedGranularCacheStorageTests: XCTestCase {
+final class BatchContextStorageTests: XCTestCase {
     var tempDirectory: URL!
 
     override func setUp() {
@@ -149,7 +149,7 @@ final class SharedGranularCacheStorageTests: XCTestCase {
     }
 
     func testStorageIsNilByDefault() {
-        XCTAssertNil(SharedGranularCacheStorage.cache)
+        XCTAssertNil(BatchContextStorage.context)
     }
 
     func testStorageCanBeSetViaTaskLocal() {
@@ -159,11 +159,12 @@ final class SharedGranularCacheStorageTests: XCTestCase {
 
         let cachePath = tempDirectory.appendingPathComponent("test-cache.json")
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
+        let context = BatchContext(granularCache: sharedCache)
 
         var capturedHashes: [String: String]?
 
-        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
-            capturedHashes = SharedGranularCacheStorage.cache?.nodeHashes(for: "fileA")
+        BatchContextStorage.$context.withValue(context) {
+            capturedHashes = BatchContextStorage.context?.granularCache?.nodeHashes(for: "fileA")
         }
 
         XCTAssertEqual(capturedHashes?["1:1"], "hash1")
@@ -176,15 +177,16 @@ final class SharedGranularCacheStorageTests: XCTestCase {
 
         let cachePath = tempDirectory.appendingPathComponent("test-cache.json")
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
+        let context = BatchContext(granularCache: sharedCache)
 
-        var insideValue: SharedGranularCache?
-        var outsideValue: SharedGranularCache?
+        var insideValue: BatchContext?
+        var outsideValue: BatchContext?
 
-        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
-            insideValue = SharedGranularCacheStorage.cache
+        BatchContextStorage.$context.withValue(context) {
+            insideValue = BatchContextStorage.context
         }
 
-        outsideValue = SharedGranularCacheStorage.cache
+        outsideValue = BatchContextStorage.context
 
         XCTAssertNotNil(insideValue)
         XCTAssertNil(outsideValue)
@@ -197,13 +199,14 @@ final class SharedGranularCacheStorageTests: XCTestCase {
 
         let cachePath = tempDirectory.appendingPathComponent("test-cache.json")
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
+        let context = BatchContext(granularCache: sharedCache)
 
         var capturedFromNestedTask: [String: String]?
 
-        await SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        await BatchContextStorage.$context.withValue(context) {
             await withTaskGroup(of: [String: String]?.self) { group in
                 group.addTask {
-                    SharedGranularCacheStorage.cache?.nodeHashes(for: "fileA")
+                    BatchContextStorage.context?.granularCache?.nodeHashes(for: "fileA")
                 }
 
                 for await result in group {
@@ -213,5 +216,21 @@ final class SharedGranularCacheStorageTests: XCTestCase {
         }
 
         XCTAssertEqual(capturedFromNestedTask?["1:1"], "hash1")
+    }
+
+    func testIsBatchModeReturnsTrueWithAnyContext() {
+        let context = BatchContext(versions: PreFetchedFileVersions(versions: [:]))
+
+        BatchContextStorage.$context.withValue(context) {
+            XCTAssertTrue(BatchContextStorage.context?.isBatchMode ?? false)
+        }
+    }
+
+    func testIsBatchModeReturnsFalseWithEmptyContext() {
+        let context = BatchContext()
+
+        BatchContextStorage.$context.withValue(context) {
+            XCTAssertFalse(BatchContextStorage.context?.isBatchMode ?? true)
+        }
     }
 }

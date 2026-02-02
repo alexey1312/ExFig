@@ -632,7 +632,7 @@ class ImageLoaderBase: @unchecked Sendable {
 
     private func loadComponents(fileId: String) async throws -> [Component] {
         // Check pre-fetched components first (batch optimization)
-        if let preFetched = PreFetchedComponentsStorage.components,
+        if let preFetched = BatchContextStorage.context?.components,
            let components = preFetched.components(for: fileId)
         {
             logger.debug("Using pre-fetched components for \(fileId) (\(components.count) components)")

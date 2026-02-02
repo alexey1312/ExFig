@@ -278,28 +278,28 @@ extension ExFigCommand {
             // Create shared theme attributes collector for batch mode
             let themeAttributesCollector = SharedThemeAttributesCollector()
 
-            // Wrap execution with batch progress view and batch context injection
-            // Nodes are injected via separate TaskLocal (Phase 3 optimization)
-            // Theme attributes collector is always injected for batch mode
+            // Wrap execution with batch progress view and unified batch context
+            // All pre-fetched data is consolidated into BatchContext to avoid nested @Sendable closures
+            // which can cause Swift runtime crashes on Linux (https://github.com/swiftlang/swift/issues/75501)
             let collector = themeAttributesCollector
+            let batchContext = BatchContext(
+                versions: preFetchedVersions,
+                components: preFetchedComponents,
+                granularCache: sharedGranularCache,
+                nodes: preFetchedNodes
+            )
             let result: BatchResult = await SharedThemeAttributesStorage.$collector.withValue(collector) {
                 await BatchProgressViewStorage.$progressView.withValue(progressView) {
-                    await PreFetchedNodesStorage.$nodes.withValue(preFetchedNodes) {
-                        await withBatchContext(
-                            preFetchedVersions: preFetchedVersions,
-                            preFetchedComponents: preFetchedComponents,
-                            sharedGranularCache: sharedGranularCache
-                        ) {
-                            await executeWithProgressUpdates(
-                                executor: executor,
-                                configs: configs,
-                                checkpointManager: checkpointManager,
-                                runnerFactory: runnerFactory,
-                                progressView: progressView,
-                                rateLimiter: rateLimiter,
-                                ui: ui
-                            )
-                        }
+                    await BatchContextStorage.$context.withValue(batchContext) {
+                        await executeWithProgressUpdates(
+                            executor: executor,
+                            configs: configs,
+                            checkpointManager: checkpointManager,
+                            runnerFactory: runnerFactory,
+                            progressView: progressView,
+                            rateLimiter: rateLimiter,
+                            ui: ui
+                        )
                     }
                 }
             }
@@ -482,74 +482,6 @@ extension ExFigCommand {
                 // Log warning and continue without pre-fetched nodes (fallback to per-config fetch)
                 ui.warning(.preFetchNodesPartialFailure(error: error.localizedDescription))
                 return nil
-            }
-        }
-
-        /// Wraps execution with TaskLocal context for pre-fetched data and shared granular cache.
-        ///
-        /// Wraps execution with TaskLocal context for pre-fetched data and shared granular cache.
-        private func withBatchContext<T>(
-            preFetchedVersions: PreFetchedFileVersions?,
-            preFetchedComponents: PreFetchedComponents?,
-            sharedGranularCache: SharedGranularCache?,
-            operation: () async -> T
-        ) async -> T {
-            switch (preFetchedVersions, preFetchedComponents, sharedGranularCache) {
-            // All three contexts
-            case let (versions?, components?, cache?):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await PreFetchedComponentsStorage.$components.withValue(components) {
-                        await SharedGranularCacheStorage.$cache.withValue(cache) {
-                            await operation()
-                        }
-                    }
-                }
-
-            // Versions + components
-            case let (versions?, components?, nil):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await PreFetchedComponentsStorage.$components.withValue(components) {
-                        await operation()
-                    }
-                }
-
-            // Versions + cache
-            case let (versions?, nil, cache?):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await SharedGranularCacheStorage.$cache.withValue(cache) {
-                        await operation()
-                    }
-                }
-
-            // Components + cache
-            case let (nil, components?, cache?):
-                await PreFetchedComponentsStorage.$components.withValue(components) {
-                    await SharedGranularCacheStorage.$cache.withValue(cache) {
-                        await operation()
-                    }
-                }
-
-            // Only versions
-            case let (versions?, nil, nil):
-                await PreFetchedVersionsStorage.$versions.withValue(versions) {
-                    await operation()
-                }
-
-            // Only components
-            case let (nil, components?, nil):
-                await PreFetchedComponentsStorage.$components.withValue(components) {
-                    await operation()
-                }
-
-            // Only cache
-            case let (nil, nil, cache?):
-                await SharedGranularCacheStorage.$cache.withValue(cache) {
-                    await operation()
-                }
-
-            // None
-            case (nil, nil, nil):
-                await operation()
             }
         }
 

@@ -15,7 +15,7 @@ enum ComponentPreFetcher {
         params: Params,
         process: () async throws -> T
     ) async throws -> T {
-        let needsLocalPreFetch = PreFetchedComponentsStorage.components == nil
+        let needsLocalPreFetch = BatchContextStorage.context?.components == nil
 
         if needsLocalPreFetch {
             var componentsMap: [String: [Component]] = [:]
@@ -30,8 +30,9 @@ enum ComponentPreFetcher {
             }
 
             let preFetched = PreFetchedComponents(components: componentsMap)
+            let localContext = BatchContext(components: preFetched)
 
-            return try await PreFetchedComponentsStorage.$components.withValue(preFetched) {
+            return try await BatchContextStorage.$context.withValue(localContext) {
                 try await process()
             }
         } else {

@@ -57,8 +57,8 @@ extension ExFigCommand {
             client: Client,
             ui: TerminalUI
         ) async throws -> TypographyExportResult {
-            // Detect batch mode via TaskLocal (shared granular cache presence)
-            let batchMode = SharedGranularCacheStorage.cache != nil
+            // Detect batch mode via TaskLocal (batch context presence)
+            let batchMode = BatchContextStorage.context?.isBatchMode ?? false
 
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(

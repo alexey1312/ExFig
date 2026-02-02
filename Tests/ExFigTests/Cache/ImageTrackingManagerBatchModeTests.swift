@@ -57,9 +57,10 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
         let cachePath = tempDirectory.appendingPathComponent("shared-cache.json")
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
+        let batchContext = BatchContext(granularCache: sharedCache)
 
         // Create manager in batch mode with shared cache
-        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        BatchContextStorage.$context.withValue(batchContext) {
             let manager = ImageTrackingManager(
                 client: mockClient,
                 cachePath: nil,
@@ -79,7 +80,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
     func testUsesLocalCacheWhenBatchModeButNoSharedCache() {
         let customPath = tempDirectory.appendingPathComponent("local-cache.json").path
 
-        // batchMode=true but no SharedGranularCacheStorage.cache set
+        // batchMode=true but no BatchContextStorage.context set
         let manager = ImageTrackingManager(
             client: mockClient,
             cachePath: customPath,
@@ -203,10 +204,11 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
         let cachePath = tempDirectory.appendingPathComponent("shared.json")
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
+        let batchContext = BatchContext(granularCache: sharedCache)
 
         var managerInBatchMode: ImageTrackingManager?
 
-        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        BatchContextStorage.$context.withValue(batchContext) {
             // Create manager inside TaskLocal scope
             managerInBatchMode = ImageTrackingManager(
                 client: mockClient,
@@ -231,8 +233,9 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
         let cachePath = tempDirectory.appendingPathComponent("shared.json")
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
+        let batchContext = BatchContext(granularCache: sharedCache)
 
-        SharedGranularCacheStorage.$cache.withValue(sharedCache) {
+        BatchContextStorage.$context.withValue(batchContext) {
             // Create multiple managers (simulating parallel config processing)
             let manager1 = ImageTrackingManager(
                 client: mockClient,

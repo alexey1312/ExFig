@@ -39,32 +39,3 @@ struct PreFetchedFileVersions: Sendable {
         Array(versions.keys)
     }
 }
-
-/// TaskLocal storage for pre-fetched file versions.
-///
-/// This is used by batch processing to share pre-fetched file metadata across
-/// multiple config executions. When running individual commands (not in batch mode),
-/// the storage is `nil` and commands fetch their own metadata.
-///
-/// ## Usage in Batch Mode
-///
-/// ```swift
-/// let preFetched = try await preFetcher.preFetch(fileIds: uniqueIds)
-/// await PreFetchedVersionsStorage.$versions.withValue(preFetched) {
-///     // All configs executed here will use pre-fetched versions
-///     await executor.execute(configs: configs) { ... }
-/// }
-/// ```
-///
-/// ## Usage in ImageTrackingManager
-///
-/// ```swift
-/// if let preFetched = PreFetchedVersionsStorage.versions,
-///    let metadata = preFetched.metadata(for: fileId) {
-///     return metadata  // Use pre-fetched
-/// }
-/// // Fall back to API request
-/// ```
-enum PreFetchedVersionsStorage {
-    @TaskLocal static var versions: PreFetchedFileVersions?
-}

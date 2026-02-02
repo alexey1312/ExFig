@@ -41,31 +41,3 @@ struct PreFetchedNodes: Sendable {
         nodes.values.reduce(0) { $0 + $1.count }
     }
 }
-
-/// TaskLocal storage for pre-fetched node documents.
-///
-/// This is used by batch processing to share pre-fetched nodes across
-/// multiple config executions when granular cache is enabled.
-///
-/// ## Usage in Batch Mode
-///
-/// ```swift
-/// let preFetchedNodes = try await preFetcher.preFetchNodes(...)
-/// await PreFetchedNodesStorage.$nodes.withValue(preFetchedNodes) {
-///     // All configs executed here will use pre-fetched nodes
-///     await executor.execute(configs: configs) { ... }
-/// }
-/// ```
-///
-/// ## Usage in GranularCacheManager
-///
-/// ```swift
-/// if let preFetched = PreFetchedNodesStorage.nodes,
-///    let nodes = preFetched.nodes(for: fileId) {
-///     return nodes  // Use pre-fetched
-/// }
-/// // Fall back to API request
-/// ```
-enum PreFetchedNodesStorage {
-    @TaskLocal static var nodes: PreFetchedNodes?
-}

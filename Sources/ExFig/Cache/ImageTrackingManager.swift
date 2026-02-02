@@ -28,7 +28,7 @@ struct FileVersionInfo: Sendable {
 ///
 /// ## Batch Mode
 ///
-/// When `batchMode` is true (detected via `SharedGranularCacheStorage.cache`),
+/// When `batchMode` is true (detected via `BatchContextStorage.context?.granularCache`),
 /// the manager uses shared cache instead of loading from disk, and defers
 /// cache updates to the batch orchestrator.
 final class ImageTrackingManager: @unchecked Sendable {
@@ -52,7 +52,7 @@ final class ImageTrackingManager: @unchecked Sendable {
         self.batchMode = batchMode
 
         // In batch mode, use shared cache if available
-        if batchMode, let shared = SharedGranularCacheStorage.cache {
+        if batchMode, let shared = BatchContextStorage.context?.granularCache {
             self.cachePath = shared.cachePath
             cache = shared.cache
             logger.debug("Using shared granular cache (batch mode)")
@@ -125,7 +125,7 @@ final class ImageTrackingManager: @unchecked Sendable {
     /// redundant API calls when multiple configs reference the same file.
     private func fetchFileMetadata(fileId: String) async throws -> FileMetadata {
         // Check pre-fetched versions first (batch optimization)
-        if let preFetched = PreFetchedVersionsStorage.versions,
+        if let preFetched = BatchContextStorage.context?.versions,
            let metadata = preFetched.metadata(for: fileId)
         {
             logger.debug("Using pre-fetched version for \(fileId)")

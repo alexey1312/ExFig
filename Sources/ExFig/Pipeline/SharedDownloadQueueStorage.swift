@@ -1,7 +1,7 @@
 import Foundation
 
 /// TaskLocal storage for injecting SharedDownloadQueue into export commands during batch processing.
-/// Similar pattern to InjectedClientStorage and SharedGranularCacheStorage.
+/// Similar pattern to InjectedClientStorage and BatchContextStorage.
 enum SharedDownloadQueueStorage {
     /// TaskLocal variable to inject shared download queue.
     @TaskLocal

@@ -63,8 +63,8 @@ extension ExFigCommand {
         // swiftlint:disable:next cyclomatic_complexity function_body_length
         /// Performs export and returns full result with file versions for batch mode.
         func performExportWithResult(client: Client, ui: TerminalUI) async throws -> ColorsExportResult {
-            // Detect batch mode via TaskLocal (shared granular cache presence)
-            let batchMode = SharedGranularCacheStorage.cache != nil
+            // Detect batch mode via TaskLocal (batch context presence)
+            let batchMode = BatchContextStorage.context?.isBatchMode ?? false
 
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(

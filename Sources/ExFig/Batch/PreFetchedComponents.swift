@@ -45,32 +45,3 @@ struct PreFetchedComponents: Sendable {
         Array(components.keys)
     }
 }
-
-/// TaskLocal storage for pre-fetched components.
-///
-/// This is used by batch processing to share pre-fetched components across
-/// multiple config executions. When running individual commands (not in batch mode),
-/// the storage is `nil` and commands fetch their own components.
-///
-/// ## Usage in Batch Mode
-///
-/// ```swift
-/// let preFetched = try await preFetcher.preFetchWithComponents(...)
-/// await PreFetchedComponentsStorage.$components.withValue(preFetched.components) {
-///     // All configs executed here will use pre-fetched components
-///     await executor.execute(configs: configs) { ... }
-/// }
-/// ```
-///
-/// ## Usage in ImageLoaderBase
-///
-/// ```swift
-/// if let preFetched = PreFetchedComponentsStorage.components,
-///    let components = preFetched.components(for: fileId) {
-///     return components  // Use pre-fetched
-/// }
-/// // Fall back to API request
-/// ```
-enum PreFetchedComponentsStorage {
-    @TaskLocal static var components: PreFetchedComponents?
-}

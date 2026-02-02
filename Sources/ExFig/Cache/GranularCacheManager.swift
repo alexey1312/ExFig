@@ -78,7 +78,7 @@ final class GranularCacheManager: Sendable {
         nodeIds: [NodeId]
     ) async throws -> [NodeId: Node] {
         // Check pre-fetched nodes first (batch optimization)
-        if let preFetched = PreFetchedNodesStorage.nodes,
+        if let preFetched = BatchContextStorage.context?.nodes,
            let preFetchedNodes = preFetched.nodes(for: fileId)
         {
             // Filter to only requested nodeIds

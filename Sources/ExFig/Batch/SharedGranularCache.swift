@@ -40,37 +40,3 @@ struct SharedGranularCache: Sendable {
         cache.files[fileId]?.nodeHashes != nil
     }
 }
-
-/// TaskLocal storage for shared granular cache.
-///
-/// This is used by batch processing to share pre-loaded node hashes across
-/// multiple config executions. When running individual commands (not in batch mode),
-/// the storage is `nil` and commands load cache from disk as usual.
-///
-/// ## Usage in Batch Mode
-///
-/// ```swift
-/// let cachePath = ImageTrackingCache.resolvePath(customPath: cachePath)
-/// let cacheData = ImageTrackingCache.load(from: cachePath)
-/// let sharedCache = SharedGranularCache(cache: cacheData, cachePath: cachePath)
-///
-/// await SharedGranularCacheStorage.$cache.withValue(sharedCache) {
-///     // All configs executed here will use shared cache
-///     await executor.execute(configs: configs) { ... }
-/// }
-///
-/// // After batch: merge computed hashes and save once
-/// ```
-///
-/// ## Usage in ImageTrackingManager
-///
-/// ```swift
-/// if let shared = SharedGranularCacheStorage.cache {
-///     // Use shared cache (batch mode)
-///     return shared.nodeHashes(for: fileId)
-/// }
-/// // Fall back to disk cache (standalone mode)
-/// ```
-enum SharedGranularCacheStorage {
-    @TaskLocal static var cache: SharedGranularCache?
-}
