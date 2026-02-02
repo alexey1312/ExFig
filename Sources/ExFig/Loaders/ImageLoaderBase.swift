@@ -13,11 +13,20 @@ struct ImageLoaderResult {
     let dark: [ImagePack]?
 
     /// Node hashes computed during load (for granular cache update).
-    /// Map of fileId → (nodeId → hash).
+    /// Map of fileId -> (nodeId -> hash).
     let computedHashes: [String: [NodeId: String]]
 
     /// Whether granular cache filtered all nodes (nothing to export).
     let skippedByGranularCache: Bool
+}
+
+/// Result of loading images with granular cache tracking.
+struct ImagesWithHashesResult {
+    let packs: [ImagePack]
+    let computedHashes: [NodeId: String]
+    let allSkipped: Bool
+    /// All asset metadata before filtering (for Code Connect and template generation).
+    let allAssetMetadata: [AssetMetadata]
 }
 
 /// Base class for loading images from Figma.
@@ -250,94 +259,16 @@ class ImageLoaderBase: @unchecked Sendable {
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
-        var imagesDict = try await fetchImageComponents(
+        let imagesDict = try await fetchImageComponents(
             fileId: fileId, frameName: frameName, filter: filter
         )
-
-        guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
-        }
-
-        // Component name must not be empty
-        imagesDict = imagesDict.filter { (_: NodeId, component: Component) in
-            if component.name.trimmingCharacters(in: .whitespaces).isEmpty {
-                logger.warning(
-                    """
-                    Found a component with empty name.
-                    Page name: \(component.containingFrame.pageName)
-                    Frame: \(component.containingFrame.name ?? "nil")
-                    Description: \(component.description ?? "nil")
-                    The component wont be exported. Fix component name in the Figma file and try again.
-                    """)
-                return false
-            }
-            return true
-        }
-
-        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
-        let imageIdToImagePath = try await loadImages(
+        return try await loadVectorImagesFromComponents(
             fileId: fileId,
-            imagesDict: imagesDict,
+            frameName: frameName,
+            components: imagesDict,
             params: params,
             onBatchProgress: onBatchProgress
         )
-
-        // Remove components for which image file could not be fetched
-        let badNodeIds = Set(imagesDict.keys).symmetricDifference(Set(imageIdToImagePath.keys))
-        for nodeId in badNodeIds {
-            imagesDict.removeValue(forKey: nodeId)
-        }
-
-        // Group images by name
-        let groups = Dictionary(grouping: imagesDict) {
-            $1.name.parseNameAndIdiom(platform: platform).name
-        }
-
-        // Create image packs for groups
-        let imagePacks = groups.compactMap { packName, components -> ImagePack? in
-            let packImages = components.compactMap { nodeId, component -> Image? in
-                guard let urlString = imageIdToImagePath[nodeId], let url = URL(string: urlString)
-                else {
-                    return nil
-                }
-                let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
-                let isRTL = component.useRTL()
-                return Image(
-                    name: name, scale: .all, idiom: idiom, url: url, format: params.format,
-                    isRTL: isRTL
-                )
-            }
-            // Get the primary nodeId from the first component (all variants share the same logical node)
-            let primaryNodeId = components.first?.0
-            return ImagePack(
-                name: packName,
-                images: packImages,
-                platform: platform,
-                nodeId: primaryNodeId,
-                fileId: fileId
-            )
-        }
-        return imagePacks
-    }
-
-    /// Result of loading vector images with granular cache tracking.
-    struct VectorImagesWithHashesResult {
-        let packs: [ImagePack]
-        let computedHashes: [NodeId: String]
-        let allSkipped: Bool
-        /// All asset metadata before filtering (for Code Connect and template generation).
-        /// Use `allAssetMetadata.map(\.name)` to get names for template generation.
-        let allAssetMetadata: [AssetMetadata]
-    }
-
-    /// Result of loading PNG/raster images with granular cache tracking.
-    struct PNGImagesWithHashesResult {
-        let packs: [ImagePack]
-        let computedHashes: [NodeId: String]
-        let allSkipped: Bool
-        /// All asset metadata before filtering (for Code Connect and template generation).
-        /// Use `allAssetMetadata.map(\.name)` to get names for template generation.
-        let allAssetMetadata: [AssetMetadata]
     }
 
     /// Loads vector images with granular cache tracking.
@@ -347,100 +278,22 @@ class ImageLoaderBase: @unchecked Sendable {
     /// 2. Computes content hashes for granular change detection
     /// 3. Filters to only changed components (if cache exists)
     /// 4. Returns computed hashes for cache update after export
-    ///
-    /// - Returns: Image packs, computed hashes, and whether all were skipped.
-    func loadVectorImagesWithGranularCache( // swiftlint:disable:this function_body_length
+    func loadVectorImagesWithGranularCache(
         fileId: String,
         frameName: String,
         params: FormatParams,
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
-    ) async throws -> VectorImagesWithHashesResult {
+    ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCache(
             fileId: fileId, frameName: frameName, filter: filter
         )
-
-        // If all components were skipped by granular cache, return early
-        if filterResult.allSkipped {
-            return VectorImagesWithHashesResult(
-                packs: [],
-                computedHashes: filterResult.computedHashes,
-                allSkipped: true,
-                allAssetMetadata: filterResult.allAssetMetadata
-            )
-        }
-
-        var imagesDict = filterResult.components
-
-        guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
-        }
-
-        // Component name must not be empty
-        imagesDict = imagesDict.filter { (_: NodeId, component: Component) in
-            if component.name.trimmingCharacters(in: .whitespaces).isEmpty {
-                logger.warning(
-                    """
-                    Found a component with empty name.
-                    Page name: \(component.containingFrame.pageName)
-                    Frame: \(component.containingFrame.name ?? "nil")
-                    Description: \(component.description ?? "nil")
-                    The component wont be exported. Fix component name in the Figma file and try again.
-                    """)
-                return false
-            }
-            return true
-        }
-
-        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
-        let imageIdToImagePath = try await loadImages(
+        return try await loadVectorImagesFromGranularFilterResult(
             fileId: fileId,
-            imagesDict: imagesDict,
+            frameName: frameName,
+            filterResult: filterResult,
             params: params,
             onBatchProgress: onBatchProgress
-        )
-
-        // Remove components for which image file could not be fetched
-        let badNodeIds = Set(imagesDict.keys).symmetricDifference(Set(imageIdToImagePath.keys))
-        for nodeId in badNodeIds {
-            imagesDict.removeValue(forKey: nodeId)
-        }
-
-        // Group images by name
-        let groups = Dictionary(grouping: imagesDict) {
-            $1.name.parseNameAndIdiom(platform: platform).name
-        }
-
-        // Create image packs for groups
-        let imagePacks = groups.compactMap { packName, components -> ImagePack? in
-            let packImages = components.compactMap { nodeId, component -> Image? in
-                guard let urlString = imageIdToImagePath[nodeId], let url = URL(string: urlString)
-                else {
-                    return nil
-                }
-                let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
-                let isRTL = component.useRTL()
-                return Image(
-                    name: name, scale: .all, idiom: idiom, url: url, format: params.format,
-                    isRTL: isRTL
-                )
-            }
-            // Get the primary nodeId from the first component (all variants share the same logical node)
-            let primaryNodeId = components.first?.0
-            return ImagePack(
-                name: packName,
-                images: packImages,
-                platform: platform,
-                nodeId: primaryNodeId,
-                fileId: fileId
-            )
-        }
-
-        return VectorImagesWithHashesResult(
-            packs: imagePacks,
-            computedHashes: filterResult.computedHashes,
-            allSkipped: false,
-            allAssetMetadata: filterResult.allAssetMetadata
         )
     }
 
@@ -449,33 +302,75 @@ class ImageLoaderBase: @unchecked Sendable {
     /// When using `useSingleFile` mode with dark mode suffix, if either the light
     /// or dark version of a component changes, both versions are fetched and exported.
     /// This ensures that the `ImagesProcessor` validation passes (it requires matching pairs).
-    ///
-    /// - Parameters:
-    ///   - fileId: The Figma file ID.
-    ///   - frameName: The frame name to filter components.
-    ///   - params: Format parameters (SVG/PDF).
-    ///   - filter: Optional filter pattern for component names.
-    ///   - darkModeSuffix: The suffix used to identify dark mode components (e.g., "-dark").
-    ///   - onBatchProgress: Progress callback.
-    /// - Returns: Image packs with paired light/dark versions, computed hashes, and skip status.
-    func loadVectorImagesWithGranularCacheAndPairing( // swiftlint:disable:this function_body_length
+    func loadVectorImagesWithGranularCacheAndPairing(
         fileId: String,
         frameName: String,
         params: FormatParams,
         filter: String? = nil,
         darkModeSuffix: String,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
-    ) async throws -> VectorImagesWithHashesResult {
+    ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCacheAndPairing(
             fileId: fileId,
             frameName: frameName,
             filter: filter,
             darkModeSuffix: darkModeSuffix
         )
+        return try await loadVectorImagesFromGranularFilterResult(
+            fileId: fileId,
+            frameName: frameName,
+            filterResult: filterResult,
+            params: params,
+            onBatchProgress: onBatchProgress
+        )
+    }
 
-        // If all components were skipped by granular cache, return early
+    // MARK: - Private Vector Image Helpers
+
+    /// Core implementation for loading vector images from pre-fetched components.
+    private func loadVectorImagesFromComponents(
+        fileId: String,
+        frameName: String,
+        components: [NodeId: Component],
+        params: FormatParams,
+        onBatchProgress: @escaping BatchProgressCallback
+    ) async throws -> [ImagePack] {
+        var imagesDict = components
+
+        guard !imagesDict.isEmpty else {
+            throw ExFigError.componentsNotFound
+        }
+
+        imagesDict = filterEmptyNameComponents(imagesDict)
+
+        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
+        let imageIdToImagePath = try await loadImages(
+            fileId: fileId,
+            imagesDict: imagesDict,
+            params: params,
+            onBatchProgress: onBatchProgress
+        )
+
+        imagesDict = removeFailedComponents(imagesDict, fetchedPaths: imageIdToImagePath)
+
+        return createVectorImagePacks(
+            imagesDict: imagesDict,
+            imageIdToImagePath: imageIdToImagePath,
+            format: params.format,
+            fileId: fileId
+        )
+    }
+
+    /// Loads vector images from a granular filter result, handling the early-skip case.
+    private func loadVectorImagesFromGranularFilterResult(
+        fileId: String,
+        frameName: String,
+        filterResult: GranularFilterResult,
+        params: FormatParams,
+        onBatchProgress: @escaping BatchProgressCallback
+    ) async throws -> ImagesWithHashesResult {
         if filterResult.allSkipped {
-            return VectorImagesWithHashesResult(
+            return ImagesWithHashesResult(
                 packs: [],
                 computedHashes: filterResult.computedHashes,
                 allSkipped: true,
@@ -483,14 +378,25 @@ class ImageLoaderBase: @unchecked Sendable {
             )
         }
 
-        var imagesDict = filterResult.components
+        let packs = try await loadVectorImagesFromComponents(
+            fileId: fileId,
+            frameName: frameName,
+            components: filterResult.components,
+            params: params,
+            onBatchProgress: onBatchProgress
+        )
 
-        guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
-        }
+        return ImagesWithHashesResult(
+            packs: packs,
+            computedHashes: filterResult.computedHashes,
+            allSkipped: false,
+            allAssetMetadata: filterResult.allAssetMetadata
+        )
+    }
 
-        // Component name must not be empty
-        imagesDict = imagesDict.filter { (_: NodeId, component: Component) in
+    /// Filters out components with empty names and logs warnings for them.
+    private func filterEmptyNameComponents(_ components: [NodeId: Component]) -> [NodeId: Component] {
+        components.filter { _, component in
             if component.name.trimmingCharacters(in: .whitespaces).isEmpty {
                 logger.warning(
                     """
@@ -504,41 +410,49 @@ class ImageLoaderBase: @unchecked Sendable {
             }
             return true
         }
+    }
 
-        logger.info("Fetching \(imagesDict.count) images from '\(frameName)'...")
-        let imageIdToImagePath = try await loadImages(
-            fileId: fileId,
-            imagesDict: imagesDict,
-            params: params,
-            onBatchProgress: onBatchProgress
-        )
-
-        // Remove components for which image file could not be fetched
-        let badNodeIds = Set(imagesDict.keys).symmetricDifference(Set(imageIdToImagePath.keys))
+    /// Removes components that failed to fetch from the images dict.
+    private func removeFailedComponents(
+        _ components: [NodeId: Component],
+        fetchedPaths: [NodeId: ImagePath]
+    ) -> [NodeId: Component] {
+        let badNodeIds = Set(components.keys).symmetricDifference(Set(fetchedPaths.keys))
+        var result = components
         for nodeId in badNodeIds {
-            imagesDict.removeValue(forKey: nodeId)
+            result.removeValue(forKey: nodeId)
         }
+        return result
+    }
 
-        // Group images by name
+    /// Creates image packs from components and their fetched image paths.
+    private func createVectorImagePacks(
+        imagesDict: [NodeId: Component],
+        imageIdToImagePath: [NodeId: ImagePath],
+        format: String,
+        fileId: String
+    ) -> [ImagePack] {
         let groups = Dictionary(grouping: imagesDict) {
             $1.name.parseNameAndIdiom(platform: platform).name
         }
 
-        // Create image packs for groups
-        let imagePacks = groups.compactMap { packName, components -> ImagePack? in
+        return groups.compactMap { packName, components -> ImagePack? in
             let packImages = components.compactMap { nodeId, component -> Image? in
-                guard let urlString = imageIdToImagePath[nodeId], let url = URL(string: urlString)
+                guard let urlString = imageIdToImagePath[nodeId],
+                      let url = URL(string: urlString)
                 else {
                     return nil
                 }
                 let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
-                let isRTL = component.useRTL()
                 return Image(
-                    name: name, scale: .all, idiom: idiom, url: url, format: params.format,
-                    isRTL: isRTL
+                    name: name,
+                    scale: .all,
+                    idiom: idiom,
+                    url: url,
+                    format: format,
+                    isRTL: component.useRTL()
                 )
             }
-            // Get the primary nodeId from the first component (all variants share the same logical node)
             let primaryNodeId = components.first?.0
             return ImagePack(
                 name: packName,
@@ -548,13 +462,6 @@ class ImageLoaderBase: @unchecked Sendable {
                 fileId: fileId
             )
         }
-
-        return VectorImagesWithHashesResult(
-            packs: imagePacks,
-            computedHashes: filterResult.computedHashes,
-            allSkipped: false,
-            allAssetMetadata: filterResult.allAssetMetadata
-        )
     }
 
     /// Loads PNG images from Figma at multiple scales.
@@ -568,59 +475,12 @@ class ImageLoaderBase: @unchecked Sendable {
         let imagesDict = try await fetchImageComponents(
             fileId: fileId, frameName: frameName, filter: filter
         )
-
-        guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
-        }
-
-        // Calculate total batches across all scales for accurate progress
-        let batchSize = 100
-        let batchesPerScale = (imagesDict.count + batchSize - 1) / batchSize
-        let totalBatches = batchesPerScale * scales.count
-
-        // Shared counter for all scales
-        let sharedCounter = CompletedBatchCounter()
-
-        // Parallel fetch for all scales (3x speedup for iOS with 3 scales)
-        let images = try await loadImagesForAllScales(
+        return try await loadPNGImagesFromComponents(
             fileId: fileId,
-            imagesDict: imagesDict,
+            components: imagesDict,
             scales: scales,
-            sharedCounter: sharedCounter,
-            totalBatches: totalBatches,
             onBatchProgress: onBatchProgress
         )
-
-        // Group images by name
-        let groups = Dictionary(grouping: imagesDict) {
-            $1.name.parseNameAndIdiom(platform: platform).name
-        }
-
-        // Create image packs for groups
-        let imagePacks = groups.compactMap { packName, components -> ImagePack? in
-            let packImages = components.flatMap { nodeId, component -> [Image] in
-                let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
-                return scales.compactMap { scale -> Image? in
-                    guard let urlString = images[scale]?[nodeId], let url = URL(string: urlString)
-                    else {
-                        return nil
-                    }
-                    return Image(
-                        name: name, scale: .individual(scale), idiom: idiom, url: url, format: "png"
-                    )
-                }
-            }
-            // Get the primary nodeId from the first component (all variants share the same logical node)
-            let primaryNodeId = components.first?.0
-            return ImagePack(
-                name: packName,
-                images: packImages,
-                platform: platform,
-                nodeId: primaryNodeId,
-                fileId: fileId
-            )
-        }
-        return imagePacks
     }
 
     /// Loads PNG/raster images with granular cache tracking.
@@ -630,22 +490,19 @@ class ImageLoaderBase: @unchecked Sendable {
     /// 2. Computes content hashes for granular change detection
     /// 3. Filters to only changed components (if cache exists)
     /// 4. Returns computed hashes for cache update after export
-    ///
-    /// - Returns: Image packs, computed hashes, and whether all were skipped.
     func loadPNGImagesWithGranularCache(
         fileId: String,
         frameName: String,
         filter: String? = nil,
         scales: [Double],
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
-    ) async throws -> PNGImagesWithHashesResult {
+    ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCache(
             fileId: fileId, frameName: frameName, filter: filter
         )
 
-        // If all components were skipped by granular cache, return early
         if filterResult.allSkipped {
-            return PNGImagesWithHashesResult(
+            return ImagesWithHashesResult(
                 packs: [],
                 computedHashes: filterResult.computedHashes,
                 allSkipped: true,
@@ -653,50 +510,85 @@ class ImageLoaderBase: @unchecked Sendable {
             )
         }
 
-        let imagesDict = filterResult.components
+        let packs = try await loadPNGImagesFromComponents(
+            fileId: fileId,
+            components: filterResult.components,
+            scales: scales,
+            onBatchProgress: onBatchProgress
+        )
 
-        guard !imagesDict.isEmpty else {
+        return ImagesWithHashesResult(
+            packs: packs,
+            computedHashes: filterResult.computedHashes,
+            allSkipped: false,
+            allAssetMetadata: filterResult.allAssetMetadata
+        )
+    }
+
+    // MARK: - Private PNG Image Helpers
+
+    /// Core implementation for loading PNG images from pre-fetched components.
+    private func loadPNGImagesFromComponents(
+        fileId: String,
+        components: [NodeId: Component],
+        scales: [Double],
+        onBatchProgress: @escaping BatchProgressCallback
+    ) async throws -> [ImagePack] {
+        guard !components.isEmpty else {
             throw ExFigError.componentsNotFound
         }
 
-        // Calculate total batches across all scales for accurate progress
         let batchSize = 100
-        let batchesPerScale = (imagesDict.count + batchSize - 1) / batchSize
+        let batchesPerScale = (components.count + batchSize - 1) / batchSize
         let totalBatches = batchesPerScale * scales.count
-
-        // Shared counter for all scales
         let sharedCounter = CompletedBatchCounter()
 
-        // Parallel fetch for all scales (3x speedup for iOS with 3 scales)
         let images = try await loadImagesForAllScales(
             fileId: fileId,
-            imagesDict: imagesDict,
+            imagesDict: components,
             scales: scales,
             sharedCounter: sharedCounter,
             totalBatches: totalBatches,
             onBatchProgress: onBatchProgress
         )
 
-        // Group images by name
+        return createPNGImagePacks(
+            imagesDict: components,
+            imagesByScale: images,
+            scales: scales,
+            fileId: fileId
+        )
+    }
+
+    /// Creates image packs from components and their fetched image paths at multiple scales.
+    private func createPNGImagePacks(
+        imagesDict: [NodeId: Component],
+        imagesByScale: [Double: [NodeId: ImagePath]],
+        scales: [Double],
+        fileId: String
+    ) -> [ImagePack] {
         let groups = Dictionary(grouping: imagesDict) {
             $1.name.parseNameAndIdiom(platform: platform).name
         }
 
-        // Create image packs for groups
-        let imagePacks = groups.compactMap { packName, components -> ImagePack? in
+        return groups.compactMap { packName, components -> ImagePack? in
             let packImages = components.flatMap { nodeId, component -> [Image] in
                 let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
                 return scales.compactMap { scale -> Image? in
-                    guard let urlString = images[scale]?[nodeId], let url = URL(string: urlString)
+                    guard let urlString = imagesByScale[scale]?[nodeId],
+                          let url = URL(string: urlString)
                     else {
                         return nil
                     }
                     return Image(
-                        name: name, scale: .individual(scale), idiom: idiom, url: url, format: "png"
+                        name: name,
+                        scale: .individual(scale),
+                        idiom: idiom,
+                        url: url,
+                        format: "png"
                     )
                 }
             }
-            // Get the primary nodeId from the first component (all variants share the same logical node)
             let primaryNodeId = components.first?.0
             return ImagePack(
                 name: packName,
@@ -706,13 +598,6 @@ class ImageLoaderBase: @unchecked Sendable {
                 fileId: fileId
             )
         }
-
-        return PNGImagesWithHashesResult(
-            packs: imagePacks,
-            computedHashes: filterResult.computedHashes,
-            allSkipped: false,
-            allAssetMetadata: filterResult.allAssetMetadata
-        )
     }
 
     // MARK: - Scale Helpers
@@ -928,20 +813,21 @@ public extension Component {
             return true
         }
 
-        let keywords = ["ios", "android", "none"]
+        let platformKeywords = ["ios", "android", "none"]
+        let containsAnyKeyword = platformKeywords.contains { description.contains($0) }
 
-        let hasNotKeywords = keywords.allSatisfy { !description.contains($0) }
-        if hasNotKeywords {
+        if !containsAnyKeyword {
             return true
         }
 
-        if (description.contains("ios") && platform == .ios)
-            || (description.contains("android") && platform == .android)
-        {
-            return true
+        switch platform {
+        case .ios:
+            return description.contains("ios")
+        case .android:
+            return description.contains("android")
+        case .flutter, .web:
+            return false
         }
-
-        return false
     }
 
     /// Checks if component should use RTL layout based on its description.
