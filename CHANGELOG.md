@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.30] - 2026-02-02
+
+### Refactor
+
+- Enhance export flow to support batch caching by @alexey1312
+
+- Simplify BatchConfigRunner export flow by @alexey1312
+
+- Simplify batch processing and context management by @alexey1312
+
+- Restructure image loading functions by @alexey1312
+
+- Streamline iOS image export process by @alexey1312
+
+- Streamline SVG parsing and improve code clarity by @alexey1312
+
+
 ## [1.2.29] - 2026-01-29
 
 ### Documentation
