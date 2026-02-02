@@ -337,27 +337,9 @@ final class SharedDownloadQueueStorageTests: XCTestCase {
         XCTAssertFalse(SharedDownloadQueueStorage.isEnabled)
     }
 
-    func testDefaultPriority() {
-        // Given: No priority set
-        // Then: Default priority is 0
-        XCTAssertEqual(SharedDownloadQueueStorage.configPriority, 0)
-    }
-
-    func testConfigIdFromLegacyStorage() async {
-        // Given: No config ID initially
-        XCTAssertNil(SharedDownloadQueueStorage.configId)
-
-        // When: Config ID is injected via legacy TaskLocal
-        await SharedDownloadQueueStorage.$_legacyConfigId.withValue("my-config") {
-            // Then: Config ID is available
-            await MainActor.run {
-                XCTAssertEqual(SharedDownloadQueueStorage.configId, "my-config")
-            }
-        }
-
-        // After: Config ID is nil again
-        XCTAssertNil(SharedDownloadQueueStorage.configId)
-    }
+    // NOTE: Tests for configId and configPriority removed.
+    // These values are now passed via ConfigExecutionContext parameter
+    // to PipelinedDownloader.download(), not via TaskLocal storage.
 }
 
 // MARK: - Test Helpers

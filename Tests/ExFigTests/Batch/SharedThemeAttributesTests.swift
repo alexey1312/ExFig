@@ -125,12 +125,16 @@ final class SharedThemeAttributesTests: XCTestCase {
     }
 
     func testTaskLocalStorageIsolation() async {
-        // Test that TaskLocal storage is properly isolated
+        // Test that TaskLocal storage is properly isolated via BatchSharedState
         let collector = SharedThemeAttributesCollector()
+        let batchState = BatchSharedState(
+            context: BatchContext(),
+            themeCollector: collector
+        )
 
-        // Run with collector in TaskLocal
-        SharedThemeAttributesStorage.$collector.withValue(collector) {
-            // Inside this scope, collector should be accessible
+        // Run with collector in BatchSharedState
+        BatchSharedState.$current.withValue(batchState) {
+            // Inside this scope, collector should be accessible via shim
             let stored = SharedThemeAttributesStorage.collector
             XCTAssertNotNil(stored)
         }

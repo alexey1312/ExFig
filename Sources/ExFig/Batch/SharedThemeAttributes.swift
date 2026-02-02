@@ -105,10 +105,14 @@ public actor SharedThemeAttributesCollector {
     }
 }
 
-/// TaskLocal storage for shared theme attributes collector.
+/// Compatibility shim for shared theme attributes collector access.
 ///
-/// When running in batch mode, this storage holds the shared collector.
-/// When running standalone commands, this is `nil` and theme attributes
+/// Reads collector from `BatchSharedState.current`.
+/// This avoids nested TaskLocal.withValue() calls which cause Swift runtime crashes on Linux.
+/// See: https://github.com/swiftlang/swift/issues/75501
+///
+/// When running in batch mode, this returns the shared collector.
+/// When running standalone commands, this returns `nil` and theme attributes
 /// are written immediately.
 ///
 /// ## Usage in ExportColors
@@ -123,5 +127,8 @@ public actor SharedThemeAttributesCollector {
 /// }
 /// ```
 public enum SharedThemeAttributesStorage {
-    @TaskLocal public static var collector: SharedThemeAttributesCollector?
+    /// Get shared theme attributes collector from BatchSharedState.
+    public static var collector: SharedThemeAttributesCollector? {
+        BatchSharedState.current?.themeCollector
+    }
 }
