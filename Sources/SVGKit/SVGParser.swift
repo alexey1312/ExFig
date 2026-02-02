@@ -458,13 +458,6 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         return (24, 24)
     }
 
-    private func parseViewBox(from element: XMLElement) -> (Double, Double)? {
-        guard let (_, _, w, h) = parseViewBoxValues(from: element) else {
-            return nil
-        }
-        return (w, h)
-    }
-
     private func parseViewBoxValues(from element: XMLElement) -> (Double, Double, Double, Double)? {
         guard let viewBox = attributeValue(element, forName: "viewBox") else {
             return nil
@@ -540,17 +533,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     }
 
     private func parseStyleAttribute(_ style: String) -> [String: String] {
-        var result: [String: String] = [:]
-        let declarations = style.split(separator: ";")
-        for declaration in declarations {
-            let parts = declaration.split(separator: ":", maxSplits: 1)
-            if parts.count == 2 {
-                let property = parts[0].trimmingCharacters(in: .whitespaces)
-                let value = parts[1].trimmingCharacters(in: .whitespaces)
-                result[property] = value
-            }
-        }
-        return result
+        parseCSSProperties(style)
     }
 
     private func createSVGPath(pathData: String, attributes: [String: String]) throws -> SVGPath {
@@ -739,91 +722,55 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     }
 
     private func convertCircleToPath(_ element: XMLElement) -> String? {
-        let cxStr = attributeValue(element, forName: "cx") ?? "0"
-        let cyStr = attributeValue(element, forName: "cy") ?? "0"
+        let cx = Double(attributeValue(element, forName: "cx") ?? "0") ?? 0
+        let cy = Double(attributeValue(element, forName: "cy") ?? "0") ?? 0
         guard let rStr = attributeValue(element, forName: "r"),
-              let cx = Double(cxStr),
-              let cy = Double(cyStr),
               let r = Double(rStr)
         else {
             return nil
         }
-
-        // Use absolute cubic Bezier curves instead of arcs for better Android VectorDrawable compatibility
-        // k ≈ 0.5523 is the magic number for approximating a circle with 4 cubic Bezier curves
-        let k = 0.5523 * r
-
-        // Start at left point (cx - r, cy) and draw 4 quadrants
-        return "M\(formatCoord(cx - r)),\(formatCoord(cy))" +
-            // Left to bottom
-            "C\(formatCoord(cx - r)),\(formatCoord(cy + k)) " +
-            "\(formatCoord(cx - k)),\(formatCoord(cy + r)) " +
-            "\(formatCoord(cx)),\(formatCoord(cy + r))" +
-            // Bottom to right
-            "C\(formatCoord(cx + k)),\(formatCoord(cy + r)) " +
-            "\(formatCoord(cx + r)),\(formatCoord(cy + k)) " +
-            "\(formatCoord(cx + r)),\(formatCoord(cy))" +
-            // Right to top
-            "C\(formatCoord(cx + r)),\(formatCoord(cy - k)) " +
-            "\(formatCoord(cx + k)),\(formatCoord(cy - r)) " +
-            "\(formatCoord(cx)),\(formatCoord(cy - r))" +
-            // Top to left
-            "C\(formatCoord(cx - k)),\(formatCoord(cy - r)) " +
-            "\(formatCoord(cx - r)),\(formatCoord(cy - k)) " +
-            "\(formatCoord(cx - r)),\(formatCoord(cy))Z"
+        return buildEllipsePath(cx: cx, cy: cy, rx: r, ry: r)
     }
 
     private func convertEllipseToPath(_ element: XMLElement) -> String? {
-        let cxStr = attributeValue(element, forName: "cx") ?? "0"
-        let cyStr = attributeValue(element, forName: "cy") ?? "0"
+        let cx = Double(attributeValue(element, forName: "cx") ?? "0") ?? 0
+        let cy = Double(attributeValue(element, forName: "cy") ?? "0") ?? 0
         guard let rxStr = attributeValue(element, forName: "rx"),
               let ryStr = attributeValue(element, forName: "ry"),
-              let cx = Double(cxStr),
-              let cy = Double(cyStr),
               let rx = Double(rxStr),
               let ry = Double(ryStr)
         else {
             return nil
         }
+        return buildEllipsePath(cx: cx, cy: cy, rx: rx, ry: ry)
+    }
 
-        // Use absolute cubic Bezier curves instead of arcs for better Android VectorDrawable compatibility
-        // k ≈ 0.5523 is the magic number for approximating an ellipse with 4 cubic Bezier curves
+    /// Builds an ellipse/circle path using cubic Bezier curves for Android VectorDrawable compatibility.
+    /// Uses k = 0.5523 constant to approximate 90-degree arcs.
+    private func buildEllipsePath(cx: Double, cy: Double, rx: Double, ry: Double) -> String {
         let kx = 0.5523 * rx
         let ky = 0.5523 * ry
 
-        // Start at left point (cx - rx, cy) and draw 4 quadrants
         return "M\(formatCoord(cx - rx)),\(formatCoord(cy))" +
-            // Left to bottom
             "C\(formatCoord(cx - rx)),\(formatCoord(cy + ky)) " +
             "\(formatCoord(cx - kx)),\(formatCoord(cy + ry)) " +
             "\(formatCoord(cx)),\(formatCoord(cy + ry))" +
-            // Bottom to right
             "C\(formatCoord(cx + kx)),\(formatCoord(cy + ry)) " +
             "\(formatCoord(cx + rx)),\(formatCoord(cy + ky)) " +
             "\(formatCoord(cx + rx)),\(formatCoord(cy))" +
-            // Right to top
             "C\(formatCoord(cx + rx)),\(formatCoord(cy - ky)) " +
             "\(formatCoord(cx + kx)),\(formatCoord(cy - ry)) " +
             "\(formatCoord(cx)),\(formatCoord(cy - ry))" +
-            // Top to left
             "C\(formatCoord(cx - kx)),\(formatCoord(cy - ry)) " +
             "\(formatCoord(cx - rx)),\(formatCoord(cy - ky)) " +
             "\(formatCoord(cx - rx)),\(formatCoord(cy))Z"
     }
 
     private func convertLineToPath(_ element: XMLElement) -> String? {
-        let x1Str = attributeValue(element, forName: "x1") ?? "0"
-        let y1Str = attributeValue(element, forName: "y1") ?? "0"
-        let x2Str = attributeValue(element, forName: "x2") ?? "0"
-        let y2Str = attributeValue(element, forName: "y2") ?? "0"
-        guard let x1 = Double(x1Str),
-              let y1 = Double(y1Str),
-              let x2 = Double(x2Str),
-              let y2 = Double(y2Str)
-        else {
-            return nil
-        }
-
+        let x1 = Double(attributeValue(element, forName: "x1") ?? "0") ?? 0
+        let y1 = Double(attributeValue(element, forName: "y1") ?? "0") ?? 0
+        let x2 = Double(attributeValue(element, forName: "x2") ?? "0") ?? 0
+        let y2 = Double(attributeValue(element, forName: "y2") ?? "0") ?? 0
         return "M\(x1),\(y1)L\(x2),\(y2)"
     }
 
@@ -1038,15 +985,13 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     /// Parses CSS property declarations (key: value; pairs)
     private func parseCSSProperties(_ properties: String) -> [String: String] {
         var result: [String: String] = [:]
-        let declarations = properties.split(separator: ";")
-        for declaration in declarations {
+        for declaration in properties.split(separator: ";") {
             let parts = declaration.split(separator: ":", maxSplits: 1)
-            if parts.count == 2 {
-                let property = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
-                let value = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                if !value.isEmpty {
-                    result[property] = value
-                }
+            guard parts.count == 2 else { continue }
+            let property = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+            let value = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
+            if !value.isEmpty {
+                result[property] = value
             }
         }
         return result
@@ -1134,30 +1079,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
         // If we need to wrap in a group, create one
         if needsGroup {
-            // Combine x/y offset with any existing transform
-            let transform: SVGTransform? = if let useX, let useY {
-                if let existingTransform = useTransform {
-                    // Combine translate with existing transform
-                    SVGTransform(
-                        translateX: (existingTransform.translateX ?? 0) + useX,
-                        translateY: (existingTransform.translateY ?? 0) + useY,
-                        scaleX: existingTransform.scaleX,
-                        scaleY: existingTransform.scaleY,
-                        rotation: existingTransform.rotation,
-                        pivotX: existingTransform.pivotX,
-                        pivotY: existingTransform.pivotY
-                    )
-                } else {
-                    SVGTransform(translateX: useX, translateY: useY)
-                }
-            } else if let useX {
-                SVGTransform(translateX: useX, translateY: 0)
-            } else if let useY {
-                SVGTransform(translateX: 0, translateY: useY)
-            } else {
-                useTransform
-            }
-
+            let transform = combineTransform(useTransform, withOffset: (useX, useY))
             let group = SVGGroup(
                 transform: transform,
                 clipPath: nil,
@@ -1169,6 +1091,34 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         }
 
         return (resolvedPaths, resolvedGroups)
+    }
+
+    /// Combines a transform with an x/y offset, creating a new transform
+    private func combineTransform(
+        _ baseTransform: SVGTransform?,
+        withOffset offset: (x: Double?, y: Double?)
+    ) -> SVGTransform? {
+        let offsetX = offset.x ?? 0
+        let offsetY = offset.y ?? 0
+        let hasOffset = offset.x != nil || offset.y != nil
+
+        if let base = baseTransform {
+            return SVGTransform(
+                translateX: (base.translateX ?? 0) + offsetX,
+                translateY: (base.translateY ?? 0) + offsetY,
+                scaleX: base.scaleX,
+                scaleY: base.scaleY,
+                rotation: base.rotation,
+                pivotX: base.pivotX,
+                pivotY: base.pivotY
+            )
+        }
+
+        if hasOffset {
+            return SVGTransform(translateX: offsetX, translateY: offsetY)
+        }
+
+        return nil
     }
 
     /// Resolves content from a referenced element (symbol, g, path, etc.)
@@ -1345,7 +1295,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
 
     private func resolveClipPath(from element: XMLElement) -> String? {
         guard let clipPathRef = attributeValue(element, forName: "clip-path"),
-              let id = parseClipPathReference(clipPathRef)
+              let id = parseUrlReference(clipPathRef)
         else {
             return nil
         }
@@ -1356,7 +1306,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     /// Figma uses `mask="url(#id)"` instead of `clip-path` for rounded corners.
     private func resolveMask(from element: XMLElement) -> String? {
         guard let maskRef = attributeValue(element, forName: "mask"),
-              let id = parseClipPathReference(maskRef) // Same url(#id) format
+              let id = parseUrlReference(maskRef) // Same url(#id) format
         else {
             return nil
         }
@@ -1410,7 +1360,7 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
         return children
     }
 
-    private func parseClipPathReference(_ reference: String) -> String? {
+    private func parseUrlReference(_ reference: String) -> String? {
         // Parse url(#id) format
         let pattern = #"url\(#([^)]+)\)"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []),
@@ -1499,36 +1449,23 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     }
 
     private func parseGradientStops(_ element: XMLElement) -> [SVGGradientStop] {
-        var stops: [SVGGradientStop] = []
-
-        for stopElement in childElements(of: element, named: "stop") {
-            let offset = parseGradientOffset(attributeValue(stopElement, forName: "offset"))
-
-            // Parse color from stop-color attribute or style
-            var colorStr: String?
-            var opacityStr: String?
-
-            if let style = attributeValue(stopElement, forName: "style") {
-                let styleAttrs = parseStyleAttribute(style)
-                colorStr = styleAttrs["stop-color"]
-                opacityStr = styleAttrs["stop-opacity"]
+        childElements(of: element, named: "stop")
+            .map { stopElement in
+                let offset = parseGradientOffset(attributeValue(stopElement, forName: "offset"))
+                let (colorStr, opacityStr) = extractStopAttributes(from: stopElement)
+                let color = colorStr.flatMap { SVGColor.parse($0) } ?? SVGColor(red: 0, green: 0, blue: 0)
+                let opacity = opacityStr.flatMap { Double($0) } ?? 1.0
+                return SVGGradientStop(offset: offset, color: color, opacity: opacity)
             }
+            .sorted { $0.offset < $1.offset }
+    }
 
-            if colorStr == nil {
-                colorStr = attributeValue(stopElement, forName: "stop-color")
-            }
-            if opacityStr == nil {
-                opacityStr = attributeValue(stopElement, forName: "stop-opacity")
-            }
-
-            let color = colorStr.flatMap { SVGColor.parse($0) } ?? SVGColor(red: 0, green: 0, blue: 0)
-            let opacity = opacityStr.flatMap { Double($0) } ?? 1.0
-
-            stops.append(SVGGradientStop(offset: offset, color: color, opacity: opacity))
-        }
-
-        // Sort stops by offset for consistent rendering
-        return stops.sorted { $0.offset < $1.offset }
+    /// Extracts stop-color and stop-opacity from style attribute or element attributes
+    private func extractStopAttributes(from element: XMLElement) -> (color: String?, opacity: String?) {
+        let styleAttrs = attributeValue(element, forName: "style").map { parseStyleAttribute($0) } ?? [:]
+        let colorStr = styleAttrs["stop-color"] ?? attributeValue(element, forName: "stop-color")
+        let opacityStr = styleAttrs["stop-opacity"] ?? attributeValue(element, forName: "stop-opacity")
+        return (colorStr, opacityStr)
     }
 
     private func parseGradientOffset(_ string: String?) -> Double {
@@ -1567,29 +1504,16 @@ public final class SVGParser: @unchecked Sendable { // swiftlint:disable:this ty
     /// Resolves fill value to SVGFill type
     /// Handles url(#id) references to gradients and solid colors
     private func resolveFill(_ fillValue: String?) -> SVGFill {
-        guard let fill = fillValue else { return .none }
+        guard let fill = fillValue, fill != "none" else { return .none }
 
-        // Check for gradient reference
-        if fill.hasPrefix("url(#") {
-            let pattern = #"url\(#([^)]+)\)"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
-               let match = regex.firstMatch(in: fill, options: [], range: NSRange(fill.startIndex..., in: fill)),
-               let idRange = Range(match.range(at: 1), in: fill)
-            {
-                let id = String(fill[idRange])
-
-                if let linearGradient = linearGradientDefs[id] {
-                    return .linearGradient(linearGradient)
-                }
-                if let radialGradient = radialGradientDefs[id] {
-                    return .radialGradient(radialGradient)
-                }
+        // Check for gradient reference using existing url(#id) parser
+        if let id = parseUrlReference(fill) {
+            if let linearGradient = linearGradientDefs[id] {
+                return .linearGradient(linearGradient)
             }
-            return .none
-        }
-
-        // Check for "none"
-        if fill == "none" {
+            if let radialGradient = radialGradientDefs[id] {
+                return .radialGradient(radialGradient)
+            }
             return .none
         }
 
