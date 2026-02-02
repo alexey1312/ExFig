@@ -487,14 +487,12 @@ extension ExFigCommand {
 
         /// Wraps execution with TaskLocal context for pre-fetched data and shared granular cache.
         ///
-        /// Uses explicit switch-case instead of nested helper closures to avoid Swift runtime crash
-        /// on Linux with deeply nested @Sendable closures.
-        /// See: https://github.com/swiftlang/swift/issues/75501
-        private func withBatchContext<T: Sendable>(
+        /// Wraps execution with TaskLocal context for pre-fetched data and shared granular cache.
+        private func withBatchContext<T>(
             preFetchedVersions: PreFetchedFileVersions?,
             preFetchedComponents: PreFetchedComponents?,
             sharedGranularCache: SharedGranularCache?,
-            operation: @Sendable () async -> T
+            operation: () async -> T
         ) async -> T {
             switch (preFetchedVersions, preFetchedComponents, sharedGranularCache) {
             // All three contexts
