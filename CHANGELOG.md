@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.31] - 2026-02-02
+
+### Bug Fixes
+
+- Replace nested @Sendable closures with switch-case in withBatchContext by @alexey1312
+
+
 ## [1.2.30] - 2026-02-02
 
 ### Refactor
