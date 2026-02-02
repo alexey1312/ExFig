@@ -56,15 +56,24 @@ extension ExFigCommand {
 
         /// Performs the actual export and returns the number of exported colors.
         func performExport(client: Client, ui: TerminalUI) async throws -> Int {
-            let result = try await performExportWithResult(client: client, ui: ui)
+            let result = try await performExportWithResult(client: client, ui: ui, context: nil)
             return result.count
         }
 
         // swiftlint:disable:next cyclomatic_complexity function_body_length
         /// Performs export and returns full result with file versions for batch mode.
-        func performExportWithResult(client: Client, ui: TerminalUI) async throws -> ColorsExportResult {
-            // Detect batch mode via TaskLocal (batch context presence)
-            let batchMode = BatchContextStorage.context?.isBatchMode ?? false
+        /// - Parameters:
+        ///   - client: Figma API client.
+        ///   - ui: Terminal UI for output.
+        ///   - context: Optional per-config execution context (passed explicitly in batch mode).
+        func performExportWithResult(
+            client: Client,
+            ui: TerminalUI,
+            context: ConfigExecutionContext? = nil
+        ) async throws -> ColorsExportResult {
+            // Detect batch mode via BatchSharedState (single TaskLocal)
+            let batchState = BatchSharedState.current
+            let batchMode = batchState?.isBatchMode ?? false
 
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(
@@ -80,7 +89,8 @@ extension ExFigCommand {
                 return ColorsExportResult(count: 0, fileVersions: nil)
             }
 
-            if BatchProgressViewStorage.progressView == nil {
+            // In batch mode, progress view is accessed via BatchSharedState
+            if batchState?.progressView == nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export colors.")
             }
 

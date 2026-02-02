@@ -17,11 +17,11 @@ final class ComponentPreFetcherTests: XCTestCase {
         super.tearDown()
     }
 
-    // MARK: - Context Preservation Tests
+    // MARK: - Basic Functionality Tests
 
-    func testPreFetchOutsideBatchModeCreatesLocalContext() async throws {
+    func testPreFetchOutsideBatchModeFetchesComponents() async throws {
         // Given: No existing batch context
-        XCTAssertNil(BatchContextStorage.context)
+        XCTAssertNil(BatchSharedState.current)
 
         let client = MockClient()
         let params = Params.make(lightFileId: "file123")
@@ -33,30 +33,25 @@ final class ComponentPreFetcherTests: XCTestCase {
         client.setResponse(mockComponents, for: ComponentsEndpoint.self)
 
         // When: Pre-fetching components outside batch mode
-        var capturedContext: BatchContext?
+        var processExecuted = false
         _ = try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
             client: client,
             params: params
         ) {
-            capturedContext = BatchContextStorage.context
+            processExecuted = true
             return "result"
         }
 
-        // Then: Local context was created with components only
-        XCTAssertNotNil(capturedContext)
-        XCTAssertNotNil(capturedContext?.components)
-        XCTAssertNil(capturedContext?.versions)
-        XCTAssertNil(capturedContext?.granularCache)
-        XCTAssertNil(capturedContext?.nodes)
-
-        // And: Context is no longer available after closure
-        XCTAssertNil(BatchContextStorage.context)
+        // Then: Process was executed and components were fetched
+        XCTAssertTrue(processExecuted)
+        XCTAssertEqual(client.requestCount, 1, "Should fetch components via API")
     }
 
-    func testPreFetchPreservesExistingVersionsInBatchMode() async throws {
-        // Given: Existing batch context with versions
+    func testPreFetchInBatchModeFetchesAndStoresComponents() async throws {
+        // Given: Existing batch context with versions but no components
         let existingVersions = PreFetchedFileVersions(versions: ["fileA": makeMetadata(version: "v1")])
         let existingContext = BatchContext(versions: existingVersions)
+        let batchState = BatchSharedState(context: existingContext)
 
         let client = MockClient()
         let params = Params.make(lightFileId: "file123")
@@ -67,107 +62,137 @@ final class ComponentPreFetcherTests: XCTestCase {
         ]
         client.setResponse(mockComponents, for: ComponentsEndpoint.self)
 
-        // When: Pre-fetching components inside batch mode with existing versions
-        var capturedContext: BatchContext?
-        await BatchContextStorage.$context.withValue(existingContext) {
+        // When: Pre-fetching components inside batch mode
+        await BatchSharedState.$current.withValue(batchState) {
             do {
                 _ = try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
                     client: client,
                     params: params
                 ) {
-                    capturedContext = BatchContextStorage.context
-                    return "result"
+                    "result"
                 }
             } catch {
                 XCTFail("Unexpected error: \(error)")
             }
         }
 
-        // Then: Both components and versions are available
-        XCTAssertNotNil(capturedContext?.components)
-        XCTAssertNotNil(capturedContext?.versions)
-        XCTAssertEqual(capturedContext?.versions?.metadata(for: "fileA")?.version, "v1")
+        // Then: Components were fetched and stored in actor
+        XCTAssertEqual(client.requestCount, 1, "Should fetch components via API")
+        let storedComponents = await batchState.getComponents()
+        XCTAssertNotNil(storedComponents, "Components should be stored in BatchSharedState")
+        XCTAssertTrue(storedComponents?.hasComponents(for: "file123") ?? false)
     }
 
-    func testPreFetchPreservesAllExistingContextFields() async throws {
-        // Given: Existing batch context with all fields populated
-        let existingVersions = PreFetchedFileVersions(versions: ["fileA": makeMetadata(version: "v1")])
-        let existingNodes = PreFetchedNodes(nodes: ["fileA": [:]])
-
-        var cache = ImageTrackingCache()
-        cache.updateFileVersion(fileId: "fileA", version: "v1")
-        let cachePath = tempDirectory.appendingPathComponent("test-cache.json")
-        let existingGranularCache = SharedGranularCache(cache: cache, cachePath: cachePath)
-
-        let existingContext = BatchContext(
-            versions: existingVersions,
-            components: nil, // No components yet
-            granularCache: existingGranularCache,
-            nodes: existingNodes
-        )
-
-        let client = MockClient()
-        let params = Params.make(lightFileId: "file123")
-
-        // Mock components response
-        let mockComponents = [
-            Component.make(nodeId: "1:1", name: "icon_test", frameName: "Icons"),
-        ]
-        client.setResponse(mockComponents, for: ComponentsEndpoint.self)
-
-        // When: Pre-fetching components inside batch mode with all context fields
-        var capturedContext: BatchContext?
-        await BatchContextStorage.$context.withValue(existingContext) {
-            do {
-                _ = try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
-                    client: client,
-                    params: params
-                ) {
-                    capturedContext = BatchContextStorage.context
-                    return "result"
-                }
-            } catch {
-                XCTFail("Unexpected error: \(error)")
-            }
-        }
-
-        // Then: All context fields are preserved
-        XCTAssertNotNil(capturedContext?.versions, "versions should be preserved")
-        XCTAssertNotNil(capturedContext?.components, "components should be added")
-        XCTAssertNotNil(capturedContext?.granularCache, "granularCache should be preserved")
-        XCTAssertNotNil(capturedContext?.nodes, "nodes should be preserved")
-    }
-
-    func testPreFetchSkipsWhenComponentsAlreadyAvailable() async throws {
-        // Given: Existing batch context already has components
-        let existingComponents = PreFetchedComponents(components: ["fileA": [
+    func testPreFetchSkipsWhenComponentsAlreadyAvailableInBatch() async throws {
+        // Given: Existing batch context already has components for required file
+        let existingComponents = PreFetchedComponents(components: ["file123": [
             Component.make(nodeId: "1:1", name: "existing_icon", frameName: "Icons"),
         ]])
         let existingContext = BatchContext(components: existingComponents)
+        let batchState = BatchSharedState(context: existingContext)
 
         let client = MockClient()
         let params = Params.make(lightFileId: "file123")
 
         // When: Pre-fetching components when they're already available
-        var capturedContext: BatchContext?
-        await BatchContextStorage.$context.withValue(existingContext) {
+        await BatchSharedState.$current.withValue(batchState) {
             do {
                 _ = try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
                     client: client,
                     params: params
                 ) {
-                    capturedContext = BatchContextStorage.context
-                    return "result"
+                    "result"
                 }
             } catch {
                 XCTFail("Unexpected error: \(error)")
             }
         }
 
-        // Then: Original components are preserved (no new fetch)
-        XCTAssertEqual(client.requestCount, 0, "No API calls should be made")
-        XCTAssertNotNil(capturedContext?.components)
-        XCTAssertTrue(capturedContext?.components?.hasComponents(for: "fileA") ?? false)
+        // Then: No API calls should be made - components already exist
+        XCTAssertEqual(client.requestCount, 0, "No API calls should be made when components exist")
+    }
+
+    func testPreFetchFetchesOnlyMissingComponents() async throws {
+        // Given: Existing batch context has components for some files but not all
+        let existingComponents = PreFetchedComponents(components: ["fileA": [
+            Component.make(nodeId: "1:1", name: "existing_icon", frameName: "Icons"),
+        ]])
+        let existingContext = BatchContext(components: existingComponents)
+        let batchState = BatchSharedState(context: existingContext)
+
+        let client = MockClient()
+        // Request components for both fileA (exists) and fileB (missing)
+        let params = Params.make(lightFileId: "fileA", darkFileId: "fileB")
+
+        // Mock components response for fileB
+        let mockComponents = [
+            Component.make(nodeId: "2:1", name: "new_icon", frameName: "Icons"),
+        ]
+        client.setResponse(mockComponents, for: ComponentsEndpoint.self)
+
+        // When: Pre-fetching components
+        await BatchSharedState.$current.withValue(batchState) {
+            do {
+                _ = try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                    client: client,
+                    params: params
+                ) {
+                    "result"
+                }
+            } catch {
+                XCTFail("Unexpected error: \(error)")
+            }
+        }
+
+        // Then: Only fileB should be fetched
+        XCTAssertEqual(client.requestCount, 1, "Should only fetch missing fileB")
+    }
+
+    func testPreFetchComponentsDirectly() async throws {
+        // Given: Client and params
+        let client = MockClient()
+        let params = Params.make(lightFileId: "file123")
+
+        let mockComponents = [
+            Component.make(nodeId: "1:1", name: "icon_test", frameName: "Icons"),
+        ]
+        client.setResponse(mockComponents, for: ComponentsEndpoint.self)
+
+        // When: Using the direct preFetchComponents method
+        let result = try await ComponentPreFetcher.preFetchComponents(
+            client: client,
+            params: params
+        )
+
+        // Then: Components were fetched and returned
+        XCTAssertNotNil(result)
+        XCTAssertTrue(result?.hasComponents(for: "file123") ?? false)
+        XCTAssertEqual(client.requestCount, 1)
+    }
+
+    func testPreFetchComponentsSkipsInBatchModeWhenExists() async throws {
+        // Given: Batch mode with existing components
+        let existingComponents = PreFetchedComponents(components: ["file123": [
+            Component.make(nodeId: "1:1", name: "existing_icon", frameName: "Icons"),
+        ]])
+        let existingContext = BatchContext(components: existingComponents)
+        let batchState = BatchSharedState(context: existingContext)
+
+        let client = MockClient()
+        let params = Params.make(lightFileId: "file123")
+
+        // When: Using the direct preFetchComponents method inside batch mode
+        var result: PreFetchedComponents?
+        await BatchSharedState.$current.withValue(batchState) {
+            result = try? await ComponentPreFetcher.preFetchComponents(
+                client: client,
+                params: params
+            )
+        }
+
+        // Then: No fetch happened, nil returned
+        XCTAssertNil(result, "Should return nil when all components already exist")
+        XCTAssertEqual(client.requestCount, 0)
     }
 
     // MARK: - Helpers

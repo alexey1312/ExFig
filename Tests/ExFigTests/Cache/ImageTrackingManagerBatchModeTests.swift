@@ -60,7 +60,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
         let batchContext = BatchContext(granularCache: sharedCache)
 
         // Create manager in batch mode with shared cache
-        BatchContextStorage.$context.withValue(batchContext) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: batchContext)) {
             let manager = ImageTrackingManager(
                 client: mockClient,
                 cachePath: nil,
@@ -208,7 +208,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
         var managerInBatchMode: ImageTrackingManager?
 
-        BatchContextStorage.$context.withValue(batchContext) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: batchContext)) {
             // Create manager inside TaskLocal scope
             managerInBatchMode = ImageTrackingManager(
                 client: mockClient,
@@ -235,7 +235,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
         let sharedCache = SharedGranularCache(cache: cache, cachePath: cachePath)
         let batchContext = BatchContext(granularCache: sharedCache)
 
-        BatchContextStorage.$context.withValue(batchContext) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: batchContext)) {
             // Create multiple managers (simulating parallel config processing)
             let manager1 = ImageTrackingManager(
                 client: mockClient,

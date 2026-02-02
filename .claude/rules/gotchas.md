@@ -23,10 +23,63 @@ func loadImages(
 }
 ```
 
+### Nested TaskLocal.withValue() Crash (Linux)
+
+**Bug:** https://github.com/swiftlang/swift/issues/75501
+
+Deep nesting of `TaskLocal.withValue()` (10+ levels) causes Swift runtime crash on Linux:
+`freed pointer was not the last allocation`
+
+**Symptoms:**
+- Works fine on macOS
+- Crashes on Linux (Ubuntu 22.04) in batch mode with `--experimental-granular-cache`
+- Error appears during task-local allocator cleanup
+
+**Root cause:**
+Swift runtime on Linux incorrectly manages task-local allocator when:
+1. Deep nesting of `TaskLocal.withValue()` (10+ levels)
+2. Nested `withValue` for the **same** TaskLocal inside TaskGroup
+
+**Solution: BatchSharedState actor pattern**
+
+Consolidate all batch state into a single actor with ONE `@TaskLocal`:
+
+```swift
+// BAD - 10+ nesting levels crashes on Linux
+$collector.withValue(c) {
+    $progressView.withValue(p) {
+        $context.withValue(ctx) {
+            $queue.withValue(q) {
+                $configId.withValue(id) {
+                    ComponentPreFetcher:
+                        $context.withValue(localCtx) { // CRASH!
+                        }
+                }
+            }
+        }
+    }
+}
+
+// GOOD - single nesting level
+let state = BatchSharedState(
+    context: batchContext,
+    progressView: progressView,
+    downloadQueue: queue
+)
+BatchSharedState.$current.withValue(state) {
+    // Access via state actor, no nested withValue
+}
+```
+
+**Key principles:**
+1. ONE `@TaskLocal` for all batch shared state
+2. Per-config data passed via explicit parameters (`ConfigExecutionContext`)
+3. Mutable state lives in actor methods, not nested `withValue`
+4. Never create nested `withValue` for the same TaskLocal
+
 ### @Sendable Closures Crash (Linux)
 
 Adding `@Sendable` to closures passed to TaskLocal `withValue` causes runtime crash on Linux:
-`freed pointer was not the last allocation`
 
 ```swift
 // BAD - crashes on Linux

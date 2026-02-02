@@ -9,23 +9,26 @@ enum PipelinedDownloader {
     /// - Parameters:
     ///   - files: Files to download (can contain both local and remote files)
     ///   - fileDownloader: Fallback downloader for standalone mode
+    ///   - context: Optional config execution context (for batch mode)
     ///   - onProgress: Progress callback (current, total)
     /// - Returns: Downloaded files with local URLs
     ///
-    /// In batch mode, configId and priority are read from TaskLocal storage.
+    /// In batch mode, queue is accessed via BatchSharedState.current.
     static func download(
         files: [FileContents],
         fileDownloader: FileDownloader,
+        context: ConfigExecutionContext? = nil,
         onProgress: DownloadProgressCallback? = nil
     ) async throws -> [FileContents] {
-        // Check if pipelined downloads are enabled
-        if let queue = SharedDownloadQueueStorage.queue,
-           let configId = SharedDownloadQueueStorage.configId
+        // Check if pipelined downloads are enabled via BatchSharedState
+        if let batchState = BatchSharedState.current,
+           let queue = batchState.downloadQueue,
+           let configId = context?.configId
         {
             try await downloadWithQueue(
                 files: files,
                 configId: configId,
-                priority: SharedDownloadQueueStorage.configPriority,
+                priority: context?.configPriority ?? 0,
                 queue: queue,
                 onProgress: onProgress
             )

@@ -290,20 +290,23 @@ final class PipelinedDownloaderTests: XCTestCase {
         XCTAssertEqual(result.count, 1)
     }
 
-    func testDownloadWithQueueInjected() async throws {
-        // Given: Queue injected via TaskLocal
+    func testDownloadWithQueueInjectedViaBatchState() async throws {
+        // Given: Queue injected via BatchSharedState (new architecture)
         let queue = SharedDownloadQueue(maxConcurrentDownloads: 5)
+        let context = BatchContext()
+        let batchState = BatchSharedState(context: context, downloadQueue: queue)
+
         let files = [FileContents.makeLocal(name: "test")]
         let downloader = FileDownloader()
+        let configContext = ConfigExecutionContext(configId: "test-config", configPriority: 0)
 
-        // When: Downloading with queue injection (local files only)
-        let result = try await SharedDownloadQueueStorage.$queue.withValue(queue) {
-            try await SharedDownloadQueueStorage.$configId.withValue("test-config") {
-                try await PipelinedDownloader.download(
-                    files: files,
-                    fileDownloader: downloader
-                )
-            }
+        // When: Downloading with BatchSharedState injection
+        let result = try await BatchSharedState.$current.withValue(batchState) {
+            try await PipelinedDownloader.download(
+                files: files,
+                fileDownloader: downloader,
+                context: configContext
+            )
         }
 
         // Then: Uses queue (local files pass through)
@@ -314,14 +317,17 @@ final class PipelinedDownloaderTests: XCTestCase {
 // MARK: - SharedDownloadQueueStorage Tests
 
 final class SharedDownloadQueueStorageTests: XCTestCase {
-    func testIsEnabledWhenQueueInjected() async {
+    func testIsEnabledWhenQueueInjectedViaBatchState() async {
         // Given: No queue injected initially
         XCTAssertFalse(SharedDownloadQueueStorage.isEnabled)
 
-        // When: Queue is injected
+        // When: Queue is injected via BatchSharedState
         let queue = SharedDownloadQueue(maxConcurrentDownloads: 5)
-        await SharedDownloadQueueStorage.$queue.withValue(queue) {
-            // Then: isEnabled returns true
+        let context = BatchContext()
+        let batchState = BatchSharedState(context: context, downloadQueue: queue)
+
+        await BatchSharedState.$current.withValue(batchState) {
+            // Then: isEnabled returns true (reads from BatchSharedState)
             await MainActor.run {
                 XCTAssertTrue(SharedDownloadQueueStorage.isEnabled)
             }
@@ -337,12 +343,12 @@ final class SharedDownloadQueueStorageTests: XCTestCase {
         XCTAssertEqual(SharedDownloadQueueStorage.configPriority, 0)
     }
 
-    func testConfigIdInjection() async {
+    func testConfigIdFromLegacyStorage() async {
         // Given: No config ID initially
         XCTAssertNil(SharedDownloadQueueStorage.configId)
 
-        // When: Config ID is injected
-        await SharedDownloadQueueStorage.$configId.withValue("my-config") {
+        // When: Config ID is injected via legacy TaskLocal
+        await SharedDownloadQueueStorage.$_legacyConfigId.withValue("my-config") {
             // Then: Config ID is available
             await MainActor.run {
                 XCTAssertEqual(SharedDownloadQueueStorage.configId, "my-config")

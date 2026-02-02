@@ -1,25 +1,13 @@
 import FigmaAPI
 
-/// Unified context for batch processing optimization.
+// MARK: - BatchContext (Immutable Pre-fetched Data)
+
+/// Immutable pre-fetched data for batch processing optimization.
 ///
-/// Consolidates all pre-fetched data into a single struct to avoid nested `@Sendable` closures
-/// which can cause Swift runtime crashes on Linux.
+/// Contains data that is fetched once at batch start and shared read-only across all configs.
+/// This struct is stored inside `BatchSharedState` and should not be used with TaskLocal directly.
+///
 /// See: https://github.com/swiftlang/swift/issues/75501
-///
-/// ## Usage
-///
-/// ```swift
-/// let context = BatchContext(
-///     versions: preFetchedVersions,
-///     components: preFetchedComponents,
-///     granularCache: sharedGranularCache,
-///     nodes: preFetchedNodes
-/// )
-///
-/// await BatchContextStorage.$context.withValue(context) {
-///     // All batch data accessible via BatchContextStorage.context
-/// }
-/// ```
 struct BatchContext: Sendable {
     /// Pre-fetched file metadata for version checking.
     let versions: PreFetchedFileVersions?
@@ -47,8 +35,6 @@ struct BatchContext: Sendable {
     }
 
     /// Whether any batch context is active (any field is non-nil).
-    ///
-    /// Used to detect batch mode in export commands.
     var isBatchMode: Bool {
         versions != nil || components != nil || granularCache != nil || nodes != nil
     }
@@ -57,37 +43,232 @@ struct BatchContext: Sendable {
     var hasGranularCache: Bool {
         granularCache != nil
     }
+
+    /// Returns a copy with updated components.
+    func withComponents(_ components: PreFetchedComponents?) -> BatchContext {
+        BatchContext(
+            versions: versions,
+            components: components,
+            granularCache: granularCache,
+            nodes: nodes
+        )
+    }
 }
 
-/// TaskLocal storage for unified batch context.
+// MARK: - ConfigExecutionContext (Per-Config Data)
+
+/// Per-config execution context passed explicitly to avoid nested TaskLocal.withValue().
 ///
-/// Replaces individual storages:
-/// - `PreFetchedVersionsStorage`
-/// - `PreFetchedComponentsStorage`
-/// - `SharedGranularCacheStorage`
-/// - `PreFetchedNodesStorage`
+/// This struct contains data specific to a single config being processed.
+/// It is passed as a parameter instead of using TaskLocal to avoid the Linux crash.
+struct ConfigExecutionContext: Sendable {
+    /// Config identifier for progress tracking and logging.
+    let configId: String
+
+    /// Priority for download ordering (lower = higher priority).
+    let configPriority: Int
+
+    /// Asset type currently being processed (for progress routing).
+    let assetType: AssetType?
+
+    /// Asset types that can be processed.
+    enum AssetType: String, Sendable {
+        case colors
+        case icons
+        case images
+        case typography
+    }
+
+    init(
+        configId: String,
+        configPriority: Int = 0,
+        assetType: AssetType? = nil
+    ) {
+        self.configId = configId
+        self.configPriority = configPriority
+        self.assetType = assetType
+    }
+
+    /// Returns a copy with different asset type.
+    func with(assetType: AssetType) -> ConfigExecutionContext {
+        ConfigExecutionContext(
+            configId: configId,
+            configPriority: configPriority,
+            assetType: assetType
+        )
+    }
+}
+
+// MARK: - BatchSharedState (Consolidated Actor)
+
+/// Actor consolidating ALL shared state for batch mode processing.
 ///
-/// ## Usage in Batch Mode
+/// This actor replaces multiple individual TaskLocal storages to avoid deep nesting
+/// of `withValue()` calls, which causes Swift runtime crashes on Linux.
+/// See: https://github.com/swiftlang/swift/issues/75501
 ///
+/// ## Architecture
+///
+/// Instead of nested TaskLocal scopes:
 /// ```swift
-/// let context = BatchContext(versions: ..., components: ..., granularCache: ..., nodes: ...)
-/// await BatchContextStorage.$context.withValue(context) {
-///     // All configs executed here can access batch data
+/// // OLD (causes crash on Linux with 10+ nesting levels)
+/// $collector.withValue(c) {
+///     $progressView.withValue(p) {
+///         $context.withValue(ctx) {
+///             $queue.withValue(q) { ... }
+///         }
+///     }
 /// }
 /// ```
 ///
-/// ## Usage in Consumers
+/// We use a single TaskLocal with an actor:
+/// ```swift
+/// // NEW (single nesting level)
+/// BatchSharedState.$current.withValue(state) {
+///     // Access everything via state actor
+/// }
+/// ```
+///
+/// ## Usage
 ///
 /// ```swift
-/// // Check for batch mode
-/// if BatchContextStorage.context?.isBatchMode == true { ... }
+/// let state = BatchSharedState(
+///     context: batchContext,
+///     progressView: progressView,
+///     themeCollector: collector,
+///     downloadQueue: queue
+/// )
 ///
-/// // Access specific data
-/// if let versions = BatchContextStorage.context?.versions { ... }
-/// if let components = BatchContextStorage.context?.components { ... }
-/// if let cache = BatchContextStorage.context?.granularCache { ... }
-/// if let nodes = BatchContextStorage.context?.nodes { ... }
+/// await BatchSharedState.$current.withValue(state) {
+///     // Inside batch processing
+///     if let ctx = BatchSharedState.current?.context { ... }
+///     if let progress = BatchSharedState.current?.progressView { ... }
+/// }
+/// ```
+actor BatchSharedState {
+    // MARK: - Immutable Pre-fetched Data
+
+    /// Consolidated immutable pre-fetched data.
+    let context: BatchContext
+
+    // MARK: - Shared Actors (Thread-safe Mutable State)
+
+    /// Progress view for batch UI display.
+    let progressView: BatchProgressView?
+
+    /// Collector for theme attributes across configs.
+    let themeCollector: SharedThemeAttributesCollector?
+
+    /// Shared download queue for cross-config pipelining.
+    let downloadQueue: SharedDownloadQueue?
+
+    // MARK: - Mutable Components State
+
+    /// Locally pre-fetched components (can be updated during execution).
+    /// Used when batch-level pre-fetch didn't include components for a specific file.
+    private var localComponents: PreFetchedComponents?
+
+    // MARK: - TaskLocal Storage
+
+    /// Single TaskLocal for all batch state.
+    /// This is the ONLY TaskLocal used in batch mode to avoid nesting issues.
+    @TaskLocal static var current: BatchSharedState?
+
+    // MARK: - Initialization
+
+    init(
+        context: BatchContext,
+        progressView: BatchProgressView? = nil,
+        themeCollector: SharedThemeAttributesCollector? = nil,
+        downloadQueue: SharedDownloadQueue? = nil
+    ) {
+        self.context = context
+        self.progressView = progressView
+        self.themeCollector = themeCollector
+        self.downloadQueue = downloadQueue
+        localComponents = nil
+    }
+
+    // MARK: - Accessors (nonisolated for sync access)
+
+    /// Get pre-fetched versions (nonisolated - immutable data).
+    nonisolated var versions: PreFetchedFileVersions? {
+        context.versions
+    }
+
+    /// Get pre-fetched nodes (nonisolated - immutable data).
+    nonisolated var nodes: PreFetchedNodes? {
+        context.nodes
+    }
+
+    /// Get shared granular cache (nonisolated - immutable data).
+    nonisolated var granularCache: SharedGranularCache? {
+        context.granularCache
+    }
+
+    /// Check if batch mode is active.
+    nonisolated var isBatchMode: Bool {
+        context.isBatchMode
+    }
+
+    // MARK: - Components Access (may need isolation)
+
+    /// Get components - either from batch context or locally pre-fetched.
+    func getComponents() -> PreFetchedComponents? {
+        localComponents ?? context.components
+    }
+
+    /// Set locally pre-fetched components.
+    func setLocalComponents(_ components: PreFetchedComponents?) {
+        localComponents = components
+    }
+
+    /// Check if components are available for a file.
+    func hasComponents(for fileId: String) -> Bool {
+        if let local = localComponents, local.components(for: fileId) != nil {
+            return true
+        }
+        if let batch = context.components, batch.components(for: fileId) != nil {
+            return true
+        }
+        return false
+    }
+
+    /// Get components for a specific file.
+    func getComponents(for fileId: String) -> [Component]? {
+        if let local = localComponents, let comps = local.components(for: fileId) {
+            return comps
+        }
+        return context.components?.components(for: fileId)
+    }
+}
+
+// MARK: - Legacy Compatibility (BatchContextStorage)
+
+/// Legacy TaskLocal storage for backward compatibility.
+///
+/// @deprecated Use `BatchSharedState.current` instead.
+/// This enum provides compatibility shims during migration.
+///
+/// ## Migration Path
+///
+/// Old code:
+/// ```swift
+/// if let ctx = BatchContextStorage.context { ... }
+/// ```
+///
+/// New code:
+/// ```swift
+/// if let state = BatchSharedState.current { ... }
 /// ```
 enum BatchContextStorage {
-    @TaskLocal static var context: BatchContext?
+    /// Legacy accessor - returns context from BatchSharedState if available.
+    static var context: BatchContext? {
+        BatchSharedState.current?.context
+    }
+
+    /// Check if batch mode is active.
+    static var isBatchMode: Bool {
+        BatchSharedState.current?.isBatchMode ?? false
+    }
 }

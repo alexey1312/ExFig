@@ -67,7 +67,7 @@ extension ExFigCommand {
             client: Client,
             ui: TerminalUI
         ) async throws -> Int {
-            let result = try await performExportWithResult(client: client, ui: ui)
+            let result = try await performExportWithResult(client: client, ui: ui, context: nil)
             return result.count
         }
 
@@ -76,13 +76,16 @@ extension ExFigCommand {
         /// - Parameters:
         ///   - client: The Figma API client to use.
         ///   - ui: The terminal UI for progress and messages.
+        ///   - context: Optional per-config execution context (passed explicitly in batch mode).
         /// - Returns: Export result including count, hashes, and granular cache stats.
         func performExportWithResult(
             client: Client,
-            ui: TerminalUI
+            ui: TerminalUI,
+            context: ConfigExecutionContext? = nil
         ) async throws -> IconsExportResult {
-            // Detect batch mode via TaskLocal (batch context presence)
-            let batchMode = BatchContextStorage.context?.isBatchMode ?? false
+            // Detect batch mode via BatchSharedState (single TaskLocal)
+            let batchState = BatchSharedState.current
+            let batchMode = batchState?.isBatchMode ?? false
 
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(

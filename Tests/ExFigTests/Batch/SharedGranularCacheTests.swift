@@ -164,7 +164,7 @@ final class BatchContextStorageTests: XCTestCase {
 
         var capturedHashes: [String: String]?
 
-        BatchContextStorage.$context.withValue(context) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: context)) {
             capturedHashes = BatchContextStorage.context?.granularCache?.nodeHashes(for: "fileA")
         }
 
@@ -183,7 +183,7 @@ final class BatchContextStorageTests: XCTestCase {
         var insideValue: BatchContext?
         var outsideValue: BatchContext?
 
-        BatchContextStorage.$context.withValue(context) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: context)) {
             insideValue = BatchContextStorage.context
         }
 
@@ -204,7 +204,7 @@ final class BatchContextStorageTests: XCTestCase {
 
         var capturedFromNestedTask: [String: String]?
 
-        await BatchContextStorage.$context.withValue(context) {
+        await BatchSharedState.$current.withValue(BatchSharedState(context: context)) {
             await withTaskGroup(of: [String: String]?.self) { group in
                 group.addTask {
                     BatchContextStorage.context?.granularCache?.nodeHashes(for: "fileA")
@@ -222,7 +222,7 @@ final class BatchContextStorageTests: XCTestCase {
     func testIsBatchModeReturnsTrueWithAnyContext() {
         let context = BatchContext(versions: PreFetchedFileVersions(versions: [:]))
 
-        BatchContextStorage.$context.withValue(context) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: context)) {
             XCTAssertTrue(BatchContextStorage.context?.isBatchMode ?? false)
         }
     }
@@ -230,7 +230,7 @@ final class BatchContextStorageTests: XCTestCase {
     func testIsBatchModeReturnsFalseWithEmptyContext() {
         let context = BatchContext()
 
-        BatchContextStorage.$context.withValue(context) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: context)) {
             XCTAssertFalse(BatchContextStorage.context?.isBatchMode ?? true)
         }
     }
@@ -254,7 +254,7 @@ final class BatchContextStorageTests: XCTestCase {
             nodes: nodes
         )
 
-        BatchContextStorage.$context.withValue(context) {
+        BatchSharedState.$current.withValue(BatchSharedState(context: context)) {
             let ctx = BatchContextStorage.context
 
             // Verify all fields are accessible

@@ -19,10 +19,9 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
     let cachePath: String?
     let experimentalGranularCache: Bool
     let concurrentDownloads: Int
-    /// Shared download queue for cross-config pipelining (optional, nil in standalone mode).
-    let downloadQueue: SharedDownloadQueue?
-    /// Priority for this config's downloads (lower = higher priority).
-    let configPriority: Int
+
+    /// Config execution context with per-config data (passed explicitly, no TaskLocal nesting).
+    let configContext: ConfigExecutionContext
 
     func export(
         configFile: ConfigFile,
@@ -30,25 +29,11 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         client: Client,
         ui: TerminalUI
     ) async throws -> ExportStats {
-        try await withDownloadContext(configFile: configFile) {
-            try await InjectedClientStorage.$client.withValue(client) {
-                try await runExports(options: options, client: client, ui: ui)
-            }
-        }
-    }
-
-    /// Injects download queue context for pipelined downloads.
-    private func withDownloadContext<T>(
-        configFile: ConfigFile,
-        operation: () async throws -> T
-    ) async rethrows -> T {
-        try await SharedDownloadQueueStorage.$queue.withValue(downloadQueue) {
-            try await SharedDownloadQueueStorage.$configId.withValue(configFile.name) {
-                try await SharedDownloadQueueStorage.$configPriority.withValue(configPriority) {
-                    try await operation()
-                }
-            }
-        }
+        // No nested withValue calls - all context comes from:
+        // 1. BatchSharedState.current (single TaskLocal)
+        // 2. configContext (passed explicitly)
+        // 3. client (passed as parameter)
+        try await runExports(options: options, client: client, ui: ui)
     }
 
     private func runExports(
@@ -66,18 +51,22 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         // Colors export
         if hasColorsConfig(params) {
             let cmd = makeColors(options: options, cacheOptions: cacheOpts, faultToleranceOptions: faultTolerance)
-            let result = try await runExport(assetType: .colors, client: client, ui: ui) {
-                try await cmd.performExportWithResult(client: client, ui: ui)
-            }
+            let result = try await cmd.performExportWithResult(
+                client: client,
+                ui: ui,
+                context: configContext.with(assetType: .colors)
+            )
             stats += ExportStats(colors: result.count, fileVersions: result.fileVersions)
         }
 
         // Icons export
         if hasIconsConfig(params) {
             let cmd = makeIcons(options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance)
-            let result = try await runExport(assetType: .icons, client: client, ui: ui) {
-                try await cmd.performExportWithResult(client: client, ui: ui)
-            }
+            let result = try await cmd.performExportWithResult(
+                client: client,
+                ui: ui,
+                context: configContext.with(assetType: .icons)
+            )
             stats += ExportStats(
                 icons: result.count,
                 computedNodeHashes: result.computedHashes,
@@ -89,9 +78,11 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         // Images export
         if hasImagesConfig(params) {
             let cmd = makeImages(options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance)
-            let result = try await runExport(assetType: .images, client: client, ui: ui) {
-                try await cmd.performExportWithResult(client: client, ui: ui)
-            }
+            let result = try await cmd.performExportWithResult(
+                client: client,
+                ui: ui,
+                context: configContext.with(assetType: .images)
+            )
             stats += ExportStats(
                 images: result.count,
                 computedNodeHashes: result.computedHashes,
@@ -103,25 +94,15 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         // Typography export
         if hasTypographyConfig(params) {
             let cmd = makeTypography(options: options, cacheOptions: cacheOpts, faultToleranceOptions: faultTolerance)
-            let result = try await runExport(assetType: .typography, client: client, ui: ui) {
-                try await cmd.performExportWithResult(client: client, ui: ui)
-            }
+            let result = try await cmd.performExportWithResult(
+                client: client,
+                ui: ui,
+                context: configContext.with(assetType: .typography)
+            )
             stats += ExportStats(typography: result.count, fileVersions: result.fileVersions)
         }
 
         return stats
-    }
-
-    /// Runs an export with asset type context for progress reporting.
-    private func runExport<T>(
-        assetType: BatchProgressViewStorage.AssetType,
-        client: Client,
-        ui: TerminalUI,
-        export: () async throws -> T
-    ) async rethrows -> T {
-        try await BatchProgressViewStorage.$currentAssetType.withValue(assetType) {
-            try await export()
-        }
     }
 
     private func makeCacheOptions() -> CacheOptions {
@@ -187,11 +168,10 @@ struct BatchConfigRunner: Sendable {
     let concurrentDownloads: Int
     /// CLI timeout override (in seconds). When set, overrides per-config YAML timeout.
     let cliTimeout: Int?
-    /// Shared download queue for cross-config pipelining.
-    let downloadQueue: SharedDownloadQueue?
     /// Priority for this config's downloads (lower = higher priority, based on submission order).
     let configPriority: Int
-    let exporter: any ConfigExportPerforming
+    /// Test-only: injected exporter for unit testing.
+    private let _testExporter: (any ConfigExportPerforming)?
 
     init(
         rateLimiter: SharedRateLimiter,
@@ -206,9 +186,8 @@ struct BatchConfigRunner: Sendable {
         experimentalGranularCache: Bool = false,
         concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads,
         cliTimeout: Int? = nil,
-        downloadQueue: SharedDownloadQueue? = nil,
         configPriority: Int = 0,
-        exporter: ConfigExportPerforming? = nil
+        exporter: (any ConfigExportPerforming)? = nil
     ) {
         self.rateLimiter = rateLimiter
         self.retryPolicy = retryPolicy
@@ -222,28 +201,18 @@ struct BatchConfigRunner: Sendable {
         self.experimentalGranularCache = experimentalGranularCache
         self.concurrentDownloads = concurrentDownloads
         self.cliTimeout = cliTimeout
-        self.downloadQueue = downloadQueue
         self.configPriority = configPriority
-        self.exporter = exporter ?? SubcommandConfigExporter(
-            globalOptions: globalOptions,
-            resume: resume,
-            cache: cache,
-            noCache: noCache,
-            force: force,
-            cachePath: cachePath,
-            experimentalGranularCache: experimentalGranularCache,
-            concurrentDownloads: concurrentDownloads,
-            downloadQueue: downloadQueue,
-            configPriority: configPriority
-        )
+        _testExporter = exporter
     }
 
     // swiftlint:disable:next function_body_length
     func process(
         configFile: ConfigFile,
-        ui: TerminalUI,
-        progressView: BatchProgressView? = nil
+        ui: TerminalUI
     ) async -> ConfigResult {
+        // Get progress view from BatchSharedState (if in batch mode)
+        let progressView = BatchSharedState.current?.progressView
+
         // Start config in progress view or log to UI
         if let progressView {
             await progressView.startConfig(name: configFile.name)
@@ -278,34 +247,32 @@ struct BatchConfigRunner: Sendable {
                 }
             )
 
-            // Create progress callback that updates BatchProgressView
-            let configName = configFile.name
-            let callback: BatchProgressViewStorage.DownloadProgressCallback = { current, total in
-                guard let progressView else { return }
-                // Route to correct asset type based on current context
-                if let assetType = BatchProgressViewStorage.currentAssetType {
-                    switch assetType {
-                    case .icons:
-                        await progressView.updateProgress(name: configName, icons: (current, total))
-                    case .images:
-                        await progressView.updateProgress(name: configName, images: (current, total))
-                    case .colors:
-                        await progressView.updateProgress(name: configName, colors: (current, total))
-                    case .typography:
-                        await progressView.updateProgress(name: configName, typography: (current, total))
-                    }
-                }
-            }
+            // Create per-config execution context (passed explicitly, no TaskLocal nesting)
+            let configContext = ConfigExecutionContext(
+                configId: configFile.name,
+                configPriority: configPriority
+            )
 
-            // Inject progress callback so export files can report incremental progress
-            let stats = try await BatchProgressViewStorage.$downloadProgressCallback.withValue(callback) {
-                try await exporter.export(
-                    configFile: configFile,
-                    options: options,
-                    client: client,
-                    ui: ui
-                )
-            }
+            // Use test exporter if provided, otherwise create real exporter
+            let exporter: any ConfigExportPerforming = _testExporter ?? SubcommandConfigExporter(
+                globalOptions: globalOptions,
+                resume: resume,
+                cache: cache,
+                noCache: noCache,
+                force: force,
+                cachePath: cachePath,
+                experimentalGranularCache: experimentalGranularCache,
+                concurrentDownloads: concurrentDownloads,
+                configContext: configContext
+            )
+
+            // No nested withValue calls - context is passed explicitly
+            let stats = try await exporter.export(
+                configFile: configFile,
+                options: options,
+                client: client,
+                ui: ui
+            )
 
             // Update progress view with final counts or log success
             if let progressView {

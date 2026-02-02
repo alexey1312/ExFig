@@ -271,37 +271,39 @@ extension ExFigCommand {
             let runnerFactory = makeRunnerFactory(
                 rateLimiter: rateLimiter,
                 retryPolicy: retryPolicy,
-                downloadQueue: downloadQueue,
                 priorityMap: priorityMap
             )
 
             // Create shared theme attributes collector for batch mode
             let themeAttributesCollector = SharedThemeAttributesCollector()
 
-            // Wrap execution with batch progress view and unified batch context
-            // All pre-fetched data is consolidated into BatchContext to avoid nested @Sendable closures
-            // which can cause Swift runtime crashes on Linux (https://github.com/swiftlang/swift/issues/75501)
-            let collector = themeAttributesCollector
+            // Create consolidated batch shared state with SINGLE TaskLocal scope.
+            // This avoids nested withValue() calls which cause Swift runtime crashes on Linux.
+            // See: https://github.com/swiftlang/swift/issues/75501
             let batchContext = BatchContext(
                 versions: preFetchedVersions,
                 components: preFetchedComponents,
                 granularCache: sharedGranularCache,
                 nodes: preFetchedNodes
             )
-            let result: BatchResult = await SharedThemeAttributesStorage.$collector.withValue(collector) {
-                await BatchProgressViewStorage.$progressView.withValue(progressView) {
-                    await BatchContextStorage.$context.withValue(batchContext) {
-                        await executeWithProgressUpdates(
-                            executor: executor,
-                            configs: configs,
-                            checkpointManager: checkpointManager,
-                            runnerFactory: runnerFactory,
-                            progressView: progressView,
-                            rateLimiter: rateLimiter,
-                            ui: ui
-                        )
-                    }
-                }
+            let batchState = BatchSharedState(
+                context: batchContext,
+                progressView: progressView,
+                themeCollector: themeAttributesCollector,
+                downloadQueue: downloadQueue
+            )
+
+            // SINGLE withValue scope - no nesting!
+            let result: BatchResult = await BatchSharedState.$current.withValue(batchState) {
+                await executeWithProgressUpdates(
+                    executor: executor,
+                    configs: configs,
+                    checkpointManager: checkpointManager,
+                    runnerFactory: runnerFactory,
+                    progressView: progressView,
+                    rateLimiter: rateLimiter,
+                    ui: ui
+                )
             }
 
             // Clear progress view after batch completes
@@ -321,9 +323,8 @@ extension ExFigCommand {
             return (result, rateLimiter)
         }
 
-        // swiftlint:disable function_parameter_count
         /// Execute batch with progress view updates and rate limiter status.
-        private func executeWithProgressUpdates(
+        private func executeWithProgressUpdates( // swiftlint:disable:this function_parameter_count
             executor: BatchExecutor,
             configs: [ConfigFile],
             checkpointManager: CheckpointManager,
@@ -332,7 +333,6 @@ extension ExFigCommand {
             rateLimiter: SharedRateLimiter,
             ui: TerminalUI
         ) async -> BatchResult {
-            // swiftlint:enable function_parameter_count
             // Start rate limiter status updates (every 500ms)
             let rateLimiterTask = Task {
                 while !Task.isCancelled {
@@ -342,14 +342,10 @@ extension ExFigCommand {
                 }
             }
 
-            // Execute batch with progress view
+            // Execute batch - runner.process() gets progressView from BatchSharedState.current
             let result = await executor.execute(configs: configs) { configFile in
                 let runner = runnerFactory(configFile)
-                let configResult = await runner.process(
-                    configFile: configFile,
-                    ui: ui,
-                    progressView: progressView
-                )
+                let configResult = await runner.process(configFile: configFile, ui: ui)
                 await checkpointManager.update(for: configFile, result: configResult)
                 return configResult
             }
@@ -364,7 +360,6 @@ extension ExFigCommand {
         private func makeRunnerFactory(
             rateLimiter: SharedRateLimiter,
             retryPolicy: RetryPolicy,
-            downloadQueue: SharedDownloadQueue,
             priorityMap: [String: Int]
         ) -> @Sendable (ConfigFile) -> BatchConfigRunner {
             // Capture all values needed for runner creation
@@ -393,7 +388,6 @@ extension ExFigCommand {
                     experimentalGranularCache: experimentalGranularCache,
                     concurrentDownloads: concurrentDownloads,
                     cliTimeout: timeout,
-                    downloadQueue: downloadQueue,
                     configPriority: priorityMap[configFile.name] ?? 0
                 )
             }

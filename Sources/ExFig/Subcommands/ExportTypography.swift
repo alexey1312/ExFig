@@ -48,17 +48,23 @@ extension ExFigCommand {
 
         /// Performs the actual export and returns the number of exported text styles.
         func performExport(client: Client, ui: TerminalUI) async throws -> Int {
-            let result = try await performExportWithResult(client: client, ui: ui)
+            let result = try await performExportWithResult(client: client, ui: ui, context: nil)
             return result.count
         }
 
         /// Performs export and returns full result with file versions for batch mode.
+        /// - Parameters:
+        ///   - client: Figma API client.
+        ///   - ui: Terminal UI for output.
+        ///   - context: Optional per-config execution context (passed explicitly in batch mode).
         func performExportWithResult( // swiftlint:disable:this function_body_length
             client: Client,
-            ui: TerminalUI
+            ui: TerminalUI,
+            context: ConfigExecutionContext? = nil
         ) async throws -> TypographyExportResult {
-            // Detect batch mode via TaskLocal (batch context presence)
-            let batchMode = BatchContextStorage.context?.isBatchMode ?? false
+            // Detect batch mode via BatchSharedState (single TaskLocal)
+            let batchState = BatchSharedState.current
+            let batchMode = batchState?.isBatchMode ?? false
 
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
@@ -79,8 +85,8 @@ extension ExFigCommand {
                 return TypographyExportResult(count: 0, fileVersions: nil)
             }
 
-            // Suppress version message in batch mode
-            if BatchProgressViewStorage.progressView == nil {
+            // Suppress version message in batch mode (check via BatchSharedState)
+            if batchState?.progressView == nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export typography.")
             }
 

@@ -6,38 +6,110 @@ paths:
 
 # Batch Processing Patterns
 
-This rule covers batch pre-fetch optimization and pipelined downloads.
+This rule covers batch pre-fetch optimization, pipelined downloads, and the BatchSharedState architecture.
 
-## Batch Pre-fetch Optimization
+## BatchSharedState Architecture
 
-When `--cache` is enabled, batch processing pre-fetches file metadata for all unique Figma file IDs before parallel
-config processing. This avoids redundant API calls when multiple configs reference the same files.
+All batch mode state is consolidated into a single `BatchSharedState` actor with ONE `@TaskLocal`.
+This avoids nested `TaskLocal.withValue()` calls which cause Swift runtime crashes on Linux.
+
+**Key types:**
+
+| Type | Purpose |
+|------|---------|
+| `BatchSharedState` | Actor holding all shared state, single `@TaskLocal` |
+| `BatchContext` | Immutable pre-fetched data (versions, components, cache, nodes) |
+| `ConfigExecutionContext` | Per-config data passed explicitly (configId, priority, assetType) |
 
 **Key files:**
 
-- `Sources/ExFig/Batch/BatchContext.swift` - Unified context struct with `@TaskLocal` injection
+- `Sources/ExFig/Batch/BatchContext.swift` - BatchSharedState actor, BatchContext, ConfigExecutionContext
+- `Sources/ExFig/Batch/BatchConfigRunner.swift` - Per-config processing with explicit context passing
+- `Sources/ExFig/Shared/ComponentPreFetcher.swift` - Updates actor state, no nested withValue
+
+**Architecture (single nesting level):**
+
+```swift
+// Create consolidated state
+let batchState = BatchSharedState(
+    context: BatchContext(
+        versions: preFetchedVersions,
+        components: preFetchedComponents,
+        granularCache: sharedGranularCache,
+        nodes: preFetchedNodes
+    ),
+    progressView: progressView,
+    themeCollector: themeAttributesCollector,
+    downloadQueue: downloadQueue
+)
+
+// SINGLE withValue scope - no nesting!
+let result = await BatchSharedState.$current.withValue(batchState) {
+    await executor.execute(configs: configs) { configFile in
+        // Per-config context passed explicitly
+        let context = ConfigExecutionContext(
+            configId: configFile.name,
+            configPriority: priorityMap[configFile.name] ?? 0
+        )
+        // ... process with explicit context
+    }
+}
+
+// Access anywhere via static property
+if let state = BatchSharedState.current {
+    let versions = state.versions      // nonisolated - immutable
+    let queue = state.downloadQueue    // nonisolated - let property
+    let comps = await state.getComponents()  // actor-isolated - mutable
+}
+```
+
+**Why this matters (Linux crash fix):**
+
+```swift
+// OLD - 10+ nesting levels caused crash on Linux
+$collector.withValue(c) {
+    $progressView.withValue(p) {
+        $context.withValue(ctx) {
+            $queue.withValue(q) {
+                ComponentPreFetcher:
+                    $context.withValue(localCtx) { // CRASH!
+                    }
+            }
+        }
+    }
+}
+
+// NEW - single nesting level
+BatchSharedState.$current.withValue(state) {
+    // Everything accessible via state actor
+}
+```
+
+## Batch Pre-fetch Optimization
+
+When `--cache` is enabled, batch processing pre-fetches file metadata for all unique Figma file IDs
+before parallel config processing. This avoids redundant API calls when multiple configs reference same files.
+
+**Pre-fetch phases:**
+
+1. **FileMetadata** - Fast, lightweight version check
+2. **Components** - Only for files with changed versions
+3. **Nodes** - Only when granular cache enabled, for files with components
+
+**Key files:**
+
 - `Sources/ExFig/Batch/PreFetchedFileVersions.swift` - Storage struct for file metadata
-- `Sources/ExFig/Batch/FileIdExtractor.swift` - Extracts unique fileIds from YAML configs
+- `Sources/ExFig/Batch/PreFetchedComponents.swift` - Storage struct for components
+- `Sources/ExFig/Batch/PreFetchedNodes.swift` - Storage struct for nodes
 - `Sources/ExFig/Batch/FileVersionPreFetcher.swift` - Parallel pre-fetching with spinner
-- `Sources/ExFig/Cache/ImageTrackingManager.swift` - Checks `BatchContextStorage` before API call
+- `Sources/ExFig/Cache/ImageTrackingManager.swift` - Checks BatchSharedState before API call
 
 **Pattern:**
 
 ```swift
-// All batch data is consolidated into BatchContext and injected via single @TaskLocal
-let batchContext = BatchContext(
-    versions: preFetchedVersions,
-    components: preFetchedComponents,
-    granularCache: sharedGranularCache,
-    nodes: preFetchedNodes
-)
-let result = await BatchContextStorage.$context.withValue(batchContext) {
-    await executor.execute(configs: configs) { ... }
-}
-
-// ImageTrackingManager checks TaskLocal first, falls back to API
-if let preFetched = BatchContextStorage.context?.versions,
-   let metadata = preFetched.metadata(for: fileId) {
+// ImageTrackingManager checks BatchSharedState first
+if let state = BatchSharedState.current,
+   let metadata = state.versions?.metadata(for: fileId) {
     return metadata  // Use pre-fetched
 }
 // ... fall back to API request
@@ -45,41 +117,62 @@ if let preFetched = BatchContextStorage.context?.versions,
 
 ## Pipelined Downloads (Batch Mode)
 
-In batch mode, downloads from all configs are coordinated through a shared queue to enable cross-config pipelining.
-While one config is fetching from Figma API, another can be downloading from CDN simultaneously.
+In batch mode, downloads from all configs are coordinated through a shared queue to enable
+cross-config pipelining. While one config is fetching from Figma API, another can be downloading
+from CDN simultaneously.
 
 **Key files:**
 
 - `Sources/ExFig/Pipeline/SharedDownloadQueue.swift` - Actor coordinating downloads across configs
-- `Sources/ExFig/Pipeline/SharedDownloadQueueStorage.swift` - `@TaskLocal` injection for queue
-- `Sources/ExFig/Pipeline/PipelinedDownloader.swift` - Helper that uses queue when available
+- `Sources/ExFig/Pipeline/PipelinedDownloader.swift` - Uses queue from BatchSharedState
 - `Sources/ExFig/Pipeline/DownloadJob.swift` - Represents a batch of files to download
 
 **How it works:**
 
 1. `Batch.swift` creates `SharedDownloadQueue` with `concurrentDownloads x parallel` capacity
-2. Each config runner gets queue + priority injected via `SharedDownloadQueueStorage` TaskLocal
-3. `ExportIcons`/`ExportImages` call `PipelinedDownloader.download()` which checks for injected queue
-4. Downloads from all configs compete for slots in the shared queue (earlier configs get higher priority)
-5. In standalone mode (no batch), falls back to direct `FileDownloader`
+2. Queue is stored in `BatchSharedState.downloadQueue`
+3. `PipelinedDownloader.download()` receives `ConfigExecutionContext` with configId/priority
+4. Downloads from all configs compete for slots (earlier configs get higher priority)
+5. In standalone mode (no BatchSharedState), falls back to direct `FileDownloader`
 
 **Pattern:**
 
 ```swift
-// Queue is injected via @TaskLocal (same pattern as InjectedClientStorage)
-try await SharedDownloadQueueStorage.$queue.withValue(downloadQueue) {
-    try await SharedDownloadQueueStorage.$configId.withValue(configFile.name) {
-        try await export(...)  // PipelinedDownloader checks SharedDownloadQueueStorage
+// PipelinedDownloader receives context explicitly
+static func download(
+    files: [FileContents],
+    fileDownloader: FileDownloader,
+    context: ConfigExecutionContext? = nil,  // Explicit, not TaskLocal
+    onProgress: DownloadProgressCallback? = nil
+) async throws -> [FileContents] {
+    // Check BatchSharedState for queue
+    if let batchState = BatchSharedState.current,
+       let queue = batchState.downloadQueue,
+       let configId = context?.configId {
+        return try await downloadWithQueue(
+            files: files,
+            configId: configId,
+            priority: context?.configPriority ?? 0,
+            queue: queue,
+            onProgress: onProgress
+        )
+    } else {
+        // Standalone mode - direct download
+        return try await fileDownloader.fetch(files: files, onProgress: onProgress)
     }
 }
-
-// PipelinedDownloader uses queue when available, otherwise direct download
-if let queue = SharedDownloadQueueStorage.queue,
-   let configId = SharedDownloadQueueStorage.configId {
-    return try await downloadWithQueue(...)  // Pipelined
-} else {
-    return try await fileDownloader.fetch(...)  // Direct
-}
 ```
+
+## Compatibility Shims
+
+For gradual migration, these shims read from `BatchSharedState.current`:
+
+| Shim | Reads From |
+|------|------------|
+| `BatchContextStorage.context` | `BatchSharedState.current?.context` |
+| `BatchProgressViewStorage.progressView` | `BatchSharedState.current?.progressView` |
+| `SharedDownloadQueueStorage.queue` | `BatchSharedState.current?.downloadQueue` |
+
+**Preferred:** Access `BatchSharedState.current` directly.
 
 **Expected performance:** ~45% improvement in batch mode with multiple configs.

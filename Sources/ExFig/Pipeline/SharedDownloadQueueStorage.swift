@@ -1,21 +1,32 @@
 import Foundation
 
-/// TaskLocal storage for injecting SharedDownloadQueue into export commands during batch processing.
-/// Similar pattern to InjectedClientStorage and BatchContextStorage.
+/// Compatibility shim for SharedDownloadQueue access.
+///
+/// Reads download queue from `BatchSharedState.current`.
+/// This avoids nested TaskLocal.withValue() calls which cause Swift runtime crashes on Linux.
+/// See: https://github.com/swiftlang/swift/issues/75501
+///
+/// ## Usage
+///
+/// ```swift
+/// // Read queue (shim to BatchSharedState)
+/// if let queue = SharedDownloadQueueStorage.queue { ... }
+///
+/// // Direct access (preferred)
+/// if let queue = BatchSharedState.current?.downloadQueue { ... }
+/// ```
+///
+/// ## Note
+///
+/// `configId` and `configPriority` are now passed via `ConfigExecutionContext`
+/// parameter to `PipelinedDownloader.download()`, not via TaskLocal.
 enum SharedDownloadQueueStorage {
-    /// TaskLocal variable to inject shared download queue.
-    @TaskLocal
-    static var queue: SharedDownloadQueue?
+    /// Get shared download queue from BatchSharedState.
+    static var queue: SharedDownloadQueue? {
+        BatchSharedState.current?.downloadQueue
+    }
 
-    /// TaskLocal variable for current config identifier (for job tracking).
-    @TaskLocal
-    static var configId: String?
-
-    /// TaskLocal variable for config priority (lower = higher priority, based on submission order).
-    @TaskLocal
-    static var configPriority: Int = 0
-
-    /// Check if pipelined downloads are enabled (queue is injected).
+    /// Check if pipelined downloads are enabled (queue is available).
     static var isEnabled: Bool {
         queue != nil
     }

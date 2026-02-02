@@ -7,24 +7,34 @@
 
 import Foundation
 
-/// TaskLocal storage for injecting BatchProgressView during batch processing.
-/// This follows the same pattern as InjectedClientStorage and SharedDownloadQueueStorage
-/// to enable batch-aware UI suppression in individual export commands.
+/// Compatibility shim for BatchProgressView access.
+///
+/// Reads progress view from `BatchSharedState.current`.
+/// This avoids nested TaskLocal.withValue() calls which cause Swift runtime crashes on Linux.
+/// See: https://github.com/swiftlang/swift/issues/75501
+///
+/// ## Usage
+///
+/// ```swift
+/// // Read progress view (shim to BatchSharedState)
+/// if let progressView = BatchProgressViewStorage.progressView { ... }
+///
+/// // Direct access (preferred)
+/// if let progressView = BatchSharedState.current?.progressView { ... }
+/// ```
+///
+/// ## Note
+///
+/// `downloadProgressCallback` and `currentAssetType` are now passed via
+/// `ConfigExecutionContext` parameter, not via TaskLocal.
 enum BatchProgressViewStorage {
-    /// TaskLocal variable to inject batch progress view into export command context.
-    /// When set, individual export commands suppress their spinners and progress bars
-    /// to prevent corruption of the multi-line batch progress display.
-    @TaskLocal static var progressView: BatchProgressView?
+    // MARK: - Types
 
     /// Callback type for reporting incremental download progress.
     typealias DownloadProgressCallback = @Sendable (Int, Int) async -> Void
 
-    /// TaskLocal callback for download progress updates.
-    /// Export files report progress through this callback when in batch mode.
-    @TaskLocal static var downloadProgressCallback: DownloadProgressCallback?
-
     /// Current asset type being processed (icons, images, colors, typography).
-    /// Used to route progress updates to the correct field in BatchProgressView.
+    /// @deprecated Use `ConfigExecutionContext.AssetType` instead.
     enum AssetType: String, Sendable {
         case colors
         case icons
@@ -32,6 +42,22 @@ enum BatchProgressViewStorage {
         case typography
     }
 
-    /// TaskLocal to track which asset type is currently being processed.
-    @TaskLocal static var currentAssetType: AssetType?
+    // MARK: - Accessors (Shim to BatchSharedState)
+
+    /// Get batch progress view from BatchSharedState.
+    static var progressView: BatchProgressView? {
+        BatchSharedState.current?.progressView
+    }
+
+    /// Download progress callback (deprecated - use ConfigExecutionContext).
+    /// Returns nil - callbacks are now passed explicitly.
+    static var downloadProgressCallback: DownloadProgressCallback? {
+        nil
+    }
+
+    /// Current asset type (deprecated - use ConfigExecutionContext.assetType).
+    /// Returns nil - asset type is now passed explicitly.
+    static var currentAssetType: AssetType? {
+        nil
+    }
 }
