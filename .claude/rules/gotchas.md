@@ -23,6 +23,19 @@ func loadImages(
 }
 ```
 
+### @Sendable Closures Crash (Linux)
+
+Adding `@Sendable` to closures passed to TaskLocal `withValue` causes runtime crash on Linux:
+`freed pointer was not the last allocation`
+
+```swift
+// BAD - crashes on Linux
+func withContext<T: Sendable>(operation: @Sendable () async -> T) async -> T
+
+// GOOD - works
+func withContext<T>(operation: () async -> T) async -> T
+```
+
 ## SwiftLint Rules
 
 - Use `Data("string".utf8)` not `"string".data(using: .utf8)!`
