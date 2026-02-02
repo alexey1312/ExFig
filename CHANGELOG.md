@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.33] - 2026-02-02
+
+### Bug Fixes
+
+- Preserve existing BatchContext fields in ComponentPreFetcher by @alexey1312
+
+
+### Documentation
+
+- Document @Sendable Linux crash in gotchas.md by @alexey1312
+
+- Update batch processing rules for BatchContext by @alexey1312
+
+
+### Other
+
+- Merge branch 'main' of https://github.com/alexey1312/ExFig by @alexey1312
+
+
+### Refactor
+
+- Unify batch TaskLocal storage into BatchContext by @alexey1312
+
+
 ## [1.2.32] - 2026-02-02
 
 ### Refactor
