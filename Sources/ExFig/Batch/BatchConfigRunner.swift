@@ -47,7 +47,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         }
     }
 
-    // swiftlint:disable:next function_body_length
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     private func exportWithInjectedClient(
         configFile: ConfigFile,
         options: ExFigOptions,
@@ -76,8 +76,15 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: faultToleranceOptions
                 )
-                colorsCount = try await BatchProgressViewStorage.$currentAssetType.withValue(.colors) {
-                    try await colors.performExport(client: client, ui: ui)
+                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.colors) {
+                    try await colors.performExportWithResult(client: client, ui: ui)
+                }
+                colorsCount = result.count
+                // Collect file versions for deferred batch-level cache save
+                if let versions = result.fileVersions {
+                    for version in versions {
+                        allFileVersions[version.fileId] = version
+                    }
                 }
             }
 
@@ -127,8 +134,15 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
                     cacheOptions: cacheOptions,
                     faultToleranceOptions: faultToleranceOptions
                 )
-                typographyCount = try await BatchProgressViewStorage.$currentAssetType.withValue(.typography) {
-                    try await typography.performExport(client: client, ui: ui)
+                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.typography) {
+                    try await typography.performExportWithResult(client: client, ui: ui)
+                }
+                typographyCount = result.count
+                // Collect file versions for deferred batch-level cache save
+                if let versions = result.fileVersions {
+                    for version in versions {
+                        allFileVersions[version.fileId] = version
+                    }
                 }
             }
 

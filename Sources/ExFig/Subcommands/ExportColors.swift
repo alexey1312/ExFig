@@ -48,17 +48,37 @@ extension ExFigCommand {
             _ = try await performExport(client: client, ui: ui)
         }
 
-        // swiftlint:disable:next cyclomatic_complexity function_body_length
+        /// Export result for batch mode (includes file versions for deferred cache save).
+        struct ColorsExportResult {
+            let count: Int
+            let fileVersions: [FileVersionInfo]?
+        }
+
+        /// Performs the actual export and returns the number of exported colors.
         func performExport(client: Client, ui: TerminalUI) async throws -> Int {
+            let result = try await performExportWithResult(client: client, ui: ui)
+            return result.count
+        }
+
+        // swiftlint:disable:next cyclomatic_complexity function_body_length
+        /// Performs export and returns full result with file versions for batch mode.
+        func performExportWithResult(client: Client, ui: TerminalUI) async throws -> ColorsExportResult {
+            // Detect batch mode via TaskLocal (shared granular cache presence)
+            let batchMode = SharedGranularCacheStorage.cache != nil
+
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(
                     client: client, params: options.params, cacheOptions: cacheOptions,
                     configCacheEnabled: options.params.common?.cache?.isEnabled ?? false,
                     configCachePath: options.params.common?.cache?.path,
-                    assetType: "Colors", ui: ui, logger: logger
+                    assetType: "Colors", ui: ui, logger: logger,
+                    batchMode: batchMode
                 )
             )
-            guard case let .proceed(trackingManager, fileVersions) = versionCheck else { return 0 }
+
+            guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
+                return ColorsExportResult(count: 0, fileVersions: nil)
+            }
 
             if BatchProgressViewStorage.progressView == nil {
                 ui.info("Using ExFig \(ExFigCommand.version) to export colors.")
@@ -93,8 +113,11 @@ extension ExFigCommand {
                     : exportWebColorsLegacy(colorsConfig: colors, web: web, config: legacyConfig))
             }
 
-            try trackingManager.updateCache(with: fileVersions, batchMode: false)
-            return totalCount
+            // Update file version cache after successful export (deferred in batch mode)
+            try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
+
+            // Return file versions only in batch mode (for deferred batch-level cache save)
+            return ColorsExportResult(count: totalCount, fileVersions: batchMode ? fileVersions : nil)
         }
 
         // MARK: - Legacy Export Configuration

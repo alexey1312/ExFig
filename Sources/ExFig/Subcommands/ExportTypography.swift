@@ -40,8 +40,26 @@ extension ExFigCommand {
             _ = try await performExport(client: client, ui: ui)
         }
 
-        // swiftlint:disable:next function_body_length
+        /// Export result for batch mode (includes file versions for deferred cache save).
+        struct TypographyExportResult {
+            let count: Int
+            let fileVersions: [FileVersionInfo]?
+        }
+
+        /// Performs the actual export and returns the number of exported text styles.
         func performExport(client: Client, ui: TerminalUI) async throws -> Int {
+            let result = try await performExportWithResult(client: client, ui: ui)
+            return result.count
+        }
+
+        /// Performs export and returns full result with file versions for batch mode.
+        func performExportWithResult( // swiftlint:disable:this function_body_length
+            client: Client,
+            ui: TerminalUI
+        ) async throws -> TypographyExportResult {
+            // Detect batch mode via TaskLocal (shared granular cache presence)
+            let batchMode = SharedGranularCacheStorage.cache != nil
+
             // Check for version changes if cache is enabled
             let versionCheck = try await VersionTrackingHelper.checkForChanges(
                 config: VersionTrackingConfig(
@@ -52,12 +70,13 @@ extension ExFigCommand {
                     configCachePath: options.params.common?.cache?.path,
                     assetType: "Typography",
                     ui: ui,
-                    logger: logger
+                    logger: logger,
+                    batchMode: batchMode
                 )
             )
 
             guard case let .proceed(trackingManager, fileVersions) = versionCheck else {
-                return 0
+                return TypographyExportResult(count: 0, fileVersions: nil)
             }
 
             // Suppress version message in batch mode
@@ -122,10 +141,11 @@ extension ExFigCommand {
                 ui.success("Done! Exported \(processedTextStyles.count) text styles to Android project.")
             }
 
-            // Update cache after successful export
+            // Update cache after successful export (deferred in batch mode)
             try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
 
-            return textStyles.count
+            // Return file versions only in batch mode (for deferred batch-level cache save)
+            return TypographyExportResult(count: textStyles.count, fileVersions: batchMode ? fileVersions : nil)
         }
 
         private func createXcodeOutput(from iosParams: Params.iOS) -> XcodeTypographyOutput {
