@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.34] - 2026-02-02
+
+### Refactor
+
+- **batch**: Consolidate TaskLocal state into BatchSharedState actor by @alexey1312
+
+- Replace TaskLocal with BatchSharedState by @alexey1312
+
+
 ## [1.2.33] - 2026-02-02
 
 ### Bug Fixes
