@@ -486,32 +486,73 @@ extension ExFigCommand {
         }
 
         /// Wraps execution with TaskLocal context for pre-fetched data and shared granular cache.
-        /// Each context is injected only if the corresponding value is non-nil.
+        ///
+        /// Uses explicit switch-case instead of nested helper closures to avoid Swift runtime crash
+        /// on Linux with deeply nested @Sendable closures.
+        /// See: https://github.com/swiftlang/swift/issues/75501
         private func withBatchContext<T: Sendable>(
             preFetchedVersions: PreFetchedFileVersions?,
             preFetchedComponents: PreFetchedComponents?,
             sharedGranularCache: SharedGranularCache?,
             operation: @Sendable () async -> T
         ) async -> T {
-            await withOptionalContext(PreFetchedVersionsStorage.$versions, preFetchedVersions) {
-                await withOptionalContext(PreFetchedComponentsStorage.$components, preFetchedComponents) {
-                    await withOptionalContext(SharedGranularCacheStorage.$cache, sharedGranularCache) {
+            switch (preFetchedVersions, preFetchedComponents, sharedGranularCache) {
+            // All three contexts
+            case let (versions?, components?, cache?):
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await PreFetchedComponentsStorage.$components.withValue(components) {
+                        await SharedGranularCacheStorage.$cache.withValue(cache) {
+                            await operation()
+                        }
+                    }
+                }
+
+            // Versions + components
+            case let (versions?, components?, nil):
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await PreFetchedComponentsStorage.$components.withValue(components) {
                         await operation()
                     }
                 }
-            }
-        }
 
-        /// Helper to conditionally inject a TaskLocal value.
-        private func withOptionalContext<V, T: Sendable>(
-            _ taskLocal: TaskLocal<V?>,
-            _ value: V?,
-            operation: @Sendable () async -> T
-        ) async -> T {
-            if let value {
-                return await taskLocal.withValue(value, operation: operation)
+            // Versions + cache
+            case let (versions?, nil, cache?):
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await SharedGranularCacheStorage.$cache.withValue(cache) {
+                        await operation()
+                    }
+                }
+
+            // Components + cache
+            case let (nil, components?, cache?):
+                await PreFetchedComponentsStorage.$components.withValue(components) {
+                    await SharedGranularCacheStorage.$cache.withValue(cache) {
+                        await operation()
+                    }
+                }
+
+            // Only versions
+            case let (versions?, nil, nil):
+                await PreFetchedVersionsStorage.$versions.withValue(versions) {
+                    await operation()
+                }
+
+            // Only components
+            case let (nil, components?, nil):
+                await PreFetchedComponentsStorage.$components.withValue(components) {
+                    await operation()
+                }
+
+            // Only cache
+            case let (nil, nil, cache?):
+                await SharedGranularCacheStorage.$cache.withValue(cache) {
+                    await operation()
+                }
+
+            // None
+            case (nil, nil, nil):
+                await operation()
             }
-            return await operation()
         }
 
         /// Saves granular cache after batch completes by merging all computed hashes.
