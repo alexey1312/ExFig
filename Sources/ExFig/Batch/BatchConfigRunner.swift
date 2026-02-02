@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import FigmaAPI
 import Foundation
 
@@ -25,136 +24,103 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
     /// Priority for this config's downloads (lower = higher priority).
     let configPriority: Int
 
-    // swiftlint:disable:next function_body_length
     func export(
         configFile: ConfigFile,
         options: ExFigOptions,
         client: Client,
         ui: TerminalUI
     ) async throws -> ExportStats {
-        // Inject download queue for pipelined downloads (if available)
+        try await withDownloadContext(configFile: configFile) {
+            try await InjectedClientStorage.$client.withValue(client) {
+                try await runExports(options: options, client: client, ui: ui)
+            }
+        }
+    }
+
+    /// Injects download queue context for pipelined downloads.
+    private func withDownloadContext<T>(
+        configFile: ConfigFile,
+        operation: () async throws -> T
+    ) async rethrows -> T {
         try await SharedDownloadQueueStorage.$queue.withValue(downloadQueue) {
             try await SharedDownloadQueueStorage.$configId.withValue(configFile.name) {
                 try await SharedDownloadQueueStorage.$configPriority.withValue(configPriority) {
-                    try await exportWithInjectedClient(
-                        configFile: configFile,
-                        options: options,
-                        client: client,
-                        ui: ui
-                    )
+                    try await operation()
                 }
             }
         }
     }
 
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
-    private func exportWithInjectedClient(
-        configFile: ConfigFile,
+    private func runExports(
         options: ExFigOptions,
         client: Client,
         ui: TerminalUI
     ) async throws -> ExportStats {
-        try await InjectedClientStorage.$client.withValue(client) {
-            let cacheOptions = makeCacheOptions()
-            let faultToleranceOptions = FaultToleranceOptions()
-            let heavyFaultToleranceOptions = makeHeavyFaultToleranceOptions()
+        let cacheOpts = makeCacheOptions()
+        let faultTolerance = FaultToleranceOptions()
+        let heavyFaultTolerance = makeHeavyFaultToleranceOptions()
+        let params = options.params
 
-            let params = options.params
-            var colorsCount = 0
-            var iconsCount = 0
-            var imagesCount = 0
-            var typographyCount = 0
-            var allComputedHashes: [String: [String: String]] = [:]
-            var allGranularStats: GranularCacheStats?
-            var allFileVersions: [String: FileVersionInfo] = [:]
+        var stats = ExportStats.zero
 
-            // Only run exports for configured asset types
-            // Each export is wrapped with asset type context for progress reporting
-            if hasColorsConfig(params) {
-                let colors = makeColors(
-                    options: options,
-                    cacheOptions: cacheOptions,
-                    faultToleranceOptions: faultToleranceOptions
-                )
-                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.colors) {
-                    try await colors.performExportWithResult(client: client, ui: ui)
-                }
-                colorsCount = result.count
-                // Collect file versions for deferred batch-level cache save
-                if let versions = result.fileVersions {
-                    for version in versions {
-                        allFileVersions[version.fileId] = version
-                    }
-                }
+        // Colors export
+        if hasColorsConfig(params) {
+            let cmd = makeColors(options: options, cacheOptions: cacheOpts, faultToleranceOptions: faultTolerance)
+            let result = try await runExport(assetType: .colors, client: client, ui: ui) {
+                try await cmd.performExportWithResult(client: client, ui: ui)
             }
+            stats += ExportStats(colors: result.count, fileVersions: result.fileVersions)
+        }
 
-            if hasIconsConfig(params) {
-                let icons = makeIcons(
-                    options: options,
-                    cacheOptions: cacheOptions,
-                    faultToleranceOptions: heavyFaultToleranceOptions
-                )
-                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.icons) {
-                    try await icons.performExportWithResult(client: client, ui: ui)
-                }
-                iconsCount = result.count
-                allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
-                allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
-                // Collect file versions
-                if let versions = result.fileVersions {
-                    for version in versions {
-                        allFileVersions[version.fileId] = version
-                    }
-                }
+        // Icons export
+        if hasIconsConfig(params) {
+            let cmd = makeIcons(options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance)
+            let result = try await runExport(assetType: .icons, client: client, ui: ui) {
+                try await cmd.performExportWithResult(client: client, ui: ui)
             }
-
-            if hasImagesConfig(params) {
-                let images = makeImages(
-                    options: options,
-                    cacheOptions: cacheOptions,
-                    faultToleranceOptions: heavyFaultToleranceOptions
-                )
-                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.images) {
-                    try await images.performExportWithResult(client: client, ui: ui)
-                }
-                imagesCount = result.count
-                allComputedHashes = mergeHashes(allComputedHashes, result.computedHashes)
-                allGranularStats = GranularCacheStats.merge(allGranularStats, result.granularCacheStats)
-                // Collect file versions
-                if let versions = result.fileVersions {
-                    for version in versions {
-                        allFileVersions[version.fileId] = version
-                    }
-                }
-            }
-
-            if hasTypographyConfig(params) {
-                let typography = makeTypography(
-                    options: options,
-                    cacheOptions: cacheOptions,
-                    faultToleranceOptions: faultToleranceOptions
-                )
-                let result = try await BatchProgressViewStorage.$currentAssetType.withValue(.typography) {
-                    try await typography.performExportWithResult(client: client, ui: ui)
-                }
-                typographyCount = result.count
-                // Collect file versions for deferred batch-level cache save
-                if let versions = result.fileVersions {
-                    for version in versions {
-                        allFileVersions[version.fileId] = version
-                    }
-                }
-            }
-
-            return ExportStats(
-                colors: colorsCount,
-                icons: iconsCount,
-                images: imagesCount,
-                typography: typographyCount,
-                computedNodeHashes: allComputedHashes,
-                granularCacheStats: allGranularStats,
-                fileVersions: allFileVersions.isEmpty ? nil : Array(allFileVersions.values)
+            stats += ExportStats(
+                icons: result.count,
+                computedNodeHashes: result.computedHashes,
+                granularCacheStats: result.granularCacheStats,
+                fileVersions: result.fileVersions
             )
+        }
+
+        // Images export
+        if hasImagesConfig(params) {
+            let cmd = makeImages(options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance)
+            let result = try await runExport(assetType: .images, client: client, ui: ui) {
+                try await cmd.performExportWithResult(client: client, ui: ui)
+            }
+            stats += ExportStats(
+                images: result.count,
+                computedNodeHashes: result.computedHashes,
+                granularCacheStats: result.granularCacheStats,
+                fileVersions: result.fileVersions
+            )
+        }
+
+        // Typography export
+        if hasTypographyConfig(params) {
+            let cmd = makeTypography(options: options, cacheOptions: cacheOpts, faultToleranceOptions: faultTolerance)
+            let result = try await runExport(assetType: .typography, client: client, ui: ui) {
+                try await cmd.performExportWithResult(client: client, ui: ui)
+            }
+            stats += ExportStats(typography: result.count, fileVersions: result.fileVersions)
+        }
+
+        return stats
+    }
+
+    /// Runs an export with asset type context for progress reporting.
+    private func runExport<T>(
+        assetType: BatchProgressViewStorage.AssetType,
+        client: Client,
+        ui: TerminalUI,
+        export: () async throws -> T
+    ) async rethrows -> T {
+        try await BatchProgressViewStorage.$currentAssetType.withValue(assetType) {
+            try await export()
         }
     }
 
@@ -173,22 +139,6 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         options.resume = resume
         options.concurrentDownloads = concurrentDownloads
         return options
-    }
-
-    /// Merges computed hashes from two results.
-    private func mergeHashes(
-        _ existing: [String: [String: String]],
-        _ new: [String: [String: String]]
-    ) -> [String: [String: String]] {
-        var result = existing
-        for (fileId, hashes) in new {
-            if let existingHashes = result[fileId] {
-                result[fileId] = existingHashes.merging(hashes) { _, new in new }
-            } else {
-                result[fileId] = hashes
-            }
-        }
-        return result
     }
 
     // MARK: - Config Detection

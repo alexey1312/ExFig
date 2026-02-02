@@ -62,6 +62,10 @@ struct ExportStats: Sendable {
         )
     }
 
+    static func += (lhs: inout ExportStats, rhs: ExportStats) {
+        lhs = lhs + rhs
+    }
+
     /// Merges two hash dictionaries.
     private static func mergeHashes(
         _ lhs: [String: [String: String]],
