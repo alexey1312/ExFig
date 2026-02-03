@@ -2,38 +2,38 @@
 
 ## Phase 1: Semantic Text Formatting (P0)
 
-- [ ] **1.1** Extend `NooraUI` adapter with convenience methods for common patterns
+- [x] **1.1** Extend `NooraUI` adapter with convenience methods for common patterns
   - Add `formatSuccess(icon:message:)`, `formatError(icon:message:)`, etc.
   - Map to `.success()`, `.danger()`, `.muted()` components
 
-- [ ] **1.2** Migrate `TerminalUI.info()` to use `NooraUI.format()`
+- [x] **1.2** Migrate `TerminalUI.info()` to use `NooraUI.format()`
   - Replace `message.cyan` with `TerminalText` `.primary()` component
   - Preserve batch mode suppression logic
 
-- [ ] **1.3** Migrate `TerminalUI.success()` to use `NooraUI.format()`
+- [x] **1.3** Migrate `TerminalUI.success()` to use `NooraUI.format()`
   - Replace `"✓".green` with `.success("✓")`
   - Preserve batch mode suppression logic
 
-- [ ] **1.4** Migrate `TerminalUI.warning()` to use `NooraUI.format()`
+- [x] **1.4** Migrate `TerminalUI.warning()` to use `NooraUI.format()`
   - Replace `"⚠".yellow` with `.accent("⚠")` or custom warning component
   - Preserve multi-line formatting logic
 
-- [ ] **1.5** Migrate `TerminalUI.error()` to use `NooraUI.format()`
+- [x] **1.5** Migrate `TerminalUI.error()` to use `NooraUI.format()`
   - Replace `"✗".red` with `.danger("✗")`
   - Preserve multi-line formatting logic
 
-- [ ] **1.6** Migrate `TerminalUI.debug()` to use `NooraUI.format()`
+- [x] **1.6** Migrate `TerminalUI.debug()` to use `NooraUI.format()`
   - Replace `"[DEBUG]".lightBlack` with `.muted("[DEBUG]")`
 
-- [ ] **1.7** Update `ExFigWarningFormatter` to return `TerminalText`
+- [x] **1.7** Update `ExFigWarningFormatter` to return `TerminalText`
   - Convert string-based formatting to semantic components
   - Add `formatAsTerminalText()` method alongside existing `format()`
 
-- [ ] **1.8** Update `ExFigErrorFormatter` to return `TerminalText`
+- [x] **1.8** Update `ExFigErrorFormatter` to return `TerminalText`
   - Use `.danger()` for error messages
   - Use `.muted()` for recovery suggestions
 
-- [ ] **1.9** Update tests for formatters
+- [x] **1.9** Update tests for formatters
   - Verify output matches expected semantic structure
   - Add tests for `NooraUI.format()` output
 
@@ -53,13 +53,13 @@
 
 ## Validation
 
-- [ ] **V1** Run full test suite: `./bin/mise run test`
+- [x] **V1** Run full test suite: `./bin/mise run test`
 - [ ] **V2** Manual testing: verify colors in TTY terminal
 - [ ] **V3** Manual testing: verify plain output in non-TTY (CI)
 - [ ] **V4** Build on Linux: verify no Noora-specific issues
 
 ## Documentation
 
-- [ ] **D1** Update CLAUDE.md dependencies table (done)
-- [ ] **D2** Update `.claude/rules/terminal-ui.md` with Noora patterns (done)
+- [x] **D1** Update CLAUDE.md dependencies table (done)
+- [x] **D2** Update `.claude/rules/terminal-ui.md` with Noora patterns (done)
 - [ ] **D3** Add migration guide for future formatters

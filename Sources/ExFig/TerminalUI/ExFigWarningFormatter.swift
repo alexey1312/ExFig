@@ -1,3 +1,5 @@
+import Noora
+
 /// Formats ExFigWarning for terminal display using TOON format.
 ///
 /// Uses two styles:
@@ -146,5 +148,32 @@ struct ExFigWarningFormatter {
         let preview = collisions.prefix(3).map { "\($0.discarded)→\($0.attr)" }.joined(separator: ", ")
         let suffix = count > 3 ? ", +\(count - 3) more" : ""
         return "Theme attributes collision: \(count) skipped, \(preview)\(suffix)"
+    }
+
+    // MARK: - TerminalText API
+
+    /// Format an ExFigWarning as semantic TerminalText.
+    /// - Parameter warning: The warning to format.
+    /// - Returns: A TerminalText suitable for NooraUI.format().
+    func formatAsTerminalText(_ warning: ExFigWarning) -> TerminalText {
+        let message = format(warning)
+        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
+
+        if lines.count == 1 {
+            // Single line: icon + accent text
+            return "\(.accent("⚠")) \(.accent(message))"
+        }
+
+        // Multi-line: build with indentation
+        var parts: [TerminalText] = []
+        for (index, line) in lines.enumerated() {
+            let lineStr = String(line)
+            if index == 0 {
+                parts.append("\(.accent("⚠")) \(.accent(lineStr))")
+            } else {
+                parts.append("  \(.accent(lineStr))")
+            }
+        }
+        return TerminalText(stringLiteral: parts.map { NooraUI.format($0) }.joined(separator: "\n"))
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import Noora
 
 /// Formats LocalizedError for terminal display using TOON format.
 ///
@@ -29,5 +30,32 @@ struct ExFigErrorFormatter {
             return format(localizedError)
         }
         return error.localizedDescription
+    }
+
+    // MARK: - TerminalText API
+
+    /// Format a LocalizedError as semantic TerminalText.
+    /// - Parameter error: The error to format.
+    /// - Returns: A TerminalText suitable for NooraUI.format().
+    func formatAsTerminalText(_ error: any LocalizedError) -> TerminalText {
+        let description = error.errorDescription ?? error.localizedDescription
+
+        if let recovery = error.recoverySuggestion {
+            // Error message with recovery suggestion
+            return "\(.danger("✗")) \(.danger(description))\n  → \(.muted(recovery))"
+        }
+
+        return "\(.danger("✗")) \(.danger(description))"
+    }
+
+    /// Format an Error as semantic TerminalText.
+    /// - Parameter error: The error to format.
+    /// - Returns: A TerminalText suitable for NooraUI.format().
+    func formatAsTerminalText(_ error: any Error) -> TerminalText {
+        if let localizedError = error as? any LocalizedError {
+            return formatAsTerminalText(localizedError)
+        }
+        let description = error.localizedDescription
+        return "\(.danger("✗")) \(.danger(description))"
     }
 }
