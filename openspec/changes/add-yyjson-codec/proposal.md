@@ -1,6 +1,6 @@
 # Proposal: Add YYJSON Codec
 
-**Status:** Draft
+**Status:** Approved
 **Author:** Claude
 **Created:** 2026-02-03
 

@@ -15,7 +15,7 @@
 - [x] Update fixtures to camelCase format
 - [x] Update FixtureLoader.swift to use standard decoder (no convertFromSnakeCase)
 - [x] Update test helpers to use JSONCodec and camelCase JSON
-- [ ] Run FigmaAPI tests, verify all pass
+- [x] Run FigmaAPI tests, verify all pass (217 tests passed)
 
 **Note:** Figma API uses camelCase keys (strokeWeight, blendMode, modeId).
 Only Component and Style models need CodingKeys for snake_case fields
@@ -41,5 +41,5 @@ Only Component and Style models need CodingKeys for snake_case fields
 
 - [x] Remove JSONDecoder.default usage from BaseEndpoint.swift
 - [x] Run full test suite (1803 pass, 10 fail unrelated to JSONCodec)
-- [ ] Run batch export integration test
-- [ ] Update CLAUDE.md dependencies table
+- [x] Run batch export integration test (89 batch tests passed)
+- [x] Update CLAUDE.md dependencies table (added swift-yyjson 0.3.0+)
