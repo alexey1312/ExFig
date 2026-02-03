@@ -46,6 +46,34 @@ protocols — making the codebase maintainable and extensible.
 - Remove monolithic `Params.swift` (1141 lines → ~200 core + 4×100 plugins)
 - Rename ExFig executable target to ExFigCLI
 
+### Batch Processing Integration
+
+Plugins remain decoupled from batch infrastructure. All batch optimizations are encapsulated
+in `*ExportContextImpl` classes within the ExFig CLI module:
+
+```
+Batch.swift → BatchSharedState.$current.withValue(state)
+    ↓
+PluginRegistry → plugin.exportIcons(context:)
+    ↓
+context.downloadFiles()  ← plugin doesn't know about batch
+    ↓
+IconsExportContextImpl.downloadFiles() {
+    if BatchSharedState.current != nil {
+        → PipelinedDownloader (shared queue, ~45% speedup)
+    } else {
+        → FileDownloader (standalone mode)
+    }
+}
+```
+
+**Key principles:**
+
+- Plugins call `context.downloadFiles()` without knowing batch details
+- `*ExportContextImpl` checks `BatchSharedState.current` internally
+- Pre-fetch, pipelining, and shared queue remain in ExFig module
+- Plugins are testable with mock contexts (no batch dependencies)
+
 ## Impact
 
 - Affected specs: `configuration` (enhanced), `plugin-architecture` (new spec)
