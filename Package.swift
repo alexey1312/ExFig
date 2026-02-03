@@ -138,6 +138,7 @@ let package = Package(
             dependencies: [
                 "ExFigCore",
                 "ExFigConfig",
+                "XcodeExport",
             ]
         ),
 
@@ -147,6 +148,7 @@ let package = Package(
             dependencies: [
                 "ExFigCore",
                 "ExFigConfig",
+                "AndroidExport",
             ]
         ),
 
@@ -156,6 +158,7 @@ let package = Package(
             dependencies: [
                 "ExFigCore",
                 "ExFigConfig",
+                "FlutterExport",
             ]
         ),
 
@@ -165,6 +168,7 @@ let package = Package(
             dependencies: [
                 "ExFigCore",
                 "ExFigConfig",
+                "WebExport",
             ]
         ),
 

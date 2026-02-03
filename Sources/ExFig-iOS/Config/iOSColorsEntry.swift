@@ -147,6 +147,21 @@ public extension iOSColorsEntry {
             nameReplaceRegexp: nameReplaceRegexp
         )
     }
+
+    /// Returns a ColorsSourceInput for use with ColorsExportContext.
+    var colorsSourceInput: ColorsSourceInput {
+        ColorsSourceInput(
+            tokensFileId: tokensFileId,
+            tokensCollectionName: tokensCollectionName,
+            lightModeName: lightModeName,
+            darkModeName: darkModeName,
+            lightHCModeName: lightHCModeName,
+            darkHCModeName: darkHCModeName,
+            primitivesModeName: primitivesModeName,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp
+        )
+    }
 }
 
 // swiftlint:enable type_name
