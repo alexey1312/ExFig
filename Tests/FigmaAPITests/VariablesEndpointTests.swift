@@ -110,47 +110,46 @@ final class VariablesEndpointTests: XCTestCase {
     }
 
     func testJSONCodecDirectDecode() throws {
-        // Test decoding just VariableCollectionValue with explicit CodingKeys
+        // Test decoding VariableCollectionValue - API uses camelCase
         let collectionJson = """
         {
-            "default_mode_id": "1:0",
+            "defaultModeId": "1:0",
             "id": "VariableCollectionId:1:1",
             "name": "Colors",
             "modes": [
-              { "mode_id": "1:0", "name": "Light" }
+              { "modeId": "1:0", "name": "Light" }
             ],
-            "variable_ids": ["id1"]
+            "variableIds": ["id1"]
         }
         """
         let collectionData = Data(collectionJson.utf8)
 
-        // Models now use explicit CodingKeys, no keyDecodingStrategy needed
         let collection = try JSONCodec.decode(VariableCollectionValue.self, from: collectionData)
         XCTAssertEqual(collection.name, "Colors")
     }
 
     func testFoundationDecoderDirectDecode() throws {
-        // Test if Foundation decoder works (to isolate YYJSON issue)
+        // Test Foundation decoder with camelCase JSON (matching Figma API)
         let json = """
         {
           "meta": {
-            "variable_collections": {
+            "variableCollections": {
               "VariableCollectionId:1:1": {
-                "default_mode_id": "1:0",
+                "defaultModeId": "1:0",
                 "id": "VariableCollectionId:1:1",
                 "name": "Colors",
                 "modes": [
-                  { "mode_id": "1:0", "name": "Light" }
+                  { "modeId": "1:0", "name": "Light" }
                 ],
-                "variable_ids": ["id1"]
+                "variableIds": ["id1"]
               }
             },
             "variables": {
               "VariableID:1:2": {
                 "id": "VariableID:1:2",
                 "name": "test",
-                "variable_collection_id": "VariableCollectionId:1:1",
-                "values_by_mode": {
+                "variableCollectionId": "VariableCollectionId:1:1",
+                "valuesByMode": {
                   "1:0": { "r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0 }
                 },
                 "description": "Test"
@@ -161,7 +160,6 @@ final class VariablesEndpointTests: XCTestCase {
         """
         let data = Data(json.utf8)
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
 
         let response = try decoder.decode(VariablesResponse.self, from: data)
         XCTAssertEqual(response.meta.variableCollections.count, 1)

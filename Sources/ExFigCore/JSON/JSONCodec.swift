@@ -25,13 +25,6 @@ public enum JSONCodec {
         YYJSONDecoder()
     }
 
-    /// Create decoder for Figma API (snake_case → camelCase).
-    public static func makeFigmaDecoder() -> YYJSONDecoder {
-        var decoder = YYJSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return decoder
-    }
-
     // MARK: - Convenience Methods
 
     /// Encode value to JSON data.
@@ -59,10 +52,5 @@ public enum JSONCodec {
     /// Decode JSON data to type.
     public static func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
         try makeDecoder().decode(type, from: data)
-    }
-
-    /// Decode JSON data with Figma key strategy (snake_case → camelCase).
-    public static func decodeFigma<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
-        try makeFigmaDecoder().decode(type, from: data)
     }
 }

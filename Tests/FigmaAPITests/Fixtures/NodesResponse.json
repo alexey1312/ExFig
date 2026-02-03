@@ -48,14 +48,14 @@
         "name": "heading/large",
         "fills": [],
         "style": {
-          "font_family": "Inter",
-          "font_post_script_name": "Inter-Bold",
-          "font_weight": 700,
-          "font_size": 32.0,
-          "line_height_px": 40.0,
-          "letter_spacing": -0.5,
-          "line_height_unit": "PIXELS",
-          "text_case": "ORIGINAL"
+          "fontFamily": "Inter",
+          "fontPostScriptName": "Inter-Bold",
+          "fontWeight": 700,
+          "fontSize": 32.0,
+          "lineHeightPx": 40.0,
+          "letterSpacing": -0.5,
+          "lineHeightUnit": "PIXELS",
+          "textCase": "ORIGINAL"
         }
       }
     },
@@ -65,14 +65,14 @@
         "name": "body/regular",
         "fills": [],
         "style": {
-          "font_family": "Inter",
-          "font_post_script_name": "Inter-Regular",
-          "font_weight": 400,
-          "font_size": 16.0,
-          "line_height_px": 24.0,
-          "letter_spacing": 0.0,
-          "line_height_unit": "PIXELS",
-          "text_case": "ORIGINAL"
+          "fontFamily": "Inter",
+          "fontPostScriptName": "Inter-Regular",
+          "fontWeight": 400,
+          "fontSize": 16.0,
+          "lineHeightPx": 24.0,
+          "letterSpacing": 0.0,
+          "lineHeightUnit": "PIXELS",
+          "textCase": "ORIGINAL"
         }
       }
     }

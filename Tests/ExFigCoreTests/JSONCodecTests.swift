@@ -57,10 +57,10 @@ struct JSONCodecTests {
     }
 
     @Test
-    func decodeFigmaSnakeCase() throws {
-        // Figma API uses snake_case keys
+    func decodeFigmaCamelCase() throws {
+        // Figma API uses camelCase keys
         let json = """
-        {"user_id": 123, "file_name": "test.fig"}
+        {"userId": 123, "fileName": "test.fig"}
         """
         let data = Data(json.utf8)
 
@@ -69,7 +69,7 @@ struct JSONCodecTests {
             let fileName: String
         }
 
-        let decoded = try JSONCodec.decodeFigma(FigmaResponse.self, from: data)
+        let decoded = try JSONCodec.decode(FigmaResponse.self, from: data)
 
         #expect(decoded.userId == 123)
         #expect(decoded.fileName == "test.fig")
@@ -139,8 +139,8 @@ struct JSONCodecTests {
     }
 
     @Test
-    func decodeFigmaCamelCaseInput() throws {
-        // Test: decodeFigma with camelCase JSON input (some Figma responses)
+    func decodeFigmaFileInfo() throws {
+        // Test: decode Figma file info response (camelCase)
         let json = """
         {"lastModified": "2024-01-01", "thumbnailUrl": "https://example.com"}
         """
@@ -151,7 +151,7 @@ struct JSONCodecTests {
             let thumbnailUrl: String
         }
 
-        let decoded = try JSONCodec.decodeFigma(FileInfo.self, from: data)
+        let decoded = try JSONCodec.decode(FileInfo.self, from: data)
 
         #expect(decoded.lastModified == "2024-01-01")
         #expect(decoded.thumbnailUrl == "https://example.com")
@@ -159,12 +159,12 @@ struct JSONCodecTests {
 
     @Test
     func decodeFigmaNestedDictionary() throws {
-        // Test: nested dictionary with snake_case keys
+        // Test: nested dictionary with camelCase keys (matching Figma API)
         let json = """
         {
-            "variable_collections": {
+            "variableCollections": {
                 "key1": {
-                    "default_mode_id": "1:0",
+                    "defaultModeId": "1:0",
                     "id": "key1",
                     "name": "Test"
                 }
@@ -183,7 +183,7 @@ struct JSONCodecTests {
             let variableCollections: [String: Inner]
         }
 
-        let decoded = try JSONCodec.decodeFigma(Outer.self, from: data)
+        let decoded = try JSONCodec.decode(Outer.self, from: data)
 
         #expect(decoded.variableCollections.count == 1)
         #expect(decoded.variableCollections["key1"]?.defaultModeId == "1:0")
@@ -191,19 +191,19 @@ struct JSONCodecTests {
 
     @Test
     func decodeFigmaFullVariableCollection() throws {
-        // Test: full variable collection structure like Figma API
+        // Test: full variable collection structure like Figma API (camelCase)
         let json = """
         {
-            "variable_collections": {
+            "variableCollections": {
                 "VariableCollectionId:1:1": {
-                    "default_mode_id": "1:0",
+                    "defaultModeId": "1:0",
                     "id": "VariableCollectionId:1:1",
                     "name": "Colors",
                     "modes": [
-                        { "mode_id": "1:0", "name": "Light" },
-                        { "mode_id": "1:1", "name": "Dark" }
+                        { "modeId": "1:0", "name": "Light" },
+                        { "modeId": "1:1", "name": "Dark" }
                     ],
-                    "variable_ids": ["id1", "id2"]
+                    "variableIds": ["id1", "id2"]
                 }
             }
         }
@@ -227,7 +227,7 @@ struct JSONCodecTests {
             let variableCollections: [String: Collection]
         }
 
-        let decoded = try JSONCodec.decodeFigma(Response.self, from: data)
+        let decoded = try JSONCodec.decode(Response.self, from: data)
 
         #expect(decoded.variableCollections.count == 1)
         let collection = decoded.variableCollections["VariableCollectionId:1:1"]
@@ -236,13 +236,13 @@ struct JSONCodecTests {
     }
 
     @Test
-    func yyjsonKeyStrategyOnNestedDictValue() throws {
-        // Minimal test: does YYJSON apply keyDecodingStrategy to dictionary values?
+    func decodeNestedDictValue() throws {
+        // Test: decode nested dictionary values (camelCase)
         let json = """
         {
             "items": {
                 "key1": {
-                    "some_field": "value"
+                    "someField": "value"
                 }
             }
         }
@@ -257,19 +257,19 @@ struct JSONCodecTests {
             let items: [String: Inner]
         }
 
-        let decoded = try JSONCodec.decodeFigma(Outer.self, from: data)
+        let decoded = try JSONCodec.decode(Outer.self, from: data)
         #expect(decoded.items["key1"]?.someField == "value")
     }
 
     @Test
-    func yyjsonWithVarProperties() throws {
+    func decodeWithVarProperties() throws {
         // Test with var instead of let (like FigmaAPI models)
         let json = """
         {
             "items": {
                 "key1": {
-                    "some_field": "value",
-                    "nested_array": [{"mode_id": "1:0", "name": "Light"}]
+                    "someField": "value",
+                    "nestedArray": [{"modeId": "1:0", "name": "Light"}]
                 }
             }
         }
@@ -290,7 +290,7 @@ struct JSONCodecTests {
             var items: [String: Inner]
         }
 
-        let decoded = try JSONCodec.decodeFigma(Outer.self, from: data)
+        let decoded = try JSONCodec.decode(Outer.self, from: data)
         #expect(decoded.items["key1"]?.someField == "value")
         #expect(decoded.items["key1"]?.nestedArray.count == 1)
         #expect(decoded.items["key1"]?.nestedArray[0].modeId == "1:0")

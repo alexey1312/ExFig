@@ -31,17 +31,6 @@ public struct TypeStyle: Decodable, Sendable {
     public var letterSpacing: Double
     public var lineHeightUnit: LineHeightUnit
     public var textCase: TextCase?
-
-    private enum CodingKeys: String, CodingKey {
-        case fontFamily = "font_family"
-        case fontPostScriptName = "font_post_script_name"
-        case fontWeight = "font_weight"
-        case fontSize = "font_size"
-        case lineHeightPx = "line_height_px"
-        case letterSpacing = "letter_spacing"
-        case lineHeightUnit = "line_height_unit"
-        case textCase = "text_case"
-    }
 }
 
 public enum TextCase: String, Decodable, Sendable {
@@ -70,25 +59,6 @@ public struct Document: Decodable, Sendable {
     public let rotation: Double?
     public let children: [Document]?
     public let style: TypeStyle?
-
-    private enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case type
-        case fills
-        case strokes
-        case strokeWeight = "stroke_weight"
-        case strokeAlign = "stroke_align"
-        case strokeJoin = "stroke_join"
-        case strokeCap = "stroke_cap"
-        case effects
-        case opacity
-        case blendMode = "blend_mode"
-        case clipsContent = "clips_content"
-        case rotation
-        case children
-        case style
-    }
 }
 
 // MARK: - Stroke Enums
@@ -123,16 +93,6 @@ public struct Effect: Decodable, Sendable {
     public let offset: Vector?
     public let spread: Double?
     public let blendMode: BlendMode?
-
-    private enum CodingKeys: String, CodingKey {
-        case type
-        case visible
-        case radius
-        case color
-        case offset
-        case spread
-        case blendMode = "blend_mode"
-    }
 }
 
 public enum EffectType: String, Decodable, Sendable {
@@ -183,14 +143,6 @@ public struct Paint: Decodable, Sendable {
 
     public var asSolid: SolidPaint? {
         SolidPaint(self)
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case type
-        case blendMode = "blend_mode"
-        case opacity
-        case color
-        case gradientStops = "gradient_stops"
     }
 }
 
