@@ -56,9 +56,9 @@
 ## Validation
 
 - [x] **V1** Run full test suite: `./bin/mise run test`
-- [ ] **V2** Manual testing: verify colors in TTY terminal
-- [ ] **V3** Manual testing: verify plain output in non-TTY (CI)
-- [ ] **V4** Build on Linux: verify no Noora-specific issues
+- [x] **V2** Manual testing: verify colors in TTY terminal
+- [x] **V3** Manual testing: verify plain output in non-TTY (CI)
+- [x] **V4** Build on Linux: verify no Noora-specific issues
 
 ## Documentation
 
