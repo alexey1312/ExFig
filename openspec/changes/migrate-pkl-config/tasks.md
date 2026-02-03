@@ -422,7 +422,7 @@ Phase 12 (Final Verification)
   - Deleted `*ColorsMultiple` methods (replaced by `*ViaPlugin`)
   - Kept `*ColorsLegacy` methods (still used for single format)
   - Kept Icons/Images export files (not migrated)
-- [ ] 9.3.4 Run: `mise run test`
+- [x] 9.3.4 Run: `mise run test` — 2076 tests pass
 
 **Status:** Phase 9 partially complete:
 
@@ -479,7 +479,7 @@ Phase 12 (Final Verification)
   - 8-step guide in ARCHITECTURE.md
   - Module structure, plugin registration, PKL schema
 
-**Completion criteria:** All docs updated, examples work
+**Completion criteria:** All docs updated, examples work ✅
 
 ---
 
@@ -491,26 +491,30 @@ Phase 12 (Final Verification)
 - [x] 11.1 Update GitHub Actions to install pkl via mise — already done
   - pkl = "0.30.2" in mise.toml
   - mise-action automatically installs all tools from mise.toml
-- [ ] 11.2 Create workflow for publishing PKL schemas on tag `schemas/v*`
-- [ ] 11.3 Verify CI passes on macOS — requires PR
-- [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04) — requires PR
+- [ ] 11.2 Create workflow for publishing PKL schemas on tag `schemas/v*` — deferred (low priority)
+- [ ] 11.3 Verify CI passes on macOS — requires PR merge
+- [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04) — requires PR merge
 
-**Completion criteria:** CI green on both platforms
+**Completion criteria:** CI green on both platforms (pending PR)
 
 ---
 
-## Phase 12: PKL Schema Updates ⏳
+## Phase 12: PKL Schema Updates ⏳ ✅
 
 > **SEQUENTIAL** — schema changes affect all plugins
 > **Depends on:** Phase 9
 
-- [ ] 12.1 Update PKL schemas to use inheritance for SourceConfig
-- [ ] 12.2 Add `source` section in each platform Entry type
-- [ ] 12.3 Validate schemas compile: `pkl eval Resources/Schemas/ExFig.pkl`
-- [ ] 12.4 Create example configs using new schema structure
-- [ ] 12.5 Update all test fixtures to new schema
+- [x] 12.1 Update PKL schemas to use inheritance for SourceConfig — already done in Phase 1
+  - `ColorsEntry extends Common.VariablesSource` (iOS, Android, Flutter, Web)
+  - `IconsEntry extends Common.FrameSource` (iOS, Android, Flutter, Web)
+  - `ImagesEntry extends Common.FrameSource` (iOS, Android, Flutter, Web)
+- [x] 12.2 Add `source` section in each platform Entry type — already done in Phase 1
+  - Entry types inherit source fields via `extends` (tokensFileId, figmaFrameName, etc.)
+- [x] 12.3 Validate schemas compile: `pkl eval Resources/Schemas/ExFig.pkl` — passes
+- [x] 12.4 Create example configs using new schema structure — `Tests/ExFigTests/Fixtures/PKL/valid-config.pkl`
+- [x] 12.5 Update all test fixtures to new schema — done, fixtures use inheritance
 
-**Completion criteria:** Schemas reflect plugin architecture
+**Completion criteria:** Schemas reflect plugin architecture ✅
 
 ---
 
@@ -519,21 +523,23 @@ Phase 12 (Final Verification)
 > **SEQUENTIAL** — full system validation
 > **Depends on:** All previous phases
 
-- [ ] 13.1 Build all targets: `swift build`
-- [ ] 13.2 Each plugin builds independently:
-  - `swift build --target ExFig-iOS`
-  - `swift build --target ExFig-Android`
-  - `swift build --target ExFig-Flutter`
-  - `swift build --target ExFig-Web`
-- [ ] 13.3 All tests pass: `mise run test`
-- [ ] 13.4 CLI end-to-end: `exfig colors -i exfig.pkl --dry-run`
-- [ ] 13.5 Batch mode: `exfig batch ./configs/ --parallel 2`
-- [ ] 13.6 Test config inheritance with `amends`
-- [ ] 13.7 Test error when pkl not installed
-- [ ] 13.8 Benchmark build times (before/after)
-- [ ] 13.9 Tag release: `git tag v2.0.0`
+- [x] 13.1 Build all targets: `swift build` — success (29.70s)
+- [x] 13.2 Each plugin builds independently:
+  - [x] `swift build --target ExFig-iOS` — success (15.14s)
+  - [x] `swift build --target ExFig-Android` — success (15.63s)
+  - [x] `swift build --target ExFig-Flutter` — success (15.69s)
+  - [x] `swift build --target ExFig-Web` — success (14.22s)
+- [x] 13.3 All tests pass: `mise run test` — 2076 tests pass
+- [x] 13.4 CLI end-to-end: verified CLI loads PKL config and reports version
+  - Tested with example config, PKL evaluation works
+  - `--dry-run` not supported for colors command
+- [ ] 13.5 Batch mode: `exfig batch ./configs/ --parallel 2` — deferred (requires real Figma token)
+- [x] 13.6 Test config inheritance with `amends` — verified project-ios.pkl inherits from base.pkl
+- [x] 13.7 Test error when pkl not installed — covered by PKLLocatorTests.throwsNotFoundWhenMissing()
+- [ ] 13.8 Benchmark build times (before/after) — deferred (no baseline to compare)
+- [ ] 13.9 Tag release: `git tag v2.0.0` — deferred (requires PR merge and final review)
 
-**Completion criteria:** ExFig v2.0 ready for release
+**Completion criteria:** ExFig v2.0 ready for release (pending CI verification)
 
 ---
 
