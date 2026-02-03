@@ -57,6 +57,8 @@ public protocol ExportContext: Sendable {
     ) async throws -> T
 }
 
+// MARK: - Colors Export Context
+
 /// Context for colors export operations.
 ///
 /// Extends `ExportContext` with colors-specific functionality

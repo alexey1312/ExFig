@@ -1,0 +1,170 @@
+import ExFigCore
+import FigmaAPI
+import Foundation
+
+/// Concrete implementation of `IconsExportContext` for the ExFig CLI.
+///
+/// Bridges between the plugin system and ExFig's internal services:
+/// - Uses `IconsLoader` for Figma data loading
+/// - Uses `ImagesProcessor` for platform-specific processing
+/// - Uses `ExFigCommand.fileWriter` for file output
+/// - Uses `TerminalUI` for progress and logging
+/// - Uses `PipelinedDownloader` for batch-optimized downloads
+struct IconsExportContextImpl: IconsExportContext {
+    let client: Client
+    let ui: TerminalUI
+    let params: Params
+    let filter: String?
+    let isBatchMode: Bool
+    let fileDownloader: FileDownloader
+    let configExecutionContext: ConfigExecutionContext?
+
+    init(
+        client: Client,
+        ui: TerminalUI,
+        params: Params,
+        filter: String? = nil,
+        isBatchMode: Bool = false,
+        fileDownloader: FileDownloader = FileDownloader(),
+        configExecutionContext: ConfigExecutionContext? = nil
+    ) {
+        self.client = client
+        self.ui = ui
+        self.params = params
+        self.filter = filter
+        self.isBatchMode = isBatchMode
+        self.fileDownloader = fileDownloader
+        self.configExecutionContext = configExecutionContext
+    }
+
+    // MARK: - ExportContext
+
+    func writeFiles(_ files: [FileContents]) throws {
+        try ExFigCommand.fileWriter.write(files: files)
+    }
+
+    func info(_ message: String) {
+        ui.info(message)
+    }
+
+    func warning(_ message: String) {
+        ui.warning(message)
+    }
+
+    func success(_ message: String) {
+        ui.success(message)
+    }
+
+    func withSpinner<T: Sendable>(
+        _ message: String,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await ui.withSpinner(message, operation: operation)
+    }
+
+    // MARK: - IconsExportContext
+
+    func loadIcons(from source: IconsSourceInput) async throws -> IconsLoadOutput {
+        // Create loader config from source input
+        let config = IconsLoaderConfig(
+            frameName: source.frameName,
+            format: source.format == .pdf ? .pdf : nil,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+        )
+
+        let loader = IconsLoader(
+            client: client,
+            params: params,
+            platform: .ios, // Platform is determined by caller, loader just fetches
+            logger: ExFigCommand.logger,
+            config: config
+        )
+
+        let result = try await loader.load(filter: filter)
+
+        return IconsLoadOutput(
+            light: result.light,
+            dark: result.dark ?? []
+        )
+    }
+
+    func processIcons(
+        _ icons: IconsLoadOutput,
+        platform: Platform,
+        nameValidateRegexp: String?,
+        nameReplaceRegexp: String?,
+        nameStyle: NameStyle
+    ) throws -> IconsProcessResult {
+        let processor = ImagesProcessor(
+            platform: platform,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp,
+            nameStyle: nameStyle
+        )
+
+        let result = processor.process(
+            light: icons.light,
+            dark: icons.dark.isEmpty ? nil : icons.dark
+        )
+
+        return try IconsProcessResult(
+            iconPairs: result.get(),
+            warning: result.warning?.errorDescription
+        )
+    }
+
+    func downloadFiles(
+        _ files: [FileContents],
+        progressTitle: String
+    ) async throws -> [FileContents] {
+        let remoteFilesCount = files.filter { $0.sourceURL != nil }.count
+
+        guard remoteFilesCount > 0 else {
+            return files
+        }
+
+        return try await ui.withProgress(progressTitle, total: remoteFilesCount) { progress in
+            try await PipelinedDownloader.download(
+                files: files,
+                fileDownloader: fileDownloader,
+                context: configExecutionContext
+            ) { current, total in
+                progress.update(current: current)
+                // Report to batch progress if in batch mode
+                if let callback = BatchProgressViewStorage.downloadProgressCallback {
+                    Task { await callback(current, total) }
+                }
+            }
+        }
+    }
+
+    func withProgress<T: Sendable>(
+        _ title: String,
+        total: Int,
+        operation: @escaping @Sendable (ProgressReporter) async throws -> T
+    ) async throws -> T {
+        try await ui.withProgress(title, total: total) { progress in
+            // Wrap ProgressBar to conform to ProgressReporter
+            let reporter = ProgressBarReporter(progressBar: progress)
+            return try await operation(reporter)
+        }
+    }
+}
+
+// MARK: - ProgressBarReporter
+
+/// Wrapper to make ProgressBar conform to ProgressReporter protocol.
+struct ProgressBarReporter: ProgressReporter {
+    let progressBar: ProgressBar
+
+    func update(current: Int) {
+        progressBar.update(current: current)
+    }
+
+    func increment() {
+        progressBar.increment()
+    }
+}

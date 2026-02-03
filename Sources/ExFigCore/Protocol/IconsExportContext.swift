@@ -1,0 +1,160 @@
+import Foundation
+
+// MARK: - Icons Export Context
+
+/// Context for icons export operations.
+///
+/// Extends `ExportContext` with icons-specific functionality
+/// like loading icons from Figma frames and processing them.
+public protocol IconsExportContext: ExportContext {
+    /// Loads icons from a Figma frame.
+    ///
+    /// - Parameter source: Icons source configuration.
+    /// - Returns: Loaded icons output (light, dark variants).
+    func loadIcons(from source: IconsSourceInput) async throws -> IconsLoadOutput
+
+    /// Processes icons into platform-specific format.
+    ///
+    /// - Parameters:
+    ///   - icons: Raw icons from Figma.
+    ///   - platform: Target platform.
+    ///   - nameValidateRegexp: Optional regex for name validation.
+    ///   - nameReplaceRegexp: Optional regex for name replacement.
+    ///   - nameStyle: Naming style for generated code.
+    /// - Returns: Processed icon pairs.
+    func processIcons(
+        _ icons: IconsLoadOutput,
+        platform: Platform,
+        nameValidateRegexp: String?,
+        nameReplaceRegexp: String?,
+        nameStyle: NameStyle
+    ) throws -> IconsProcessResult
+
+    /// Downloads remote files with progress reporting.
+    ///
+    /// In batch mode, uses `PipelinedDownloader` with shared queue for ~45% speedup.
+    /// In standalone mode, uses direct file downloader.
+    ///
+    /// - Parameters:
+    ///   - files: Files to download (may contain remote URLs).
+    ///   - progressTitle: Title for the progress bar.
+    /// - Returns: Files with downloaded data populated.
+    func downloadFiles(
+        _ files: [FileContents],
+        progressTitle: String
+    ) async throws -> [FileContents]
+
+    /// Runs an operation with a progress bar.
+    ///
+    /// - Parameters:
+    ///   - title: Progress bar title.
+    ///   - total: Total number of items.
+    ///   - operation: The operation to run, receives progress callback.
+    /// - Returns: The operation result.
+    func withProgress<T: Sendable>(
+        _ title: String,
+        total: Int,
+        operation: @escaping @Sendable (ProgressReporter) async throws -> T
+    ) async throws -> T
+}
+
+/// Input for loading icons from Figma.
+public struct IconsSourceInput: Sendable {
+    /// The Figma file ID containing icons.
+    public let fileId: String
+
+    /// Optional dark mode file ID (if separate files for light/dark).
+    public let darkFileId: String?
+
+    /// The frame name containing icons.
+    public let frameName: String
+
+    /// Icon format (svg or pdf, iOS only).
+    public let format: VectorFormat
+
+    /// Whether to use single file with dark mode suffix.
+    public let useSingleFile: Bool
+
+    /// Suffix for dark mode icons when using single file.
+    public let darkModeSuffix: String
+
+    /// iOS render mode settings.
+    public let renderMode: XcodeRenderMode?
+    public let renderModeDefaultSuffix: String?
+    public let renderModeOriginalSuffix: String?
+    public let renderModeTemplateSuffix: String?
+
+    /// Name validation regex.
+    public let nameValidateRegexp: String?
+
+    /// Name replacement regex.
+    public let nameReplaceRegexp: String?
+
+    public init(
+        fileId: String,
+        darkFileId: String? = nil,
+        frameName: String,
+        format: VectorFormat = .svg,
+        useSingleFile: Bool = false,
+        darkModeSuffix: String = "_dark",
+        renderMode: XcodeRenderMode? = nil,
+        renderModeDefaultSuffix: String? = nil,
+        renderModeOriginalSuffix: String? = nil,
+        renderModeTemplateSuffix: String? = nil,
+        nameValidateRegexp: String? = nil,
+        nameReplaceRegexp: String? = nil
+    ) {
+        self.fileId = fileId
+        self.darkFileId = darkFileId
+        self.frameName = frameName
+        self.format = format
+        self.useSingleFile = useSingleFile
+        self.darkModeSuffix = darkModeSuffix
+        self.renderMode = renderMode
+        self.renderModeDefaultSuffix = renderModeDefaultSuffix
+        self.renderModeOriginalSuffix = renderModeOriginalSuffix
+        self.renderModeTemplateSuffix = renderModeTemplateSuffix
+        self.nameValidateRegexp = nameValidateRegexp
+        self.nameReplaceRegexp = nameReplaceRegexp
+    }
+}
+
+/// Vector format for icons.
+public enum VectorFormat: String, Sendable, Decodable {
+    case svg
+    case pdf
+}
+
+/// Output from icons loading.
+public struct IconsLoadOutput: Sendable {
+    public let light: [ImagePack]
+    public let dark: [ImagePack]
+
+    public init(
+        light: [ImagePack],
+        dark: [ImagePack] = []
+    ) {
+        self.light = light
+        self.dark = dark
+    }
+}
+
+/// Result from icons processing.
+public struct IconsProcessResult: Sendable {
+    public let iconPairs: [AssetPair<ImagePack>]
+    public let warning: String?
+
+    public init(iconPairs: [AssetPair<ImagePack>], warning: String? = nil) {
+        self.iconPairs = iconPairs
+        self.warning = warning
+    }
+}
+
+/// Protocol for reporting progress updates.
+public protocol ProgressReporter: Sendable {
+    /// Updates progress to specific value.
+    func update(current: Int)
+
+    /// Increments progress by one.
+    func increment()
+}

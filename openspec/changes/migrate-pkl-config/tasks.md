@@ -289,26 +289,36 @@ Phase 12 (Final Verification)
 > **4 PARALLEL SUBAGENTS** — mirrors Phase 7 structure
 > **Depends on:** Phase 7
 
-### 7b.1 Core Protocols
+### 7b.1 Core Protocols ✅
 
-- [ ] 7b.1.1 Create `Sources/ExFigCore/Protocol/IconsExporter.swift`
+- [x] 7b.1.1 Create `Sources/ExFigCore/Protocol/IconsExporter.swift`
   - `IconsExporter` protocol extending `AssetExporter`
   - Associated types: `Entry`, `PlatformConfig`
   - Method: `exportIcons(entries:platformConfig:context:) async throws -> Int`
-- [ ] 7b.1.2 Create `Sources/ExFigCore/Protocol/IconsExportContext.swift`
-  - `IconsExportContext` protocol extending `ExportContext`
-  - Methods: `fetchIconNodes(from:)`, `requestRenders(nodes:format:)`, `convertToVector(_:format:)`
-  - Method: `downloadFiles(_:context:onProgress:)` — uses PipelinedDownloader in batch mode
-- [ ] 7b.1.3 Create `Sources/ExFigCore/Protocol/ImagesExporter.swift`
+- [x] 7b.1.2 Create `IconsExportContext` protocol in `ExportContext.swift`
+  - Methods: `loadIcons(from:)`, `processIcons(_:platform:...)`, `downloadFiles(_:progressTitle:)`
+  - Input types: `IconsSourceInput`, `IconsLoadOutput`, `IconsProcessResult`
+  - Added `VectorFormat` enum and `ProgressReporter` protocol
+- [x] 7b.1.3 Create `Sources/ExFigCore/Protocol/ImagesExporter.swift`
   - `ImagesExporter` protocol extending `AssetExporter`
   - Associated types: `Entry`, `PlatformConfig`
   - Method: `exportImages(entries:platformConfig:context:) async throws -> Int`
-- [ ] 7b.1.4 Create `Sources/ExFigCore/Protocol/ImagesExportContext.swift`
-  - `ImagesExportContext` protocol extending `ExportContext`
-  - Methods: `fetchImageNodes(from:)`, `requestRenders(nodes:scales:format:)`, `convertFormat(_:to:)`
-  - Method: `downloadFiles(_:context:onProgress:)` — uses PipelinedDownloader in batch mode
-- [ ] 7b.1.5 Create `Sources/ExFig/Context/IconsExportContextImpl.swift`
-- [ ] 7b.1.6 Create `Sources/ExFig/Context/ImagesExportContextImpl.swift`
+- [x] 7b.1.4 Create `ImagesExportContext` protocol in `ExportContext.swift`
+  - Methods: `loadImages(from:)`, `processImages(_:platform:...)`, `downloadFiles(_:progressTitle:)`
+  - Methods: `convertFormat(_:to:progressTitle:)`, `rasterizeSVGs(_:scales:to:progressTitle:)`
+  - Input types: `ImagesSourceInput`, `ImagesLoadOutput`, `ImagesProcessResult`
+  - Added `ImageSourceFormat`, `ImageOutputFormat` enums
+- [x] 7b.1.5 Create `Sources/ExFig/Context/IconsExportContextImpl.swift`
+  - Implements `IconsExportContext`
+  - Uses `IconsLoader` for Figma data loading
+  - Uses `PipelinedDownloader` for batch-optimized downloads
+- [x] 7b.1.6 Create `Sources/ExFig/Context/ImagesExportContextImpl.swift`
+  - Implements `ImagesExportContext`
+  - Uses `ImagesLoader` for Figma data loading
+  - Uses `HeicConverterFactory` and `WebpConverterFactory` for format conversion
+  - Uses `SvgToPngConverter` for SVG rasterization
+
+**Status:** Phase 7b.1 complete. All core protocols and context implementations created.
 
 ### 7b.2 iOS Icons & Images
 
