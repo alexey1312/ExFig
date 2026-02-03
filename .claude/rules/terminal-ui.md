@@ -98,7 +98,25 @@ await BatchProgressViewStorage.$progressView.withValue(progressView) {
 
 ## Noora Design System
 
-Use `NooraUI` adapter for semantic terminal text formatting with ANSI colors:
+Use `NooraUI` adapter for semantic terminal text formatting with ANSI colors.
+
+**Convenience methods** (preferred for common patterns):
+
+```swift
+// Status messages with icons
+NooraUI.formatSuccess("Build completed", useColors: true)  // ✓ Build completed
+NooraUI.formatError("Build failed", useColors: true)       // ✗ Build failed
+NooraUI.formatWarning("Deprecated API", useColors: true)   // ⚠ Deprecated API
+NooraUI.formatInfo("Loading config", useColors: true)      // Loading config (primary)
+NooraUI.formatDebug("Cache hit", useColors: true)          // [DEBUG] Cache hit
+
+// Multi-line messages with proper indentation
+NooraUI.formatMultilineError("Line 1\nLine 2", useColors: true)
+// ✗ Line 1
+//   Line 2
+```
+
+**Low-level TerminalText API** (for custom formatting):
 
 ```swift
 import Noora
@@ -120,23 +138,27 @@ print(NooraUI.format(text))
 
 **NooraUI adapter** (`Sources/ExFig/TerminalUI/NooraUI.swift`):
 
-```swift
-// Shared instance with default theme
-NooraUI.shared  // Noora()
+| Method                                      | Purpose                           |
+| ------------------------------------------- | --------------------------------- |
+| `format(_ text: TerminalText)`              | Convert TerminalText to ANSI str  |
+| `formatSuccess(_ msg, useColors:)`          | Success with ✓ icon               |
+| `formatError(_ msg, useColors:)`            | Error with ✗ icon                 |
+| `formatWarning(_ msg, useColors:)`          | Warning with ⚠ icon               |
+| `formatInfo(_ msg, useColors:)`             | Info with primary color           |
+| `formatDebug(_ msg, useColors:)`            | Debug with [DEBUG] prefix         |
+| `formatMultilineError(_ msg, useColors:)`   | Multi-line error with indentation |
+| `formatMultilineWarning(_ msg, useColors:)` | Multi-line warning with indent    |
 
-// Format TerminalText to ANSI string
-NooraUI.format(text)  // -> String with escape codes
-```
+**When to use Noora vs custom components:**
 
-**When to use Noora vs plain strings:**
-
-| Use Case                | Approach                           |
-| ----------------------- | ---------------------------------- |
-| Status messages         | `NooraUI.format(terminalText)`     |
-| Commands in output      | `.command("exfig colors")`         |
-| Success/error indicators| `.success("✓")` / `.danger("✗")`   |
-| Simple logs             | Plain strings via `print()`        |
-| Warnings/errors         | `ExFigWarning` + `TerminalUI`      |
+| Use Case                    | Approach                              |
+| --------------------------- | ------------------------------------- |
+| Status messages             | `NooraUI.formatSuccess/Error/etc.`    |
+| Commands in output          | `.command("exfig colors")`            |
+| Custom formatted text       | `NooraUI.format(terminalText)`        |
+| Spinner/Progress animations | Custom `Spinner`/`ProgressBar`        |
+| Batch multi-line progress   | Custom `BatchProgressView`            |
+| Warnings/errors via UI      | `ui.warning()` / `ui.error()` (uses Noora internally) |
 
 ## Warnings System
 
