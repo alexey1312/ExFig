@@ -1,5 +1,41 @@
 # ExFig v2.0 Tasks
 
+## Summary
+
+**Status: Ready for PR Merge**
+
+| Phase                  | Status      | Notes                                    |
+| ---------------------- | ----------- | ---------------------------------------- |
+| 1. PKL Schemas         | ✅ Complete | All schemas created and validated        |
+| 2. PKL Infrastructure  | ✅ Complete | PKLLocator, PKLEvaluator, 9 tests        |
+| 3. Core Protocols      | ✅ Complete | PlatformPlugin, AssetExporter, 161 tests |
+| 4. ExFig Integration   | ✅ Complete | PKL config loading works                 |
+| 5. ExFigConfig Module  | ✅ Complete | 22 tests                                 |
+| 6. Dependency Cleanup  | ✅ Complete | Yams removed                             |
+| 7. Platform Plugins    | ✅ Complete | 62 plugin tests                          |
+| 7b. Icons & Images     | ✅ Complete | All exporters implemented                |
+| 8. Test Updates        | ✅ Complete | Coverage maintained                      |
+| 9. CLI Refactoring     | 🔶 Partial  | Colors migrated, Icons/Images deferred   |
+| 10. Documentation      | ✅ Complete | CLAUDE.md, PKL.md, MIGRATION.md          |
+| 11. CI/CD              | ⏳ Pending  | pkl installed, awaiting CI verification  |
+| 12. Schema Updates     | ✅ Complete | Inheritance works                        |
+| 13. Final Verification | ⏳ Pending  | Awaiting PR merge for release tag        |
+
+**Metrics:**
+
+- 2076 tests passing
+- Debug + Release builds successful
+- 4 platform plugins working (iOS, Android, Flutter, Web)
+- Colors export fully migrated to plugin architecture
+
+**Deferred to future iterations:**
+
+- ExportIcons/Images migration (complex batch infrastructure)
+- Rename ExFig → ExFigCLI (separate PR)
+- PKL schema publishing to GitHub releases
+
+---
+
 ## Legend
 
 | Symbol | Meaning                                                        |
@@ -545,7 +581,7 @@ Phase 12 (Final Verification)
   - [x] `swift build --target ExFig-Android` — success (15.63s)
   - [x] `swift build --target ExFig-Flutter` — success (15.69s)
   - [x] `swift build --target ExFig-Web` — success (14.22s)
-- [x] 13.3 All tests pass: `mise run test` — 2076 tests pass
+- [x] 13.3 All tests pass: `mise run test` — 2076 tests pass (verified 2026-02-04)
 - [x] 13.4 CLI end-to-end: verified CLI loads PKL config and reports version
   - Tested with example config, PKL evaluation works
   - `--dry-run` not supported for colors command
