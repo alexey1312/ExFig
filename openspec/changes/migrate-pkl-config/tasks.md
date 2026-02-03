@@ -463,7 +463,9 @@ Phase 12 (Final Verification)
 > **SUBAGENT:** docs-arch-agent
 
 - [ ] 10.2.1 Create `docs/ARCHITECTURE.md` — plugin system overview
-- [ ] 10.2.2 Update `openspec/project.md` to reference PKL instead of Yams
+- [x] 10.2.2 Update `openspec/project.md` to reference PKL instead of Yams
+  - Tech Stack: Yams → PKL
+  - Architecture Patterns: added platform plugins (ExFig-iOS/Android/Flutter/Web)
 - [ ] 10.2.3 Document how to add new platform plugin
 
 **Completion criteria:** All docs updated, examples work
