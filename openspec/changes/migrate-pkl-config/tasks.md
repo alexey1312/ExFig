@@ -135,28 +135,28 @@ Phase 12 (Final Verification)
 
 ### 5.1 Tests First
 
-- [ ] 5.1.1 Create `Tests/ExFigConfigTests/SourceConfigTests.swift`
+- [x] 5.1.1 Create `Tests/ExFigConfigTests/SourceConfigTests.swift`
   - Test: decodes all Figma Variables fields
   - Test: decodes Figma Frame fields
   - Test: handles optional fields
-- [ ] 5.1.2 Create `Tests/ExFigConfigTests/AssetConfigurationTests.swift`
+- [x] 5.1.2 Create `Tests/ExFigConfigTests/AssetConfigurationTests.swift`
   - Test: decodes single object as `.single`
   - Test: decodes array as `.multiple`
   - Test: `.entries` returns correct array for both cases
-- [ ] 5.1.3 Create `Tests/ExFigConfigTests/NameProcessingConfigTests.swift`
+- [x] 5.1.3 Create `Tests/ExFigConfigTests/NameProcessingConfigTests.swift`
   - Test: validates name against regexp
   - Test: applies replacement regexp
 
 ### 5.2 Implementation
 
-- [ ] 5.2.1 Create `ExFigConfig` target in `Package.swift`
-- [ ] 5.2.2 Move `PKLLocator`, `PKLEvaluator`, `PKLError` to `Sources/ExFigConfig/PKL/`
-- [ ] 5.2.3 Create `Sources/ExFigConfig/SourceConfig.swift`
-- [ ] 5.2.4 Create `Sources/ExFigConfig/AssetConfiguration.swift`
-- [ ] 5.2.5 Create `Sources/ExFigConfig/NameProcessingConfig.swift`
-- [ ] 5.2.6 Run tests: `swift test --filter ExFigConfigTests`
+- [x] 5.2.1 Create `ExFigConfig` target in `Package.swift`
+- [x] 5.2.2 Move `PKLLocator`, `PKLEvaluator`, `PKLError` to `Sources/ExFigConfig/PKL/`
+- [x] 5.2.3 Create `Sources/ExFigConfig/SourceConfig.swift`
+- [x] 5.2.4 Create `Sources/ExFigConfig/AssetConfiguration.swift`
+- [x] 5.2.5 Create `Sources/ExFigConfig/NameProcessingConfig.swift`
+- [x] 5.2.6 Run tests: `swift test --filter ExFigConfigTests` — 22 tests pass
 
-**Completion criteria:** ExFigConfig module compiles and tests pass
+**Completion criteria:** ExFigConfig module compiles and tests pass ✅
 
 ---
 
