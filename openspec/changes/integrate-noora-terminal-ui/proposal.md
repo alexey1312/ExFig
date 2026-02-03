@@ -43,12 +43,11 @@ TerminalUI содержит 18 файлов с кастомными реализ
 
 ### Заменить на Noora
 
-| Текущее                 | Noora API                 | Приоритет |
-| ----------------------- | ------------------------- | --------- |
-| Rainbow color calls     | `TerminalText` components | P0        |
-| Icon + color patterns   | `.success()`, `.danger()` | P0        |
-| Simple progress         | `progressBarStep`         | P1        |
-| Yes/No prompts (future) | `yesOrNoChoicePrompt`     | P2        |
+| Текущее               | Noora API                 | Приоритет |
+| --------------------- | ------------------------- | --------- |
+| Rainbow color calls   | `TerminalText` components | P0        |
+| Icon + color patterns | `.success()`, `.danger()` | P0        |
+| Simple progress       | `progressBarStep`         | P1        |
 
 ### Оставить кастомным
 
@@ -73,9 +72,6 @@ TerminalUI содержит 18 файлов с кастомными реализ
 2. **Phase 2 (P1)**: Простой progress
    - Использовать `progressBarStep` для одиночных операций без детального ETA
    - Оставить кастомный ProgressBar для детального прогресса
-
-3. **Phase 3 (P2)**: Интерактивные диалоги
-   - Добавить `yesOrNoChoicePrompt` при необходимости
 
 ### Архитектурное решение
 

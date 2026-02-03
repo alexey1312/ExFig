@@ -149,7 +149,6 @@ struct ExFigWarningFormatter {
 | Spinner with message                    | **Custom** | Braille animation UX   |
 | Progress with ETA                       | **Custom** | Detailed metrics       |
 | Batch multi-line progress               | **Custom** | Complex layout         |
-| Yes/No prompts                          | **Noora**  | Standard UX            |
 | Command highlighting                    | **Noora**  | `.command()` component |
 
 ## Trade-offs

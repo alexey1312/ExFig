@@ -51,16 +51,6 @@
   - Update `.claude/rules/terminal-ui.md`
   - Add decision matrix
 
-## Phase 3: Interactive Prompts (P2)
-
-- [ ] **3.1** Add `NooraUI.yesOrNoPrompt()` wrapper
-  - Wrap `Noora.yesOrNoChoicePrompt()`
-  - Integrate with TerminalUI output mode checks
-
-- [ ] **3.2** Identify CLI commands that could benefit from prompts
-  - Review `--force` flags that could be interactive
-  - Consider batch mode implications
-
 ## Validation
 
 - [ ] **V1** Run full test suite: `./bin/mise run test`
