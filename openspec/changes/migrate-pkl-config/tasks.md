@@ -271,14 +271,14 @@ Phase 12 (Final Verification)
 > **SUBAGENT:** Single agent, preserve coverage
 > **Depends on:** Phase 6
 
-- [ ] 8.1 Update existing integration tests to use PKL configs
-- [ ] 8.2 Remove YAML fixture files
-- [ ] 8.3 Add test for PKL evaluation error handling
-- [ ] 8.4 Add test for missing pkl CLI error
-- [ ] 8.5 Run full test suite: `mise run test`
-- [ ] 8.6 Verify test coverage >= previous: `mise run coverage`
+- [x] 8.1 Update existing integration tests to use PKL configs — already done in Phase 4
+- [x] 8.2 Remove YAML fixture files — no YAML fixtures exist (only PKL)
+- [x] 8.3 Add test for PKL evaluation error handling — exists in PKLEvaluatorTests
+- [x] 8.4 Add test for missing pkl CLI error — exists in PKLLocatorTests
+- [x] 8.5 Run full test suite: `mise run test` — 1972 tests pass
+- [x] 8.6 Verify test coverage >= previous: `mise run coverage` — 49.32% (maintained)
 
-**Completion criteria:** All tests pass, coverage maintained
+**Completion criteria:** All tests pass, coverage maintained ✅
 
 ---
 
