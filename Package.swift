@@ -34,6 +34,7 @@ let package = Package(
             dependencies: [
                 "FigmaAPI",
                 "ExFigCore",
+                "ExFigConfig",
                 "XcodeExport",
                 "AndroidExport",
                 "FlutterExport",
@@ -56,6 +57,11 @@ let package = Package(
             dependencies: [
                 .product(name: "YYJSON", package: "swift-yyjson"),
             ]
+        ),
+
+        // PKL configuration and shared config types
+        .target(
+            name: "ExFigConfig"
         ),
 
         // Loads data via Figma REST API
@@ -145,6 +151,13 @@ let package = Package(
             name: "ExFigCoreTests",
             dependencies: [
                 "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "ExFigConfigTests",
+            dependencies: [
+                "ExFigConfig",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
             ]
         ),
