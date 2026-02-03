@@ -320,39 +320,41 @@ Phase 12 (Final Verification)
 
 **Status:** Phase 7b.1 complete. All core protocols and context implementations created.
 
-### 7b.2 iOS Icons & Images
+### 7b.2 iOS Icons & Images ✅
 
-- [ ] 7b.2.1 Create `Sources/ExFig-iOS/Config/iOSIconsEntry.swift`
-- [ ] 7b.2.2 Create `Sources/ExFig-iOS/Config/iOSImagesEntry.swift`
-- [ ] 7b.2.3 Implement `iOSIconsExporter.exportIcons()` (migrate from `iOSIconsExport.swift`)
-- [ ] 7b.2.4 Implement `iOSImagesExporter.exportImages()` (migrate from `iOSImagesExport.swift`)
-- [ ] 7b.2.5 Create tests in `Tests/ExFig-iOSTests/`
+- [x] 7b.2.1 Create `Sources/ExFig-iOS/Config/iOSIconsEntry.swift`
+- [x] 7b.2.2 Create `Sources/ExFig-iOS/Config/iOSImagesEntry.swift`
+- [x] 7b.2.3 Implement `iOSIconsExporter.exportIcons()` (migrate from `iOSIconsExport.swift`)
+- [x] 7b.2.4 Implement `iOSImagesExporter.exportImages()` (migrate from `iOSImagesExport.swift`)
+- [x] 7b.2.5 Create tests in `Tests/ExFig-iOSTests/`
 
-### 7b.3 Android Icons & Images
+### 7b.3 Android Icons & Images ✅
 
-- [ ] 7b.3.1 Create `Sources/ExFig-Android/Config/AndroidIconsEntry.swift`
-- [ ] 7b.3.2 Create `Sources/ExFig-Android/Config/AndroidImagesEntry.swift`
-- [ ] 7b.3.3 Implement `AndroidIconsExporter.exportIcons()`
-- [ ] 7b.3.4 Implement `AndroidImagesExporter.exportImages()`
-- [ ] 7b.3.5 Create tests in `Tests/ExFig-AndroidTests/`
+- [x] 7b.3.1 Create `Sources/ExFig-Android/Config/AndroidIconsEntry.swift`
+- [x] 7b.3.2 Create `Sources/ExFig-Android/Config/AndroidImagesEntry.swift`
+- [x] 7b.3.3 Implement `AndroidIconsExporter.exportIcons()`
+- [x] 7b.3.4 Implement `AndroidImagesExporter.exportImages()`
+- [x] 7b.3.5 Create tests in `Tests/ExFig-AndroidTests/`
 
-### 7b.4 Flutter Icons & Images
+### 7b.4 Flutter Icons & Images ✅
 
-- [ ] 7b.4.1 Create `Sources/ExFig-Flutter/Config/FlutterIconsEntry.swift`
-- [ ] 7b.4.2 Create `Sources/ExFig-Flutter/Config/FlutterImagesEntry.swift`
-- [ ] 7b.4.3 Implement `FlutterIconsExporter.exportIcons()`
-- [ ] 7b.4.4 Implement `FlutterImagesExporter.exportImages()`
-- [ ] 7b.4.5 Create tests in `Tests/ExFig-FlutterTests/`
+- [x] 7b.4.1 Create `Sources/ExFig-Flutter/Config/FlutterIconsEntry.swift`
+- [x] 7b.4.2 Create `Sources/ExFig-Flutter/Config/FlutterImagesEntry.swift`
+- [x] 7b.4.3 Implement `FlutterIconsExporter.exportIcons()`
+- [x] 7b.4.4 Implement `FlutterImagesExporter.exportImages()`
+- [x] 7b.4.5 Create tests in `Tests/ExFig-FlutterTests/`
 
-### 7b.5 Web Icons & Images
+### 7b.5 Web Icons & Images ✅
 
-- [ ] 7b.5.1 Create `Sources/ExFig-Web/Config/WebIconsEntry.swift`
-- [ ] 7b.5.2 Create `Sources/ExFig-Web/Config/WebImagesEntry.swift`
-- [ ] 7b.5.3 Implement `WebIconsExporter.exportIcons()`
-- [ ] 7b.5.4 Implement `WebImagesExporter.exportImages()`
-- [ ] 7b.5.5 Create tests in `Tests/ExFig-WebTests/`
+- [x] 7b.5.1 Create `Sources/ExFig-Web/Config/WebIconsEntry.swift`
+- [x] 7b.5.2 Create `Sources/ExFig-Web/Config/WebImagesEntry.swift`
+- [x] 7b.5.3 Implement `WebIconsExporter.exportIcons()`
+- [x] 7b.5.4 Implement `WebImagesExporter.exportImages()`
+- [x] 7b.5.5 Create tests in `Tests/ExFig-WebTests/`
 
-**Completion criteria:** All Icons/Images exporters implemented with tests
+**Completion criteria:** All Icons/Images exporters implemented with tests ✅
+
+**Status:** Phase 7b complete. All Icons & Images exporters implemented for all 4 platforms with full test coverage.
 
 ---
 
