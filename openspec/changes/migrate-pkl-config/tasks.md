@@ -198,7 +198,7 @@ Phase 12 (Final Verification)
 
 - [x] 7.1.3 Create `ExFig-iOS` target in `Package.swift`
 - [x] 7.1.4 Create `Sources/ExFig-iOS/iOSPlugin.swift`
-- [ ] 7.1.5 Create `Sources/ExFig-iOS/Config/iOSColorsEntry.swift`
+- [x] 7.1.5 Create `Sources/ExFig-iOS/Config/iOSColorsEntry.swift`
 - [x] 7.1.6 Create `Sources/ExFig-iOS/Export/iOSColorsExporter.swift` (skeleton)
 - [ ] 7.1.7 Migrate code from `Sources/ExFig/Subcommands/Export/iOSColorsExport.swift`
 - [x] 7.1.8 Created stub exporters for Icons, Images, Typography
@@ -217,7 +217,7 @@ Phase 12 (Final Verification)
 
 - [x] 7.2.3 Create `ExFig-Android` target in `Package.swift`
 - [x] 7.2.4 Create `Sources/ExFig-Android/AndroidPlugin.swift`
-- [ ] 7.2.5 Create `Sources/ExFig-Android/Config/AndroidColorsEntry.swift`
+- [x] 7.2.5 Create `Sources/ExFig-Android/Config/AndroidColorsEntry.swift`
 - [x] 7.2.6 Create `Sources/ExFig-Android/Export/AndroidColorsExporter.swift` (skeleton)
 - [ ] 7.2.7 Migrate code from `Sources/ExFig/Subcommands/Export/AndroidColorsExport.swift`
 - [x] 7.2.8 Created stub exporters for Icons, Images, Typography
@@ -236,7 +236,7 @@ Phase 12 (Final Verification)
 
 - [x] 7.3.3 Create `ExFig-Flutter` target in `Package.swift`
 - [x] 7.3.4 Create `Sources/ExFig-Flutter/FlutterPlugin.swift`
-- [ ] 7.3.5 Create `Sources/ExFig-Flutter/Config/FlutterColorsEntry.swift`
+- [x] 7.3.5 Create `Sources/ExFig-Flutter/Config/FlutterColorsEntry.swift`
 - [x] 7.3.6 Create `Sources/ExFig-Flutter/Export/FlutterColorsExporter.swift` (skeleton)
 - [ ] 7.3.7 Migrate code from `Sources/ExFig/Subcommands/Export/FlutterColorsExport.swift`
 - [x] 7.3.8 Created stub exporters for Icons, Images (no typography for Flutter)
@@ -255,7 +255,7 @@ Phase 12 (Final Verification)
 
 - [x] 7.4.3 Create `ExFig-Web` target in `Package.swift`
 - [x] 7.4.4 Create `Sources/ExFig-Web/WebPlugin.swift`
-- [ ] 7.4.5 Create `Sources/ExFig-Web/Config/WebColorsEntry.swift`
+- [x] 7.4.5 Create `Sources/ExFig-Web/Config/WebColorsEntry.swift`
 - [x] 7.4.6 Create `Sources/ExFig-Web/Export/WebColorsExporter.swift` (skeleton)
 - [ ] 7.4.7 Migrate code from `Sources/ExFig/Subcommands/Export/WebColorsExport.swift`
 - [x] 7.4.8 Created stub exporters for Icons, Images (no typography for Web)
@@ -263,8 +263,10 @@ Phase 12 (Final Verification)
 
 **Completion criteria:** All 4 plugin test suites pass independently ✅
 
-**Status:** Phase 7 skeleton complete. 46 plugin tests passing.
-Remaining work: Config entry types and actual export logic migration (marked with [ ]).
+**Status:** Phase 7 config entry types complete. 46 plugin tests passing.
+
+- ✅ All ColorsEntry types created for iOS, Android, Flutter, Web
+- Remaining: Export logic migration (7.x.7 tasks)
 
 ---
 
