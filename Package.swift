@@ -126,6 +126,17 @@ let package = Package(
             ]
         ),
 
+        // MARK: - Platform Plugins
+
+        // iOS platform plugin
+        .target(
+            name: "ExFig-iOS",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+            ]
+        ),
+
         // MARK: - Tests
 
         .testTarget(
@@ -191,6 +202,17 @@ let package = Package(
         .testTarget(
             name: "SVGKitTests",
             dependencies: ["SVGKit", .product(name: "CustomDump", package: "swift-custom-dump")]
+        ),
+
+        // MARK: - Plugin Tests
+
+        .testTarget(
+            name: "ExFig-iOSTests",
+            dependencies: [
+                "ExFig-iOS",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
         ),
     ]
 )
