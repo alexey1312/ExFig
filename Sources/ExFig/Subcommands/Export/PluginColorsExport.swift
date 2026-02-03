@@ -1,0 +1,195 @@
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
+import ExFigCore
+import FigmaAPI
+import Foundation
+import XcodeExport
+
+// MARK: - Plugin-based Colors Export
+
+extension ExFigCommand.ExportColors {
+    /// Exports iOS colors using plugin architecture.
+    ///
+    /// This method uses `iOSColorsExporter` from the plugin system instead of
+    /// direct implementation. It handles both export and post-export tasks
+    /// like syncCodeSyntax and Xcode project updates.
+    ///
+    /// - Parameters:
+    ///   - entries: Params entries to convert and export.
+    ///   - ios: iOS platform configuration from Params.
+    ///   - client: Figma API client.
+    ///   - ui: Terminal UI for output.
+    /// - Returns: Number of colors exported.
+    func exportiOSColorsViaPlugin(
+        entries: [Params.iOS.ColorsEntry],
+        ios: Params.iOS,
+        client: Client,
+        ui: TerminalUI
+    ) async throws -> Int {
+        // Convert Params to plugin types
+        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let platformConfig = ios.platformConfig()
+
+        // Create context
+        let batchMode = BatchSharedState.current?.isBatchMode ?? false
+        let context = ColorsExportContextImpl(
+            client: client,
+            ui: ui,
+            filter: filter,
+            isBatchMode: batchMode
+        )
+
+        // Export via plugin
+        let exporter = iOSColorsExporter()
+        let count = try await exporter.exportColors(
+            entries: pluginEntries,
+            platformConfig: platformConfig,
+            context: context
+        )
+
+        // Post-export: syncCodeSyntax
+        for entry in entries where entry.syncCodeSyntax == true {
+            if let template = entry.codeSyntaxTemplate {
+                let syncCount = try await ui.withSpinner("Syncing codeSyntax to Figma...") {
+                    let syncer = CodeSyntaxSyncer(client: client)
+                    return try await syncer.sync(
+                        fileId: entry.tokensFileId,
+                        collectionName: entry.tokensCollectionName,
+                        template: template,
+                        nameStyle: entry.nameStyle,
+                        nameValidateRegexp: entry.nameValidateRegexp,
+                        nameReplaceRegexp: entry.nameReplaceRegexp
+                    )
+                }
+                ui.info("Synced codeSyntax for \(syncCount) variables")
+            }
+        }
+
+        // Post-export: update Xcode project (only if not in Swift Package)
+        if ios.xcassetsInSwiftPackage != true {
+            do {
+                let xcodeProject = try XcodeProjectWriter(
+                    xcodeProjPath: ios.xcodeprojPath,
+                    target: ios.target
+                )
+                // Add Swift file references for each entry
+                for entry in pluginEntries {
+                    if let colorSwift = entry.colorSwift {
+                        try xcodeProject.addFileReferenceToXcodeProj(colorSwift)
+                    }
+                    if let swiftuiColorSwift = entry.swiftuiColorSwift {
+                        try xcodeProject.addFileReferenceToXcodeProj(swiftuiColorSwift)
+                    }
+                }
+                try xcodeProject.save()
+            } catch {
+                ui.warning(.xcodeProjectUpdateFailed)
+            }
+        }
+
+        // Check for updates (only in standalone mode)
+        if !batchMode {
+            await checkForUpdate(logger: ExFigCommand.logger)
+        }
+
+        return count
+    }
+
+    /// Exports Android colors using plugin architecture.
+    func exportAndroidColorsViaPlugin(
+        entries: [Params.Android.ColorsEntry],
+        android: Params.Android,
+        client: Client,
+        ui: TerminalUI
+    ) async throws -> Int {
+        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let platformConfig = android.platformConfig()
+
+        let batchMode = BatchSharedState.current?.isBatchMode ?? false
+        let context = ColorsExportContextImpl(
+            client: client,
+            ui: ui,
+            filter: filter,
+            isBatchMode: batchMode
+        )
+
+        let exporter = AndroidColorsExporter()
+        let count = try await exporter.exportColors(
+            entries: pluginEntries,
+            platformConfig: platformConfig,
+            context: context
+        )
+
+        if !batchMode {
+            await checkForUpdate(logger: ExFigCommand.logger)
+        }
+
+        return count
+    }
+
+    /// Exports Flutter colors using plugin architecture.
+    func exportFlutterColorsViaPlugin(
+        entries: [Params.Flutter.ColorsEntry],
+        flutter: Params.Flutter,
+        client: Client,
+        ui: TerminalUI
+    ) async throws -> Int {
+        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let platformConfig = flutter.platformConfig()
+
+        let batchMode = BatchSharedState.current?.isBatchMode ?? false
+        let context = ColorsExportContextImpl(
+            client: client,
+            ui: ui,
+            filter: filter,
+            isBatchMode: batchMode
+        )
+
+        let exporter = FlutterColorsExporter()
+        let count = try await exporter.exportColors(
+            entries: pluginEntries,
+            platformConfig: platformConfig,
+            context: context
+        )
+
+        if !batchMode {
+            await checkForUpdate(logger: ExFigCommand.logger)
+        }
+
+        return count
+    }
+
+    /// Exports Web colors using plugin architecture.
+    func exportWebColorsViaPlugin(
+        entries: [Params.Web.ColorsEntry],
+        web: Params.Web,
+        client: Client,
+        ui: TerminalUI
+    ) async throws -> Int {
+        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let platformConfig = web.platformConfig()
+
+        let batchMode = BatchSharedState.current?.isBatchMode ?? false
+        let context = ColorsExportContextImpl(
+            client: client,
+            ui: ui,
+            filter: filter,
+            isBatchMode: batchMode
+        )
+
+        let exporter = WebColorsExporter()
+        let count = try await exporter.exportColors(
+            entries: pluginEntries,
+            platformConfig: platformConfig,
+            context: context
+        )
+
+        if !batchMode {
+            await checkForUpdate(logger: ExFigCommand.logger)
+        }
+
+        return count
+    }
+}

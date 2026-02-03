@@ -100,27 +100,28 @@ extension ExFigCommand {
             )
             var totalCount = 0
 
+            // Export colors via plugin architecture (multiple format) or legacy methods (single format)
             if let ios = options.params.ios, let colors = ios.colors {
                 totalCount += try await (colors.isMultiple
-                    ? exportiOSColorsMultiple(entries: colors.entries, ios: ios, client: client, ui: ui)
+                    ? exportiOSColorsViaPlugin(entries: colors.entries, ios: ios, client: client, ui: ui)
                     : exportiOSColorsLegacy(colorsConfig: colors, ios: ios, config: legacyConfig))
             }
 
             if let android = options.params.android, let colors = android.colors {
                 totalCount += try await (colors.isMultiple
-                    ? exportAndroidColorsMultiple(entries: colors.entries, android: android, client: client, ui: ui)
+                    ? exportAndroidColorsViaPlugin(entries: colors.entries, android: android, client: client, ui: ui)
                     : exportAndroidColorsLegacy(colorsConfig: colors, android: android, config: legacyConfig))
             }
 
             if let flutter = options.params.flutter, let colors = flutter.colors {
                 totalCount += try await (colors.isMultiple
-                    ? exportFlutterColorsMultiple(entries: colors.entries, flutter: flutter, client: client, ui: ui)
+                    ? exportFlutterColorsViaPlugin(entries: colors.entries, flutter: flutter, client: client, ui: ui)
                     : exportFlutterColorsLegacy(colorsConfig: colors, flutter: flutter, config: legacyConfig))
             }
 
             if let web = options.params.web, let colors = web.colors {
                 totalCount += try await (colors.isMultiple
-                    ? exportWebColorsMultiple(entries: colors.entries, web: web, client: client, ui: ui)
+                    ? exportWebColorsViaPlugin(entries: colors.entries, web: web, client: client, ui: ui)
                     : exportWebColorsLegacy(colorsConfig: colors, web: web, config: legacyConfig))
             }
 

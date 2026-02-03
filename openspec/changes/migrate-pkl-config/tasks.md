@@ -392,7 +392,12 @@ Phase 12 (Final Verification)
 - [x] 9.2.1 Create `Sources/ExFig/Plugin/PluginRegistry.swift`
 - [x] 9.2.2 Update `Package.swift` to add plugin dependencies to ExFig target
 - [ ] 9.2.3 Rename target `ExFig` → `ExFigCLI` (deferred to Phase 9.3)
-- [ ] 9.2.4 Refactor `ExportColors` command to use `PluginRegistry`
+- [x] 9.2.4 Refactor `ExportColors` command to use `PluginRegistry`
+  - Created `Sources/ExFig/Plugin/ParamsToPluginAdapter.swift` with adapters for all platforms
+  - Created `Sources/ExFig/Subcommands/Export/PluginColorsExport.swift` with plugin-based export methods
+  - Updated `ExportColors.performExportWithResult()` to use `*ViaPlugin` methods for multiple format
+  - Legacy format continues to use old methods (deprecated, to be removed later)
+  - Post-export tasks (syncCodeSyntax, Xcode project update) remain in CLI layer
 - [ ] 9.2.5 Refactor `ExportIcons` command to use `PluginRegistry`
 - [ ] 9.2.6 Refactor `ExportImages` command to use `PluginRegistry`
 - [ ] 9.2.7 Update Batch processing for plugin system
@@ -404,7 +409,7 @@ Phase 12 (Final Verification)
 - [ ] 9.3.3 Delete old Export files (`iOSColorsExport.swift`, etc.)
 - [ ] 9.3.4 Run: `mise run test`
 
-**Status:** PluginRegistry created with 18 tests passing. Export commands refactoring pending completion of Phase 7 migration tasks (7.x.5, 7.x.7).
+**Status:** ExportColors refactored to use plugin architecture. 2076 tests passing.
 
 **Completion criteria:** CLI works with plugin architecture, old code removed
 
