@@ -4,22 +4,27 @@
 
 **Status: Ready for PR Merge**
 
-| Phase                  | Status      | Notes                                    |
-| ---------------------- | ----------- | ---------------------------------------- |
-| 1. PKL Schemas         | ✅ Complete | All schemas created and validated        |
-| 2. PKL Infrastructure  | ✅ Complete | PKLLocator, PKLEvaluator, 9 tests        |
-| 3. Core Protocols      | ✅ Complete | PlatformPlugin, AssetExporter, 161 tests |
-| 4. ExFig Integration   | ✅ Complete | PKL config loading works                 |
-| 5. ExFigConfig Module  | ✅ Complete | 22 tests                                 |
-| 6. Dependency Cleanup  | ✅ Complete | Yams removed                             |
-| 7. Platform Plugins    | ✅ Complete | 62 plugin tests                          |
-| 7b. Icons & Images     | ✅ Complete | All exporters implemented                |
-| 8. Test Updates        | ✅ Complete | Coverage maintained                      |
-| 9. CLI Refactoring     | 🔶 Partial  | Colors migrated, Icons/Images deferred   |
-| 10. Documentation      | ✅ Complete | CLAUDE.md, PKL.md, MIGRATION.md          |
-| 11. CI/CD              | ⏳ Pending  | pkl installed, awaiting CI verification  |
-| 12. Schema Updates     | ✅ Complete | Inheritance works                        |
-| 13. Final Verification | ⏳ Pending  | Awaiting PR merge for release tag        |
+| Phase                    | Status      | Notes                                    |
+| ------------------------ | ----------- | ---------------------------------------- |
+| 1. PKL Schemas           | ✅ Complete | All schemas created and validated        |
+| 2. PKL Infrastructure    | ✅ Complete | PKLLocator, PKLEvaluator, 9 tests        |
+| 3. Core Protocols        | ✅ Complete | PlatformPlugin, AssetExporter, 161 tests |
+| 4. ExFig Integration     | ✅ Complete | PKL config loading works                 |
+| 5. ExFigConfig Module    | ✅ Complete | 22 tests                                 |
+| 6. Dependency Cleanup    | ✅ Complete | Yams removed                             |
+| 7. Platform Plugins      | ✅ Complete | 62 plugin tests                          |
+| 7b. Icons & Images       | ✅ Complete | All exporters implemented                |
+| 8. Test Updates          | ✅ Complete | Coverage maintained                      |
+| 9. CLI Refactoring       | 🔶 Partial  | Colors migrated                          |
+| 10. Documentation        | ✅ Complete | CLAUDE.md, PKL.md, MIGRATION.md          |
+| 11. CI/CD                | ⏳ Pending  | pkl installed, awaiting CI verification  |
+| 12. Schema Updates       | ✅ Complete | Inheritance works                        |
+| 13. Final Verification   | ⏳ Pending  | Awaiting PR merge for release tag        |
+| **14. Icons Migration**  | 🔲 TODO     | Integrate plugins with granular cache    |
+| **15. Images Migration** | 🔲 TODO     | Same pattern as Icons                    |
+| **16. Typography**       | 🔲 TODO     | Full exporter implementation             |
+| **17. Batch Processing** | 🔲 TODO     | Plugin-based batch export                |
+| **18. Final Cleanup**    | 🔲 TODO     | Delete Params, rename ExFig→ExFigCLI     |
 
 **Metrics:**
 
@@ -28,11 +33,12 @@
 - 4 platform plugins working (iOS, Android, Flutter, Web)
 - Colors export fully migrated to plugin architecture
 
-**Deferred to future iterations:**
+**Remaining work:**
 
-- ExportIcons/Images migration (complex batch infrastructure)
-- Rename ExFig → ExFigCLI (separate PR)
-- PKL schema publishing to GitHub releases
+- Icons/Images CLI migration with granular cache support
+- Typography exporter implementation
+- Batch processing integration
+- Final cleanup (Params deletion, target rename)
 
 ---
 
@@ -57,11 +63,27 @@ Phase 4 (ExFig Integration) ←─ Phase 5 (ExFigConfig Module)
     ↓                          ↓
 Phase 6 (Dependency Cleanup)   Phase 7 (Platform Plugins) 🔀 [4 parallel]
     ↓                          ↓
-Phase 8 (Test Updates)         Phase 9 (CLI Refactoring)
-    ↓                          ↓
-Phase 10 (Documentation) ──────┴── Phase 11 (CI/CD)
+Phase 8 (Test Updates)         Phase 9 (CLI Refactoring) ─────────────────┐
+    ↓                          ↓                                          │
+Phase 10 (Documentation) ──────┴── Phase 11 (CI/CD)                       │
+    ↓                                                                     │
+Phase 12 (Schema Updates)                                                 │
+    ↓                                                                     │
+Phase 13 (Final Verification)                                             │
+                                                                          │
+═══════════════════════════════════════════════════════════════════════════
+                         NEW PHASES (v2.1)                                │
+═══════════════════════════════════════════════════════════════════════════
+                                                                          │
+Phase 14 (Icons Migration) ◄──────────────────────────────────────────────┘
     ↓
-Phase 12 (Final Verification)
+Phase 15 (Images Migration)
+    ↓
+Phase 16 (Typography) ─────────┐
+    ↓                          ↓
+Phase 17 (Batch Processing) ◄──┘
+    ↓
+Phase 18 (Final Cleanup)
 ```
 
 ---
@@ -607,6 +629,155 @@ Phase 12 (Final Verification)
 
 ---
 
+## Phase 14: Icons CLI Migration 🧪 ⚠️ 📦
+
+> **SUBAGENT:** Single agent, TDD + migration
+> **Depends on:** Phase 9
+
+### 14.1 Extend IconsExportContext for Granular Cache
+
+- [ ] 14.1.1 Add `loadIconsWithGranularCache` method to `IconsExportContext` protocol
+  - Input: `IconsSourceInput`, `GranularCacheManager?`
+  - Output: `IconsLoadOutputWithHashes` (icons + computedHashes + allAssetMetadata)
+- [ ] 14.1.2 Update `IconsExportContextImpl` to support granular cache
+  - Use `IconsLoader.loadWithGranularCache()` when manager provided
+  - Return hashes for batch cache update
+- [ ] 14.1.3 Add `ComponentPreFetcher` support for multiple entries
+  - Method: `withPreFetchedComponents(operation:)` on context
+
+### 14.2 Create PluginIconsExport
+
+- [ ] 14.2.1 Create `Sources/ExFig/Subcommands/Export/PluginIconsExport.swift`
+  - Methods: `exportiOSIconsViaPlugin`, `exportAndroidIconsViaPlugin`, etc.
+  - Return `PlatformExportResult` with hashes for batch mode
+- [ ] 14.2.2 Update `ParamsToPluginAdapter` with icons adapters
+  - `toiOSIconsEntries()`, `toAndroidIconsEntries()`, etc.
+- [ ] 14.2.3 Update `ExportIcons.performExportWithResult()` to use plugin methods
+
+### 14.3 Tests
+
+- [ ] 14.3.1 Add tests for `IconsExportContextImpl` with granular cache
+- [ ] 14.3.2 Add tests for `PluginIconsExport` methods
+- [ ] 14.3.3 Run: `mise run test` — all tests pass
+
+**Completion criteria:** ExportIcons command uses plugin architecture with full granular cache support
+
+---
+
+## Phase 15: Images CLI Migration 🧪 ⚠️ 📦
+
+> **SUBAGENT:** Single agent, TDD + migration
+> **Depends on:** Phase 14 (same pattern)
+
+### 15.1 Extend ImagesExportContext for Granular Cache
+
+- [ ] 15.1.1 Add `loadImagesWithGranularCache` method to `ImagesExportContext` protocol
+- [ ] 15.1.2 Update `ImagesExportContextImpl` to support granular cache
+- [ ] 15.1.3 Add `ComponentPreFetcher` support for multiple entries
+
+### 15.2 Create PluginImagesExport
+
+- [ ] 15.2.1 Create `Sources/ExFig/Subcommands/Export/PluginImagesExport.swift`
+- [ ] 15.2.2 Update `ParamsToPluginAdapter` with images adapters
+- [ ] 15.2.3 Update `ExportImages.performExportWithResult()` to use plugin methods
+
+### 15.3 Tests
+
+- [ ] 15.3.1 Add tests for `ImagesExportContextImpl` with granular cache
+- [ ] 15.3.2 Add tests for `PluginImagesExport` methods
+- [ ] 15.3.3 Run: `mise run test` — all tests pass
+
+**Completion criteria:** ExportImages command uses plugin architecture with full granular cache support
+
+---
+
+## Phase 16: Typography Implementation 🧪 📦
+
+> **SUBAGENT:** Single agent, TDD approach
+> **Depends on:** Phase 9
+
+### 16.1 Core Protocol
+
+- [ ] 16.1.1 Create `Sources/ExFigCore/Protocol/TypographyExporter.swift`
+  - Protocol: `TypographyExporter` extending `AssetExporter`
+  - Method: `exportTypography(entries:platformConfig:context:) async throws -> Int`
+- [ ] 16.1.2 Create `TypographyExportContext` protocol
+  - Methods: `loadTypography(from:)`, `processTypography(_:platform:)`
+- [ ] 16.1.3 Create `Sources/ExFig/Context/TypographyExportContextImpl.swift`
+
+### 16.2 Platform Exporters
+
+- [ ] 16.2.1 Create `Sources/ExFig-iOS/Config/iOSTypographyEntry.swift`
+- [ ] 16.2.2 Implement `iOSTypographyExporter.exportTypography()`
+- [ ] 16.2.3 Create `Sources/ExFig-Android/Config/AndroidTypographyEntry.swift`
+- [ ] 16.2.4 Implement `AndroidTypographyExporter.exportTypography()`
+
+### 16.3 CLI Integration
+
+- [ ] 16.3.1 Create `Sources/ExFig/Subcommands/Export/PluginTypographyExport.swift`
+- [ ] 16.3.2 Update `ParamsToPluginAdapter` with typography adapters
+- [ ] 16.3.3 Update `ExportTypography` command to use plugin methods
+
+### 16.4 Tests
+
+- [ ] 16.4.1 Add tests for typography exporters
+- [ ] 16.4.2 Run: `mise run test` — all tests pass
+
+**Completion criteria:** ExportTypography command uses plugin architecture
+
+---
+
+## Phase 17: Batch Processing Update 🧪 ⚠️ 📦
+
+> **SUBAGENT:** Single agent, migration
+> **Depends on:** Phase 14, 15, 16
+
+### 17.1 Update BatchConfigRunner
+
+- [ ] 17.1.1 Update `BatchConfigRunner` to use plugin-based exports
+  - Replace direct `exportiOSIcons()` calls with `exportiOSIconsViaPlugin()`
+  - Same for Images and Typography
+- [ ] 17.1.2 Ensure granular cache hashes flow through plugin architecture
+- [ ] 17.1.3 Verify batch progress reporting works with plugins
+
+### 17.2 Tests
+
+- [ ] 17.2.1 Add integration test for batch mode with plugins
+- [ ] 17.2.2 Run: `mise run test` — all tests pass
+
+**Completion criteria:** Batch processing works with plugin architecture
+
+---
+
+## Phase 18: Final Cleanup ⏳
+
+> **SEQUENTIAL** — cleanup after all migrations complete
+> **Depends on:** Phase 14, 15, 16, 17
+
+### 18.1 Remove Legacy Code
+
+- [ ] 18.1.1 Delete `Sources/ExFig/Input/Params.swift` (1141 lines)
+- [ ] 18.1.2 Delete old export files:
+  - `iOSIconsExport.swift`, `AndroidIconsExport.swift`, etc.
+  - `iOSImagesExport.swift`, `AndroidImagesExport.swift`, etc.
+- [ ] 18.1.3 Remove unused helpers and adapters
+
+### 18.2 Rename Target
+
+- [ ] 18.2.1 Rename `ExFig` → `ExFigCLI` in `Package.swift`
+- [ ] 18.2.2 Update all `import ExFig` → `import ExFigCLI` (if needed)
+- [ ] 18.2.3 Update documentation references
+
+### 18.3 Verification
+
+- [ ] 18.3.1 Run: `swift build` — success
+- [ ] 18.3.2 Run: `mise run test` — all tests pass
+- [ ] 18.3.3 Verify CLI works end-to-end
+
+**Completion criteria:** Clean codebase with no legacy code, ExFigCLI target
+
+---
+
 ## Subagent Execution Plan
 
 ```
@@ -667,13 +838,37 @@ Phase 12 (Final Verification)
          └─────────────┼─────────────┘
                        ▼
           ┌─────────────────────────┐
-          │  Phase 12: Schema       │
-          │  Updates                │
+          │  Phase 12-13: Schema    │
+          │  + Verification         │
+          └────────────┬────────────┘
+                       │
+    ═══════════════════╪═══════════════════
+         NEW PHASES (v2.1)
+    ═══════════════════╪═══════════════════
+                       ▼
+          ┌─────────────────────────┐
+          │  📦 Phase 14:           │
+          │  Icons Migration        │
           └────────────┬────────────┘
                        ▼
           ┌─────────────────────────┐
-          │  Phase 13: Final        │
-          │  Verification           │
+          │  📦 Phase 15:           │
+          │  Images Migration       │
+          └────────────┬────────────┘
+                       ▼
+          ┌─────────────────────────┐
+          │  📦 Phase 16:           │
+          │  Typography             │
+          └────────────┬────────────┘
+                       ▼
+          ┌─────────────────────────┐
+          │  📦 Phase 17:           │
+          │  Batch Processing       │
+          └────────────┬────────────┘
+                       ▼
+          ┌─────────────────────────┐
+          │  Phase 18: Final        │
+          │  Cleanup                │
           └─────────────────────────┘
 ```
 
