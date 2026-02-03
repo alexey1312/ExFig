@@ -385,7 +385,10 @@ Phase 12 (Final Verification)
   - Test: registers all 4 plugins
   - Test: routes to correct plugin by config key
   - Test: returns empty for unknown config key
-- [ ] 9.1.2 Create integration tests for export commands with plugins
+- [ ] 9.1.2 Create integration tests for export commands with plugins — **DEFERRED**
+  - Requires mocking FigmaAPI for full cycle tests
+  - Unit tests for PluginRegistry cover registration and routing (18 tests)
+  - Decision: Add integration tests in future iteration when Icons/Images migrate
 
 ### 9.2 Implementation
 
@@ -426,7 +429,10 @@ Phase 12 (Final Verification)
 
 **Status:** Phase 9 partially complete:
 
+- ✅ PluginRegistry implemented with 18 tests
 - ✅ ExportColors migrated to plugin architecture for multiple format
+- ✅ ParamsToPluginAdapter created for all 4 platforms
+- ⏸️ Integration tests deferred (requires FigmaAPI mocking)
 - ⏸️ ExportIcons/Images deferred (require significant plugin architecture extensions)
 - ⏸️ Batch processing deferred (depends on Icons/Images)
 - ⏸️ Cleanup deferred (Params still required)
@@ -493,9 +499,17 @@ Phase 12 (Final Verification)
   - mise-action automatically installs all tools from mise.toml
   - Added explicit `pkl --version` check for macOS
   - Added explicit `mise install pkl` and PATH setup for Linux (Docker container)
-- [ ] 11.2 Create workflow for publishing PKL schemas on tag `schemas/v*` — deferred (low priority)
-- [ ] 11.3 Verify CI passes on macOS — requires PR merge
-- [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04) — requires PR merge
+- [ ] 11.2 Create workflow for publishing PKL schemas on tag `schemas/v*` — **DEFERRED** (low priority)
+  - Schemas work locally via Resources/Schemas/
+  - Remote publishing can be added when user demand exists
+- [ ] 11.3 Verify CI passes on macOS — **BLOCKED** (requires PR merge)
+- [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04) — **BLOCKED** (requires PR merge)
+
+**Status:** Phase 11 partially complete:
+
+- ✅ pkl installation configured for GitHub Actions (macOS + Linux)
+- ⏸️ Schema publishing deferred (low priority, no user demand)
+- 🔒 CI verification blocked until PR merge
 
 **Completion criteria:** CI green on both platforms (pending PR)
 
@@ -535,11 +549,23 @@ Phase 12 (Final Verification)
 - [x] 13.4 CLI end-to-end: verified CLI loads PKL config and reports version
   - Tested with example config, PKL evaluation works
   - `--dry-run` not supported for colors command
-- [ ] 13.5 Batch mode: `exfig batch ./configs/ --parallel 2` — deferred (requires real Figma token)
+- [ ] 13.5 Batch mode: `exfig batch ./configs/ --parallel 2` — **DEFERRED** (requires real Figma token)
+  - Batch processing logic unchanged from v1.x
+  - PKL config loading verified in unit tests
 - [x] 13.6 Test config inheritance with `amends` — verified project-ios.pkl inherits from base.pkl
 - [x] 13.7 Test error when pkl not installed — covered by PKLLocatorTests.throwsNotFoundWhenMissing()
-- [ ] 13.8 Benchmark build times (before/after) — deferred (no baseline to compare)
-- [ ] 13.9 Tag release: `git tag v2.0.0` — deferred (requires PR merge and final review)
+- [ ] 13.8 Benchmark build times (before/after) — **DEFERRED** (no baseline from before migration)
+- [ ] 13.9 Tag release: `git tag v2.0.0` — **BLOCKED** (requires PR merge and final review)
+
+**Status:** Phase 13 substantially complete:
+
+- ✅ All builds pass (debug + release)
+- ✅ All plugin modules build independently
+- ✅ 2076 tests pass
+- ✅ CLI loads PKL config successfully
+- ✅ Config inheritance verified
+- ⏸️ Batch mode, benchmarks deferred (require external resources)
+- 🔒 Release tag blocked until PR merge
 
 **Completion criteria:** ExFig v2.0 ready for release (pending CI verification)
 
