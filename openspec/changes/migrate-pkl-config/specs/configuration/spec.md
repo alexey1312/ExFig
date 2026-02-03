@@ -148,3 +148,166 @@ The system SHALL evaluate PKL configurations to JSON for internal processing.
 - **WHEN** the system evaluates the configuration
 - **THEN** all entries are correctly parsed from JSON
 - **AND** evaluation completes within 1 second
+
+---
+
+## Plugin Architecture Requirements
+
+### Requirement: Platform Plugin Registration
+
+The system SHALL support platform plugins for extensible export functionality.
+
+#### Scenario: iOS plugin registers exporters
+
+- **GIVEN** the ExFig-iOS plugin is linked
+- **WHEN** ExFigCLI initializes the plugin registry
+- **THEN** iOSColorsExporter, iOSIconsExporter, iOSImagesExporter, iOSTypographyExporter are registered
+- **AND** plugin identifier is "ios"
+
+#### Scenario: Android plugin registers exporters
+
+- **GIVEN** the ExFig-Android plugin is linked
+- **WHEN** ExFigCLI initializes the plugin registry
+- **THEN** AndroidColorsExporter, AndroidIconsExporter, AndroidImagesExporter, AndroidTypographyExporter are registered
+- **AND** plugin identifier is "android"
+
+#### Scenario: Plugin provides config keys
+
+- **GIVEN** the iOS plugin is registered
+- **WHEN** PluginRegistry is queried for iOS config keys
+- **THEN** the system returns `["ios.colors", "ios.icons", "ios.images", "ios.typography"]`
+
+### Requirement: AssetExporter Protocol
+
+The system SHALL use a unified AssetExporter protocol for all export operations.
+
+#### Scenario: Export colors using plugin
+
+- **GIVEN** a PKL config with `ios.colors` section
+- **AND** the iOS plugin is registered
+- **WHEN** `exfig colors -i exfig.pkl` is executed
+- **THEN** the system routes to iOSColorsExporter
+- **AND** exporter calls load(), process(), export() in sequence
+
+#### Scenario: Exporter load phase
+
+- **GIVEN** a valid iOSColorsEntry configuration
+- **WHEN** iOSColorsExporter.load() is called
+- **THEN** the exporter fetches data from Figma API using FigmaClient
+- **AND** returns LoaderOutput with raw color data
+
+#### Scenario: Exporter process phase
+
+- **GIVEN** LoaderOutput from load phase
+- **WHEN** iOSColorsExporter.process() is called
+- **THEN** the exporter transforms raw data into [Color] domain models
+- **AND** applies name validation/replacement from config
+
+#### Scenario: Exporter export phase
+
+- **GIVEN** processed [Color] output
+- **WHEN** iOSColorsExporter.export() is called
+- **THEN** the exporter generates xcassets and/or Swift files
+- **AND** returns ExportResult with written file paths
+
+### Requirement: Shared SourceConfig
+
+The system SHALL use a common SourceConfig structure for Figma source fields.
+
+#### Scenario: SourceConfig in iOS entry
+
+- **GIVEN** a PKL config with iOS colors entry containing `source` section
+- **WHEN** the configuration is parsed
+- **THEN** `source.tokensFileId`, `source.lightModeName`, etc. are extracted
+- **AND** iOS-specific fields (`useColorAssets`, `assetsFolder`) are separate from source
+
+#### Scenario: SourceConfig inheritance from common
+
+- **GIVEN** a PKL config with `common.variablesColors` defined
+- **AND** an iOS entry without explicit `source` section
+- **WHEN** the configuration is parsed
+- **THEN** source fields are inherited from `common.variablesColors`
+
+#### Scenario: SourceConfig fields list
+
+- **GIVEN** the SourceConfig type
+- **THEN** it SHALL contain these Figma Variables fields:
+  - `tokensFileId: String?`
+  - `tokensCollectionName: String?`
+  - `lightModeName: String?`
+  - `darkModeName: String?`
+  - `lightHCModeName: String?`
+  - `darkHCModeName: String?`
+  - `primitivesModeName: String?`
+- **AND** these Figma Frame fields:
+  - `figmaFrameName: String?`
+  - `sourceFormat: SourceFormat?`
+- **AND** these name processing fields:
+  - `nameValidateRegexp: String?`
+  - `nameReplaceRegexp: String?`
+
+### Requirement: AssetConfiguration Generic Type
+
+The system SHALL use AssetConfiguration<Entry> for single/multiple entry decoding.
+
+#### Scenario: Single entry configuration
+
+- **GIVEN** a PKL config with `ios.colors` as single object (not array)
+- **WHEN** the configuration is decoded
+- **THEN** AssetConfiguration decodes as `.single(entry)`
+- **AND** `configuration.entries` returns `[entry]`
+
+#### Scenario: Multiple entries configuration
+
+- **GIVEN** a PKL config with `ios.colors` as array of objects
+- **WHEN** the configuration is decoded
+- **THEN** AssetConfiguration decodes as `.multiple(entries)`
+- **AND** `configuration.entries` returns all entries
+
+#### Scenario: Mixed platforms single/multiple
+
+- **GIVEN** a PKL config with `ios.colors` as single and `android.colors` as array
+- **WHEN** the configuration is decoded
+- **THEN** iOS uses `.single` and Android uses `.multiple`
+- **AND** both platforms export correctly
+
+### Requirement: Plugin Independence
+
+The system SHALL support independent compilation of each plugin module.
+
+#### Scenario: Build iOS plugin independently
+
+- **GIVEN** the ExFig-iOS target in Package.swift
+- **WHEN** `swift build --target ExFig-iOS` is executed
+- **THEN** the build succeeds without building other plugins
+
+#### Scenario: Test iOS plugin in isolation
+
+- **GIVEN** the ExFig-iOSTests target in Package.swift
+- **WHEN** `swift test --filter ExFig-iOSTests` is executed
+- **THEN** iOS plugin tests run without requiring Android/Flutter/Web plugins
+
+### Requirement: PluginRegistry
+
+The system SHALL use PluginRegistry to manage available plugins.
+
+#### Scenario: Register all plugins at startup
+
+- **GIVEN** ExFigCLI executable starts
+- **WHEN** main() initializes
+- **THEN** PluginRegistry registers iOS, Android, Flutter, Web plugins
+- **AND** all plugins are available for export commands
+
+#### Scenario: Route export to correct plugin
+
+- **GIVEN** a PKL config with only `ios.colors` section
+- **WHEN** `exfig colors -i exfig.pkl` is executed
+- **THEN** PluginRegistry routes to iOSPlugin only
+- **AND** Android, Flutter, Web plugins are not invoked
+
+#### Scenario: Export multiple platforms
+
+- **GIVEN** a PKL config with `ios.colors` and `android.colors` sections
+- **WHEN** `exfig colors -i exfig.pkl` is executed
+- **THEN** PluginRegistry invokes both iOSPlugin and AndroidPlugin
+- **AND** each plugin exports its colors independently

@@ -1,4 +1,38 @@
-## 1. PKL Schemas
+# ExFig v2.0 Tasks
+
+## Legend
+
+| Symbol | Meaning                                                        |
+| ------ | -------------------------------------------------------------- |
+| 🔀     | **PARALLEL** — tasks can run concurrently via subagents        |
+| ⏳     | **SEQUENTIAL** — must complete before next phase               |
+| 🧪     | **TDD** — write tests first, then implementation               |
+| 📦     | **SUBAGENT** — isolated unit of work for delegation            |
+| ⚠️      | **MIGRATION** — refactor existing code, preserve test coverage |
+
+## Dependency Graph
+
+```
+Phase 1 (PKL Schemas)
+    ↓
+Phase 2 (PKL Infrastructure) ──┬── Phase 3 (Core Protocols)
+    ↓                          ↓
+Phase 4 (ExFig Integration) ←─ Phase 5 (ExFigConfig Module)
+    ↓                          ↓
+Phase 6 (Dependency Cleanup)   Phase 7 (Platform Plugins) 🔀 [4 parallel]
+    ↓                          ↓
+Phase 8 (Test Updates)         Phase 9 (CLI Refactoring)
+    ↓                          ↓
+Phase 10 (Documentation) ──────┴── Phase 11 (CI/CD)
+    ↓
+Phase 12 (Final Verification)
+```
+
+---
+
+## Phase 1: PKL Schemas ⏳
+
+> **No parallelism** — schemas depend on each other (imports)
 
 - [ ] 1.1 Create `Resources/Schemas/PklProject` manifest
 - [ ] 1.2 Create `ExFig.pkl` main abstract schema
@@ -10,60 +44,438 @@
 - [ ] 1.8 Create `Web.pkl` with colors, icons, images configurations
 - [ ] 1.9 Validate schemas compile: `pkl eval ExFig.pkl`
 
-## 2. PKL Infrastructure
+**Completion criteria:** `pkl eval Resources/Schemas/ExFig.pkl` succeeds
 
-- [ ] 2.1 Create `PKL/PKLError.swift` with NotFound, EvaluationFailed cases
-- [ ] 2.2 Create `PKL/PKLLocator.swift` with mise shim and PATH detection
-- [ ] 2.3 Create `PKL/PKLEvaluator.swift` with subprocess wrapper
-- [ ] 2.4 Add `pkl` to `mise.toml` tools section
-- [ ] 2.5 Write unit tests for `PKLLocator`
-- [ ] 2.6 Write unit tests for `PKLEvaluator`
+---
 
-## 3. ExFig Integration
+## Phase 2: PKL Infrastructure 🧪 📦
 
-- [ ] 3.1 Update `ExFigOptions.swift` to use `PKLEvaluator`
-- [ ] 3.2 Change default config filename to `exfig.pkl`
-- [ ] 3.3 Remove YAML file detection logic
-- [ ] 3.4 Update `ConfigDiscovery.swift` to find `.pkl` files
-- [ ] 3.5 Remove Yams validation logic from `ConfigDiscovery`
-- [ ] 3.6 Update error messages to reference PKL
+> **SUBAGENT:** Single agent, TDD approach
+> **Depends on:** Phase 1
 
-## 4. Dependency Cleanup
+### 2.1 Tests First
 
-- [ ] 4.1 Remove `Yams` from `Package.swift` dependencies
-- [ ] 4.2 Remove `import Yams` from `ExFigOptions.swift`
-- [ ] 4.3 Remove `import Yams` from `ConfigDiscovery.swift`
-- [ ] 4.4 Search and remove any remaining Yams references
+- [ ] 2.1.1 Create `Tests/ExFigTests/PKL/PKLLocatorTests.swift`
+  - Test: finds pkl via mise shims
+  - Test: finds pkl in PATH
+  - Test: throws NotFound when missing
+- [ ] 2.1.2 Create `Tests/ExFigTests/PKL/PKLEvaluatorTests.swift`
+  - Test: evaluates valid PKL to JSON
+  - Test: throws EvaluationFailed on syntax error
+  - Test: includes line/column in error message
 
-## 5. Test Updates
+### 2.2 Implementation
 
-- [ ] 5.1 Create `Tests/ExFigTests/Fixtures/exfig.pkl` test config
-- [ ] 5.2 Create `Tests/ExFigTests/Fixtures/base.pkl` for inheritance tests
-- [ ] 5.3 Update existing integration tests to use PKL configs
-- [ ] 5.4 Remove YAML fixture files
-- [ ] 5.5 Add test for PKL evaluation error handling
-- [ ] 5.6 Add test for missing pkl CLI error
-- [ ] 5.7 Run full test suite: `mise run test`
+- [ ] 2.2.1 Create `PKL/PKLError.swift` with NotFound, EvaluationFailed cases
+- [ ] 2.2.2 Create `PKL/PKLLocator.swift` with mise shim and PATH detection
+- [ ] 2.2.3 Create `PKL/PKLEvaluator.swift` with subprocess wrapper
+- [ ] 2.2.4 Add `pkl` to `mise.toml` tools section
+- [ ] 2.2.5 Run tests: `swift test --filter PKL`
 
-## 6. Documentation
+**Completion criteria:** All PKL tests pass
 
-- [ ] 6.1 Update `CLAUDE.md` Quick Reference with PKL commands
-- [ ] 6.2 Update `CLAUDE.md` config examples to PKL syntax
-- [ ] 6.3 Create `docs/PKL.md` — complete PKL configuration guide
-- [ ] 6.4 Create `docs/MIGRATION.md` — YAML to PKL migration guide
-- [ ] 6.5 Update `README.md` with PKL prerequisites
-- [ ] 6.6 Update `openspec/project.md` to reference PKL instead of Yams
+---
 
-## 7. CI/CD
+## Phase 3: Core Protocols 🧪 📦
 
-- [ ] 7.1 Update GitHub Actions to install pkl via mise
-- [ ] 7.2 Create workflow for publishing PKL schemas on tag `schemas/v*`
-- [ ] 7.3 Verify CI passes on macOS and Linux
+> **SUBAGENT:** Single agent, TDD approach
+> **Parallel with:** Phase 2 (no dependencies)
 
-## 8. Verification
+### 3.1 Tests First
 
-- [ ] 8.1 Build release: `mise run build:release`
-- [ ] 8.2 Test basic command: `exfig colors -i exfig.pkl --dry-run`
-- [ ] 8.3 Test batch mode: `exfig batch ./configs/ --parallel 2`
-- [ ] 8.4 Test config inheritance with `amends`
-- [ ] 8.5 Test error when pkl not installed
+- [ ] 3.1.1 Create `Tests/ExFigCoreTests/Protocol/PlatformPluginTests.swift`
+  - Test: plugin provides identifier
+  - Test: plugin provides configKeys
+  - Test: plugin returns exporters
+- [ ] 3.1.2 Create `Tests/ExFigCoreTests/Protocol/AssetExporterTests.swift`
+  - Test: mock exporter load/process/export cycle
+  - Test: exporter provides assetType
+
+### 3.2 Implementation
+
+- [ ] 3.2.1 Create `Sources/ExFigCore/Protocol/AssetType.swift` (enum: colors, icons, images, typography)
+- [ ] 3.2.2 Create `Sources/ExFigCore/Protocol/ExportResult.swift`
+- [ ] 3.2.3 Create `Sources/ExFigCore/Protocol/AssetExporter.swift`
+- [ ] 3.2.4 Create `Sources/ExFigCore/Protocol/PlatformPlugin.swift`
+- [ ] 3.2.5 Run tests: `swift test --filter ExFigCoreTests`
+
+**Completion criteria:** Protocol tests pass with mock implementations
+
+---
+
+## Phase 4: ExFig Integration ⚠️ 📦
+
+> **SUBAGENT:** Single agent, migration with existing test preservation
+> **Depends on:** Phase 2
+
+### 4.1 Preserve Existing Tests
+
+- [ ] 4.1.1 Run existing tests, note which use YAML: `swift test 2>&1 | grep -i yaml`
+- [ ] 4.1.2 Create `Tests/ExFigTests/Fixtures/exfig.pkl` equivalent to existing YAML fixture
+- [ ] 4.1.3 Create `Tests/ExFigTests/Fixtures/base.pkl` for inheritance tests
+
+### 4.2 Migration (keep tests green)
+
+- [ ] 4.2.1 Update `ExFigOptions.swift` to use `PKLEvaluator`
+- [ ] 4.2.2 Change default config filename to `exfig.pkl`
+- [ ] 4.2.3 Remove YAML file detection logic
+- [ ] 4.2.4 Update `ConfigDiscovery.swift` to find `.pkl` files
+- [ ] 4.2.5 Remove Yams validation logic from `ConfigDiscovery`
+- [ ] 4.2.6 Update error messages to reference PKL
+- [ ] 4.2.7 Run full test suite: `mise run test`
+
+**Completion criteria:** All existing tests pass with PKL configs
+
+---
+
+## Phase 5: ExFigConfig Module 🧪 📦
+
+> **SUBAGENT:** Single agent, TDD approach
+> **Depends on:** Phase 2, Phase 3
+
+### 5.1 Tests First
+
+- [ ] 5.1.1 Create `Tests/ExFigConfigTests/SourceConfigTests.swift`
+  - Test: decodes all Figma Variables fields
+  - Test: decodes Figma Frame fields
+  - Test: handles optional fields
+- [ ] 5.1.2 Create `Tests/ExFigConfigTests/AssetConfigurationTests.swift`
+  - Test: decodes single object as `.single`
+  - Test: decodes array as `.multiple`
+  - Test: `.entries` returns correct array for both cases
+- [ ] 5.1.3 Create `Tests/ExFigConfigTests/NameProcessingConfigTests.swift`
+  - Test: validates name against regexp
+  - Test: applies replacement regexp
+
+### 5.2 Implementation
+
+- [ ] 5.2.1 Create `ExFigConfig` target in `Package.swift`
+- [ ] 5.2.2 Move `PKLLocator`, `PKLEvaluator`, `PKLError` to `Sources/ExFigConfig/PKL/`
+- [ ] 5.2.3 Create `Sources/ExFigConfig/SourceConfig.swift`
+- [ ] 5.2.4 Create `Sources/ExFigConfig/AssetConfiguration.swift`
+- [ ] 5.2.5 Create `Sources/ExFigConfig/NameProcessingConfig.swift`
+- [ ] 5.2.6 Run tests: `swift test --filter ExFigConfigTests`
+
+**Completion criteria:** ExFigConfig module compiles and tests pass
+
+---
+
+## Phase 6: Dependency Cleanup ⏳
+
+> **SEQUENTIAL** — must complete before Phase 8
+> **Depends on:** Phase 4
+
+- [ ] 6.1 Remove `Yams` from `Package.swift` dependencies
+- [ ] 6.2 Remove `import Yams` from `ExFigOptions.swift`
+- [ ] 6.3 Remove `import Yams` from `ConfigDiscovery.swift`
+- [ ] 6.4 Search and remove any remaining Yams references: `grep -r "Yams" Sources/`
+- [ ] 6.5 Verify build: `swift build`
+
+**Completion criteria:** Project builds without Yams dependency
+
+---
+
+## Phase 7: Platform Plugins 🔀 🧪
+
+> **4 PARALLEL SUBAGENTS** — each plugin is independent
+> **Depends on:** Phase 3, Phase 5
+
+### 7.1 iOS Plugin 📦
+
+> **SUBAGENT:** ios-plugin-agent
+
+#### Tests First
+
+- [ ] 7.1.1 Create `Tests/ExFig-iOSTests/iOSPluginTests.swift`
+  - Test: identifier is "ios"
+  - Test: configKeys contains expected keys
+  - Test: exporters() returns 4 exporters
+- [ ] 7.1.2 Create `Tests/ExFig-iOSTests/iOSColorsExporterTests.swift`
+  - Test: load fetches from Figma
+  - Test: process transforms to [Color]
+  - Test: export generates xcassets
+
+#### Implementation
+
+- [ ] 7.1.3 Create `ExFig-iOS` target in `Package.swift`
+- [ ] 7.1.4 Create `Sources/ExFig-iOS/iOSPlugin.swift`
+- [ ] 7.1.5 Create `Sources/ExFig-iOS/Config/iOSColorsEntry.swift`
+- [ ] 7.1.6 Create `Sources/ExFig-iOS/Export/iOSColorsExporter.swift`
+- [ ] 7.1.7 Migrate code from `Sources/ExFig/Subcommands/Export/iOSColorsExport.swift`
+- [ ] 7.1.8 Repeat for Icons, Images, Typography exporters
+- [ ] 7.1.9 Run: `swift test --filter ExFig-iOSTests`
+
+### 7.2 Android Plugin 📦
+
+> **SUBAGENT:** android-plugin-agent
+
+#### Tests First
+
+- [ ] 7.2.1 Create `Tests/ExFig-AndroidTests/AndroidPluginTests.swift`
+- [ ] 7.2.2 Create `Tests/ExFig-AndroidTests/AndroidColorsExporterTests.swift`
+
+#### Implementation
+
+- [ ] 7.2.3 Create `ExFig-Android` target in `Package.swift`
+- [ ] 7.2.4 Create `Sources/ExFig-Android/AndroidPlugin.swift`
+- [ ] 7.2.5 Create `Sources/ExFig-Android/Config/AndroidColorsEntry.swift`
+- [ ] 7.2.6 Create `Sources/ExFig-Android/Export/AndroidColorsExporter.swift`
+- [ ] 7.2.7 Migrate code from `Sources/ExFig/Subcommands/Export/AndroidColorsExport.swift`
+- [ ] 7.2.8 Repeat for Icons, Images, Typography exporters
+- [ ] 7.2.9 Run: `swift test --filter ExFig-AndroidTests`
+
+### 7.3 Flutter Plugin 📦
+
+> **SUBAGENT:** flutter-plugin-agent
+
+#### Tests First
+
+- [ ] 7.3.1 Create `Tests/ExFig-FlutterTests/FlutterPluginTests.swift`
+- [ ] 7.3.2 Create `Tests/ExFig-FlutterTests/FlutterColorsExporterTests.swift`
+
+#### Implementation
+
+- [ ] 7.3.3 Create `ExFig-Flutter` target in `Package.swift`
+- [ ] 7.3.4 Create `Sources/ExFig-Flutter/FlutterPlugin.swift`
+- [ ] 7.3.5 Create `Sources/ExFig-Flutter/Config/FlutterColorsEntry.swift`
+- [ ] 7.3.6 Create `Sources/ExFig-Flutter/Export/FlutterColorsExporter.swift`
+- [ ] 7.3.7 Migrate code from `Sources/ExFig/Subcommands/Export/FlutterColorsExport.swift`
+- [ ] 7.3.8 Repeat for Icons, Images exporters
+- [ ] 7.3.9 Run: `swift test --filter ExFig-FlutterTests`
+
+### 7.4 Web Plugin 📦
+
+> **SUBAGENT:** web-plugin-agent
+
+#### Tests First
+
+- [ ] 7.4.1 Create `Tests/ExFig-WebTests/WebPluginTests.swift`
+- [ ] 7.4.2 Create `Tests/ExFig-WebTests/WebColorsExporterTests.swift`
+
+#### Implementation
+
+- [ ] 7.4.3 Create `ExFig-Web` target in `Package.swift`
+- [ ] 7.4.4 Create `Sources/ExFig-Web/WebPlugin.swift`
+- [ ] 7.4.5 Create `Sources/ExFig-Web/Config/WebColorsEntry.swift`
+- [ ] 7.4.6 Create `Sources/ExFig-Web/Export/WebColorsExporter.swift`
+- [ ] 7.4.7 Migrate code from `Sources/ExFig/Subcommands/Export/WebColorsExport.swift`
+- [ ] 7.4.8 Repeat for Icons, Images exporters
+- [ ] 7.4.9 Run: `swift test --filter ExFig-WebTests`
+
+**Completion criteria:** All 4 plugin test suites pass independently
+
+---
+
+## Phase 8: Test Updates ⚠️ 📦
+
+> **SUBAGENT:** Single agent, preserve coverage
+> **Depends on:** Phase 6
+
+- [ ] 8.1 Update existing integration tests to use PKL configs
+- [ ] 8.2 Remove YAML fixture files
+- [ ] 8.3 Add test for PKL evaluation error handling
+- [ ] 8.4 Add test for missing pkl CLI error
+- [ ] 8.5 Run full test suite: `mise run test`
+- [ ] 8.6 Verify test coverage >= previous: `mise run coverage`
+
+**Completion criteria:** All tests pass, coverage maintained
+
+---
+
+## Phase 9: CLI Refactoring 🧪 ⚠️ 📦
+
+> **SUBAGENT:** Single agent, TDD + migration
+> **Depends on:** Phase 7 (all plugins)
+
+### 9.1 Tests First
+
+- [ ] 9.1.1 Create `Tests/ExFigCLITests/PluginRegistryTests.swift`
+  - Test: registers all 4 plugins
+  - Test: routes to correct plugin by config key
+  - Test: returns empty for unknown config key
+- [ ] 9.1.2 Create integration tests for export commands with plugins
+
+### 9.2 Implementation
+
+- [ ] 9.2.1 Create `Sources/ExFigCLI/Plugin/PluginRegistry.swift`
+- [ ] 9.2.2 Rename target `ExFig` → `ExFigCLI` in `Package.swift`
+- [ ] 9.2.3 Update product name in `Package.swift`
+- [ ] 9.2.4 Refactor `ExportColors` command to use `PluginRegistry`
+- [ ] 9.2.5 Refactor `ExportIcons` command to use `PluginRegistry`
+- [ ] 9.2.6 Refactor `ExportImages` command to use `PluginRegistry`
+- [ ] 9.2.7 Update Batch processing for plugin system
+
+### 9.3 Cleanup (after tests pass)
+
+- [ ] 9.3.1 Delete `Sources/ExFig/Input/Params.swift`
+- [ ] 9.3.2 Delete old Export files (`iOSColorsExport.swift`, etc.)
+- [ ] 9.3.3 Run: `mise run test`
+
+**Completion criteria:** CLI works with plugin architecture, old code removed
+
+---
+
+## Phase 10: Documentation 🔀
+
+> **2 PARALLEL SUBAGENTS**
+> **Depends on:** Phase 9
+
+### 10.1 User Documentation 📦
+
+> **SUBAGENT:** docs-user-agent
+
+- [ ] 10.1.1 Update `CLAUDE.md` Quick Reference with PKL commands
+- [ ] 10.1.2 Update `CLAUDE.md` config examples to PKL syntax
+- [ ] 10.1.3 Create `docs/PKL.md` — complete PKL configuration guide
+- [ ] 10.1.4 Create `docs/MIGRATION.md` — YAML to PKL migration guide
+- [ ] 10.1.5 Update `README.md` with PKL prerequisites
+
+### 10.2 Architecture Documentation 📦
+
+> **SUBAGENT:** docs-arch-agent
+
+- [ ] 10.2.1 Create `docs/ARCHITECTURE.md` — plugin system overview
+- [ ] 10.2.2 Update `openspec/project.md` to reference PKL instead of Yams
+- [ ] 10.2.3 Document how to add new platform plugin
+
+**Completion criteria:** All docs updated, examples work
+
+---
+
+## Phase 11: CI/CD 📦
+
+> **SUBAGENT:** Single agent
+> **Parallel with:** Phase 10
+
+- [ ] 11.1 Update GitHub Actions to install pkl via mise
+- [ ] 11.2 Create workflow for publishing PKL schemas on tag `schemas/v*`
+- [ ] 11.3 Verify CI passes on macOS
+- [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04)
+
+**Completion criteria:** CI green on both platforms
+
+---
+
+## Phase 12: PKL Schema Updates ⏳
+
+> **SEQUENTIAL** — schema changes affect all plugins
+> **Depends on:** Phase 9
+
+- [ ] 12.1 Update PKL schemas to use inheritance for SourceConfig
+- [ ] 12.2 Add `source` section in each platform Entry type
+- [ ] 12.3 Validate schemas compile: `pkl eval Resources/Schemas/ExFig.pkl`
+- [ ] 12.4 Create example configs using new schema structure
+- [ ] 12.5 Update all test fixtures to new schema
+
+**Completion criteria:** Schemas reflect plugin architecture
+
+---
+
+## Phase 13: Final Verification ⏳
+
+> **SEQUENTIAL** — full system validation
+> **Depends on:** All previous phases
+
+- [ ] 13.1 Build all targets: `swift build`
+- [ ] 13.2 Each plugin builds independently:
+  - `swift build --target ExFig-iOS`
+  - `swift build --target ExFig-Android`
+  - `swift build --target ExFig-Flutter`
+  - `swift build --target ExFig-Web`
+- [ ] 13.3 All tests pass: `mise run test`
+- [ ] 13.4 CLI end-to-end: `exfig colors -i exfig.pkl --dry-run`
+- [ ] 13.5 Batch mode: `exfig batch ./configs/ --parallel 2`
+- [ ] 13.6 Test config inheritance with `amends`
+- [ ] 13.7 Test error when pkl not installed
+- [ ] 13.8 Benchmark build times (before/after)
+- [ ] 13.9 Tag release: `git tag v2.0.0`
+
+**Completion criteria:** ExFig v2.0 ready for release
+
+---
+
+## Subagent Execution Plan
+
+```
+                ┌─────────────────┐
+                │  Phase 1: PKL   │
+                │    Schemas      │
+                └────────┬────────┘
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              │              ▼
+┌─────────────────┐     │     ┌─────────────────┐
+│  📦 Phase 2:    │     │     │  📦 Phase 3:    │
+│  PKL Infra      │     │     │  Core Protocols │
+│  (TDD)          │     │     │  (TDD)          │
+└────────┬────────┘     │     └────────┬────────┘
+         │              │              │
+         ▼              │              ▼
+┌─────────────────┐     │     ┌─────────────────┐
+│  📦 Phase 4:    │     │     │  📦 Phase 5:    │
+│  ExFig Integr.  │◄────┴────►│  ExFigConfig    │
+│  (Migration)    │           │  (TDD)          │
+└────────┬────────┘           └────────┬────────┘
+         │                             │
+         ▼                             │
+┌─────────────────┐                    │
+│  Phase 6:       │                    │
+│  Yams Cleanup   │                    │
+└────────┬────────┘                    │
+         │                             │
+         ▼                             ▼
+┌─────────────────┐     ┌──────────────────────────────────┐
+│  📦 Phase 8:    │     │  🔀 Phase 7: Platform Plugins    │
+│  Test Updates   │     │  ┌────────┐ ┌────────┐          │
+└────────┬────────┘     │  │📦 iOS  │ │📦 Andr │          │
+         │              │  └────────┘ └────────┘          │
+         │              │  ┌────────┐ ┌────────┐          │
+         │              │  │📦 Flut │ │📦 Web  │          │
+         │              │  └────────┘ └────────┘          │
+         │              └──────────────┬───────────────────┘
+         │                             │
+         └──────────────┬──────────────┘
+                        ▼
+          ┌─────────────────────────┐
+          │  📦 Phase 9:            │
+          │  CLI Refactoring (TDD)  │
+          └────────────┬────────────┘
+                       │
+          ┌────────────┼────────────┐
+          ▼            │            ▼
+┌─────────────────┐    │    ┌─────────────────┐
+│  🔀 Phase 10:   │    │    │  📦 Phase 11:   │
+│  Documentation  │    │    │  CI/CD          │
+│  ┌────┐ ┌────┐  │    │    └────────┬────────┘
+│  │User│ │Arch│  │    │             │
+│  └────┘ └────┘  │    │             │
+└────────┬────────┘    │             │
+         │             │             │
+         └─────────────┼─────────────┘
+                       ▼
+          ┌─────────────────────────┐
+          │  Phase 12: Schema       │
+          │  Updates                │
+          └────────────┬────────────┘
+                       ▼
+          ┌─────────────────────────┐
+          │  Phase 13: Final        │
+          │  Verification           │
+          └─────────────────────────┘
+```
+
+## TDD Checklist (for each component)
+
+1. **Write failing test** — define expected behavior
+2. **Run test** — confirm it fails for right reason
+3. **Implement minimal code** — make test pass
+4. **Refactor** — clean up while tests stay green
+5. **Repeat** — next test case
+
+## Migration Checklist (for refactoring)
+
+1. **Run existing tests** — establish baseline
+2. **Create equivalent fixtures** — PKL versions of YAML
+3. **Update code incrementally** — keep tests passing
+4. **Remove old code** — only after new code works
+5. **Verify coverage** — maintain or improve
