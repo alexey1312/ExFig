@@ -115,4 +115,66 @@ enum NooraUI {
             }
         }.joined(separator: "\n")
     }
+
+    // MARK: - Progress Components
+
+    /// Execute an async operation with a Noora progress bar (0-100%).
+    ///
+    /// Use this for operations with known completion percentage.
+    /// For indeterminate progress, use the custom `TerminalUI.withSpinner()` instead.
+    ///
+    /// - Note: This renders directly via Noora, bypassing `TerminalOutputManager`.
+    ///   Use only for standalone operations, not during batch mode or concurrent animations.
+    ///
+    /// - Parameters:
+    ///   - message: Initial message shown during progress
+    ///   - successMessage: Message shown on successful completion (optional)
+    ///   - errorMessage: Message shown on failure (optional)
+    ///   - operation: Async closure receiving an `updateProgress(Double)` callback (0.0 to 1.0)
+    /// - Returns: The result of the operation
+    static func progressBarStep<T>(
+        message: String,
+        successMessage: String? = nil,
+        errorMessage: String? = nil,
+        operation: @escaping (@escaping (Double) -> Void) async throws -> T
+    ) async throws -> T {
+        try await shared.progressBarStep(
+            message: message,
+            successMessage: successMessage,
+            errorMessage: errorMessage,
+            task: operation
+        )
+    }
+
+    /// Execute an async operation with a Noora spinner and updateable message.
+    ///
+    /// Use this for operations where you want to update the status message dynamically.
+    /// For simple indeterminate progress, prefer `TerminalUI.withSpinner()` which integrates
+    /// with batch mode and output coordination.
+    ///
+    /// - Note: This renders directly via Noora, bypassing `TerminalOutputManager`.
+    ///   Use only for standalone operations, not during batch mode or concurrent animations.
+    ///
+    /// - Parameters:
+    ///   - message: Initial message shown with spinner
+    ///   - successMessage: Message shown on successful completion (optional)
+    ///   - errorMessage: Message shown on failure (optional)
+    ///   - showSpinner: Whether to show animated spinner (default: true)
+    ///   - operation: Async closure receiving an `updateMessage(String)` callback
+    /// - Returns: The result of the operation
+    static func progressStep<T>(
+        message: String,
+        successMessage: String? = nil,
+        errorMessage: String? = nil,
+        showSpinner: Bool = true,
+        operation: @escaping ((String) -> Void) async throws -> T
+    ) async throws -> T {
+        try await shared.progressStep(
+            message: message,
+            successMessage: successMessage,
+            errorMessage: errorMessage,
+            showSpinner: showSpinner,
+            task: operation
+        )
+    }
 }

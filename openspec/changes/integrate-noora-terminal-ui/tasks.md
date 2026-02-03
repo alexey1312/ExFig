@@ -39,17 +39,19 @@
 
 ## Phase 2: Progress Components (P1)
 
-- [ ] **2.1** Add `NooraUI.progressBarStep()` wrapper
-  - Wrap `Noora.progressBarStep()` with ExFig conventions
-  - Support custom renderer integration
+- [x] **2.1** Add `NooraUI.progressBarStep()` wrapper
+  - Added `NooraUI.progressBarStep()` and `NooraUI.progressStep()` wrappers
+  - Note: These bypass `TerminalOutputManager`, use only for standalone operations
 
-- [ ] **2.2** Evaluate replacing simple `withSpinner` with `progressBarStep`
-  - Compare UX: Braille spinner vs Noora step indicator
-  - Decision: keep both or migrate specific use cases
+- [x] **2.2** Evaluate replacing simple `withSpinner` with `progressBarStep`
+  - **Decision: Keep both, no migration**
+  - Custom `Spinner` is deeply integrated with `TerminalOutputManager` and batch mode
+  - 80+ call sites depend on batch mode suppression and output coordination
+  - Noora wrappers available for new isolated use cases only
 
-- [ ] **2.3** Document when to use Noora vs custom components
-  - Update `.claude/rules/terminal-ui.md`
-  - Add decision matrix
+- [x] **2.3** Document when to use Noora vs custom components
+  - Updated `.claude/rules/terminal-ui.md` with decision matrix
+  - Added Noora progress wrappers documentation
 
 ## Validation
 
@@ -62,4 +64,5 @@
 
 - [x] **D1** Update CLAUDE.md dependencies table (done)
 - [x] **D2** Update `.claude/rules/terminal-ui.md` with Noora patterns (done)
-- [ ] **D3** Add migration guide for future formatters
+- [x] **D3** Add migration guide for future formatters
+  - Added "Migration Guide: Rainbow to Noora" section to terminal-ui.md
