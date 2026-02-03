@@ -164,16 +164,15 @@ struct ExFigWarningFormatter {
             return "\(.accent("⚠")) \(.accent(message))"
         }
 
-        // Multi-line: build with indentation
-        var parts: [TerminalText] = []
-        for (index, line) in lines.enumerated() {
-            let lineStr = String(line)
+        // Multi-line: build string with indentation, then wrap in single accent
+        let formattedLines = lines.enumerated().map { index, line in
             if index == 0 {
-                parts.append("\(.accent("⚠")) \(.accent(lineStr))")
+                "⚠ \(line)"
             } else {
-                parts.append("  \(.accent(lineStr))")
+                "  \(line)"
             }
-        }
-        return TerminalText(stringLiteral: parts.map { NooraUI.format($0) }.joined(separator: "\n"))
+        }.joined(separator: "\n")
+
+        return "\(.accent(formattedLines))"
     }
 }
