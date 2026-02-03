@@ -1,0 +1,85 @@
+/// Flutter platform configuration for ExFig.
+module Flutter
+
+import "Common.pkl"
+import "Android.pkl"
+
+/// Flutter image format.
+typealias ImageFormat = "svg"|"png"|"webp"
+
+// MARK: - Colors
+
+/// Flutter colors entry configuration.
+class ColorsEntry extends Common.VariablesSource {
+  /// Output path for generated Dart colors file.
+  output: String?
+
+  /// Class name for generated colors. Default: AppColors.
+  className: String?
+}
+
+// MARK: - Icons
+
+/// Flutter icons entry configuration.
+class IconsEntry extends Common.FrameSource {
+  /// Output directory for icon SVG files.
+  output: String
+
+  /// Dart file path for icon class generation.
+  dartFile: String?
+
+  /// Class name for generated icons. Default: AppIcons.
+  className: String?
+
+  /// Naming style for icon names.
+  nameStyle: Common.NameStyle?
+}
+
+// MARK: - Images
+
+/// Flutter images entry configuration.
+class ImagesEntry extends Common.FrameSource {
+  /// Output directory for image files.
+  output: String
+
+  /// Dart file path for image class generation.
+  dartFile: String?
+
+  /// Class name for generated images. Default: AppImages.
+  className: String?
+
+  /// Scale factors to generate (e.g., [1, 2, 3]).
+  scales: Listing<Number>?
+
+  /// Output format for images.
+  format: ImageFormat?
+
+  /// WebP encoding options.
+  webpOptions: Android.WebpOptions?
+
+  /// Source format for fetching from Figma API.
+  sourceFormat: Common.SourceFormat?
+
+  /// Naming style for generated assets.
+  nameStyle: Common.NameStyle?
+}
+
+// MARK: - Flutter Platform Configuration
+
+/// Root Flutter platform configuration.
+class FlutterConfig {
+  /// Base output directory for all generated files.
+  output: String
+
+  /// Path to custom Stencil templates.
+  templatesPath: String?
+
+  /// Colors configuration (single entry or array).
+  colors: (ColorsEntry|Listing<ColorsEntry>)?
+
+  /// Icons configuration (single entry or array).
+  icons: (IconsEntry|Listing<IconsEntry>)?
+
+  /// Images configuration (single entry or array).
+  images: (ImagesEntry|Listing<ImagesEntry>)?
+}

@@ -1,0 +1,74 @@
+/// Example ExFig configuration with multiple entries.
+amends "../ExFig.pkl"
+
+import "../Common.pkl"
+import "../iOS.pkl"
+import "../Android.pkl"
+
+common = new Common.CommonConfig {
+  cache = new Common.Cache {
+    enabled = true
+    path = ".exfig-cache.json"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+    nameValidateRegexp = "^ic_(.+)$"
+    nameReplaceRegexp = "$1"
+  }
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "MyApp/Resources/Assets.xcassets"
+  xcassetsInMainBundle = true
+
+  // Multiple colors entries
+  colors = new Listing {
+    new iOS.ColorsEntry {
+      tokensFileId = "file1"
+      tokensCollectionName = "Semantic Colors"
+      lightModeName = "Light"
+      darkModeName = "Dark"
+      useColorAssets = true
+      assetsFolder = "Colors/Semantic"
+      nameStyle = "camelCase"
+    }
+    new iOS.ColorsEntry {
+      tokensFileId = "file2"
+      tokensCollectionName = "Primitive Colors"
+      lightModeName = "Default"
+      useColorAssets = true
+      assetsFolder = "Colors/Primitives"
+      nameStyle = "camelCase"
+    }
+  }
+
+  icons = new iOS.IconsEntry {
+    format = "pdf"
+    assetsFolder = "Icons"
+    nameStyle = "camelCase"
+  }
+}
+
+android = new Android.AndroidConfig {
+  mainRes = "app/src/main/res"
+  mainSrc = "app/src/main/kotlin"
+  resourcePackage = "com.example.app"
+
+  colors = new Android.ColorsEntry {
+    tokensFileId = "file1"
+    tokensCollectionName = "Semantic Colors"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+    composePackageName = "com.example.app.ui.theme"
+    colorKotlin = "app/src/main/kotlin/com/example/app/ui/theme/Colors.kt"
+  }
+
+  icons = new Android.IconsEntry {
+    output = "drawable"
+    composePackageName = "com.example.app.ui.icons"
+    composeFormat = "imageVector"
+    composeExtensionTarget = "com.example.app.ui.AppIcons"
+  }
+}

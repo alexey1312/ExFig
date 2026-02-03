@@ -1,0 +1,203 @@
+/// iOS platform configuration for ExFig.
+module iOS
+
+import "Common.pkl"
+
+/// Xcode asset catalog render mode.
+typealias XcodeRenderMode = "default"|"original"|"template"
+
+/// Output format for iOS images in asset catalogs.
+/// - `png`: Standard PNG format (default, maximum compatibility)
+/// - `heic`: HEIC format (~40-50% smaller, iOS 12+, macOS only for encoding)
+typealias ImageOutputFormat = "png"|"heic"
+
+/// HEIC encoding mode.
+typealias HeicEncoding = "lossy"|"lossless"
+
+// MARK: - HEIC Options
+
+/// HEIC encoding options for iOS images.
+class HeicOptions {
+  /// Encoding mode: lossy (default) or lossless.
+  encoding: HeicEncoding?
+
+  /// Quality for lossy encoding (0-100). Default: 90.
+  quality: Int(isBetween(0, 100))?
+}
+
+// MARK: - Colors
+
+/// iOS colors entry configuration.
+/// Can include inline source or use common.variablesColors.
+class ColorsEntry extends Common.VariablesSource {
+  /// Use Color Assets (.xcassets) instead of code-only colors.
+  useColorAssets: Boolean
+
+  /// Path to .xcassets folder for color assets.
+  assetsFolder: String?
+
+  /// Naming style for generated color names.
+  nameStyle: Common.NameStyle
+
+  /// Group colors using namespace in asset catalog.
+  groupUsingNamespace: Boolean?
+
+  /// Path to generate UIColor extension Swift file.
+  colorSwift: String?
+
+  /// Path to generate SwiftUI Color extension Swift file.
+  swiftuiColorSwift: String?
+
+  /// Sync generated code names back to Figma Variables codeSyntax.iOS field.
+  syncCodeSyntax: Boolean?
+
+  /// Template for codeSyntax.iOS. Use {name} for variable name.
+  /// Example: "Color.{name}" → "Color.backgroundAccent"
+  codeSyntaxTemplate: String?
+}
+
+// MARK: - Icons
+
+/// iOS icons entry configuration.
+class IconsEntry extends Common.FrameSource {
+  /// Vector format for icons.
+  format: Common.VectorFormat
+
+  /// Path to .xcassets folder for icons.
+  assetsFolder: String
+
+  /// Asset names that preserve vector representation.
+  preservesVectorRepresentation: Listing<String>?
+
+  /// Naming style for generated icon names.
+  nameStyle: Common.NameStyle
+
+  /// Path to generate UIImage extension Swift file.
+  imageSwift: String?
+
+  /// Path to generate SwiftUI Image extension Swift file.
+  swiftUIImageSwift: String?
+
+  /// Path to generate Figma Code Connect Swift file.
+  codeConnectSwift: String?
+
+  /// Default render mode for assets.
+  renderMode: XcodeRenderMode?
+
+  /// Suffix for assets using default render mode.
+  renderModeDefaultSuffix: String?
+
+  /// Suffix for assets using original render mode.
+  renderModeOriginalSuffix: String?
+
+  /// Suffix for assets using template render mode.
+  renderModeTemplateSuffix: String?
+}
+
+// MARK: - Images
+
+/// iOS images entry configuration.
+class ImagesEntry extends Common.FrameSource {
+  /// Path to .xcassets folder for images.
+  assetsFolder: String
+
+  /// Naming style for generated image names.
+  nameStyle: Common.NameStyle
+
+  /// Scale factors to generate (e.g., [1, 2, 3]).
+  scales: Listing<Number>?
+
+  /// Path to generate UIImage extension Swift file.
+  imageSwift: String?
+
+  /// Path to generate SwiftUI Image extension Swift file.
+  swiftUIImageSwift: String?
+
+  /// Path to generate Figma Code Connect Swift file.
+  codeConnectSwift: String?
+
+  /// Source format for fetching from Figma API.
+  sourceFormat: Common.SourceFormat?
+
+  /// Output format for asset catalog.
+  outputFormat: ImageOutputFormat?
+
+  /// HEIC encoding options. Only used when outputFormat is heic.
+  heicOptions: HeicOptions?
+
+  /// Default render mode for assets.
+  renderMode: XcodeRenderMode?
+
+  /// Suffix for assets using default render mode.
+  renderModeDefaultSuffix: String?
+
+  /// Suffix for assets using original render mode.
+  renderModeOriginalSuffix: String?
+
+  /// Suffix for assets using template render mode.
+  renderModeTemplateSuffix: String?
+}
+
+// MARK: - Typography
+
+/// iOS typography configuration.
+class Typography {
+  /// Path to generate UIFont extension Swift file.
+  fontSwift: String?
+
+  /// Path to generate UILabel.Style extension Swift file.
+  labelStyleSwift: String?
+
+  /// Path to generate SwiftUI Font extension Swift file.
+  swiftUIFontSwift: String?
+
+  /// Generate UILabel subclasses for each style.
+  generateLabels: Boolean
+
+  /// Directory to generate label subclasses.
+  labelsDirectory: String?
+
+  /// Naming style for generated font names.
+  nameStyle: Common.NameStyle
+}
+
+// MARK: - iOS Platform Configuration
+
+/// Root iOS platform configuration.
+class iOSConfig {
+  /// Path to .xcodeproj file.
+  xcodeprojPath: String
+
+  /// Xcode target name.
+  target: String
+
+  /// Path to main .xcassets folder.
+  xcassetsPath: String
+
+  /// Whether assets are in main bundle.
+  xcassetsInMainBundle: Boolean
+
+  /// Whether assets are in Swift Package.
+  xcassetsInSwiftPackage: Boolean?
+
+  /// Resource bundle names for asset lookup.
+  resourceBundleNames: Listing<String>?
+
+  /// Add @objc attribute to generated extensions.
+  addObjcAttribute: Boolean?
+
+  /// Path to custom Stencil templates.
+  templatesPath: String?
+
+  /// Colors configuration (single entry or array).
+  colors: (ColorsEntry|Listing<ColorsEntry>)?
+
+  /// Icons configuration (single entry or array).
+  icons: (IconsEntry|Listing<IconsEntry>)?
+
+  /// Images configuration (single entry or array).
+  images: (ImagesEntry|Listing<ImagesEntry>)?
+
+  /// Typography configuration.
+  typography: Typography?
+}

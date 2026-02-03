@@ -1,0 +1,13 @@
+amends "pkl:Project"
+
+package {
+  name = "exfig"
+  baseUri = "package://github.com/niceplaces/exfig"
+  version = "2.0.0"
+  packageZipUrl = "https://github.com/niceplaces/exfig/releases/download/schemas-v\(version)/exfig-schemas@\(version).zip"
+  description = "ExFig configuration schemas for exporting Figma assets to iOS, Android, Flutter, and Web"
+  authors {
+    "Alexey"
+  }
+  license = "MIT"
+}

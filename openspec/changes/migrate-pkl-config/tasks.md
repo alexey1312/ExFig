@@ -34,15 +34,15 @@ Phase 12 (Final Verification)
 
 > **No parallelism** — schemas depend on each other (imports)
 
-- [ ] 1.1 Create `Resources/Schemas/PklProject` manifest
-- [ ] 1.2 Create `ExFig.pkl` main abstract schema
-- [ ] 1.3 Create `Figma.pkl` with timeout, fileIds
-- [ ] 1.4 Create `Common.pkl` with cache, variablesColors, icons, images, typography
-- [ ] 1.5 Create `iOS.pkl` with colors, icons, images, typography configurations
-- [ ] 1.6 Create `Android.pkl` with colors, icons, images, typography configurations
-- [ ] 1.7 Create `Flutter.pkl` with colors, icons, images configurations
-- [ ] 1.8 Create `Web.pkl` with colors, icons, images configurations
-- [ ] 1.9 Validate schemas compile: `pkl eval ExFig.pkl`
+- [x] 1.1 Create `Resources/Schemas/PklProject` manifest
+- [x] 1.2 Create `ExFig.pkl` main abstract schema
+- [x] 1.3 Create `Figma.pkl` with timeout, fileIds
+- [x] 1.4 Create `Common.pkl` with cache, variablesColors, icons, images, typography
+- [x] 1.5 Create `iOS.pkl` with colors, icons, images, typography configurations
+- [x] 1.6 Create `Android.pkl` with colors, icons, images, typography configurations
+- [x] 1.7 Create `Flutter.pkl` with colors, icons, images configurations
+- [x] 1.8 Create `Web.pkl` with colors, icons, images configurations
+- [x] 1.9 Validate schemas compile: `pkl eval ExFig.pkl`
 
 **Completion criteria:** `pkl eval Resources/Schemas/ExFig.pkl` succeeds
 

@@ -1,0 +1,24 @@
+/// Figma API configuration.
+module Figma
+
+import "pkl:base"
+
+/// Figma file configuration for legacy Styles API.
+/// Required for icons, images, typography, or legacy Styles API colors.
+/// Optional when using only Variables API for colors.
+class FigmaConfig {
+  /// Figma file ID for light mode colors, icons, images, and typography.
+  lightFileId: String?
+
+  /// Figma file ID for dark mode.
+  darkFileId: String?
+
+  /// Figma file ID for light high contrast mode.
+  lightHighContrastFileId: String?
+
+  /// Figma file ID for dark high contrast mode.
+  darkHighContrastFileId: String?
+
+  /// Request timeout in seconds. Default: 30.
+  timeout: Number?
+}

@@ -1,0 +1,176 @@
+/// Android platform configuration for ExFig.
+module Android
+
+import "Common.pkl"
+
+/// Compose icon generation format.
+/// - `resourceReference`: Generates extension functions using painterResource(R.drawable.xxx)
+/// - `imageVector`: Generates ImageVector code directly from SVG data
+typealias ComposeIconFormat = "resourceReference"|"imageVector"
+
+/// Android image format.
+typealias ImageFormat = "svg"|"png"|"webp"
+
+/// WebP encoding mode.
+typealias WebpEncoding = "lossy"|"lossless"
+
+// MARK: - WebP Options
+
+/// WebP encoding options.
+class WebpOptions {
+  /// Encoding mode.
+  encoding: WebpEncoding
+
+  /// Quality for lossy encoding (0-100).
+  quality: Int(isBetween(0, 100))?
+}
+
+// MARK: - Theme Attributes
+
+/// Name transformation for theme attributes.
+class NameTransform {
+  /// Target case style for attribute names. Default: PascalCase.
+  style: Common.NameStyle?
+
+  /// Prefix to add to attribute names. Default: "color".
+  prefix: String?
+
+  /// Prefixes to strip from color names before transformation.
+  stripPrefixes: Listing<String>?
+}
+
+/// Theme attributes configuration for generating attrs.xml and styles.xml.
+class ThemeAttributes {
+  /// Whether theme attributes generation is enabled.
+  enabled: Boolean?
+
+  /// Path to attrs.xml relative to mainRes.
+  attrsFile: String?
+
+  /// Path to styles.xml relative to mainRes.
+  stylesFile: String?
+
+  /// Path to styles-night.xml relative to mainRes.
+  stylesNightFile: String?
+
+  /// Theme name used in markers (e.g., "Theme.MyApp.Main").
+  themeName: String
+
+  /// Custom marker start text.
+  markerStart: String?
+
+  /// Custom marker end text.
+  markerEnd: String?
+
+  /// Name transformation configuration.
+  nameTransform: NameTransform?
+
+  /// If true, create file with markers if missing.
+  autoCreateMarkers: Boolean?
+}
+
+// MARK: - Colors
+
+/// Android colors entry configuration.
+class ColorsEntry extends Common.VariablesSource {
+  /// Output filename for colors XML. Default: figma_colors.xml
+  xmlOutputFileName: String?
+
+  /// Skip XML generation entirely. Useful for Compose-only projects.
+  xmlDisabled: Boolean?
+
+  /// Package name for generated Compose colors.
+  composePackageName: String?
+
+  /// Path to generate Compose Color Kotlin file.
+  colorKotlin: String?
+
+  /// Theme attributes configuration.
+  themeAttributes: ThemeAttributes?
+}
+
+// MARK: - Icons
+
+/// Android icons entry configuration.
+class IconsEntry extends Common.FrameSource {
+  /// Output directory for vector drawables.
+  output: String
+
+  /// Package name for generated Compose icons.
+  composePackageName: String?
+
+  /// Format for Compose icon generation.
+  composeFormat: ComposeIconFormat?
+
+  /// Extension target for ImageVector (e.g., "com.example.app.ui.AppIcons").
+  composeExtensionTarget: String?
+
+  /// Naming style for icon names.
+  nameStyle: Common.NameStyle?
+
+  /// Coordinate precision for pathData (1-6). Default: 4.
+  pathPrecision: Int(isBetween(1, 6))?
+
+  /// If true, exit with error when pathData exceeds 32,767 bytes.
+  strictPathValidation: Boolean?
+}
+
+// MARK: - Images
+
+/// Android images entry configuration.
+class ImagesEntry extends Common.FrameSource {
+  /// Scale factors to generate (e.g., [1, 1.5, 2, 3, 4]).
+  scales: Listing<Number>?
+
+  /// Output directory for images.
+  output: String
+
+  /// Output format for images.
+  format: ImageFormat
+
+  /// WebP encoding options.
+  webpOptions: WebpOptions?
+
+  /// Source format for fetching from Figma API.
+  sourceFormat: Common.SourceFormat?
+}
+
+// MARK: - Typography
+
+/// Android typography configuration.
+class Typography {
+  /// Naming style for generated type names.
+  nameStyle: Common.NameStyle
+
+  /// Package name for generated Compose typography.
+  composePackageName: String?
+}
+
+// MARK: - Android Platform Configuration
+
+/// Root Android platform configuration.
+class AndroidConfig {
+  /// Path to main res directory.
+  mainRes: String
+
+  /// Resource package name (R class package).
+  resourcePackage: String?
+
+  /// Path to main src directory for Kotlin generation.
+  mainSrc: String?
+
+  /// Path to custom Stencil templates.
+  templatesPath: String?
+
+  /// Colors configuration (single entry or array).
+  colors: (ColorsEntry|Listing<ColorsEntry>)?
+
+  /// Icons configuration (single entry or array).
+  icons: (IconsEntry|Listing<IconsEntry>)?
+
+  /// Images configuration (single entry or array).
+  images: (ImagesEntry|Listing<ImagesEntry>)?
+
+  /// Typography configuration.
+  typography: Typography?
+}
