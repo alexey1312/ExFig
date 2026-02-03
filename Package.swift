@@ -137,6 +137,33 @@ let package = Package(
             ]
         ),
 
+        // Android platform plugin
+        .target(
+            name: "ExFig-Android",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+            ]
+        ),
+
+        // Flutter platform plugin
+        .target(
+            name: "ExFig-Flutter",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+            ]
+        ),
+
+        // Web platform plugin
+        .target(
+            name: "ExFig-Web",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+            ]
+        ),
+
         // MARK: - Tests
 
         .testTarget(
@@ -210,6 +237,30 @@ let package = Package(
             name: "ExFig-iOSTests",
             dependencies: [
                 "ExFig-iOS",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "ExFig-AndroidTests",
+            dependencies: [
+                "ExFig-Android",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "ExFig-FlutterTests",
+            dependencies: [
+                "ExFig-Flutter",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "ExFig-WebTests",
+            dependencies: [
+                "ExFig-Web",
                 "ExFigCore",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
             ]
