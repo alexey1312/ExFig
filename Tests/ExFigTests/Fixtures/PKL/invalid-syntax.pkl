@@ -1,0 +1,7 @@
+/// Test fixture: invalid PKL with syntax error.
+amends "../../../../Sources/ExFig/Resources/Schemas/ExFig.pkl"
+
+// Missing closing brace - syntax error
+ios = new {
+  xcodeprojPath = "Test.xcodeproj"
+// intentionally broken

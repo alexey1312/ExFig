@@ -55,22 +55,22 @@ Phase 12 (Final Verification)
 
 ### 2.1 Tests First
 
-- [ ] 2.1.1 Create `Tests/ExFigTests/PKL/PKLLocatorTests.swift`
-  - Test: finds pkl via mise shims
-  - Test: finds pkl in PATH
+- [x] 2.1.1 Create `Tests/ExFigTests/PKL/PKLLocatorTests.swift`
+  - Test: finds pkl via mise installs, Homebrew, or PATH
+  - Test: found pkl is executable
   - Test: throws NotFound when missing
-- [ ] 2.1.2 Create `Tests/ExFigTests/PKL/PKLEvaluatorTests.swift`
+- [x] 2.1.2 Create `Tests/ExFigTests/PKL/PKLEvaluatorTests.swift`
   - Test: evaluates valid PKL to JSON
   - Test: throws EvaluationFailed on syntax error
   - Test: includes line/column in error message
 
 ### 2.2 Implementation
 
-- [ ] 2.2.1 Create `PKL/PKLError.swift` with NotFound, EvaluationFailed cases
-- [ ] 2.2.2 Create `PKL/PKLLocator.swift` with mise shim and PATH detection
-- [ ] 2.2.3 Create `PKL/PKLEvaluator.swift` with subprocess wrapper
-- [ ] 2.2.4 Add `pkl` to `mise.toml` tools section
-- [ ] 2.2.5 Run tests: `swift test --filter PKL`
+- [x] 2.2.1 Create `PKL/PKLError.swift` with NotFound, EvaluationFailed cases
+- [x] 2.2.2 Create `PKL/PKLLocator.swift` with mise installs, Homebrew, and PATH detection
+- [x] 2.2.3 Create `PKL/PKLEvaluator.swift` with subprocess wrapper
+- [x] 2.2.4 `pkl` already in `mise.toml` tools section
+- [x] 2.2.5 Run tests: `swift test --filter PKL` — 9 tests pass
 
 **Completion criteria:** All PKL tests pass
 

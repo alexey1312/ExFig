@@ -1,0 +1,27 @@
+/// Test fixture: valid ExFig configuration.
+amends "../../../../Sources/ExFig/Resources/Schemas/ExFig.pkl"
+
+import "../../../../Sources/ExFig/Resources/Schemas/Common.pkl"
+import "../../../../Sources/ExFig/Resources/Schemas/iOS.pkl"
+
+common = new Common.CommonConfig {
+  variablesColors = new Common.VariablesColors {
+    tokensFileId = "test-file-id"
+    tokensCollectionName = "Test Collection"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+  }
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "Test.xcodeproj"
+  target = "TestTarget"
+  xcassetsPath = "Test/Assets.xcassets"
+  xcassetsInMainBundle = true
+
+  colors = new iOS.ColorsEntry {
+    useColorAssets = true
+    assetsFolder = "Colors"
+    nameStyle = "camelCase"
+  }
+}
