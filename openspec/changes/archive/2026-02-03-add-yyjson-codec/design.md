@@ -28,67 +28,55 @@
 import Foundation
 import YYJSON
 
-/// Централизованный JSON кодек на основе YYJSON.
+/// Centralized JSON codec based on YYJSON.
 ///
-/// Предоставляет высокопроизводительную замену Foundation JSON.
-/// Использовать вместо прямых вызовов JSONEncoder/JSONDecoder.
+/// Provides high-performance replacement for Foundation JSON.
+/// Use instead of direct JSONEncoder/JSONDecoder calls.
 public enum JSONCodec {
 
     // MARK: - Factory Methods
 
-    /// Создать encoder с настройками по умолчанию.
+    /// Create encoder with default settings.
     public static func makeEncoder() -> YYJSONEncoder {
         YYJSONEncoder()
     }
 
-    /// Создать encoder с pretty-print.
+    /// Create encoder with pretty-print.
     public static func makePrettyEncoder() -> YYJSONEncoder {
         var encoder = YYJSONEncoder()
         encoder.writeOptions = [.prettyPrinted]
         return encoder
     }
 
-    /// Создать decoder с настройками по умолчанию.
+    /// Create decoder with default settings.
     public static func makeDecoder() -> YYJSONDecoder {
         YYJSONDecoder()
     }
 
-    /// Создать decoder для Figma API (snake_case → camelCase).
-    public static func makeFigmaDecoder() -> YYJSONDecoder {
-        var decoder = YYJSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return decoder
-    }
-
     // MARK: - Convenience Methods
 
-    /// Encode значение в JSON data.
+    /// Encode value to JSON data.
     public static func encode(_ value: some Encodable) throws -> Data {
         try makeEncoder().encode(value)
     }
 
-    /// Encode значение в pretty-printed JSON.
+    /// Encode value to pretty-printed JSON.
     public static func encodePretty(_ value: some Encodable) throws -> Data {
         try makePrettyEncoder().encode(value)
     }
 
-    /// Encode с sorted keys для детерминированного вывода.
+    /// Encode with sorted keys for deterministic output.
     ///
-    /// Использовать для хэширования, где порядок ключей важен.
+    /// Use for hashing where key order matters.
     public static func encodeSorted(_ value: some Encodable) throws -> Data {
         let data = try makeEncoder().encode(value)
         let object = try YYJSONSerialization.jsonObject(with: data)
         return try YYJSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
     }
 
-    /// Decode JSON data в тип.
+    /// Decode JSON data to type.
     public static func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
         try makeDecoder().decode(type, from: data)
-    }
-
-    /// Decode JSON data с Figma key strategy.
-    public static func decodeFigma<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
-        try makeFigmaDecoder().decode(type, from: data)
     }
 }
 ```
@@ -112,10 +100,7 @@ let data = try encoder.encode(value)
 ### After (JSONCodec)
 
 ```swift
-// Decode (Figma API)
-let result = try JSONCodec.decodeFigma(Response.self, from: data)
-
-// Decode (general)
+// Decode
 let result = try JSONCodec.decode(Response.self, from: data)
 
 // Encode
@@ -128,21 +113,42 @@ let hashableData = try JSONCodec.encodeSorted(value)
 
 ## Key Considerations
 
-### 1. Figma API Decoder
+### 1. Figma API Models
 
-Figma API использует snake_case. Создаём отдельный `makeFigmaDecoder()` с `.convertFromSnakeCase`.
+Figma API uses snake_case in JSON. Instead of global `keyDecodingStrategy = .convertFromSnakeCase`,
+we use explicit `CodingKeys` in models — more reliable and explicit:
 
-### 2. Sorted Keys для Hashing
+```swift
+// Example: Sources/FigmaAPI/Model/Style.swift
+public struct Style: Codable, Sendable {
+    public let key: String
+    public let name: String
+    public let styleType: StyleType
 
-`NodeHasher` требует детерминированный JSON для стабильных хэшей.
-YYJSON не поддерживает sorted keys напрямую в encoder, поэтому используем two-step:
+    private enum CodingKeys: String, CodingKey {
+        case key, name
+        case styleType = "style_type"
+    }
+}
+```
+
+Benefits of explicit `CodingKeys`:
+
+- Works with any decoder (Foundation, YYJSON)
+- Field mapping is visible in the model
+- Doesn't break when adding new fields
+
+### 2. Sorted Keys for Hashing
+
+`NodeHasher` requires deterministic JSON for stable hashes.
+YYJSON doesn't support sorted keys directly in encoder, so we use two-step approach:
 
 1. Encode → Data
 2. Parse → Object → Serialize with sortedKeys
 
 ### 3. Linux Compatibility
 
-swift-yyjson поддерживает Linux. Не требует `#if canImport(FoundationNetworking)`.
+swift-yyjson supports Linux. No `#if canImport(FoundationNetworking)` required.
 
 ## Dependencies Update
 
