@@ -488,9 +488,11 @@ Phase 12 (Final Verification)
 > **SUBAGENT:** Single agent
 > **Parallel with:** Phase 10
 
-- [x] 11.1 Update GitHub Actions to install pkl via mise — already done
+- [x] 11.1 Update GitHub Actions to install pkl via mise
   - pkl = "0.30.2" in mise.toml
   - mise-action automatically installs all tools from mise.toml
+  - Added explicit `pkl --version` check for macOS
+  - Added explicit `mise install pkl` and PATH setup for Linux (Docker container)
 - [ ] 11.2 Create workflow for publishing PKL schemas on tag `schemas/v*` — deferred (low priority)
 - [ ] 11.3 Verify CI passes on macOS — requires PR merge
 - [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04) — requires PR merge
