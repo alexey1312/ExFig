@@ -200,9 +200,14 @@ Phase 12 (Final Verification)
 - [x] 7.1.4 Create `Sources/ExFig-iOS/iOSPlugin.swift`
 - [x] 7.1.5 Create `Sources/ExFig-iOS/Config/iOSColorsEntry.swift`
 - [x] 7.1.6 Create `Sources/ExFig-iOS/Export/iOSColorsExporter.swift` (skeleton)
-- [ ] 7.1.7 Migrate code from `Sources/ExFig/Subcommands/Export/iOSColorsExport.swift`
+- [x] 7.1.7 Migrate code from `Sources/ExFig/Subcommands/Export/iOSColorsExport.swift`
+  - Created `ColorsExporter` protocol in ExFigCore
+  - Created `ColorsExportContext` protocol for dependency injection
+  - Created `ColorsExportContextImpl` bridging plugins to ExFig services
+  - Implemented full `iOSColorsExporter.exportColors()` with load/process/export cycle
+  - Added `iOSPlatformConfig` for iOS-wide settings
 - [x] 7.1.8 Created stub exporters for Icons, Images, Typography
-- [x] 7.1.9 Run: `swift test --filter ExFig-iOSTests` — 12 tests pass
+- [x] 7.1.9 Run: `swift test --filter ExFig-iOSTests` — 14 tests pass
 
 ### 7.2 Android Plugin 📦 ✅
 
@@ -219,9 +224,11 @@ Phase 12 (Final Verification)
 - [x] 7.2.4 Create `Sources/ExFig-Android/AndroidPlugin.swift`
 - [x] 7.2.5 Create `Sources/ExFig-Android/Config/AndroidColorsEntry.swift`
 - [x] 7.2.6 Create `Sources/ExFig-Android/Export/AndroidColorsExporter.swift` (skeleton)
-- [ ] 7.2.7 Migrate code from `Sources/ExFig/Subcommands/Export/AndroidColorsExport.swift`
+- [x] 7.2.7 Migrate code from `Sources/ExFig/Subcommands/Export/AndroidColorsExport.swift`
+  - Implemented full `AndroidColorsExporter.exportColors()` with XML and Kotlin generation
+  - Added `AndroidPlatformConfig` for Android-wide settings
 - [x] 7.2.8 Created stub exporters for Icons, Images, Typography
-- [x] 7.2.9 Run: `swift test --filter ExFig-AndroidTests` — 12 tests pass
+- [x] 7.2.9 Run: `swift test --filter ExFig-AndroidTests` — 14 tests pass
 
 ### 7.3 Flutter Plugin 📦 ✅
 
@@ -238,9 +245,11 @@ Phase 12 (Final Verification)
 - [x] 7.3.4 Create `Sources/ExFig-Flutter/FlutterPlugin.swift`
 - [x] 7.3.5 Create `Sources/ExFig-Flutter/Config/FlutterColorsEntry.swift`
 - [x] 7.3.6 Create `Sources/ExFig-Flutter/Export/FlutterColorsExporter.swift` (skeleton)
-- [ ] 7.3.7 Migrate code from `Sources/ExFig/Subcommands/Export/FlutterColorsExport.swift`
+- [x] 7.3.7 Migrate code from `Sources/ExFig/Subcommands/Export/FlutterColorsExport.swift`
+  - Implemented full `FlutterColorsExporter.exportColors()` with Dart class generation
+  - Added `FlutterPlatformConfig` for Flutter-wide settings
 - [x] 7.3.8 Created stub exporters for Icons, Images (no typography for Flutter)
-- [x] 7.3.9 Run: `swift test --filter ExFig-FlutterTests` — 11 tests pass
+- [x] 7.3.9 Run: `swift test --filter ExFig-FlutterTests` — 13 tests pass
 
 ### 7.4 Web Plugin 📦 ✅
 
@@ -257,16 +266,81 @@ Phase 12 (Final Verification)
 - [x] 7.4.4 Create `Sources/ExFig-Web/WebPlugin.swift`
 - [x] 7.4.5 Create `Sources/ExFig-Web/Config/WebColorsEntry.swift`
 - [x] 7.4.6 Create `Sources/ExFig-Web/Export/WebColorsExporter.swift` (skeleton)
-- [ ] 7.4.7 Migrate code from `Sources/ExFig/Subcommands/Export/WebColorsExport.swift`
+- [x] 7.4.7 Migrate code from `Sources/ExFig/Subcommands/Export/WebColorsExport.swift`
+  - Implemented full `WebColorsExporter.exportColors()` with CSS/TypeScript/JSON generation
+  - Added `WebPlatformConfig` for Web-wide settings
 - [x] 7.4.8 Created stub exporters for Icons, Images (no typography for Web)
-- [x] 7.4.9 Run: `swift test --filter ExFig-WebTests` — 11 tests pass
+- [x] 7.4.9 Run: `swift test --filter ExFig-WebTests` — 13 tests pass
 
 **Completion criteria:** All 4 plugin test suites pass independently ✅
 
-**Status:** Phase 7 config entry types complete. 46 plugin tests passing.
+**Status:** Phase 7 complete. 62 plugin tests passing.
 
 - ✅ All ColorsEntry types created for iOS, Android, Flutter, Web
-- Remaining: Export logic migration (7.x.7 tasks)
+- ✅ All ColorsExporter implementations with full load/process/export cycle
+- ✅ All PlatformConfig types for platform-wide settings
+- ✅ ColorsExporter protocol and ColorsExportContext in ExFigCore
+- ✅ ColorsExportContextImpl bridges plugins to ExFig services
+
+---
+
+## Phase 7b: Icons & Images Exporters 🔀 🧪
+
+> **4 PARALLEL SUBAGENTS** — mirrors Phase 7 structure
+> **Depends on:** Phase 7
+
+### 7b.1 Core Protocols
+
+- [ ] 7b.1.1 Create `Sources/ExFigCore/Protocol/IconsExporter.swift`
+  - `IconsExporter` protocol extending `AssetExporter`
+  - Associated types: `Entry`, `PlatformConfig`
+  - Method: `exportIcons(entries:platformConfig:context:) async throws -> Int`
+- [ ] 7b.1.2 Create `Sources/ExFigCore/Protocol/IconsExportContext.swift`
+  - `IconsExportContext` protocol extending `ExportContext`
+  - Methods: `downloadIcons(from:)`, `convertToVector(_:format:)`
+- [ ] 7b.1.3 Create `Sources/ExFigCore/Protocol/ImagesExporter.swift`
+  - `ImagesExporter` protocol extending `AssetExporter`
+  - Associated types: `Entry`, `PlatformConfig`
+  - Method: `exportImages(entries:platformConfig:context:) async throws -> Int`
+- [ ] 7b.1.4 Create `Sources/ExFigCore/Protocol/ImagesExportContext.swift`
+  - `ImagesExportContext` protocol extending `ExportContext`
+  - Methods: `downloadImages(from:)`, `renderImage(_:scale:format:)`
+- [ ] 7b.1.5 Create `Sources/ExFig/Context/IconsExportContextImpl.swift`
+- [ ] 7b.1.6 Create `Sources/ExFig/Context/ImagesExportContextImpl.swift`
+
+### 7b.2 iOS Icons & Images
+
+- [ ] 7b.2.1 Create `Sources/ExFig-iOS/Config/iOSIconsEntry.swift`
+- [ ] 7b.2.2 Create `Sources/ExFig-iOS/Config/iOSImagesEntry.swift`
+- [ ] 7b.2.3 Implement `iOSIconsExporter.exportIcons()` (migrate from `iOSIconsExport.swift`)
+- [ ] 7b.2.4 Implement `iOSImagesExporter.exportImages()` (migrate from `iOSImagesExport.swift`)
+- [ ] 7b.2.5 Create tests in `Tests/ExFig-iOSTests/`
+
+### 7b.3 Android Icons & Images
+
+- [ ] 7b.3.1 Create `Sources/ExFig-Android/Config/AndroidIconsEntry.swift`
+- [ ] 7b.3.2 Create `Sources/ExFig-Android/Config/AndroidImagesEntry.swift`
+- [ ] 7b.3.3 Implement `AndroidIconsExporter.exportIcons()`
+- [ ] 7b.3.4 Implement `AndroidImagesExporter.exportImages()`
+- [ ] 7b.3.5 Create tests in `Tests/ExFig-AndroidTests/`
+
+### 7b.4 Flutter Icons & Images
+
+- [ ] 7b.4.1 Create `Sources/ExFig-Flutter/Config/FlutterIconsEntry.swift`
+- [ ] 7b.4.2 Create `Sources/ExFig-Flutter/Config/FlutterImagesEntry.swift`
+- [ ] 7b.4.3 Implement `FlutterIconsExporter.exportIcons()`
+- [ ] 7b.4.4 Implement `FlutterImagesExporter.exportImages()`
+- [ ] 7b.4.5 Create tests in `Tests/ExFig-FlutterTests/`
+
+### 7b.5 Web Icons & Images
+
+- [ ] 7b.5.1 Create `Sources/ExFig-Web/Config/WebIconsEntry.swift`
+- [ ] 7b.5.2 Create `Sources/ExFig-Web/Config/WebImagesEntry.swift`
+- [ ] 7b.5.3 Implement `WebIconsExporter.exportIcons()`
+- [ ] 7b.5.4 Implement `WebImagesExporter.exportImages()`
+- [ ] 7b.5.5 Create tests in `Tests/ExFig-WebTests/`
+
+**Completion criteria:** All Icons/Images exporters implemented with tests
 
 ---
 

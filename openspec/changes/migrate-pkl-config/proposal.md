@@ -34,7 +34,14 @@ protocols — making the codebase maintainable and extensible.
 - **BREAKING**: Restructure ExFig module into plugin-based architecture
 - Create `ExFigConfig` module for PKL evaluation and shared config types
 - Create `ExFig-iOS`, `ExFig-Android`, `ExFig-Flutter`, `ExFig-Web` plugin modules
-- Introduce `PlatformPlugin` and `AssetExporter` protocols in ExFigCore
+- Introduce core protocols in ExFigCore:
+  - `PlatformPlugin` — platform registration and exporter discovery
+  - `AssetExporter` — base protocol for all asset exporters
+  - `ColorsExporter` + `ColorsExportContext` — colors export with load/process/export cycle
+  - `IconsExporter` + `IconsExportContext` — icons export (SVG/PDF download, vector conversion)
+  - `ImagesExporter` + `ImagesExportContext` — images export (PNG/HEIC rendering, scaling)
+  - `TypographyExporter` + `TypographyExportContext` — typography export (font styles)
+  - `PluginRegistry` — plugin coordination and routing
 - Migrate platform-specific code from ExFig to respective plugins
 - Remove monolithic `Params.swift` (1141 lines → ~200 core + 4×100 plugins)
 - Rename ExFig executable target to ExFigCLI
@@ -47,12 +54,15 @@ protocols — making the codebase maintainable and extensible.
   - `Sources/ExFig/Input/Params.swift` — DELETE (replaced by plugin configs)
   - `Sources/ExFig/Input/ExFigOptions.swift` — refactor to use PKL
   - `Sources/ExFig/Batch/ConfigDiscovery.swift` — `.pkl` file discovery
-  - `Sources/ExFigCore/Protocol/` — NEW: PlatformPlugin, AssetExporter, AssetType
+  - `Sources/ExFig/Context/` — NEW: ColorsExportContextImpl, IconsExportContextImpl, ImagesExportContextImpl
+  - `Sources/ExFigCore/Protocol/` — NEW: PlatformPlugin, AssetExporter, AssetType, ExportContext
+  - `Sources/ExFigCore/Protocol/` — NEW: ColorsExporter, IconsExporter, ImagesExporter, TypographyExporter
+  - `Sources/ExFigCore/Plugin/` — NEW: PluginRegistry
   - `Sources/ExFigConfig/` — NEW module for PKL and shared config
-  - `Sources/ExFig-iOS/` — NEW plugin module
-  - `Sources/ExFig-Android/` — NEW plugin module
-  - `Sources/ExFig-Flutter/` — NEW plugin module
-  - `Sources/ExFig-Web/` — NEW plugin module
+  - `Sources/ExFig-iOS/` — NEW plugin module (iOSColorsExporter, iOSIconsExporter, iOSImagesExporter)
+  - `Sources/ExFig-Android/` — NEW plugin module (AndroidColorsExporter, AndroidIconsExporter, etc.)
+  - `Sources/ExFig-Flutter/` — NEW plugin module (FlutterColorsExporter, FlutterIconsExporter, etc.)
+  - `Sources/ExFig-Web/` — NEW plugin module (WebColorsExporter, WebIconsExporter, etc.)
   - `mise.toml` — add pkl tool
   - `CLAUDE.md` — update configuration examples and architecture docs
 
