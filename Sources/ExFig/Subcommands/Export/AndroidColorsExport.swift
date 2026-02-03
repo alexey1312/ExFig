@@ -6,66 +6,6 @@ import Foundation
 // MARK: - Android Colors Export
 
 extension ExFigCommand.ExportColors {
-    /// Exports Android colors using multiple entries format.
-    func exportAndroidColorsMultiple(
-        entries: [Params.Android.ColorsEntry],
-        android: Params.Android,
-        client: Client,
-        ui: TerminalUI
-    ) async throws -> Int {
-        var totalCount = 0
-
-        for entry in entries {
-            let colors = try await ui.withSpinner(
-                "Fetching colors from Figma (\(entry.tokensCollectionName))..."
-            ) {
-                let loader = ColorsVariablesLoader(
-                    client: client,
-                    variableParams: Params.Common.VariablesColors(
-                        tokensFileId: entry.tokensFileId,
-                        tokensCollectionName: entry.tokensCollectionName,
-                        lightModeName: entry.lightModeName,
-                        darkModeName: entry.darkModeName,
-                        lightHCModeName: entry.lightHCModeName,
-                        darkHCModeName: entry.darkHCModeName,
-                        primitivesModeName: entry.primitivesModeName,
-                        nameValidateRegexp: entry.nameValidateRegexp,
-                        nameReplaceRegexp: entry.nameReplaceRegexp
-                    ),
-                    filter: filter
-                )
-                return try await loader.load()
-            }
-
-            let colorPairs = try await ui.withSpinner("Processing colors for Android...") {
-                let processor = ColorsProcessor(
-                    platform: .android,
-                    nameValidateRegexp: entry.nameValidateRegexp,
-                    nameReplaceRegexp: entry.nameReplaceRegexp,
-                    nameStyle: .snakeCase
-                )
-                let result = processor.process(light: colors.light, dark: colors.dark)
-                if let warning = result.warning {
-                    ui.warning(warning)
-                }
-                return try result.get()
-            }
-
-            try await ui.withSpinner("Exporting colors to Android Studio project...") {
-                try await exportAndroidColorsEntry(colorPairs: colorPairs, entry: entry, android: android, ui: ui)
-            }
-
-            totalCount += colorPairs.count
-        }
-
-        if BatchProgressViewStorage.progressView == nil {
-            await checkForUpdate(logger: ExFigCommand.logger)
-        }
-
-        ui.success("Done! Exported \(totalCount) colors to Android project.")
-        return totalCount
-    }
-
     /// Exports Android colors using legacy format (common.variablesColors or common.colors).
     func exportAndroidColorsLegacy(
         colorsConfig: Params.Android.ColorsConfiguration,

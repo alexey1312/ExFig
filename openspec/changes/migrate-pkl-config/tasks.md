@@ -418,10 +418,10 @@ Phase 12 (Final Verification)
 - [ ] 9.3.2 Delete `Sources/ExFig/Input/Params.swift` — **BLOCKED**
   - Params still used by Icons/Images export and Batch processing
   - Can only delete after full migration
-- [ ] 9.3.3 Delete old Export files (`iOSColorsExport.swift`, etc.) — **PARTIAL**
-  - Can delete *ColorsMultiple methods (replaced by *ViaPlugin)
-  - Keep *ColorsLegacy methods (still used for single format)
-  - Keep Icons/Images export files (not migrated)
+- [x] 9.3.3 Delete old Export files (`iOSColorsExport.swift`, etc.) — **PARTIAL**
+  - Deleted `*ColorsMultiple` methods (replaced by `*ViaPlugin`)
+  - Kept `*ColorsLegacy` methods (still used for single format)
+  - Kept Icons/Images export files (not migrated)
 - [ ] 9.3.4 Run: `mise run test`
 
 **Status:** Phase 9 partially complete:
