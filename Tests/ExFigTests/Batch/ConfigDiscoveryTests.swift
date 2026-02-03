@@ -16,37 +16,38 @@ final class ConfigDiscoveryTests: XCTestCase {
 
     // MARK: - Directory Scanning Tests
 
-    func testDiscoverYamlFilesInDirectory() throws {
-        // Given: A directory with multiple YAML files
-        try createConfigFile(name: "ios-app.yaml")
-        try createConfigFile(name: "android-app.yaml")
-        try createConfigFile(name: "web-app.yaml")
+    func testDiscoverPklFilesInDirectory() throws {
+        // Given: A directory with multiple PKL files
+        try createConfigFile(name: "ios-app.pkl")
+        try createConfigFile(name: "android-app.pkl")
+        try createConfigFile(name: "web-app.pkl")
 
         // When: Discovering configs
         let discovery = ConfigDiscovery()
         let configs = try discovery.discoverConfigs(in: tempDirectory)
 
-        // Then: All YAML files are found
+        // Then: All PKL files are found
         XCTAssertEqual(configs.count, 3)
-        XCTAssertTrue(configs.contains { $0.lastPathComponent == "ios-app.yaml" })
-        XCTAssertTrue(configs.contains { $0.lastPathComponent == "android-app.yaml" })
-        XCTAssertTrue(configs.contains { $0.lastPathComponent == "web-app.yaml" })
+        XCTAssertTrue(configs.contains { $0.lastPathComponent == "ios-app.pkl" })
+        XCTAssertTrue(configs.contains { $0.lastPathComponent == "android-app.pkl" })
+        XCTAssertTrue(configs.contains { $0.lastPathComponent == "web-app.pkl" })
     }
 
-    func testDiscoverOnlyYamlFiles() throws {
+    func testDiscoverOnlyPklFiles() throws {
         // Given: A directory with mixed file types
-        try createConfigFile(name: "valid.yaml")
-        try createConfigFile(name: "also-valid.yml")
+        try createConfigFile(name: "valid.pkl")
+        try createConfigFile(name: "also-valid.pkl")
         try createFile(name: "readme.md", content: "# README")
         try createFile(name: "config.json", content: "{}")
+        try createFile(name: "old-config.yaml", content: "figma: {}")
 
         // When: Discovering configs
         let discovery = ConfigDiscovery()
         let configs = try discovery.discoverConfigs(in: tempDirectory)
 
-        // Then: Only YAML files are found
+        // Then: Only PKL files are found
         XCTAssertEqual(configs.count, 2)
-        XCTAssertTrue(configs.allSatisfy { $0.pathExtension == "yaml" || $0.pathExtension == "yml" })
+        XCTAssertTrue(configs.allSatisfy { $0.pathExtension == "pkl" })
     }
 
     func testDiscoverEmptyDirectory() throws {
@@ -83,9 +84,9 @@ final class ConfigDiscoveryTests: XCTestCase {
 
     func testFilterValidExFigConfigs() throws {
         // Given: A directory with valid and invalid configs
-        try createConfigFile(name: "valid-exfig.yaml")
-        try createFile(name: "invalid.yaml", content: "not_a_config: true")
-        try createFile(name: "empty.yaml", content: "")
+        try createConfigFile(name: "valid-exfig.pkl")
+        try createFile(name: "invalid.pkl", content: "not_a_config = true")
+        try createFile(name: "empty.pkl", content: "")
 
         // When: Discovering and filtering configs
         let discovery = ConfigDiscovery()
@@ -94,79 +95,69 @@ final class ConfigDiscoveryTests: XCTestCase {
 
         // Then: Only valid configs pass
         XCTAssertEqual(validConfigs.count, 1)
-        XCTAssertEqual(validConfigs.first?.lastPathComponent, "valid-exfig.yaml")
+        XCTAssertEqual(validConfigs.first?.lastPathComponent, "valid-exfig.pkl")
     }
 
-    func testValidateConfigWithFigmaSection() throws {
-        // Given: A YAML file with figma section
-        try createConfigFile(name: "with-figma.yaml")
+    func testValidateConfigWithExFigAmends() throws {
+        // Given: A PKL file that amends ExFig
+        try createConfigFile(name: "with-exfig.pkl")
 
         // When: Validating
         let discovery = ConfigDiscovery()
-        let url = tempDirectory.appendingPathComponent("with-figma.yaml")
+        let url = tempDirectory.appendingPathComponent("with-exfig.pkl")
         let isValid = discovery.isValidExFigConfig(at: url)
 
         // Then: Config is valid
         XCTAssertTrue(isValid)
     }
 
-    func testValidateConfigWithoutFigmaSection() throws {
-        // Given: A YAML file without figma section
-        try createFile(name: "no-figma.yaml", content: """
-        ios:
-          target: MyApp
+    func testValidateConfigWithoutExFigAmends() throws {
+        // Given: A PKL file without ExFig amends
+        try createFile(name: "no-exfig.pkl", content: """
+        name = "something else"
+        value = 123
         """)
 
         // When: Validating
         let discovery = ConfigDiscovery()
-        let url = tempDirectory.appendingPathComponent("no-figma.yaml")
+        let url = tempDirectory.appendingPathComponent("no-exfig.pkl")
         let isValid = discovery.isValidExFigConfig(at: url)
 
         // Then: Config is invalid
         XCTAssertFalse(isValid)
     }
 
-    func testValidateConfigWithVariablesColors() throws {
-        // Given: A YAML file with common.variablesColors (Variables API)
-        try createFile(name: "variables-colors.yaml", content: """
-        common:
-          variablesColors:
-            tokensFileId: "abc123"
-            tokensCollectionName: "Colors"
-            lightModeName: "Light"
-            darkModeName: "Dark"
-        ios:
-          colors:
-            output: "Colors.swift"
+    func testValidateConfigWithPlatformSection() throws {
+        // Given: A PKL file with ios section (platform indicator)
+        try createFile(name: "ios-platform.pkl", content: """
+        ios {
+          xcodeprojPath = "./MyApp.xcodeproj"
+        }
         """)
 
         // When: Validating
         let discovery = ConfigDiscovery()
-        let url = tempDirectory.appendingPathComponent("variables-colors.yaml")
+        let url = tempDirectory.appendingPathComponent("ios-platform.pkl")
         let isValid = discovery.isValidExFigConfig(at: url)
 
-        // Then: Config is valid (Variables API doesn't require figma section)
+        // Then: Config is valid (has platform section)
         XCTAssertTrue(isValid)
     }
 
-    func testValidateConfigWithPlatformColors() throws {
-        // Given: A YAML file with platform-specific colors but no figma section
-        try createFile(name: "platform-colors.yaml", content: """
-        ios:
-          colors:
-            output: "Colors.swift"
-            entries:
-              - variablesColors:
-                  tokensFileId: "abc123"
-                  tokensCollectionName: "Colors"
+    func testValidateConfigWithAndroidSection() throws {
+        // Given: A PKL file with android section
+        try createFile(name: "android-platform.pkl", content: """
+        android {
+          mainRes = "./app/src/main/res"
+        }
         """)
 
         // When: Validating
         let discovery = ConfigDiscovery()
-        let url = tempDirectory.appendingPathComponent("platform-colors.yaml")
+        let url = tempDirectory.appendingPathComponent("android-platform.pkl")
         let isValid = discovery.isValidExFigConfig(at: url)
 
-        // Then: Config is valid (multi-entry colors doesn't require figma section)
+        // Then: Config is valid
         XCTAssertTrue(isValid)
     }
 
@@ -175,11 +166,11 @@ final class ConfigDiscoveryTests: XCTestCase {
     func testDetectOutputPathConflicts() throws {
         // Given: Two configs with overlapping output paths
         let config1 = try createConfigFileAndReturnURL(
-            name: "app1.yaml",
+            name: "app1.pkl",
             iosXcassetsPath: "./Resources/Assets.xcassets"
         )
         let config2 = try createConfigFileAndReturnURL(
-            name: "app2.yaml",
+            name: "app2.pkl",
             iosXcassetsPath: "./Resources/Assets.xcassets"
         )
 
@@ -196,11 +187,11 @@ final class ConfigDiscoveryTests: XCTestCase {
     func testNoConflictsWithDifferentOutputPaths() throws {
         // Given: Two configs with different output paths
         let config1 = try createConfigFileAndReturnURL(
-            name: "app1.yaml",
+            name: "app1.pkl",
             iosXcassetsPath: "./App1/Resources/Assets.xcassets"
         )
         let config2 = try createConfigFileAndReturnURL(
-            name: "app2.yaml",
+            name: "app2.pkl",
             iosXcassetsPath: "./App2/Resources/Assets.xcassets"
         )
 
@@ -216,13 +207,13 @@ final class ConfigDiscoveryTests: XCTestCase {
 
     func testDiscoverFromExplicitFileList() throws {
         // Given: Specific config files
-        try createConfigFile(name: "config1.yaml")
-        try createConfigFile(name: "config2.yaml")
-        try createConfigFile(name: "config3.yaml")
+        try createConfigFile(name: "config1.pkl")
+        try createConfigFile(name: "config2.pkl")
+        try createConfigFile(name: "config3.pkl")
 
         let urls = [
-            tempDirectory.appendingPathComponent("config1.yaml"),
-            tempDirectory.appendingPathComponent("config3.yaml"),
+            tempDirectory.appendingPathComponent("config1.pkl"),
+            tempDirectory.appendingPathComponent("config3.pkl"),
         ]
 
         // When: Discovering from file list
@@ -231,16 +222,16 @@ final class ConfigDiscoveryTests: XCTestCase {
 
         // Then: Only specified files are returned
         XCTAssertEqual(configs.count, 2)
-        XCTAssertTrue(configs.contains { $0.lastPathComponent == "config1.yaml" })
-        XCTAssertTrue(configs.contains { $0.lastPathComponent == "config3.yaml" })
-        XCTAssertFalse(configs.contains { $0.lastPathComponent == "config2.yaml" })
+        XCTAssertTrue(configs.contains { $0.lastPathComponent == "config1.pkl" })
+        XCTAssertTrue(configs.contains { $0.lastPathComponent == "config3.pkl" })
+        XCTAssertFalse(configs.contains { $0.lastPathComponent == "config2.pkl" })
     }
 
     func testDiscoverFromMixedValidAndInvalidPaths() throws {
         // Given: Some existing and non-existing files
-        try createConfigFile(name: "exists.yaml")
-        let existingURL = tempDirectory.appendingPathComponent("exists.yaml")
-        let nonExistingURL = tempDirectory.appendingPathComponent("does-not-exist.yaml")
+        try createConfigFile(name: "exists.pkl")
+        let existingURL = tempDirectory.appendingPathComponent("exists.pkl")
+        let nonExistingURL = tempDirectory.appendingPathComponent("does-not-exist.pkl")
 
         // When/Then: Throws error for non-existing file
         let discovery = ConfigDiscovery()
@@ -261,26 +252,34 @@ final class ConfigDiscoveryTests: XCTestCase {
 
     private func createConfigFile(name: String) throws {
         let content = """
-        figma:
-          lightFileId: "abc123"
-        ios:
-          xcodeprojPath: "./MyApp.xcodeproj"
-          target: "MyApp"
-          xcassetsPath: "./Resources/Assets.xcassets"
-          xcassetsInMainBundle: true
+        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+
+        figma {
+          lightFileId = "abc123"
+        }
+        ios {
+          xcodeprojPath = "./MyApp.xcodeproj"
+          target = "MyApp"
+          xcassetsPath = "./Resources/Assets.xcassets"
+          xcassetsInMainBundle = true
+        }
         """
         try createFile(name: name, content: content)
     }
 
     private func createConfigFileAndReturnURL(name: String, iosXcassetsPath: String) throws -> URL {
         let content = """
-        figma:
-          lightFileId: "abc123"
-        ios:
-          xcodeprojPath: "./MyApp.xcodeproj"
-          target: "MyApp"
-          xcassetsPath: "\(iosXcassetsPath)"
-          xcassetsInMainBundle: true
+        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+
+        figma {
+          lightFileId = "abc123"
+        }
+        ios {
+          xcodeprojPath = "./MyApp.xcodeproj"
+          target = "MyApp"
+          xcassetsPath = "\(iosXcassetsPath)"
+          xcassetsInMainBundle = true
+        }
         """
         try createFile(name: name, content: content)
         return tempDirectory.appendingPathComponent(name)

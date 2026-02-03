@@ -21,8 +21,9 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsLightFileId() throws {
         let configURL = try createConfig("""
-        figma:
-          lightFileId: "abc123"
+        figma {
+          lightFileId = "abc123"
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -32,9 +33,10 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsBothLightAndDarkFileIds() throws {
         let configURL = try createConfig("""
-        figma:
-          lightFileId: "light-id"
-          darkFileId: "dark-id"
+        figma {
+          lightFileId = "light-id"
+          darkFileId = "dark-id"
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -44,13 +46,16 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsTokensFileId() throws {
         let configURL = try createConfig("""
-        figma:
-          lightFileId: "main-file"
-        common:
-          variablesColors:
-            tokensFileId: "tokens-file"
-            tokensCollectionName: "Colors"
-            lightModeName: "Light"
+        figma {
+          lightFileId = "main-file"
+        }
+        common {
+          variablesColors {
+            tokensFileId = "tokens-file"
+            tokensCollectionName = "Colors"
+            lightModeName = "Light"
+          }
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -62,14 +67,16 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testDeduplicatesSameFileIdAcrossConfigs() throws {
         let config1 = try createConfig("""
-        figma:
-          lightFileId: "shared-file"
-        """, name: "config1.yaml")
+        figma {
+          lightFileId = "shared-file"
+        }
+        """, name: "config1.pkl")
 
         let config2 = try createConfig("""
-        figma:
-          lightFileId: "shared-file"
-        """, name: "config2.yaml")
+        figma {
+          lightFileId = "shared-file"
+        }
+        """, name: "config2.pkl")
 
         let result = extractor.extractUniqueFileIds(from: [config1, config2])
 
@@ -79,15 +86,17 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testDeduplicatesWhenDarkSameAsOtherLight() throws {
         let config1 = try createConfig("""
-        figma:
-          lightFileId: "file-a"
-          darkFileId: "file-b"
-        """, name: "config1.yaml")
+        figma {
+          lightFileId = "file-a"
+          darkFileId = "file-b"
+        }
+        """, name: "config1.pkl")
 
         let config2 = try createConfig("""
-        figma:
-          lightFileId: "file-b"
-        """, name: "config2.yaml")
+        figma {
+          lightFileId = "file-b"
+        }
+        """, name: "config2.pkl")
 
         let result = extractor.extractUniqueFileIds(from: [config1, config2])
 
@@ -98,15 +107,17 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsFromMultipleConfigs() throws {
         let config1 = try createConfig("""
-        figma:
-          lightFileId: "file-1"
-        """, name: "config1.yaml")
+        figma {
+          lightFileId = "file-1"
+        }
+        """, name: "config1.pkl")
 
         let config2 = try createConfig("""
-        figma:
-          lightFileId: "file-2"
-          darkFileId: "file-3"
-        """, name: "config2.yaml")
+        figma {
+          lightFileId = "file-2"
+          darkFileId = "file-3"
+        }
+        """, name: "config2.pkl")
 
         let result = extractor.extractUniqueFileIds(from: [config1, config2])
 
@@ -115,8 +126,8 @@ final class FileIdExtractorTests: XCTestCase {
 
     // MARK: - Error Handling
 
-    func testReturnsEmptySetForInvalidYaml() throws {
-        let configURL = try createConfig("not: valid: yaml: syntax: [", name: "invalid.yaml")
+    func testReturnsEmptySetForInvalidPkl() throws {
+        let configURL = try createConfig("not valid pkl syntax {{{", name: "invalid.pkl")
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
 
@@ -125,8 +136,9 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsDarkFileIdWhenLightFileIdMissing() throws {
         let configURL = try createConfig("""
-        figma:
-          darkFileId: "only-dark"
+        figma {
+          darkFileId = "only-dark"
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -137,7 +149,7 @@ final class FileIdExtractorTests: XCTestCase {
     }
 
     func testReturnsEmptySetForNonexistentFile() {
-        let nonexistent = tempDir.appendingPathComponent("nonexistent.yaml")
+        let nonexistent = tempDir.appendingPathComponent("nonexistent.pkl")
 
         let result = extractor.extractUniqueFileIds(from: [nonexistent])
 
@@ -146,11 +158,12 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testSkipsInvalidConfigsButExtractsFromValid() throws {
         let valid = try createConfig("""
-        figma:
-          lightFileId: "valid-file"
-        """, name: "valid.yaml")
+        figma {
+          lightFileId = "valid-file"
+        }
+        """, name: "valid.pkl")
 
-        let invalid = try createConfig("invalid: [yaml", name: "invalid.yaml")
+        let invalid = try createConfig("invalid pkl {{{", name: "invalid.pkl")
 
         let result = extractor.extractUniqueFileIds(from: [valid, invalid])
 
@@ -169,11 +182,12 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsHighContrastFileIds() throws {
         let configURL = try createConfig("""
-        figma:
-          lightFileId: "light-file"
-          darkFileId: "dark-file"
-          lightHighContrastFileId: "light-hc"
-          darkHighContrastFileId: "dark-hc"
+        figma {
+          lightFileId = "light-file"
+          darkFileId = "dark-file"
+          lightHighContrastFileId = "light-hc"
+          darkHighContrastFileId = "dark-hc"
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -189,24 +203,31 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsMultiEntryColorsTokensFileIds() throws {
         let configURL = try createConfig("""
-        figma:
-          lightFileId: "design-file"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            - tokensFileId: "ios-tokens-1"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
-            - tokensFileId: "ios-tokens-2"
-              tokensCollectionName: "Brand"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
+        figma {
+          lightFileId = "design-file"
+        }
+        ios {
+          xcodeprojPath = "Test.xcodeproj"
+          target = "Test"
+          xcassetsPath = "Assets.xcassets"
+          xcassetsInMainBundle = true
+          colors = new Listing {
+            new {
+              tokensFileId = "ios-tokens-1"
+              tokensCollectionName = "Colors"
+              lightModeName = "Light"
+              useColorAssets = true
+              nameStyle = "camelCase"
+            }
+            new {
+              tokensFileId = "ios-tokens-2"
+              tokensCollectionName = "Brand"
+              lightModeName = "Light"
+              useColorAssets = true
+              nameStyle = "camelCase"
+            }
+          }
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -218,25 +239,34 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testExtractsMultiPlatformMultiEntryColors() throws {
         let configURL = try createConfig("""
-        figma:
-          lightFileId: "design-file"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            - tokensFileId: "ios-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
-        android:
-          mainRes: "./res"
-          colors:
-            - tokensFileId: "android-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
+        figma {
+          lightFileId = "design-file"
+        }
+        ios {
+          xcodeprojPath = "Test.xcodeproj"
+          target = "Test"
+          xcassetsPath = "Assets.xcassets"
+          xcassetsInMainBundle = true
+          colors = new Listing {
+            new {
+              tokensFileId = "ios-tokens"
+              tokensCollectionName = "Colors"
+              lightModeName = "Light"
+              useColorAssets = true
+              nameStyle = "camelCase"
+            }
+          }
+        }
+        android {
+          mainRes = "./res"
+          colors = new Listing {
+            new {
+              tokensFileId = "android-tokens"
+              tokensCollectionName = "Colors"
+              lightModeName = "Light"
+            }
+          }
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -248,24 +278,31 @@ final class FileIdExtractorTests: XCTestCase {
 
     func testCombinesCommonAndMultiEntryTokens() throws {
         let configURL = try createConfig("""
-        figma:
-          lightFileId: "design-file"
-        common:
-          variablesColors:
-            tokensFileId: "common-tokens"
-            tokensCollectionName: "Shared"
-            lightModeName: "Light"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            - tokensFileId: "ios-specific"
-              tokensCollectionName: "Brand"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
+        figma {
+          lightFileId = "design-file"
+        }
+        common {
+          variablesColors {
+            tokensFileId = "common-tokens"
+            tokensCollectionName = "Shared"
+            lightModeName = "Light"
+          }
+        }
+        ios {
+          xcodeprojPath = "Test.xcodeproj"
+          target = "Test"
+          xcassetsPath = "Assets.xcassets"
+          xcassetsInMainBundle = true
+          colors = new Listing {
+            new {
+              tokensFileId = "ios-specific"
+              tokensCollectionName = "Brand"
+              lightModeName = "Light"
+              useColorAssets = true
+              nameStyle = "camelCase"
+            }
+          }
+        }
         """)
 
         let result = extractor.extractUniqueFileIds(from: [configURL])
@@ -278,7 +315,7 @@ final class FileIdExtractorTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func createConfig(_ content: String, name: String = "test.yaml") throws -> URL {
+    private func createConfig(_ content: String, name: String = "test.pkl") throws -> URL {
         let url = tempDir.appendingPathComponent(name)
         try content.write(to: url, atomically: true, encoding: .utf8)
         return url

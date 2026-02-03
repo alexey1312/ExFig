@@ -6,7 +6,7 @@ final class BatchExecutorTests: XCTestCase {
 
     func testExecuteSingleConfig() async {
         // Given: A single config
-        let config = ConfigFile(url: URL(fileURLWithPath: "/test/config.yaml"), name: "config")
+        let config = ConfigFile(url: URL(fileURLWithPath: "/test/config.pkl"), name: "config")
         let executor = BatchExecutor(maxParallel: 3)
 
         let tracker = ExecutionTracker()
@@ -32,9 +32,9 @@ final class BatchExecutorTests: XCTestCase {
     func testExecuteMultipleConfigs() async {
         // Given: Multiple configs
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config2.yaml"), name: "config2"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config3.yaml"), name: "config3"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config1.pkl"), name: "config1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config2.pkl"), name: "config2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config3.pkl"), name: "config3"),
         ]
         let executor = BatchExecutor(maxParallel: 3)
 
@@ -63,7 +63,7 @@ final class BatchExecutorTests: XCTestCase {
     func testRespectsMaxParallelism() async {
         // Given: More configs than max parallelism
         let configs = (1 ... 10).map { i in
-            ConfigFile(url: URL(fileURLWithPath: "/test/config\(i).yaml"), name: "config\(i)")
+            ConfigFile(url: URL(fileURLWithPath: "/test/config\(i).pkl"), name: "config\(i)")
         }
         let executor = BatchExecutor(maxParallel: 2)
 
@@ -97,9 +97,9 @@ final class BatchExecutorTests: XCTestCase {
     func testContinueOnErrorByDefault() async {
         // Given: Some configs that will fail
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/good1.yaml"), name: "good1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/bad.yaml"), name: "bad"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/good2.yaml"), name: "good2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/good1.pkl"), name: "good1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/bad.pkl"), name: "bad"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/good2.pkl"), name: "good2"),
         ]
         let executor = BatchExecutor(maxParallel: 1, failFast: false)
 
@@ -131,9 +131,9 @@ final class BatchExecutorTests: XCTestCase {
     func testFailFastStopsOnFirstError() async {
         // Given: Some configs that will fail
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/good1.yaml"), name: "good1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/bad.yaml"), name: "bad"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/good2.yaml"), name: "good2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/good1.pkl"), name: "good1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/bad.pkl"), name: "bad"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/good2.pkl"), name: "good2"),
         ]
         let executor = BatchExecutor(maxParallel: 1, failFast: true)
 
@@ -166,8 +166,8 @@ final class BatchExecutorTests: XCTestCase {
     func testBatchResultAggregatesStats() async {
         // Given: Configs with various stats
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config2.yaml"), name: "config2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config1.pkl"), name: "config1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config2.pkl"), name: "config2"),
         ]
         let executor = BatchExecutor(maxParallel: 3)
 
@@ -193,7 +193,7 @@ final class BatchExecutorTests: XCTestCase {
 
     func testBatchResultTracksTimings() async {
         // Given: A config
-        let config = ConfigFile(url: URL(fileURLWithPath: "/test/config.yaml"), name: "config")
+        let config = ConfigFile(url: URL(fileURLWithPath: "/test/config.pkl"), name: "config")
         let executor = BatchExecutor(maxParallel: 1)
 
         let handler: ConfigHandler = { configFile in

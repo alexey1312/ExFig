@@ -1,6 +1,5 @@
 import ArgumentParser
 import Foundation
-import Yams
 
 /// Command-line options for ExFig commands.
 ///
@@ -11,15 +10,14 @@ import Yams
 /// - Important: Do not access `accessToken` or `params` before validation completes.
 struct ExFigOptions: ParsableArguments {
     /// Default config filename for new projects.
-    static let defaultConfigFilename = "exfig.yaml"
+    static let defaultConfigFilename = "exfig.pkl"
 
     /// Config file names in order of priority for auto-detection.
-    /// exfig.yaml is preferred; figma-export.yaml is fallback for users migrating from figma-export.
-    static let defaultConfigFiles = [defaultConfigFilename, "figma-export.yaml"]
+    static let defaultConfigFiles = [defaultConfigFilename]
 
     @Option(
         name: .shortAndLong,
-        help: "Path to YAML config file. Auto-detects exfig.yaml or figma-export.yaml if not specified."
+        help: "Path to PKL config file. Auto-detects exfig.pkl if not specified."
     )
     var input: String?
 
@@ -29,7 +27,7 @@ struct ExFigOptions: ParsableArguments {
     /// Populated during `validate()`.
     private(set) var accessToken: String!
 
-    /// Parsed configuration from the YAML input file.
+    /// Parsed configuration from the PKL input file.
     /// Populated during `validate()`.
     private(set) var params: Params!
 
@@ -60,19 +58,46 @@ struct ExFigOptions: ParsableArguments {
         }
 
         // No config file found - throw error with helpful message
-        let filenames = Self.defaultConfigFiles.joined(separator: " or ")
         throw ExFigError.custom(
-            errorString: "Config file not found. Create \(filenames), or specify path with -i option."
+            errorString: """
+            Config file not found. Create exfig.pkl, or specify path with -i option.
+
+            Example exfig.pkl:
+              amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+
+              ios {
+                xcodeprojPath = "MyApp.xcodeproj"
+                ...
+              }
+            """
         )
     }
 
     private func readParams(at path: String) throws -> Params {
         let url = URL(fileURLWithPath: path)
-        let data = try Data(contentsOf: url)
-        guard let string = String(bytes: data, encoding: .utf8) else {
-            throw ExFigError.custom(errorString: "Unable to read file at \(path)")
+        let evaluator = try PKLEvaluator()
+
+        // PKLEvaluator is an actor, need to run async
+        // Using blocking call since we're in validate() which is synchronous
+        let semaphore = DispatchSemaphore(value: 0)
+        var result: Result<Params, Error>!
+
+        Task {
+            do {
+                result = try await .success(evaluator.evaluateToParams(configPath: url))
+            } catch {
+                result = .failure(error)
+            }
+            semaphore.signal()
         }
-        let decoder = YAMLDecoder()
-        return try decoder.decode(Params.self, from: string)
+
+        semaphore.wait()
+
+        switch result! {
+        case let .success(params):
+            return params
+        case let .failure(error):
+            throw error
+        }
     }
 }

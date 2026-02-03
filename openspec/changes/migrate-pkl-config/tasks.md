@@ -110,21 +110,21 @@ Phase 12 (Final Verification)
 
 ### 4.1 Preserve Existing Tests
 
-- [ ] 4.1.1 Run existing tests, note which use YAML: `swift test 2>&1 | grep -i yaml`
-- [ ] 4.1.2 Create `Tests/ExFigTests/Fixtures/exfig.pkl` equivalent to existing YAML fixture
-- [ ] 4.1.3 Create `Tests/ExFigTests/Fixtures/base.pkl` for inheritance tests
+- [x] 4.1.1 Run existing tests, note which use YAML: `swift test 2>&1 | grep -i yaml`
+- [x] 4.1.2 Create `Tests/ExFigTests/Fixtures/exfig.pkl` equivalent to existing YAML fixture
+- [x] 4.1.3 Create `Tests/ExFigTests/Fixtures/base.pkl` for inheritance tests
 
 ### 4.2 Migration (keep tests green)
 
-- [ ] 4.2.1 Update `ExFigOptions.swift` to use `PKLEvaluator`
-- [ ] 4.2.2 Change default config filename to `exfig.pkl`
-- [ ] 4.2.3 Remove YAML file detection logic
-- [ ] 4.2.4 Update `ConfigDiscovery.swift` to find `.pkl` files
-- [ ] 4.2.5 Remove Yams validation logic from `ConfigDiscovery`
-- [ ] 4.2.6 Update error messages to reference PKL
-- [ ] 4.2.7 Run full test suite: `mise run test`
+- [x] 4.2.1 Update `ExFigOptions.swift` to use `PKLEvaluator`
+- [x] 4.2.2 Change default config filename to `exfig.pkl`
+- [x] 4.2.3 Remove YAML file detection logic
+- [x] 4.2.4 Update `ConfigDiscovery.swift` to find `.pkl` files
+- [x] 4.2.5 Remove Yams validation logic from `ConfigDiscovery`
+- [x] 4.2.6 Update error messages to reference PKL
+- [x] 4.2.7 Run full test suite: `mise run test` — 1920 tests pass
 
-**Completion criteria:** All existing tests pass with PKL configs
+**Completion criteria:** All existing tests pass with PKL configs ✅
 
 ---
 

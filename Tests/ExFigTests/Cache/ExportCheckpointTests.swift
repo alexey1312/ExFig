@@ -21,15 +21,15 @@ final class ExportCheckpointTests: XCTestCase {
     // MARK: - Initialization
 
     func testInit_createsCheckpointWithUniqueID() {
-        let checkpoint1 = ExportCheckpoint(configPath: "/path/to/config.yaml", configHash: "abc123")
-        let checkpoint2 = ExportCheckpoint(configPath: "/path/to/config.yaml", configHash: "abc123")
+        let checkpoint1 = ExportCheckpoint(configPath: "/path/to/config.pkl", configHash: "abc123")
+        let checkpoint2 = ExportCheckpoint(configPath: "/path/to/config.pkl", configHash: "abc123")
 
         XCTAssertNotEqual(checkpoint1.exportID, checkpoint2.exportID)
     }
 
     func testInit_setsStartedAtToNow() {
         let before = Date()
-        let checkpoint = ExportCheckpoint(configPath: "/path/to/config.yaml", configHash: "abc123")
+        let checkpoint = ExportCheckpoint(configPath: "/path/to/config.pkl", configHash: "abc123")
         let after = Date()
 
         XCTAssertGreaterThanOrEqual(checkpoint.startedAt, before)
@@ -37,9 +37,9 @@ final class ExportCheckpointTests: XCTestCase {
     }
 
     func testInit_storesConfigPathAndHash() {
-        let checkpoint = ExportCheckpoint(configPath: "/path/to/config.yaml", configHash: "abc123")
+        let checkpoint = ExportCheckpoint(configPath: "/path/to/config.pkl", configHash: "abc123")
 
-        XCTAssertEqual(checkpoint.configPath, "/path/to/config.yaml")
+        XCTAssertEqual(checkpoint.configPath, "/path/to/config.pkl")
         XCTAssertEqual(checkpoint.configHash, "abc123")
     }
 
@@ -187,7 +187,7 @@ final class ExportCheckpointTests: XCTestCase {
 
     func testSaveAndLoad_roundTrips() throws {
         var original = ExportCheckpoint(
-            configPath: "/path/to/config.yaml",
+            configPath: "/path/to/config.pkl",
             configHash: "abc123",
             pending: ExportCheckpoint.PendingItems(
                 colors: true,
@@ -238,7 +238,7 @@ final class ExportCheckpointTests: XCTestCase {
 
     func testComputeConfigHash_returnsDeterministicHash() throws {
         let configContent = "figma:\n  fileKey: abc123\n"
-        let fileURL = tempDirectory.appendingPathComponent("config.yaml")
+        let fileURL = tempDirectory.appendingPathComponent("config.pkl")
         try configContent.write(to: fileURL, atomically: true, encoding: .utf8)
 
         let hash1 = try ExportCheckpoint.computeConfigHash(from: fileURL)
@@ -248,8 +248,8 @@ final class ExportCheckpointTests: XCTestCase {
     }
 
     func testComputeConfigHash_differentForDifferentContent() throws {
-        let file1 = tempDirectory.appendingPathComponent("config1.yaml")
-        let file2 = tempDirectory.appendingPathComponent("config2.yaml")
+        let file1 = tempDirectory.appendingPathComponent("config1.pkl")
+        let file2 = tempDirectory.appendingPathComponent("config2.pkl")
 
         try "content1".write(to: file1, atomically: true, encoding: .utf8)
         try "content2".write(to: file2, atomically: true, encoding: .utf8)

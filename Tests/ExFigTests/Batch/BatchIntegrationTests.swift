@@ -21,11 +21,11 @@ final class BatchIntegrationTests: XCTestCase {
     func testBatchProcessesMultipleConfigsInParallel() async {
         // Given: Multiple valid config files
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config2.yaml"), name: "config2"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config3.yaml"), name: "config3"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config4.yaml"), name: "config4"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config5.yaml"), name: "config5"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config1.pkl"), name: "config1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config2.pkl"), name: "config2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config3.pkl"), name: "config3"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config4.pkl"), name: "config4"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config5.pkl"), name: "config5"),
         ]
         let executor = BatchExecutor(maxParallel: 3)
 
@@ -59,11 +59,11 @@ final class BatchIntegrationTests: XCTestCase {
     func testBatchHandlesMixedSuccessAndFailure() async {
         // Given: Configs with some that will fail
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/good1.yaml"), name: "good1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/bad1.yaml"), name: "bad1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/good2.yaml"), name: "good2"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/bad2.yaml"), name: "bad2"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/good3.yaml"), name: "good3"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/good1.pkl"), name: "good1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/bad1.pkl"), name: "bad1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/good2.pkl"), name: "good2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/bad2.pkl"), name: "bad2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/good3.pkl"), name: "good3"),
         ]
         let executor = BatchExecutor(maxParallel: 2, failFast: false)
 
@@ -96,9 +96,9 @@ final class BatchIntegrationTests: XCTestCase {
     func testBatchWithRateLimitedClient() async {
         // Given: Multiple configs with rate-limited execution
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config2.yaml"), name: "config2"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config3.yaml"), name: "config3"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config1.pkl"), name: "config1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config2.pkl"), name: "config2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config3.pkl"), name: "config3"),
         ]
 
         // Create rate limiter with high rate for testing
@@ -129,10 +129,10 @@ final class BatchIntegrationTests: XCTestCase {
 
     func testBatchDiscoveryAndExecution() async throws {
         // Given: Directory with multiple config files
-        try createValidConfigFile(name: "ios-colors.yaml")
-        try createValidConfigFile(name: "android-icons.yaml")
-        try createValidConfigFile(name: "flutter-all.yaml")
-        try createInvalidConfigFile(name: "not-a-config.yaml")
+        try createValidConfigFile(name: "ios-colors.pkl")
+        try createValidConfigFile(name: "android-icons.pkl")
+        try createValidConfigFile(name: "flutter-all.pkl")
+        try createInvalidConfigFile(name: "not-a-config.pkl")
 
         // When: Discovering and filtering configs
         let discovery = ConfigDiscovery()
@@ -160,9 +160,9 @@ final class BatchIntegrationTests: XCTestCase {
 
     func testBatchWithOutputPathConflicts() throws {
         // Given: Configs with conflicting output paths
-        try createConfigFileWithXcassets(name: "app1.yaml", path: "./Shared/Assets.xcassets")
-        try createConfigFileWithXcassets(name: "app2.yaml", path: "./Shared/Assets.xcassets")
-        try createConfigFileWithXcassets(name: "app3.yaml", path: "./Different/Assets.xcassets")
+        try createConfigFileWithXcassets(name: "app1.pkl", path: "./Shared/Assets.xcassets")
+        try createConfigFileWithXcassets(name: "app2.pkl", path: "./Shared/Assets.xcassets")
+        try createConfigFileWithXcassets(name: "app3.pkl", path: "./Different/Assets.xcassets")
 
         // When: Detecting conflicts
         let discovery = ConfigDiscovery()
@@ -178,8 +178,8 @@ final class BatchIntegrationTests: XCTestCase {
     func testBatchReportsCorrectTiming() async {
         // Given: Configs with known processing time
         let configs = [
-            ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
-            ConfigFile(url: URL(fileURLWithPath: "/test/config2.yaml"), name: "config2"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config1.pkl"), name: "config1"),
+            ConfigFile(url: URL(fileURLWithPath: "/test/config2.pkl"), name: "config2"),
         ]
         let executor = BatchExecutor(maxParallel: 1) // Sequential for predictable timing
 
@@ -206,12 +206,16 @@ final class BatchIntegrationTests: XCTestCase {
 
     private func createValidConfigFile(name: String) throws {
         let content = """
-        figma:
-          lightFileId: "abc123"
-        ios:
-          xcodeprojPath: "./MyApp.xcodeproj"
-          target: "MyApp"
-          xcassetsPath: "./Resources/Assets.xcassets"
+        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+
+        figma {
+          lightFileId = "abc123"
+        }
+        ios {
+          xcodeprojPath = "./MyApp.xcodeproj"
+          target = "MyApp"
+          xcassetsPath = "./Resources/Assets.xcassets"
+        }
         """
         try content.write(
             to: tempDirectory.appendingPathComponent(name),
@@ -222,8 +226,8 @@ final class BatchIntegrationTests: XCTestCase {
 
     private func createInvalidConfigFile(name: String) throws {
         let content = """
-        not_a_config: true
-        some_other_key: value
+        not_a_config = true
+        some_other_key = "value"
         """
         try content.write(
             to: tempDirectory.appendingPathComponent(name),
@@ -234,12 +238,16 @@ final class BatchIntegrationTests: XCTestCase {
 
     private func createConfigFileWithXcassets(name: String, path: String) throws {
         let content = """
-        figma:
-          lightFileId: "abc123"
-        ios:
-          xcodeprojPath: "./MyApp.xcodeproj"
-          target: "MyApp"
-          xcassetsPath: "\(path)"
+        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+
+        figma {
+          lightFileId = "abc123"
+        }
+        ios {
+          xcodeprojPath = "./MyApp.xcodeproj"
+          target = "MyApp"
+          xcassetsPath = "\(path)"
+        }
         """
         try content.write(
             to: tempDirectory.appendingPathComponent(name),

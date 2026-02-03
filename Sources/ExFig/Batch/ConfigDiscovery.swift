@@ -1,5 +1,4 @@
 import Foundation
-import Yams
 
 /// Errors that can occur during config discovery.
 enum ConfigDiscoveryError: LocalizedError {
@@ -25,7 +24,7 @@ enum ConfigDiscoveryError: LocalizedError {
         case .fileNotFound:
             "Check the config file path"
         case .invalidConfig:
-            "Validate config with: exfig validate <config>"
+            "Validate config with: pkl eval <config>"
         }
     }
 }
@@ -40,13 +39,13 @@ struct OutputPathConflict {
 
 /// Discovers and validates ExFig configuration files.
 struct ConfigDiscovery {
-    private static let yamlExtensions = ["yaml", "yml"]
+    private static let pklExtension = "pkl"
 
     // MARK: - Directory Scanning
 
-    /// Discover all YAML config files in a directory.
+    /// Discover all PKL config files in a directory.
     /// - Parameter directory: Directory to scan.
-    /// - Returns: Array of URLs to discovered YAML files.
+    /// - Returns: Array of URLs to discovered PKL files.
     /// - Throws: `ConfigDiscoveryError.directoryNotFound` if directory doesn't exist.
     func discoverConfigs(in directory: URL) throws -> [URL] {
         let fileManager = FileManager.default
@@ -65,7 +64,7 @@ struct ConfigDiscovery {
         )
 
         return contents.filter { url in
-            Self.yamlExtensions.contains(url.pathExtension.lowercased())
+            url.pathExtension.lowercased() == Self.pklExtension
         }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
@@ -87,52 +86,38 @@ struct ConfigDiscovery {
 
     // MARK: - Config Validation
 
-    /// Filter discovered configs to only include valid ExFig/figma-export configs.
+    /// Filter discovered configs to only include valid ExFig configs.
     /// - Parameter configs: URLs to check.
     /// - Returns: URLs that are valid ExFig configs.
     func filterValidConfigs(_ configs: [URL]) -> [URL] {
         configs.filter { isValidExFigConfig(at: $0) }
     }
 
-    /// Check if a YAML file is a valid ExFig config.
-    /// - Parameter url: URL to the YAML file.
+    /// Check if a PKL file is a valid ExFig config.
+    /// - Parameter url: URL to the PKL file.
     /// - Returns: `true` if the file is a valid ExFig config.
     ///
-    /// A config is valid if it has:
-    /// - `figma` section (required for icons, images, typography, legacy colors), OR
-    /// - `common.variablesColors` section (Variables API for colors), OR
-    /// - Platform-specific colors with multi-entry format (ios.colors, android.colors, etc.)
+    /// A config is valid if it:
+    /// - Has .pkl extension
+    /// - Contains "ExFig" in amends clause or has platform section (ios, android, flutter, web)
     func isValidExFigConfig(at url: URL) -> Bool {
+        guard url.pathExtension.lowercased() == Self.pklExtension else {
+            return false
+        }
+
         do {
-            let data = try Data(contentsOf: url)
-            guard let content = String(data: data, encoding: .utf8),
-                  !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            else {
-                return false
-            }
+            let content = try String(contentsOf: url, encoding: .utf8)
 
-            guard let yaml = try Yams.load(yaml: content) as? [String: Any] else {
-                return false
-            }
-
-            // Has figma section (required for icons, images, typography, legacy colors)
-            if yaml["figma"] != nil {
+            // Check if it amends ExFig schema
+            if content.contains("ExFig.pkl") {
                 return true
             }
 
-            // Has common.variablesColors (Variables API for colors)
-            if let common = yaml["common"] as? [String: Any],
-               common["variablesColors"] != nil
-            {
-                return true
-            }
-
-            // Has platform-specific colors with multi-entry format
+            // Check for platform sections (basic text search)
             let platforms = ["ios", "android", "flutter", "web"]
             for platform in platforms {
-                if let platformConfig = yaml[platform] as? [String: Any],
-                   platformConfig["colors"] != nil
-                {
+                // Look for platform = new or platform { patterns
+                if content.contains("\(platform) =") || content.contains("\(platform) {") {
                     return true
                 }
             }
@@ -167,36 +152,24 @@ struct ConfigDiscovery {
     // MARK: - Private Helpers
 
     private func extractOutputPaths(from configURL: URL) throws -> [String] {
-        let data = try Data(contentsOf: configURL)
-        guard let content = String(data: data, encoding: .utf8) else {
-            return []
-        }
-
-        guard let yaml = try Yams.load(yaml: content) as? [String: Any] else {
-            return []
-        }
-
+        // For PKL, we need to evaluate the config to get output paths
+        // For now, do a basic text search for common output path patterns
+        let content = try String(contentsOf: configURL, encoding: .utf8)
         var paths: [String] = []
 
         // Extract iOS xcassetsPath
-        if let ios = yaml["ios"] as? [String: Any],
-           let xcassetsPath = ios["xcassetsPath"] as? String
-        {
-            paths.append(xcassetsPath)
+        if let match = content.firstMatch(of: /xcassetsPath\s*=\s*"([^"]+)"/) {
+            paths.append(String(match.1))
         }
 
         // Extract Android mainRes
-        if let android = yaml["android"] as? [String: Any],
-           let mainRes = android["mainRes"] as? String
-        {
-            paths.append(mainRes)
+        if let match = content.firstMatch(of: /mainRes\s*=\s*"([^"]+)"/) {
+            paths.append(String(match.1))
         }
 
-        // Extract Flutter output
-        if let flutter = yaml["flutter"] as? [String: Any],
-           let output = flutter["output"] as? String
-        {
-            paths.append(output)
+        // Extract Flutter/Web output
+        if let match = content.firstMatch(of: /output\s*=\s*"([^"]+)"/) {
+            paths.append(String(match.1))
         }
 
         return paths

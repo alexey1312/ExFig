@@ -277,8 +277,8 @@ final class ResumeIntegrationTests: XCTestCase {
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
 
-        configFile = tempDirectory.appendingPathComponent("config.yaml")
-        try "figma:\n  fileKey: test123\nicons:\n  - name: test\n".write(
+        configFile = tempDirectory.appendingPathComponent("config.pkl")
+        try "figma {\n  lightFileId = \"test123\"\n}\n".write(
             to: configFile, atomically: true, encoding: .utf8
         )
     }

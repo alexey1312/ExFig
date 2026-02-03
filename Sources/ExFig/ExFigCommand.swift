@@ -80,7 +80,6 @@ struct ExFigCommand: AsyncParsableCommand {
             FetchImages.self,
             Download.self,
             Batch.self,
-            MigrateConfig.self,
         ],
         defaultSubcommand: ExportColors.self
     )

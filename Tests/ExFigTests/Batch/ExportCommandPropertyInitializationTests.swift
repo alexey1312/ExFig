@@ -120,10 +120,11 @@ final class ExportCommandPropertyInitializationTests: XCTestCase {
 
     private func makeConfigFile() throws -> URL {
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".yaml")
+            .appendingPathComponent(UUID().uuidString + ".pkl")
         let content = """
-        figma:
-          lightFileId: "test123"
+        figma {
+          lightFileId = "test123"
+        }
         """
         try content.write(to: url, atomically: true, encoding: .utf8)
         tempFiles.append(url)

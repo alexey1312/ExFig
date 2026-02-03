@@ -1,5 +1,4 @@
 import Foundation
-import Yams
 
 /// Extracts unique Figma file IDs from config files.
 ///
@@ -31,19 +30,27 @@ struct FileIdExtractor {
         return fileIds
     }
 
-    /// Parse Params from a config file URL.
+    /// Parse Params from a PKL config file URL.
     ///
     /// - Parameter url: URL to the config file.
     /// - Returns: Parsed Params or nil if parsing fails.
     private func parseParams(from url: URL) -> Params? {
         do {
-            let data = try Data(contentsOf: url)
-            guard let content = String(data: data, encoding: .utf8) else {
-                return nil
+            let evaluator = try PKLEvaluator()
+
+            // Run async evaluation synchronously
+            let semaphore = DispatchSemaphore(value: 0)
+            var result: Params?
+
+            Task {
+                result = try? await evaluator.evaluateToParams(configPath: url)
+                semaphore.signal()
             }
-            return try YAMLDecoder().decode(Params.self, from: content)
+
+            semaphore.wait()
+            return result
         } catch {
-            // Config parsing failed, skip this file
+            // PKL evaluation failed, skip this file
             // The actual batch processing will report this error later
             return nil
         }
