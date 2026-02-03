@@ -135,20 +135,25 @@ and Flutter projects.
 
 ## Architecture
 
-Eight modules in `Sources/`:
+Twelve modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
 | `ExFig`         | CLI commands, loaders, file I/O, terminal UI              |
 | `ExFigCore`     | Domain models (Color, Image, TextStyle), processors       |
+| `ExFigConfig`   | PKL config parsing, evaluation, locator                   |
 | `FigmaAPI`      | Figma REST API client, endpoints, response models         |
+| `ExFig-iOS`     | iOS platform plugin (ColorsExporter, IconsExporter, etc.) |
+| `ExFig-Android` | Android platform plugin                                   |
+| `ExFig-Flutter` | Flutter platform plugin                                   |
+| `ExFig-Web`     | Web platform plugin                                       |
 | `XcodeExport`   | iOS export (.xcassets, Swift extensions)                  |
 | `AndroidExport` | Android export (XML resources, Compose, Vector Drawables) |
 | `FlutterExport` | Flutter export (Dart code, SVG/PNG assets)                |
 | `WebExport`     | Web/React export (CSS variables, JSX icons)               |
 | `SVGKit`        | SVG parsing, ImageVector/VectorDrawable generation        |
 
-**Data flow:** CLI -> Config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform export -> File write
+**Data flow:** CLI -> PKL config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform plugin -> Export module -> File write
 
 ## Key Directories
 
@@ -164,7 +169,16 @@ Sources/ExFig/
 ├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
 ├── Batch/           # Batch processing (executor, runner, checkpoint)
 ├── Sync/            # Figma sync functionality (state tracking, diff detection)
+├── Plugin/          # Plugin registry, Params-to-Plugin adapters
+├── Context/         # Export context implementations (ColorsExportContextImpl, etc.)
 └── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger, EntryProcessor)
+
+Sources/ExFig-{iOS,Android,Flutter,Web}/
+├── Config/          # Entry types (iOSColorsEntry, AndroidIconsEntry, etc.)
+└── Export/          # Exporters (iOSColorsExporter, AndroidImagesExporter, etc.)
+
+Sources/ExFigConfig/
+└── PKL/             # PKL locator, evaluator, error types
 
 Sources/*/Resources/ # Stencil templates for code generation
 Tests/               # Test targets mirror source structure
@@ -184,6 +198,14 @@ Tests/               # Test targets mirror source structure
 1. Create endpoint in `Sources/FigmaAPI/Endpoint/`
 2. Add response models in `Sources/FigmaAPI/Model/`
 3. Add method to `FigmaClient.swift`
+
+### Adding a Platform Plugin Exporter
+
+1. Create entry type in `Sources/ExFig-{Platform}/Config/` (e.g., `iOSColorsEntry.swift`)
+2. Implement exporter in `Sources/ExFig-{Platform}/Export/` conforming to protocol (e.g., `ColorsExporter`)
+3. Register exporter in plugin's `exporters()` method
+4. Create adapter in `Sources/ExFig/Plugin/ParamsToPluginAdapter.swift` for Params -> Entry conversion
+5. Add export method in `Sources/ExFig/Subcommands/Export/Plugin*Export.swift`
 
 ### Modifying Generated Code
 

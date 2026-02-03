@@ -446,11 +446,17 @@ Phase 12 (Final Verification)
 
 > **SUBAGENT:** docs-user-agent
 
-- [ ] 10.1.1 Update `CLAUDE.md` Quick Reference with PKL commands
-- [ ] 10.1.2 Update `CLAUDE.md` config examples to PKL syntax
+- [x] 10.1.1 Update `CLAUDE.md` Quick Reference with PKL commands
+  - Architecture section updated to 12 modules (added ExFigConfig, ExFig-iOS/Android/Flutter/Web)
+  - Key Directories section updated with Plugin, Context, ExFig-* structure
+  - Added "Adding a Platform Plugin Exporter" code pattern
+- [x] 10.1.2 Update `CLAUDE.md` config examples to PKL syntax — already using PKL
 - [ ] 10.1.3 Create `docs/PKL.md` — complete PKL configuration guide
 - [ ] 10.1.4 Create `docs/MIGRATION.md` — YAML to PKL migration guide
-- [ ] 10.1.5 Update `README.md` with PKL prerequisites
+- [x] 10.1.5 Update `README.md` with PKL prerequisites
+  - Updated config examples from YAML to PKL syntax
+  - Added PKL to Requirements section
+  - Updated batch processing examples (.yaml → .pkl)
 
 ### 10.2 Architecture Documentation 📦
 

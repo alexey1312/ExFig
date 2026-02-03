@@ -115,18 +115,19 @@ exfig init -p flutter
 
 ### 4. Configure File IDs
 
-Edit `exfig.yaml` and add your Figma file IDs:
+Edit `exfig.pkl` and add your Figma file IDs:
 
-```yaml
-figma:
-  lightFileId: YOUR_FIGMA_FILE_ID
+```pkl
+figma {
+  lightFileId = "YOUR_FIGMA_FILE_ID"
+}
 ```
 
 ### 5. Export Resources
 
 ```bash
 # Migrate from figma-export (optional)
-exfig migrate figma-export.yaml -o exfig.yaml
+exfig migrate figma-export.yaml -o exfig.pkl
 
 # Export colors
 exfig colors
@@ -185,11 +186,13 @@ avoid re-exporting unchanged assets. Works for all commands: `colors`, `icons`, 
 
 ### Enable via Configuration
 
-```yaml
-common:
-  cache:
-    enabled: true
-    path: ".exfig-cache.json" # optional, defaults to .exfig-cache.json
+```pkl
+common {
+  cache {
+    enabled = true
+    path = ".exfig-cache.json" // optional, defaults to .exfig-cache.json
+  }
+}
 ```
 
 ### Enable via CLI
@@ -343,18 +346,18 @@ See [CONFIG.md](CONFIG.md#json-export-download-command) for full documentation.
 
 Process multiple configuration files in parallel with shared rate limiting.
 
-> **Note:** Directory scanning is non-recursive. Only YAML files directly in the specified directory are processed. Use
-> shell globbing for nested configs (e.g., `./configs/*/*.yaml`).
+> **Note:** Directory scanning is non-recursive. Only PKL files directly in the specified directory are processed. Use
+> shell globbing for nested configs (e.g., `./configs/*/*.pkl`).
 
 ```bash
 # Process all configs in a directory (non-recursive)
 exfig batch ./configs/
 
 # Process specific config files
-exfig batch ios-app.yaml android-app.yaml flutter-app.yaml
+exfig batch ios-app.pkl android-app.pkl flutter-app.pkl
 
 # Process nested configs via shell glob
-exfig batch ./configs/*/*.yaml
+exfig batch ./configs/*/*.pkl
 
 # With custom parallelism (default: 3)
 exfig batch ./configs/ --parallel 5
@@ -396,14 +399,14 @@ The JSON report includes timing, success/failure counts, and per-config results:
   "failureCount": 1,
   "results": [
     {
-      "name": "ios-app.yaml",
-      "path": "/configs/ios-app.yaml",
+      "name": "ios-app.pkl",
+      "path": "/configs/ios-app.pkl",
       "success": true,
       "stats": { "colors": 45, "icons": 120, "images": 30, "typography": 12 }
     },
     {
-      "name": "android-app.yaml",
-      "path": "/configs/android-app.yaml",
+      "name": "android-app.pkl",
+      "path": "/configs/android-app.pkl",
       "success": false,
       "error": "Invalid Figma file ID"
     }
@@ -596,6 +599,7 @@ flutter_project/
 
 - **Swift 6.2+** (for building from source)
 - **macOS 13.0+** or **Linux (Ubuntu 22.04)**
+- **[PKL](https://pkl-lang.org/)** - Configuration language (install via `brew install pkl` or `mise use -g pkl`)
 - **Figma Personal Access Token**
 
 ## Contributing
