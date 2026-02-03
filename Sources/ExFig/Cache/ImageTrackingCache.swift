@@ -1,3 +1,4 @@
+import ExFigCore
 import Foundation
 
 /// Cache model for tracking Figma file versions and node hashes.
@@ -79,8 +80,7 @@ extension ImageTrackingCache {
 
         do {
             let data = try Data(contentsOf: path)
-            let decoder = JSONDecoder()
-            let cache = try decoder.decode(ImageTrackingCache.self, from: data)
+            let cache = try JSONCodec.decode(ImageTrackingCache.self, from: data)
 
             // Migration: v1 → v2 (nodeHashes field added, backward compatible)
             if cache.schemaVersion < currentSchemaVersion {
@@ -101,8 +101,8 @@ extension ImageTrackingCache {
 
     /// Saves cache to a file at the specified path.
     func save(to path: URL) throws {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        var encoder = JSONCodec.makeEncoder()
+        encoder.writeOptions = [.prettyPrinted]
         let data = try encoder.encode(self)
         try data.write(to: path, options: .atomic)
     }

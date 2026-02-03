@@ -37,8 +37,8 @@ final class CodeSyntaxSyncerTests: XCTestCase {
             variablesJson[varId] = [
                 "id": varId,
                 "name": name,
-                "variable_collection_id": collectionId,
-                "values_by_mode": [
+                "variableCollectionId": collectionId,
+                "valuesByMode": [
                     modeId: ["r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0],
                 ],
                 "description": "",
@@ -47,25 +47,24 @@ final class CodeSyntaxSyncerTests: XCTestCase {
 
         let json: [String: Any] = [
             "meta": [
-                "variable_collections": [
+                "variableCollections": [
                     collectionId: [
-                        "default_mode_id": modeId,
+                        "defaultModeId": modeId,
                         "id": collectionId,
                         "name": collectionName,
                         "modes": [
-                            ["mode_id": modeId, "name": "Light"],
+                            ["modeId": modeId, "name": "Light"],
                         ],
-                        "variable_ids": variableIds,
+                        "variableIds": variableIds,
                     ],
                 ],
                 "variables": variablesJson,
             ],
         ]
 
+        // JSON uses camelCase keys matching real Figma API responses
         let data = try JSONSerialization.data(withJSONObject: json)
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let response = try decoder.decode(VariablesResponse.self, from: data)
+        let response = try JSONCodec.decode(VariablesResponse.self, from: data)
         return response.meta
     }
 
@@ -164,7 +163,7 @@ final class CodeSyntaxSyncerTests: XCTestCase {
         XCTAssertEqual(postRequests.count, 1)
 
         if let body = postRequests.first?.httpBody {
-            let request = try JSONDecoder().decode(VariablesUpdateRequest.self, from: body)
+            let request = try JSONCodec.decode(VariablesUpdateRequest.self, from: body)
             XCTAssertEqual(request.variables.first?.codeSyntax?.iOS, "Color.backgroundPrimary")
         }
     }
@@ -185,7 +184,7 @@ final class CodeSyntaxSyncerTests: XCTestCase {
             .filter { $0.httpMethod == "POST" }
 
         if let body = postRequests.first?.httpBody {
-            let request = try JSONDecoder().decode(VariablesUpdateRequest.self, from: body)
+            let request = try JSONCodec.decode(VariablesUpdateRequest.self, from: body)
             XCTAssertEqual(request.variables.first?.codeSyntax?.iOS, "Color.color")
         }
     }
@@ -206,7 +205,7 @@ final class CodeSyntaxSyncerTests: XCTestCase {
             .filter { $0.httpMethod == "POST" }
 
         if let body = postRequests.first?.httpBody {
-            let request = try JSONDecoder().decode(VariablesUpdateRequest.self, from: body)
+            let request = try JSONCodec.decode(VariablesUpdateRequest.self, from: body)
             XCTAssertEqual(request.variables.first?.codeSyntax?.iOS, "Color.backgroundAccent")
         }
     }
@@ -227,7 +226,7 @@ final class CodeSyntaxSyncerTests: XCTestCase {
             .filter { $0.httpMethod == "POST" }
 
         if let body = postRequests.first?.httpBody {
-            let request = try JSONDecoder().decode(VariablesUpdateRequest.self, from: body)
+            let request = try JSONCodec.decode(VariablesUpdateRequest.self, from: body)
             XCTAssertEqual(request.variables.first?.codeSyntax?.iOS, "Color.background_accent")
         }
     }
@@ -250,7 +249,7 @@ final class CodeSyntaxSyncerTests: XCTestCase {
             .filter { $0.httpMethod == "POST" }
 
         if let body = postRequests.first?.httpBody {
-            let request = try JSONDecoder().decode(VariablesUpdateRequest.self, from: body)
+            let request = try JSONCodec.decode(VariablesUpdateRequest.self, from: body)
             XCTAssertEqual(request.variables.first?.codeSyntax?.iOS, "ThemeCompatable.colors.primary")
         }
     }
@@ -271,7 +270,7 @@ final class CodeSyntaxSyncerTests: XCTestCase {
             .filter { $0.httpMethod == "POST" }
 
         if let body = postRequests.first?.httpBody {
-            let request = try JSONDecoder().decode(VariablesUpdateRequest.self, from: body)
+            let request = try JSONCodec.decode(VariablesUpdateRequest.self, from: body)
             XCTAssertEqual(request.variables.first?.codeSyntax?.iOS, "UIColor.accent")
         }
     }
@@ -297,7 +296,7 @@ final class CodeSyntaxSyncerTests: XCTestCase {
             .filter { $0.httpMethod == "POST" }
 
         if let body = postRequests.first?.httpBody {
-            let request = try JSONDecoder().decode(VariablesUpdateRequest.self, from: body)
+            let request = try JSONCodec.decode(VariablesUpdateRequest.self, from: body)
             XCTAssertEqual(request.variables.first?.codeSyntax?.iOS, "Color.backgroundPrimary")
         }
     }

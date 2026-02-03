@@ -1,7 +1,9 @@
 // swiftlint:disable file_length
 import ArgumentParser
+import ExFigCore
 import FigmaAPI
 import Foundation
+import YYJSON
 
 extension ExFigCommand {
     // swiftlint:disable:next type_body_length
@@ -781,9 +783,13 @@ extension ExFigCommand {
                 }
             )
 
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            let data = try encoder.encode(report)
+            // Encode to JSON, then re-serialize with sorted keys for stable output
+            let jsonData = try JSONCodec.encode(report)
+            let object = try YYJSONSerialization.jsonObject(with: jsonData)
+            let data = try YYJSONSerialization.data(
+                withJSONObject: object,
+                options: [.prettyPrinted, .sortedKeys]
+            )
 
             let url = URL(fileURLWithPath: path)
             try data.write(to: url)

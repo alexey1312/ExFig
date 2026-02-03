@@ -1,3 +1,4 @@
+import ExFigCore
 import FigmaAPI
 import Foundation
 
@@ -21,11 +22,8 @@ enum NodeHasher {
     /// - Parameter properties: The hashable visual properties of a node.
     /// - Returns: 16-character lowercase hex string (e.g., "a1b2c3d4e5f67890").
     static func computeHash(_ properties: NodeHashableProperties) -> String {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-
         do {
-            let data = try encoder.encode(properties)
+            let data = try JSONCodec.encodeSorted(properties)
             return FNV1aHasher.hashToHex(data)
         } catch {
             // Encoding should never fail for Encodable types

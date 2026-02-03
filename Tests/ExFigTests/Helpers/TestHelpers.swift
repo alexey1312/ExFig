@@ -1,4 +1,5 @@
 @testable import ExFig
+import ExFigCore
 import FigmaAPI
 import Foundation
 
@@ -23,7 +24,7 @@ extension Params.Figma {
         }
         """
         // swiftlint:disable:next force_try
-        return try! JSONDecoder().decode(Params.Figma.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(Params.Figma.self, from: Data(json.utf8))
     }
 }
 
@@ -53,7 +54,7 @@ extension Params.Common.Colors {
 
         let json = "{ \(components.joined(separator: ", ")) }"
         // swiftlint:disable:next force_try
-        return try! JSONDecoder().decode(Params.Common.Colors.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(Params.Common.Colors.self, from: Data(json.utf8))
     }
 }
 
@@ -89,7 +90,7 @@ extension Node {
         }
         """
         // swiftlint:disable:next force_try
-        return try! JSONDecoder().decode(Node.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(Node.self, from: Data(json.utf8))
     }
 }
 
@@ -138,7 +139,7 @@ extension Params.Common.VariablesColors {
 
         let json = "{ \(components.joined(separator: ", ")) }"
         // swiftlint:disable:next force_try
-        return try! JSONDecoder().decode(Params.Common.VariablesColors.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(Params.Common.VariablesColors.self, from: Data(json.utf8))
     }
 }
 
@@ -173,10 +174,9 @@ extension Component {
         }
         json += "}"
 
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // Model uses explicit CodingKeys for snake_case mapping
         // swiftlint:disable:next force_try
-        return try! decoder.decode(Component.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(Component.self, from: Data(json.utf8))
     }
 }
 
@@ -232,7 +232,7 @@ extension Params {
         """
 
         // swiftlint:disable:next force_try
-        return try! JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(Params.self, from: Data(json.utf8))
     }
 }
 
@@ -280,7 +280,7 @@ extension VariablesMeta {
     ) -> VariablesMeta {
         // swiftlint:enable function_body_length large_tuple
         let modesJson = modes.map { mode in
-            "{\"mode_id\": \"\(mode.id)\", \"name\": \"\(mode.name)\"}"
+            "{\"modeId\": \"\(mode.id)\", \"name\": \"\(mode.name)\"}"
         }.joined(separator: ", ")
 
         // Only include variables from main collection in variable_ids
@@ -306,8 +306,8 @@ extension VariablesMeta {
             "VariableID:\(variable.id)": {
                 "id": "VariableID:\(variable.id)",
                 "name": "\(variable.name)",
-                "variable_collection_id": "\(collectionId)",
-                "values_by_mode": { \(valuesJson) },
+                "variableCollectionId": "\(collectionId)",
+                "valuesByMode": { \(valuesJson) },
                 "description": ""
             }
             """
@@ -316,42 +316,41 @@ extension VariablesMeta {
         // Build primitive collections JSON
         var collectionsJson = """
         "VariableCollectionId:1:1": {
-            "default_mode_id": "\(modes.first?.id ?? "1:0")",
+            "defaultModeId": "\(modes.first?.id ?? "1:0")",
             "id": "VariableCollectionId:1:1",
             "name": "\(collectionName)",
             "modes": [\(modesJson)],
-            "variable_ids": [\(mainCollectionVariableIds)]
+            "variableIds": [\(mainCollectionVariableIds)]
         }
         """
 
         for collection in primitiveCollections {
             let primModesJson = collection.modes.map { mode in
-                "{\"mode_id\": \"\(mode.id)\", \"name\": \"\(mode.name)\"}"
+                "{\"modeId\": \"\(mode.id)\", \"name\": \"\(mode.name)\"}"
             }.joined(separator: ", ")
             let primVarIds = collection.variableIds.map { "\"VariableID:\($0)\"" }.joined(separator: ", ")
 
             collectionsJson += """
             ,
             "\(collection.id)": {
-                "default_mode_id": "\(collection.defaultModeId)",
+                "defaultModeId": "\(collection.defaultModeId)",
                 "id": "\(collection.id)",
                 "name": "\(collection.name)",
                 "modes": [\(primModesJson)],
-                "variable_ids": [\(primVarIds)]
+                "variableIds": [\(primVarIds)]
             }
             """
         }
 
         let json = """
         {
-            "variable_collections": { \(collectionsJson) },
+            "variableCollections": { \(collectionsJson) },
             "variables": { \(variablesJson) }
         }
         """
 
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // JSON uses camelCase keys matching real Figma API responses
         // swiftlint:disable:next force_try
-        return try! decoder.decode(VariablesMeta.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(VariablesMeta.self, from: Data(json.utf8))
     }
 }
