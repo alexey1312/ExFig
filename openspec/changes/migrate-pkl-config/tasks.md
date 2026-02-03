@@ -291,7 +291,7 @@ Remaining work: Config entry types and actual export logic migration (marked wit
 
 ### 9.1 Tests First
 
-- [ ] 9.1.1 Create `Tests/ExFigCLITests/PluginRegistryTests.swift`
+- [x] 9.1.1 Create `Tests/ExFigTests/Plugin/PluginRegistryTests.swift` — 18 tests pass
   - Test: registers all 4 plugins
   - Test: routes to correct plugin by config key
   - Test: returns empty for unknown config key
@@ -299,9 +299,9 @@ Remaining work: Config entry types and actual export logic migration (marked wit
 
 ### 9.2 Implementation
 
-- [ ] 9.2.1 Create `Sources/ExFigCLI/Plugin/PluginRegistry.swift`
-- [ ] 9.2.2 Rename target `ExFig` → `ExFigCLI` in `Package.swift`
-- [ ] 9.2.3 Update product name in `Package.swift`
+- [x] 9.2.1 Create `Sources/ExFig/Plugin/PluginRegistry.swift`
+- [x] 9.2.2 Update `Package.swift` to add plugin dependencies to ExFig target
+- [ ] 9.2.3 Rename target `ExFig` → `ExFigCLI` (deferred to Phase 9.3)
 - [ ] 9.2.4 Refactor `ExportColors` command to use `PluginRegistry`
 - [ ] 9.2.5 Refactor `ExportIcons` command to use `PluginRegistry`
 - [ ] 9.2.6 Refactor `ExportImages` command to use `PluginRegistry`
@@ -309,9 +309,12 @@ Remaining work: Config entry types and actual export logic migration (marked wit
 
 ### 9.3 Cleanup (after tests pass)
 
-- [ ] 9.3.1 Delete `Sources/ExFig/Input/Params.swift`
-- [ ] 9.3.2 Delete old Export files (`iOSColorsExport.swift`, etc.)
-- [ ] 9.3.3 Run: `mise run test`
+- [ ] 9.3.1 Rename target `ExFig` → `ExFigCLI` in `Package.swift`
+- [ ] 9.3.2 Delete `Sources/ExFig/Input/Params.swift`
+- [ ] 9.3.3 Delete old Export files (`iOSColorsExport.swift`, etc.)
+- [ ] 9.3.4 Run: `mise run test`
+
+**Status:** PluginRegistry created with 18 tests passing. Export commands refactoring pending completion of Phase 7 migration tasks (7.x.5, 7.x.7).
 
 **Completion criteria:** CLI works with plugin architecture, old code removed
 
