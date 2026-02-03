@@ -1,5 +1,4 @@
 import ExFigCore
-import ToonFormat
 
 /// Formats `AssetsValidatorWarning` for readable terminal display using TOON format
 struct WarningFormatter {

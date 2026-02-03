@@ -5,7 +5,9 @@ paths:
 
 # Terminal UI Patterns
 
-This rule covers TerminalUI usage, warnings system, and errors system.
+This rule covers TerminalUI usage, Noora design system, warnings, and errors.
+
+**Design system:** Use [Noora](https://github.com/tuist/Noora) (tuist/Noora) for semantic terminal text formatting.
 
 ## TerminalUI Usage
 
@@ -42,8 +44,9 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 | `BatchProgressCallback`    | `@Sendable (Int, Int) -> Void` for batch progress     |
 | `Lock<T>`                  | Thread-safe state wrapper (NSLock-based, Sendable)    |
 | `ExFigWarning`             | Enum of all warning types for consistent messaging    |
-| `ExFigWarningFormatter`    | Formats warnings as compact or multiline TOON strings |
+| `ExFigWarningFormatter`    | Formats warnings as compact or multiline strings      |
 | `ExFigErrorFormatter`      | Formats errors with recovery suggestions              |
+| `NooraUI`                  | Adapter for Noora design system (semantic text)       |
 | `ConflictFormatter`        | Formats batch output path conflicts for display       |
 
 **TerminalOutputManager API:**
@@ -92,6 +95,48 @@ await BatchProgressViewStorage.$progressView.withValue(progressView) {
 - Individual export commands detect `BatchProgressViewStorage.progressView` via `@TaskLocal`
 - Spinners and progress bars are automatically suppressed in batch mode
 - Critical logs (errors/warnings) coordinate with progress display via `clearForLog()` -> print -> `render()`
+
+## Noora Design System
+
+Use `NooraUI` adapter for semantic terminal text formatting with ANSI colors:
+
+```swift
+import Noora
+
+// Format semantic text
+let text: TerminalText = "Status: \(.success("OK")) for \(.primary("MyProject"))"
+print(NooraUI.format(text))
+
+// Available components:
+// .raw(String)       - No formatting
+// .command(String)   - System commands (highlighted)
+// .primary(String)   - Theme primary color
+// .secondary(String) - Theme secondary color
+// .muted(String)     - Dimmed text
+// .accent(String)    - Accent color
+// .danger(String)    - Error/danger color
+// .success(String)   - Success color
+```
+
+**NooraUI adapter** (`Sources/ExFig/TerminalUI/NooraUI.swift`):
+
+```swift
+// Shared instance with default theme
+NooraUI.shared  // Noora()
+
+// Format TerminalText to ANSI string
+NooraUI.format(text)  // -> String with escape codes
+```
+
+**When to use Noora vs plain strings:**
+
+| Use Case                | Approach                           |
+| ----------------------- | ---------------------------------- |
+| Status messages         | `NooraUI.format(terminalText)`     |
+| Commands in output      | `.command("exfig colors")`         |
+| Success/error indicators| `.success("✓")` / `.danger("✗")`   |
+| Simple logs             | Plain strings via `print()`        |
+| Warnings/errors         | `ExFigWarning` + `TerminalUI`      |
 
 ## Warnings System
 
