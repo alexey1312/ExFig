@@ -1,3 +1,4 @@
+import ExFigCore
 import Foundation
 #if os(Linux)
     import FoundationNetworking
@@ -21,22 +22,15 @@ extension BaseEndpoint where Root == Content {
 extension BaseEndpoint {
     public func content(from response: URLResponse?, with body: Data) throws -> Content {
         do {
-            let resource = try JSONDecoder.default.decode(Root.self, from: body)
+            // Models use explicit CodingKeys for snake_case mapping
+            let resource = try JSONCodec.decode(Root.self, from: body)
             return content(from: resource)
         } catch let mainError {
-            if let error = try? JSONDecoder.default.decode(FigmaClientError.self, from: body) {
+            if let error = try? JSONCodec.decode(FigmaClientError.self, from: body) {
                 throw error
             }
 
             throw mainError
         }
     }
-}
-
-extension JSONDecoder {
-    static let `default`: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return decoder
-    }()
 }

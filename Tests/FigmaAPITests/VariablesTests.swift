@@ -5,7 +5,7 @@ import XCTest
 final class ModeTests: XCTestCase {
     func testDecoding() throws {
         let json = """
-        {"modeId": "123:0", "name": "Light"}
+        {"mode_id": "123:0", "name": "Light"}
         """
 
         let mode = try JSONDecoder().decode(Mode.self, from: Data(json.utf8))
@@ -19,14 +19,14 @@ final class VariableCollectionValueTests: XCTestCase {
     func testDecoding() throws {
         let json = """
         {
-            "defaultModeId": "123:0",
+            "default_mode_id": "123:0",
             "id": "collection-1",
             "name": "Colors",
             "modes": [
-                {"modeId": "123:0", "name": "Light"},
-                {"modeId": "123:1", "name": "Dark"}
+                {"mode_id": "123:0", "name": "Light"},
+                {"mode_id": "123:1", "name": "Dark"}
             ],
-            "variableIds": ["var-1", "var-2"]
+            "variable_ids": ["var-1", "var-2"]
         }
         """
 
@@ -166,8 +166,8 @@ final class VariableValueTests: XCTestCase {
         {
             "id": "var-1",
             "name": "primary",
-            "variableCollectionId": "collection-1",
-            "valuesByMode": {
+            "variable_collection_id": "collection-1",
+            "values_by_mode": {
                 "123:0": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}
             },
             "description": "Primary color"
@@ -188,21 +188,21 @@ final class VariablesMetaTests: XCTestCase {
     func testDecoding() throws {
         let json = """
         {
-            "variableCollections": {
+            "variable_collections": {
                 "collection-1": {
-                    "defaultModeId": "123:0",
+                    "default_mode_id": "123:0",
                     "id": "collection-1",
                     "name": "Colors",
-                    "modes": [{"modeId": "123:0", "name": "Light"}],
-                    "variableIds": ["var-1"]
+                    "modes": [{"mode_id": "123:0", "name": "Light"}],
+                    "variable_ids": ["var-1"]
                 }
             },
             "variables": {
                 "var-1": {
                     "id": "var-1",
                     "name": "primary",
-                    "variableCollectionId": "collection-1",
-                    "valuesByMode": {"123:0": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}},
+                    "variable_collection_id": "collection-1",
+                    "values_by_mode": {"123:0": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0}},
                     "description": ""
                 }
             }
@@ -223,7 +223,7 @@ final class VariablesResponseTests: XCTestCase {
         let json = """
         {
             "meta": {
-                "variableCollections": {},
+                "variable_collections": {},
                 "variables": {}
             }
         }

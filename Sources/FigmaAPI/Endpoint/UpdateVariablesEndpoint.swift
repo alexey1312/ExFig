@@ -1,3 +1,4 @@
+import ExFigCore
 import Foundation
 #if os(Linux)
     import FoundationNetworking
@@ -26,9 +27,8 @@ public struct UpdateVariablesEndpoint: BaseEndpoint {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let encoder = JSONEncoder()
         // swiftlint:disable:next force_try
-        request.httpBody = try! encoder.encode(body)
+        request.httpBody = try! JSONCodec.encode(body)
 
         return request
     }

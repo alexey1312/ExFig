@@ -18,8 +18,8 @@ enum FixtureLoader {
     /// - Returns: The decoded object of type T.
     static func load<T: Decodable>(_ name: String) throws -> T {
         let data = try loadData(name)
+        // Models use explicit CodingKeys for snake_case mapping
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode(T.self, from: data)
     }
 }

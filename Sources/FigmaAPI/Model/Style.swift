@@ -17,6 +17,13 @@ public struct Style: Decodable, Sendable {
         self.name = name
         self.description = description
     }
+
+    private enum CodingKeys: String, CodingKey {
+        case styleType = "style_type"
+        case nodeId = "node_id"
+        case name
+        case description
+    }
 }
 
 public struct StylesResponse: Decodable, Sendable {
