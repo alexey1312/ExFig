@@ -398,18 +398,40 @@ Phase 12 (Final Verification)
   - Updated `ExportColors.performExportWithResult()` to use `*ViaPlugin` methods for multiple format
   - Legacy format continues to use old methods (deprecated, to be removed later)
   - Post-export tasks (syncCodeSyntax, Xcode project update) remain in CLI layer
-- [ ] 9.2.5 Refactor `ExportIcons` command to use `PluginRegistry`
-- [ ] 9.2.6 Refactor `ExportImages` command to use `PluginRegistry`
-- [ ] 9.2.7 Update Batch processing for plugin system
+- [ ] 9.2.5 Refactor `ExportIcons` command to use `PluginRegistry` — **DEFERRED**
+  - Icons export uses advanced features (GranularCacheManager, PipelinedDownloader, ComponentPreFetcher)
+  - Plugin IconsExporter is a simplified version without these features
+  - Full migration requires extending plugin architecture significantly
+  - Decision: Keep using current implementation, migrate in future iteration
+- [ ] 9.2.6 Refactor `ExportImages` command to use `PluginRegistry` — **DEFERRED**
+  - Same complexity as Icons (granular cache, pipelined downloads)
+  - Decision: Keep using current implementation, migrate in future iteration
+- [ ] 9.2.7 Update Batch processing for plugin system — **DEFERRED**
+  - Depends on Icons/Images migration
+  - Current batch processing works with existing implementation
 
 ### 9.3 Cleanup (after tests pass)
 
-- [ ] 9.3.1 Rename target `ExFig` → `ExFigCLI` in `Package.swift`
-- [ ] 9.3.2 Delete `Sources/ExFig/Input/Params.swift`
-- [ ] 9.3.3 Delete old Export files (`iOSColorsExport.swift`, etc.)
+- [ ] 9.3.1 Rename target `ExFig` → `ExFigCLI` in `Package.swift` — **DEFERRED**
+  - Would break imports in many files
+  - Decision: Keep as ExFig, rename in separate PR
+- [ ] 9.3.2 Delete `Sources/ExFig/Input/Params.swift` — **BLOCKED**
+  - Params still used by Icons/Images export and Batch processing
+  - Can only delete after full migration
+- [ ] 9.3.3 Delete old Export files (`iOSColorsExport.swift`, etc.) — **PARTIAL**
+  - Can delete *ColorsMultiple methods (replaced by *ViaPlugin)
+  - Keep *ColorsLegacy methods (still used for single format)
+  - Keep Icons/Images export files (not migrated)
 - [ ] 9.3.4 Run: `mise run test`
 
-**Status:** ExportColors refactored to use plugin architecture. 2076 tests passing.
+**Status:** Phase 9 partially complete:
+
+- ✅ ExportColors migrated to plugin architecture for multiple format
+- ⏸️ ExportIcons/Images deferred (require significant plugin architecture extensions)
+- ⏸️ Batch processing deferred (depends on Icons/Images)
+- ⏸️ Cleanup deferred (Params still required)
+
+2076 tests passing.
 
 **Completion criteria:** CLI works with plugin architecture, old code removed
 
