@@ -165,13 +165,13 @@ Phase 12 (Final Verification)
 > **SEQUENTIAL** — must complete before Phase 8
 > **Depends on:** Phase 4
 
-- [ ] 6.1 Remove `Yams` from `Package.swift` dependencies
-- [ ] 6.2 Remove `import Yams` from `ExFigOptions.swift`
-- [ ] 6.3 Remove `import Yams` from `ConfigDiscovery.swift`
-- [ ] 6.4 Search and remove any remaining Yams references: `grep -r "Yams" Sources/`
-- [ ] 6.5 Verify build: `swift build`
+- [x] 6.1 Remove `Yams` from `Package.swift` dependencies
+- [x] 6.2 Remove `import Yams` from `ExFigOptions.swift` (already removed in Phase 4)
+- [x] 6.3 Remove `import Yams` from `ConfigDiscovery.swift` (already removed in Phase 4)
+- [x] 6.4 Search and remove any remaining Yams references: `grep -r "Yams" Sources/` — none found
+- [x] 6.5 Verify build: `swift build` — 1920 tests pass
 
-**Completion criteria:** Project builds without Yams dependency
+**Completion criteria:** Project builds without Yams dependency ✅
 
 ---
 

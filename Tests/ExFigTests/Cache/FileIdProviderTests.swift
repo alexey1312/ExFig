@@ -1,19 +1,25 @@
+// swiftlint:disable file_length type_body_length
 @testable import ExFig
+import Foundation
 import XCTest
-import Yams
 
 final class FileIdProviderTests: XCTestCase {
     // MARK: - Variables API (Primary Colors Path)
 
     func testIncludesCommonVariablesColorsTokensFileId() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        common:
-          variablesColors:
-            tokensFileId: "tokens-file"
-            tokensCollectionName: "Colors"
-            lightModeName: "Light"
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "common": {
+            "variablesColors": {
+              "tokensFileId": "tokens-file",
+              "tokensCollectionName": "Colors",
+              "lightModeName": "Light"
+            }
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -24,13 +30,18 @@ final class FileIdProviderTests: XCTestCase {
 
     func testTokensFileIdDifferentFromLightFileId() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        common:
-          variablesColors:
-            tokensFileId: "separate-tokens-file"
-            tokensCollectionName: "Colors"
-            lightModeName: "Light"
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "common": {
+            "variablesColors": {
+              "tokensFileId": "separate-tokens-file",
+              "tokensCollectionName": "Colors",
+              "lightModeName": "Light"
+            }
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -42,13 +53,18 @@ final class FileIdProviderTests: XCTestCase {
 
     func testTokensFileIdSameAsLightFileIdDeduplicates() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "same-file"
-        common:
-          variablesColors:
-            tokensFileId: "same-file"
-            tokensCollectionName: "Colors"
-            lightModeName: "Light"
+        {
+          "figma": {
+            "lightFileId": "same-file"
+          },
+          "common": {
+            "variablesColors": {
+              "tokensFileId": "same-file",
+              "tokensCollectionName": "Colors",
+              "lightModeName": "Light"
+            }
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -61,8 +77,11 @@ final class FileIdProviderTests: XCTestCase {
 
     func testIncludesLightFileIdOnly() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "light-only"
+        {
+          "figma": {
+            "lightFileId": "light-only"
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -72,9 +91,12 @@ final class FileIdProviderTests: XCTestCase {
 
     func testIncludesDarkFileId() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "light-file"
-          darkFileId: "dark-file"
+        {
+          "figma": {
+            "lightFileId": "light-file",
+            "darkFileId": "dark-file"
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -84,11 +106,14 @@ final class FileIdProviderTests: XCTestCase {
 
     func testIncludesHighContrastFileIds() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "light-file"
-          darkFileId: "dark-file"
-          lightHighContrastFileId: "light-hc"
-          darkHighContrastFileId: "dark-hc"
+        {
+          "figma": {
+            "lightFileId": "light-file",
+            "darkFileId": "dark-file",
+            "lightHighContrastFileId": "light-hc",
+            "darkHighContrastFileId": "dark-hc"
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -104,24 +129,33 @@ final class FileIdProviderTests: XCTestCase {
 
     func testIOSMultiEntryColorsExtractsTokensFileIds() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            - tokensFileId: "ios-tokens-1"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
-            - tokensFileId: "ios-tokens-2"
-              tokensCollectionName: "Brand"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsPath": "Assets.xcassets",
+            "xcassetsInMainBundle": true,
+            "colors": [
+              {
+                "tokensFileId": "ios-tokens-1",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light",
+                "useColorAssets": true,
+                "nameStyle": "camelCase"
+              },
+              {
+                "tokensFileId": "ios-tokens-2",
+                "tokensCollectionName": "Brand",
+                "lightModeName": "Light",
+                "useColorAssets": true,
+                "nameStyle": "camelCase"
+              }
+            ]
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -134,16 +168,21 @@ final class FileIdProviderTests: XCTestCase {
     func testIOSSingleColorsDoesNotAddTokensFileId() throws {
         // Single (legacy) format uses common.variablesColors for source
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            useColorAssets: true
-            nameStyle: camelCase
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsPath": "Assets.xcassets",
+            "xcassetsInMainBundle": true,
+            "colors": {
+              "useColorAssets": true,
+              "nameStyle": "camelCase"
+            }
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -156,14 +195,21 @@ final class FileIdProviderTests: XCTestCase {
 
     func testAndroidMultiEntryColorsExtractsTokensFileIds() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        android:
-          mainRes: "./res"
-          colors:
-            - tokensFileId: "android-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "android": {
+            "mainRes": "./res",
+            "colors": [
+              {
+                "tokensFileId": "android-tokens",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light"
+              }
+            ]
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -176,14 +222,21 @@ final class FileIdProviderTests: XCTestCase {
 
     func testFlutterMultiEntryColorsExtractsTokensFileIds() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        flutter:
-          output: "./flutter"
-          colors:
-            - tokensFileId: "flutter-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "flutter": {
+            "output": "./flutter",
+            "colors": [
+              {
+                "tokensFileId": "flutter-tokens",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light"
+              }
+            ]
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -196,14 +249,21 @@ final class FileIdProviderTests: XCTestCase {
 
     func testWebMultiEntryColorsExtractsTokensFileIds() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        web:
-          output: "./web"
-          colors:
-            - tokensFileId: "web-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "web": {
+            "output": "./web",
+            "colors": [
+              {
+                "tokensFileId": "web-tokens",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light"
+              }
+            ]
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -216,25 +276,36 @@ final class FileIdProviderTests: XCTestCase {
 
     func testDeduplicatesSharedTokensFileIdAcrossPlatforms() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            - tokensFileId: "shared-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
-        android:
-          mainRes: "./res"
-          colors:
-            - tokensFileId: "shared-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsPath": "Assets.xcassets",
+            "xcassetsInMainBundle": true,
+            "colors": [
+              {
+                "tokensFileId": "shared-tokens",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light",
+                "useColorAssets": true,
+                "nameStyle": "camelCase"
+              }
+            ]
+          },
+          "android": {
+            "mainRes": "./res",
+            "colors": [
+              {
+                "tokensFileId": "shared-tokens",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light"
+              }
+            ]
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -247,24 +318,33 @@ final class FileIdProviderTests: XCTestCase {
 
     func testCombinesCommonAndMultiEntryTokensFileIds() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        common:
-          variablesColors:
-            tokensFileId: "common-tokens"
-            tokensCollectionName: "Shared"
-            lightModeName: "Light"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            - tokensFileId: "ios-specific-tokens"
-              tokensCollectionName: "Brand"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "common": {
+            "variablesColors": {
+              "tokensFileId": "common-tokens",
+              "tokensCollectionName": "Shared",
+              "lightModeName": "Light"
+            }
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsPath": "Assets.xcassets",
+            "xcassetsInMainBundle": true,
+            "colors": [
+              {
+                "tokensFileId": "ios-specific-tokens",
+                "tokensCollectionName": "Brand",
+                "lightModeName": "Light",
+                "useColorAssets": true,
+                "nameStyle": "camelCase"
+              }
+            ]
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -279,24 +359,33 @@ final class FileIdProviderTests: XCTestCase {
 
     func testFiltersEmptyTokensFileIdInMultiEntry() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            - tokensFileId: "valid-tokens"
-              tokensCollectionName: "Colors"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
-            - tokensFileId: ""
-              tokensCollectionName: "Empty"
-              lightModeName: "Light"
-              useColorAssets: true
-              nameStyle: camelCase
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsPath": "Assets.xcassets",
+            "xcassetsInMainBundle": true,
+            "colors": [
+              {
+                "tokensFileId": "valid-tokens",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light",
+                "useColorAssets": true,
+                "nameStyle": "camelCase"
+              },
+              {
+                "tokensFileId": "",
+                "tokensCollectionName": "Empty",
+                "lightModeName": "Light",
+                "useColorAssets": true,
+                "nameStyle": "camelCase"
+              }
+            ]
+          }
+        }
         """)
 
         let result = params.getFileIds()
@@ -311,16 +400,21 @@ final class FileIdProviderTests: XCTestCase {
 
     func testIOSColorsConfigurationSingleReturnsEmpty() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        ios:
-          xcodeprojPath: "Test.xcodeproj"
-          target: "Test"
-          xcassetsPath: "Assets.xcassets"
-          xcassetsInMainBundle: true
-          colors:
-            useColorAssets: true
-            nameStyle: camelCase
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsPath": "Assets.xcassets",
+            "xcassetsInMainBundle": true,
+            "colors": {
+              "useColorAssets": true,
+              "nameStyle": "camelCase"
+            }
+          }
+        }
         """)
 
         let result = params.ios?.colors?.getFileIds() ?? []
@@ -331,12 +425,17 @@ final class FileIdProviderTests: XCTestCase {
 
     func testAndroidColorsConfigurationSingleReturnsEmpty() throws {
         let params = try parseParams("""
-        figma:
-          lightFileId: "design-file"
-        android:
-          mainRes: "./res"
-          colors:
-            composePackageName: "com.example"
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "android": {
+            "mainRes": "./res",
+            "colors": {
+              "composePackageName": "com.example"
+            }
+          }
+        }
         """)
 
         let result = params.android?.colors?.getFileIds() ?? []
@@ -346,8 +445,8 @@ final class FileIdProviderTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func parseParams(_ yaml: String) throws -> Params {
-        let decoder = YAMLDecoder()
-        return try decoder.decode(Params.self, from: yaml)
+    private func parseParams(_ json: String) throws -> Params {
+        let decoder = JSONDecoder()
+        return try decoder.decode(Params.self, from: Data(json.utf8))
     }
 }

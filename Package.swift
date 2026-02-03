@@ -14,7 +14,6 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
-        .package(url: "https://github.com/jpsim/Yams.git", from: "5.3.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: "0.15.1"),
         .package(url: "https://github.com/SwiftGen/StencilSwiftKit", from: "2.10.1"),
@@ -43,7 +42,6 @@ let package = Package(
                 .product(name: "Resvg", package: "swift-resvg"),
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Yams", package: "Yams"),
                 .product(name: "Logging", package: "swift-log"),
 
                 .product(name: "WebP", package: "libwebp"),
