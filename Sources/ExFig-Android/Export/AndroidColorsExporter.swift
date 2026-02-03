@@ -1,9 +1,140 @@
+import AndroidExport
 import ExFigCore
 import Foundation
 
 /// Exports colors from Figma Variables to Android XML resources and Kotlin extensions.
-public struct AndroidColorsExporter: AssetExporter {
-    public let assetType: AssetType = .colors
+///
+/// This exporter handles the full export cycle:
+/// 1. Loading colors from Figma Variables API
+/// 2. Processing colors with snake_case naming
+/// 3. Generating XML resources and Kotlin Compose extensions
+///
+/// ## Usage
+///
+/// ```swift
+/// let exporter = AndroidColorsExporter()
+/// let count = try await exporter.exportColors(
+///     entries: colorsEntries,
+///     platformConfig: androidPlatformConfig,
+///     context: colorsContext
+/// )
+/// ```
+public struct AndroidColorsExporter: ColorsExporter {
+    public typealias Entry = AndroidColorsEntry
+    public typealias PlatformConfig = AndroidPlatformConfig
 
     public init() {}
+
+    /// Exports colors from Figma to Android project.
+    ///
+    /// - Parameters:
+    ///   - entries: Array of colors configuration entries.
+    ///   - platformConfig: Android platform configuration.
+    ///   - context: Export context with dependencies.
+    /// - Returns: Total number of colors exported.
+    public func exportColors(
+        entries: [AndroidColorsEntry],
+        platformConfig: AndroidPlatformConfig,
+        context: some ColorsExportContext
+    ) async throws -> Int {
+        var totalCount = 0
+
+        for entry in entries {
+            totalCount += try await exportSingleEntry(
+                entry: entry,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
+
+        if !context.isBatchMode {
+            context.success("Done! Exported \(totalCount) colors to Android project.")
+        }
+
+        return totalCount
+    }
+
+    // MARK: - Private
+
+    private func exportSingleEntry(
+        entry: AndroidColorsEntry,
+        platformConfig: AndroidPlatformConfig,
+        context: some ColorsExportContext
+    ) async throws -> Int {
+        // 1. Load colors from Figma
+        let colors = try await context.withSpinner(
+            "Fetching colors from Figma (\(entry.tokensCollectionName))..."
+        ) {
+            try await context.loadColors(from: entry.colorsSourceInput)
+        }
+
+        // 2. Process colors (Android uses snake_case)
+        let processResult = try await context.withSpinner("Processing colors for Android...") {
+            try context.processColors(
+                colors,
+                platform: .android,
+                nameValidateRegexp: entry.nameValidateRegexp,
+                nameReplaceRegexp: entry.nameReplaceRegexp,
+                nameStyle: .snakeCase
+            )
+        }
+
+        if let warning = processResult.warning {
+            context.warning(warning)
+        }
+
+        let colorPairs = processResult.colorPairs
+
+        // 3. Export to Android
+        try await context.withSpinner("Exporting colors to Android Studio project...") {
+            try exportToAndroid(
+                colorPairs: colorPairs,
+                entry: entry,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
+
+        return colorPairs.count
+    }
+
+    private func exportToAndroid(
+        colorPairs: [AssetPair<Color>],
+        entry: AndroidColorsEntry,
+        platformConfig: AndroidPlatformConfig,
+        context: some ColorsExportContext
+    ) throws {
+        // Create output configuration
+        let output = AndroidOutput(
+            xmlOutputDirectory: platformConfig.mainRes,
+            xmlResourcePackage: platformConfig.resourcePackage,
+            srcDirectory: platformConfig.mainSrc,
+            packageName: entry.composePackageName,
+            colorKotlinURL: entry.colorKotlin,
+            templatesPath: platformConfig.templatesPath,
+            xmlDisabled: entry.xmlDisabled ?? false
+        )
+
+        // Export
+        let exporter = AndroidColorExporter(
+            output: output,
+            xmlOutputFileName: entry.xmlOutputFileName
+        )
+        let files = try exporter.export(colorPairs: colorPairs)
+
+        // Clean up old XML files (unless XML generation is disabled)
+        if !(entry.xmlDisabled ?? false) {
+            let fileName = entry.xmlOutputFileName ?? "colors.xml"
+            let lightColorsFileURL = platformConfig.mainRes
+                .appendingPathComponent("values/\(fileName)")
+            let darkColorsFileURL = platformConfig.mainRes
+                .appendingPathComponent("values-night/\(fileName)")
+
+            try? FileManager.default.removeItem(atPath: lightColorsFileURL.path)
+            try? FileManager.default.removeItem(atPath: darkColorsFileURL.path)
+        }
+
+        // Write files
+        try context.writeFiles(files)
+    }
 }

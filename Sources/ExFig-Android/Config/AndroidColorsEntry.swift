@@ -1,4 +1,5 @@
 import ExFigConfig
+import ExFigCore
 import Foundation
 
 /// Android colors export configuration entry.
@@ -196,6 +197,21 @@ public extension AndroidColorsEntry {
     /// Returns a NameProcessingConfig for this entry.
     var nameProcessing: NameProcessingConfig {
         NameProcessingConfig(
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp
+        )
+    }
+
+    /// Returns a ColorsSourceInput for use with ColorsExportContext.
+    var colorsSourceInput: ColorsSourceInput {
+        ColorsSourceInput(
+            tokensFileId: tokensFileId,
+            tokensCollectionName: tokensCollectionName,
+            lightModeName: lightModeName,
+            darkModeName: darkModeName,
+            lightHCModeName: lightHCModeName,
+            darkHCModeName: darkHCModeName,
+            primitivesModeName: primitivesModeName,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )
