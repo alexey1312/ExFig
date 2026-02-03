@@ -109,8 +109,8 @@ and Flutter projects.
 
 # Run CLI
 .build/debug/exfig --help
-.build/debug/exfig colors -i exfig.yaml
-.build/debug/exfig icons -i exfig.yaml
+.build/debug/exfig colors -i exfig.pkl
+.build/debug/exfig icons -i exfig.pkl
 .build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
 
 # Search (swiftindex) — use for ANY code search
@@ -126,10 +126,10 @@ and Flutter projects.
 | Language        | Swift 6.2, macOS 13.0+                                                             |
 | Package Manager | Swift Package Manager                                                              |
 | CLI Framework   | swift-argument-parser                                                              |
-| Config Format   | YAML (via Yams)                                                                    |
+| Config Format   | PKL (Programmable, Scalable, Safe)                                                 |
 | Templates       | Stencil                                                                            |
 | Required Env    | `FIGMA_PERSONAL_TOKEN`                                                             |
-| Config Files    | `exfig.yaml` or `figma-export.yaml` (auto-detected)                                |
+| Config Files    | `exfig.pkl` (PKL configuration)                                                    |
 | Tooling         | mise (`./bin/mise` self-contained, no global install needed)                       |
 | Platforms       | macOS 13+ (primary), Linux/Ubuntu 22.04 (CI) - see `.claude/rules/linux-compat.md` |
 
@@ -226,23 +226,23 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Dependencies
 
-| Package               | Version | Purpose                    |
-| --------------------- | ------- | -------------------------- |
-| swift-argument-parser | 1.5.0+  | CLI framework              |
-| swift-collections     | 1.2.x   | Ordered collections        |
-| Yams                  | 5.3.0+  | YAML parsing               |
-| Stencil               | 0.15.1+ | Template engine            |
-| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions   |
-| XcodeProj             | 8.27.0+ | Xcode project manipulation |
-| swift-log             | 1.6.0+  | Logging                    |
-
-| libwebp | 1.4.1+ | WebP encoding |
-| libpng | 1.6.45+ | PNG decoding |
-| swift-custom-dump | 1.3.0+ | Test assertions |
-| Noora | 0.54.0+ | Terminal UI design system |
-| swift-resvg | 0.45.1 | SVG parsing/rendering |
-| swift-docc-plugin | 1.4.5+ | DocC documentation |
-| swift-yyjson | 0.4.0+ | High-performance JSON codec |
+| Package               | Version | Purpose                     |
+| --------------------- | ------- | --------------------------- |
+| swift-argument-parser | 1.5.0+  | CLI framework               |
+| swift-collections     | 1.2.x   | Ordered collections         |
+| Stencil               | 0.15.1+ | Template engine             |
+| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions    |
+| XcodeProj             | 8.27.0+ | Xcode project manipulation  |
+| swift-log             | 1.6.0+  | Logging                     |
+| Rainbow               | 4.2.0+  | Terminal colors             |
+| libwebp               | 1.4.1+  | WebP encoding               |
+| libpng                | 1.6.45+ | PNG decoding                |
+| swift-custom-dump     | 1.3.0+  | Test assertions             |
+| toon-swift            | 0.3.0+  | TOON format encoding        |
+| Noora                 | 0.54.0+ | Terminal UI design system   |
+| swift-resvg           | 0.45.1  | SVG parsing/rendering       |
+| swift-docc-plugin     | 1.4.5+  | DocC documentation          |
+| swift-yyjson          | 0.4.0+  | High-performance JSON codec |
 
 ## Troubleshooting
 
