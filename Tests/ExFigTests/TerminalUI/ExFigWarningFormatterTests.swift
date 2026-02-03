@@ -1,4 +1,5 @@
 @testable import ExFig
+import Noora
 import XCTest
 
 final class ExFigWarningFormatterTests: XCTestCase {
@@ -224,5 +225,38 @@ final class ExFigWarningFormatterTests: XCTestCase {
         let result = formatter.format(warning)
 
         XCTAssertTrue(result.contains("error=Network connection lost during request"))
+    }
+
+    // MARK: - TerminalText API
+
+    func testFormatAsTerminalTextCompactWarning() {
+        let warning = ExFigWarning.configMissing(platform: "ios", assetType: "icons")
+
+        let text = formatter.formatAsTerminalText(warning)
+        let formatted = NooraUI.format(text)
+
+        // Should contain the message content
+        XCTAssertTrue(formatted.contains("Config missing"))
+        XCTAssertTrue(formatted.contains("platform=ios"))
+    }
+
+    func testFormatAsTerminalTextMultilineWarning() {
+        let warning = ExFigWarning.noAssetsFound(assetType: "icons", frameName: "Icons")
+
+        let text = formatter.formatAsTerminalText(warning)
+        let formatted = NooraUI.format(text)
+
+        // Should contain multi-line content
+        XCTAssertTrue(formatted.contains("No assets found"))
+        XCTAssertTrue(formatted.contains("type: icons"))
+    }
+
+    func testFormatAsTerminalTextProducesNonEmptyOutput() {
+        let warning = ExFigWarning.xcodeProjectUpdateFailed
+
+        let text = formatter.formatAsTerminalText(warning)
+        let formatted = NooraUI.format(text)
+
+        XCTAssertFalse(formatted.isEmpty)
     }
 }

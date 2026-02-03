@@ -203,7 +203,7 @@ Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after 
 | libwebp               | 1.4.1+  | WebP encoding              |
 | libpng                | 1.6.45+ | PNG decoding               |
 | swift-custom-dump     | 1.3.0+  | Test assertions            |
-| toon-swift            | 0.3.0+  | TOON format encoding       |
+| Noora                 | 0.54.0+ | Terminal UI design system  |
 | swift-resvg           | 0.45.1  | SVG parsing/rendering      |
 | swift-docc-plugin     | 1.4.5+  | DocC documentation         |
 

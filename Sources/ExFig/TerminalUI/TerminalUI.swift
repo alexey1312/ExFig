@@ -31,11 +31,7 @@ final class TerminalUI: Sendable {
         guard outputMode != .quiet else { return }
         // Suppress in batch mode - progress view shows status
         if BatchProgressViewStorage.progressView != nil { return }
-        if useColors {
-            TerminalOutputManager.shared.print(message.cyan)
-        } else {
-            TerminalOutputManager.shared.print(message)
-        }
+        TerminalOutputManager.shared.print(NooraUI.formatInfo(message, useColors: useColors))
     }
 
     /// Print a success message
@@ -43,8 +39,7 @@ final class TerminalUI: Sendable {
         guard outputMode != .quiet else { return }
         // Suppress in batch mode - progress view shows status
         if BatchProgressViewStorage.progressView != nil { return }
-        let icon = useColors ? "✓".green : "✓"
-        TerminalOutputManager.shared.print("\(icon) \(message)")
+        TerminalOutputManager.shared.print(NooraUI.formatSuccess(message, useColors: useColors))
     }
 
     /// Print a warning message (handles multi-line properly)
@@ -63,22 +58,9 @@ final class TerminalUI: Sendable {
 
     /// Internal helper to print warning message with formatting
     private func printWarning(_ message: String) {
-        let icon = useColors ? "⚠".yellow : "⚠"
-
-        // Split message into lines and apply formatting to each
-        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
-
-        for (index, line) in lines.enumerated() {
-            let lineStr = String(line)
-            let text = useColors ? lineStr.yellow : lineStr
-
-            if index == 0 {
-                // First line gets the icon
-                TerminalOutputManager.shared.print("\(icon) \(text)")
-            } else {
-                // Subsequent lines are indented to align with text after icon
-                TerminalOutputManager.shared.print("  \(text)")
-            }
+        let formatted = NooraUI.formatMultilineWarning(message, useColors: useColors)
+        for line in formatted.split(separator: "\n", omittingEmptySubsequences: false) {
+            TerminalOutputManager.shared.print(String(line))
         }
     }
 
@@ -115,22 +97,9 @@ final class TerminalUI: Sendable {
 
     /// Internal helper to print error message with formatting
     private func printError(_ message: String) {
-        let icon = useColors ? "✗".red : "✗"
-
-        // Split message into lines and apply formatting to each
-        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
-
-        for (index, line) in lines.enumerated() {
-            let lineStr = String(line)
-            let text = useColors ? lineStr.red : lineStr
-
-            if index == 0 {
-                // First line gets the icon
-                TerminalOutputManager.shared.print("\(icon) \(text)")
-            } else {
-                // Subsequent lines are indented to align with text after icon
-                TerminalOutputManager.shared.print("  \(text)")
-            }
+        let formatted = NooraUI.formatMultilineError(message, useColors: useColors)
+        for line in formatted.split(separator: "\n", omittingEmptySubsequences: false) {
+            TerminalOutputManager.shared.print(String(line))
         }
     }
 
@@ -153,34 +122,19 @@ final class TerminalUI: Sendable {
         guard outputMode == .verbose else { return }
         // Suppress in batch mode - progress view shows status
         if BatchProgressViewStorage.progressView != nil { return }
-        let prefix = useColors ? "[DEBUG]".lightBlack : "[DEBUG]"
-        TerminalOutputManager.shared.print("\(prefix) \(message)")
+        TerminalOutputManager.shared.print(NooraUI.formatDebug(message, useColors: useColors))
     }
 
     // MARK: - Batch Mode Log Formatting
 
     /// Format warning message for batch mode queue (includes icon and coloring)
     private func formatWarningForQueue(_ message: String) -> String {
-        let icon = useColors ? "⚠".yellow : "⚠"
-        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
-
-        return lines.enumerated().map { index, line in
-            let lineStr = String(line)
-            let text = useColors ? lineStr.yellow : lineStr
-            return index == 0 ? "\(icon) \(text)" : "  \(text)"
-        }.joined(separator: "\n")
+        NooraUI.formatMultilineWarning(message, useColors: useColors)
     }
 
     /// Format error message for batch mode queue (includes icon and coloring)
     private func formatErrorForQueue(_ message: String) -> String {
-        let icon = useColors ? "✗".red : "✗"
-        let lines = message.split(separator: "\n", omittingEmptySubsequences: false)
-
-        return lines.enumerated().map { index, line in
-            let lineStr = String(line)
-            let text = useColors ? lineStr.red : lineStr
-            return index == 0 ? "\(icon) \(text)" : "  \(text)"
-        }.joined(separator: "\n")
+        NooraUI.formatMultilineError(message, useColors: useColors)
     }
 
     // MARK: - Spinner Operations

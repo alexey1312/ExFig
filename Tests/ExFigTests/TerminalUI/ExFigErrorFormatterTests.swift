@@ -1,4 +1,5 @@
 @testable import ExFig
+import Noora
 import XCTest
 
 final class ExFigErrorFormatterTests: XCTestCase {
@@ -171,4 +172,54 @@ private struct RecoverableError: LocalizedError {
 
     var errorDescription: String? { description }
     var recoverySuggestion: String? { recovery }
+}
+
+// MARK: - TerminalText API Tests
+
+extension ExFigErrorFormatterTests {
+    func testFormatAsTerminalTextSimpleError() {
+        let error = SimpleError(description: "Something went wrong")
+
+        let text = formatter.formatAsTerminalText(error)
+        let formatted = NooraUI.format(text)
+
+        // Should contain the message
+        XCTAssertTrue(formatted.contains("Something went wrong"))
+    }
+
+    func testFormatAsTerminalTextWithRecovery() {
+        let error = RecoverableError(
+            description: "File not found",
+            recovery: "Check the file path exists"
+        )
+
+        let text = formatter.formatAsTerminalText(error)
+        let formatted = NooraUI.format(text)
+
+        // Should contain both error and recovery
+        XCTAssertTrue(formatted.contains("File not found"))
+        XCTAssertTrue(formatted.contains("Check the file path exists"))
+    }
+
+    func testFormatAsTerminalTextRecoveryOnNewLine() {
+        let error = RecoverableError(
+            description: "Error message",
+            recovery: "Recovery suggestion"
+        )
+
+        let text = formatter.formatAsTerminalText(error)
+        let formatted = NooraUI.format(text)
+        let lines = formatted.split(separator: "\n")
+
+        XCTAssertEqual(lines.count, 2, "Should have error and recovery on separate lines")
+    }
+
+    func testFormatAsTerminalTextProducesNonEmptyOutput() {
+        let error = ExFigError.accessTokenNotFound
+
+        let text = formatter.formatAsTerminalText(error)
+        let formatted = NooraUI.format(text)
+
+        XCTAssertFalse(formatted.isEmpty)
+    }
 }

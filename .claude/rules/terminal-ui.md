@@ -5,7 +5,9 @@ paths:
 
 # Terminal UI Patterns
 
-This rule covers TerminalUI usage, warnings system, and errors system.
+This rule covers TerminalUI usage, Noora design system, warnings, and errors.
+
+**Design system:** Use [Noora](https://github.com/tuist/Noora) (tuist/Noora) for semantic terminal text formatting.
 
 ## TerminalUI Usage
 
@@ -42,8 +44,9 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 | `BatchProgressCallback`    | `@Sendable (Int, Int) -> Void` for batch progress     |
 | `Lock<T>`                  | Thread-safe state wrapper (NSLock-based, Sendable)    |
 | `ExFigWarning`             | Enum of all warning types for consistent messaging    |
-| `ExFigWarningFormatter`    | Formats warnings as compact or multiline TOON strings |
+| `ExFigWarningFormatter`    | Formats warnings as compact or multiline strings      |
 | `ExFigErrorFormatter`      | Formats errors with recovery suggestions              |
+| `NooraUI`                  | Adapter for Noora design system (semantic text)       |
 | `ConflictFormatter`        | Formats batch output path conflicts for display       |
 
 **TerminalOutputManager API:**
@@ -92,6 +95,119 @@ await BatchProgressViewStorage.$progressView.withValue(progressView) {
 - Individual export commands detect `BatchProgressViewStorage.progressView` via `@TaskLocal`
 - Spinners and progress bars are automatically suppressed in batch mode
 - Critical logs (errors/warnings) coordinate with progress display via `clearForLog()` -> print -> `render()`
+
+## Noora Design System
+
+Use `NooraUI` adapter for semantic terminal text formatting with ANSI colors.
+
+**Convenience methods** (preferred for common patterns):
+
+```swift
+// Status messages with icons
+NooraUI.formatSuccess("Build completed", useColors: true)  // ✓ Build completed
+NooraUI.formatError("Build failed", useColors: true)       // ✗ Build failed
+NooraUI.formatWarning("Deprecated API", useColors: true)   // ⚠ Deprecated API
+NooraUI.formatInfo("Loading config", useColors: true)      // Loading config (primary)
+NooraUI.formatDebug("Cache hit", useColors: true)          // [DEBUG] Cache hit
+
+// Multi-line messages with proper indentation
+NooraUI.formatMultilineError("Line 1\nLine 2", useColors: true)
+// ✗ Line 1
+//   Line 2
+```
+
+**Low-level TerminalText API** (for custom formatting):
+
+```swift
+import Noora
+
+// Format semantic text
+let text: TerminalText = "Status: \(.success("OK")) for \(.primary("MyProject"))"
+print(NooraUI.format(text))
+
+// Available components:
+// .raw(String)       - No formatting
+// .command(String)   - System commands (highlighted)
+// .primary(String)   - Theme primary color
+// .secondary(String) - Theme secondary color
+// .muted(String)     - Dimmed text
+// .accent(String)    - Accent color
+// .danger(String)    - Error/danger color
+// .success(String)   - Success color
+```
+
+**NooraUI adapter** (`Sources/ExFig/TerminalUI/NooraUI.swift`):
+
+| Method                                      | Purpose                               |
+| ------------------------------------------- | ------------------------------------- |
+| `format(_ text: TerminalText)`              | Convert TerminalText to ANSI str      |
+| `formatSuccess(_ msg, useColors:)`          | Success with ✓ icon                   |
+| `formatError(_ msg, useColors:)`            | Error with ✗ icon                     |
+| `formatWarning(_ msg, useColors:)`          | Warning with ⚠ icon                   |
+| `formatInfo(_ msg, useColors:)`             | Info with primary color               |
+| `formatDebug(_ msg, useColors:)`            | Debug with [DEBUG] prefix             |
+| `formatMultilineError(_ msg, useColors:)`   | Multi-line error with indentation     |
+| `formatMultilineWarning(_ msg, useColors:)` | Multi-line warning with indent        |
+| `progressBarStep(message:...)`              | Standalone progress bar (0-100%)      |
+| `progressStep(message:...)`                 | Standalone spinner with msg updates   |
+
+**When to use Noora vs custom components:**
+
+| Use Case                      | Approach                                              | Reason                                    |
+| ----------------------------- | ----------------------------------------------------- | ----------------------------------------- |
+| Status messages               | `NooraUI.formatSuccess/Error/etc.`                    | Semantic formatting with theme            |
+| Commands in output            | `.command("exfig colors")`                            | Consistent command highlighting           |
+| Custom formatted text         | `NooraUI.format(terminalText)`                        | Low-level semantic composition            |
+| Spinner/Progress in commands  | Custom `ui.withSpinner()`/`ui.withProgress()`         | Batch mode suppression, output coord      |
+| Batch multi-line progress     | Custom `BatchProgressView`                            | Complex multi-config progress display     |
+| Warnings/errors via UI        | `ui.warning()`/`ui.error()`                           | Uses Noora internally, batch-aware        |
+| Standalone progress bar (0-1) | `NooraUI.progressBarStep()` (new)                     | Known completion %, no batch mode needed  |
+| Standalone spinner + updates  | `NooraUI.progressStep()` (new)                        | Dynamic message updates, no batch mode    |
+
+**Decision matrix for progress indicators:**
+
+```
+Need batch mode suppression?
+├── YES → Use ui.withSpinner() or ui.withProgress()
+└── NO  → Need percentage progress (0-100%)?
+          ├── YES → Use NooraUI.progressBarStep()
+          └── NO  → Need dynamic message updates?
+                    ├── YES → Use NooraUI.progressStep()
+                    └── NO  → Use ui.withSpinner() (default)
+```
+
+**Noora progress wrappers** (standalone only, bypass `TerminalOutputManager`):
+
+```swift
+// Progress bar with percentage (0.0 to 1.0)
+let result = try await NooraUI.progressBarStep(
+    message: "Processing...",
+    successMessage: "Done",
+    errorMessage: "Failed"
+) { updateProgress in
+    for (i, item) in items.enumerated() {
+        try await process(item)
+        updateProgress(Double(i + 1) / Double(items.count))
+    }
+    return items
+}
+
+// Spinner with dynamic message updates
+let result = try await NooraUI.progressStep(
+    message: "Loading...",
+    successMessage: "Loaded",
+    errorMessage: "Failed"
+) { updateMessage in
+    updateMessage("Loading step 1...")
+    try await step1()
+    updateMessage("Loading step 2...")
+    try await step2()
+    return data
+}
+```
+
+> **Warning:** Noora progress wrappers render directly to stdout, bypassing `TerminalOutputManager`.
+> Do NOT use during batch mode or when other animations are active.
 
 ## Warnings System
 
@@ -166,3 +282,59 @@ ui.error(someError)  // Auto-formats LocalizedError or falls back to localizedDe
 2. Implement `errorDescription` with compact TOON format (`key=value`)
 3. Implement `recoverySuggestion` with actionable fix (or `nil` for simple errors)
 4. Call via `ui.error(yourError)` - formatter handles display
+
+## Migration Guide: Rainbow to Noora
+
+When creating new formatters or migrating existing ones from Rainbow to Noora:
+
+**1. Replace Rainbow color calls with semantic TerminalText:**
+
+```swift
+// Before (Rainbow)
+"Error: ".red + message
+"✓ ".green + "Success"
+"[DEBUG] ".lightBlack + message
+
+// After (Noora)
+let text: TerminalText = "\(.danger("Error:")) \(message)"
+let text: TerminalText = "\(.success("✓")) Success"
+let text: TerminalText = "\(.muted("[DEBUG]")) \(message)"
+```
+
+**2. Use NooraUI convenience methods for common patterns:**
+
+```swift
+// Before
+let output = useColors ? "✓ \(message)".green : "✓ \(message)"
+
+// After
+let output = NooraUI.formatSuccess(message, useColors: useColors)
+```
+
+**3. Semantic component mapping:**
+
+| Rainbow           | TerminalText Component | Use Case            |
+| ----------------- | ---------------------- | ------------------- |
+| `.red`            | `.danger()`            | Errors, failures    |
+| `.green`          | `.success()`           | Success messages    |
+| `.yellow`         | `.accent()`            | Warnings, highlights|
+| `.cyan`           | `.primary()`           | Info, main content  |
+| `.lightBlack`     | `.muted()`             | Debug, secondary    |
+| `.bold`           | `.command()`           | Commands, emphasis  |
+
+**4. Multi-line message pattern:**
+
+```swift
+// Use formatMultilineError/Warning for proper indentation
+let output = NooraUI.formatMultilineError(
+    "First line\nSecond line",
+    useColors: useColors
+)
+// Output:
+// ✗ First line
+//   Second line
+```
+
+**5. Keep `useColors` parameter:**
+
+Always preserve `useColors: Bool` parameter to support `--no-color` flag and non-TTY environments.
