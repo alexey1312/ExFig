@@ -1,5 +1,6 @@
 import ExFigCore
 import Foundation
+import Logging
 
 /// Cache model for tracking Figma file versions and node hashes.
 /// Used to skip exports when files haven't changed since last export.
@@ -70,6 +71,8 @@ struct CachedFileInfo: Codable, Sendable {
 // MARK: - Cache Persistence
 
 extension ImageTrackingCache {
+    private static let logger = Logger(label: "com.alexey1312.exfig.image-tracking-cache")
+
     /// Loads cache from a file at the specified path.
     /// Returns an empty cache if file doesn't exist or is invalid.
     /// Migrates from older schema versions automatically.
@@ -94,7 +97,14 @@ extension ImageTrackingCache {
 
             return cache
         } catch {
-            // Invalid cache file, return empty cache
+            // Log the error - helps diagnose cache compatibility issues after migrations
+            logger.warning(
+                "Cache file corrupted or incompatible, starting with empty cache",
+                metadata: [
+                    "path": "\(path.path)",
+                    "error": "\(error.localizedDescription)",
+                ]
+            )
             return ImageTrackingCache()
         }
     }

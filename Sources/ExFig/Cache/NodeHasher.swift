@@ -1,6 +1,7 @@
 import ExFigCore
 import FigmaAPI
 import Foundation
+import Logging
 
 /// Computes stable hashes for Figma node visual properties.
 ///
@@ -13,6 +14,8 @@ import Foundation
 /// - Recursive hashing includes all children
 /// - Float normalization handled at property creation time
 enum NodeHasher {
+    private static let logger = Logger(label: "com.alexey1312.exfig.node-hasher")
+
     /// Computes a stable hash for the given node properties.
     ///
     /// The hash is computed from canonical JSON (sorted keys) of the
@@ -26,8 +29,15 @@ enum NodeHasher {
             let data = try JSONCodec.encodeSorted(properties)
             return FNV1aHasher.hashToHex(data)
         } catch {
-            // Encoding should never fail for Encodable types
-            // If it does, return a unique error hash to force re-export
+            // Log the error - this should never happen but needs visibility for debugging
+            logger.warning(
+                "NodeHasher encoding failed, returning zero hash to force re-export",
+                metadata: [
+                    "nodeType": "\(properties.type)",
+                    "error": "\(error.localizedDescription)",
+                ]
+            )
+            // Return error hash to force re-export rather than silently skip
             return "0000000000000000"
         }
     }

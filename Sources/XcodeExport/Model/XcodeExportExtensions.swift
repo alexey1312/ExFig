@@ -43,10 +43,7 @@ extension XcodeEmptyContents {
 
 extension XcodeAssetContents {
     func makeFileContents(to directory: URL) throws -> FileContents {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-
-        let data = try encoder.encode(self)
+        let data = try JSONCodec.encodePrettySorted(self)
         // swiftlint:disable:next force_unwrapping
         let fileURL = URL(string: "Contents.json")!
 

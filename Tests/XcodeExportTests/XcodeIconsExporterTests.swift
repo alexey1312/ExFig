@@ -741,22 +741,23 @@ final class XcodeIconsExporterTests: XCTestCase {
         XCTAssertNotNil(content)
 
         let generatedCode = String(data: content!, encoding: .utf8)
+        // YYJSON prettyPrinted format: 4-space indent, no space before colon
         let referenceCode = """
         {
-          "images" : [
-            {
-              "filename" : "ic24TabBarHome.pdf",
-              "idiom" : "universal"
+            "images": [
+                {
+                    "filename": "ic24TabBarHome.pdf",
+                    "idiom": "universal"
+                }
+            ],
+            "info": {
+                "author": "xcode",
+                "version": 1
+            },
+            "properties": {
+                "preserves-vector-representation": true,
+                "template-rendering-intent": "template"
             }
-          ],
-          "info" : {
-            "author" : "xcode",
-            "version" : 1
-          },
-          "properties" : {
-            "preserves-vector-representation" : true,
-            "template-rendering-intent" : "template"
-          }
         }
         """
         expectNoDifference(generatedCode, referenceCode)
@@ -785,22 +786,23 @@ final class XcodeIconsExporterTests: XCTestCase {
         XCTAssertNotNil(content)
 
         let generatedCode = String(data: content!, encoding: .utf8)
+        // YYJSON prettyPrinted format: 4-space indent, no space before colon
         let referenceCode = """
         {
-          "images" : [
-            {
-              "filename" : "ic24TabBarHome.pdf",
-              "idiom" : "universal"
+            "images": [
+                {
+                    "filename": "ic24TabBarHome.pdf",
+                    "idiom": "universal"
+                }
+            ],
+            "info": {
+                "author": "xcode",
+                "version": 1
+            },
+            "properties": {
+                "preserves-vector-representation": true,
+                "template-rendering-intent": "template"
             }
-          ],
-          "info" : {
-            "author" : "xcode",
-            "version" : 1
-          },
-          "properties" : {
-            "preserves-vector-representation" : true,
-            "template-rendering-intent" : "template"
-          }
         }
         """
         expectNoDifference(generatedCode, referenceCode)

@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 @testable import ExFigCore
 import Foundation
 import Testing
@@ -294,5 +295,176 @@ struct JSONCodecTests {
         #expect(decoded.items["key1"]?.someField == "value")
         #expect(decoded.items["key1"]?.nestedArray.count == 1)
         #expect(decoded.items["key1"]?.nestedArray[0].modeId == "1:0")
+    }
+
+    // MARK: - Error Handling Tests
+
+    @Test
+    func decodeInvalidJSON() throws {
+        let invalidData = Data("not valid json {{{".utf8)
+
+        #expect(throws: (any Error).self) {
+            struct TestModel: Codable { let id: Int }
+            _ = try JSONCodec.decode(TestModel.self, from: invalidData)
+        }
+    }
+
+    @Test
+    func decodeEmptyData() throws {
+        let emptyData = Data()
+
+        #expect(throws: (any Error).self) {
+            struct TestModel: Codable { let id: Int }
+            _ = try JSONCodec.decode(TestModel.self, from: emptyData)
+        }
+    }
+
+    @Test
+    func decodeTypeMismatch() throws {
+        // JSON has string "id", but model expects Int
+        let json = """
+        {"id": "not_an_int", "name": "test"}
+        """
+        let data = Data(json.utf8)
+
+        struct TestModel: Codable {
+            let id: Int
+            let name: String
+        }
+
+        #expect(throws: (any Error).self) {
+            _ = try JSONCodec.decode(TestModel.self, from: data)
+        }
+    }
+
+    // MARK: - Unicode and Special Characters
+
+    @Test
+    func encodeDecodeUnicode() throws {
+        struct TestModel: Codable, Equatable {
+            let name: String
+            let emoji: String
+            let chinese: String
+        }
+
+        let model = TestModel(
+            name: "Test \"quoted\" \\escaped\\",
+            emoji: "Icon 💡🎨🚀",
+            chinese: "中文测试"
+        )
+
+        let data = try JSONCodec.encode(model)
+        let decoded = try JSONCodec.decode(TestModel.self, from: data)
+
+        #expect(model == decoded)
+    }
+
+    @Test
+    func encodeDecodeSpecialCharacters() throws {
+        struct TestModel: Codable, Equatable {
+            let text: String
+        }
+
+        // Test various special characters that need escaping
+        let model = TestModel(text: "Line1\nLine2\tTabbed\r\nWindows")
+
+        let data = try JSONCodec.encode(model)
+        let decoded = try JSONCodec.decode(TestModel.self, from: data)
+
+        #expect(model == decoded)
+    }
+
+    // MARK: - encodePrettySorted Tests
+
+    @Test
+    func encodePrettySorted() throws {
+        struct TestModel: Codable {
+            let z: Int
+            let a: Int
+        }
+
+        let model = TestModel(z: 2, a: 1)
+        let data = try JSONCodec.encodePrettySorted(model)
+        let string = String(bytes: data, encoding: .utf8) ?? ""
+
+        // Should have newlines (pretty)
+        #expect(string.contains("\n"), "Should be pretty-printed: \(string)")
+
+        // Keys should be sorted: "a" before "z"
+        guard let rangeA = string.range(of: "\"a\""),
+              let rangeZ = string.range(of: "\"z\"")
+        else {
+            Issue.record("Missing keys in JSON: \(string)")
+            return
+        }
+
+        #expect(rangeA.lowerBound < rangeZ.lowerBound, "Keys should be sorted: \(string)")
+    }
+
+    @Test
+    func encodePrettySortedNested() throws {
+        struct Inner: Codable {
+            let beta: String
+            let alpha: String
+        }
+
+        struct Outer: Codable {
+            let inner: Inner
+            let data: Int
+            let config: String
+        }
+
+        let model = Outer(
+            inner: Inner(beta: "b", alpha: "a"),
+            data: 42,
+            config: "test"
+        )
+
+        let data = try JSONCodec.encodePrettySorted(model)
+        let string = String(bytes: data, encoding: .utf8) ?? ""
+
+        // Verify top-level keys are sorted: config, data, inner
+        guard let rangeConfig = string.range(of: "\"config\""),
+              let rangeData = string.range(of: "\"data\""),
+              let rangeInner = string.range(of: "\"inner\"")
+        else {
+            Issue.record("Missing keys in JSON: \(string)")
+            return
+        }
+
+        #expect(rangeConfig.lowerBound < rangeData.lowerBound)
+        #expect(rangeData.lowerBound < rangeInner.lowerBound)
+
+        // Verify nested keys are sorted: alpha, beta
+        guard let rangeAlpha = string.range(of: "\"alpha\""),
+              let rangeBeta = string.range(of: "\"beta\"")
+        else {
+            Issue.record("Missing nested keys in JSON: \(string)")
+            return
+        }
+
+        #expect(rangeAlpha.lowerBound < rangeBeta.lowerBound)
+    }
+
+    // MARK: - Large Payload Test
+
+    @Test
+    func encodeDecodeLargePayload() throws {
+        struct Node: Codable, Equatable {
+            let id: String
+            let name: String
+            let value: Int
+        }
+
+        // Create 500 nodes to simulate a typical Figma response
+        let nodes = (0 ..< 500).map { i in
+            Node(id: "node:\(i)", name: "Node \(i)", value: i)
+        }
+
+        let data = try JSONCodec.encode(nodes)
+        let decoded = try JSONCodec.decode([Node].self, from: data)
+
+        #expect(nodes == decoded)
+        #expect(decoded.count == 500)
     }
 }

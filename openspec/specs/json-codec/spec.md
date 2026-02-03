@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD - created by archiving change add-yyjson-codec. Update Purpose after archive.
+Provide high-performance JSON encoding/decoding via YYJSON, replacing Foundation's JSONEncoder/JSONDecoder throughout the codebase for improved performance and deterministic output.
 
 ## Requirements
 
@@ -29,6 +29,13 @@ The system MUST provide a centralized `JSONCodec` enum in ExFigCore module that 
 - **Then** returns JSON with keys sorted alphabetically
 - **And** calling multiple times produces identical output
 
+#### Scenario: Encode with pretty printing and sorted keys
+
+- **Given** a value conforming to `Encodable`
+- **When** calling `JSONCodec.encodePrettySorted(value)`
+- **Then** returns human-readable JSON with indentation and sorted keys
+- **And** suitable for Contents.json in xcassets
+
 ---
 
 ### Requirement: JSONCodec SHALL provide high-performance JSON decoding
@@ -42,11 +49,12 @@ The system MUST decode JSON data using YYJSON backend.
 - **When** calling `JSONCodec.decode(Type.self, from: data)`
 - **Then** returns decoded value
 
-#### Scenario: Decode Figma API response with snake_case keys
+#### Scenario: Decode Figma API responses using explicit CodingKeys
 
-- **Given** JSON data with snake_case keys (e.g., `file_key`, `last_modified`)
-- **When** calling `JSONCodec.decodeFigma(Type.self, from: data)`
-- **Then** converts keys to camelCase and decodes successfully
+- **Given** Figma API models with snake_case fields (e.g., `node_id`, `style_type`)
+- **When** models define explicit `CodingKeys` enum with string raw values
+- **Then** `JSONCodec.decode()` maps snake_case JSON keys to camelCase properties
+- **Note** This approach is preferred over global `keyDecodingStrategy` for reliability
 
 ---
 
@@ -58,7 +66,7 @@ All existing `JSONEncoder`/`JSONDecoder` usages MUST migrate to `JSONCodec`.
 
 - **Given** a Figma API response
 - **When** `BaseEndpoint` processes the response
-- **Then** uses `JSONCodec.decodeFigma()` instead of Foundation decoder
+- **Then** uses `JSONCodec.decode()` with models using explicit `CodingKeys`
 
 #### Scenario: Cache serialization uses JSONCodec
 
@@ -77,4 +85,4 @@ All existing `JSONEncoder`/`JSONDecoder` usages MUST migrate to `JSONCodec`.
 
 - **Given** xcassets Contents.json generation
 - **When** `XcodeColorExporter` or `XcodeExportExtensions` creates JSON
-- **Then** uses `JSONCodec.encodePretty()`
+- **Then** uses `JSONCodec.encodePrettySorted()`

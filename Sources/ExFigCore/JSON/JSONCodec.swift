@@ -49,6 +49,16 @@ public enum JSONCodec {
         return try YYJSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
     }
 
+    /// Encode with pretty-print and sorted keys.
+    ///
+    /// Use for Contents.json in xcassets where human-readable output
+    /// with deterministic key order is needed.
+    public static func encodePrettySorted(_ value: some Encodable) throws -> Data {
+        let data = try makeEncoder().encode(value)
+        let object = try YYJSONSerialization.jsonObject(with: data)
+        return try YYJSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys])
+    }
+
     /// Decode JSON data to type.
     public static func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
         try makeDecoder().decode(type, from: data)
