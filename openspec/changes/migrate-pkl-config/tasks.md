@@ -451,8 +451,14 @@ Phase 12 (Final Verification)
   - Key Directories section updated with Plugin, Context, ExFig-* structure
   - Added "Adding a Platform Plugin Exporter" code pattern
 - [x] 10.1.2 Update `CLAUDE.md` config examples to PKL syntax — already using PKL
-- [ ] 10.1.3 Create `docs/PKL.md` — complete PKL configuration guide
-- [ ] 10.1.4 Create `docs/MIGRATION.md` — YAML to PKL migration guide
+- [x] 10.1.3 Create `docs/PKL.md` — complete PKL configuration guide
+  - Installation, basic config, inheritance via amends
+  - All platform configs (iOS, Android, Flutter, Web)
+  - Multiple entries, common settings, name processing
+- [x] 10.1.4 Create `docs/MIGRATION.md` — YAML to PKL migration guide
+  - Syntax mapping (YAML → PKL)
+  - Complete examples (iOS-only, multi-platform)
+  - Common migration errors and fixes
 - [x] 10.1.5 Update `README.md` with PKL prerequisites
   - Updated config examples from YAML to PKL syntax
   - Added PKL to Requirements section
@@ -462,11 +468,16 @@ Phase 12 (Final Verification)
 
 > **SUBAGENT:** docs-arch-agent
 
-- [ ] 10.2.1 Create `docs/ARCHITECTURE.md` — plugin system overview
+- [x] 10.2.1 Create `docs/ARCHITECTURE.md` — plugin system overview
+  - Module responsibilities, key protocols
+  - Data flow diagram, PluginRegistry usage
+  - Context injection pattern, batch transparency
 - [x] 10.2.2 Update `openspec/project.md` to reference PKL instead of Yams
   - Tech Stack: Yams → PKL
   - Architecture Patterns: added platform plugins (ExFig-iOS/Android/Flutter/Web)
-- [ ] 10.2.3 Document how to add new platform plugin
+- [x] 10.2.3 Document how to add new platform plugin
+  - 8-step guide in ARCHITECTURE.md
+  - Module structure, plugin registration, PKL schema
 
 **Completion criteria:** All docs updated, examples work
 
@@ -477,10 +488,12 @@ Phase 12 (Final Verification)
 > **SUBAGENT:** Single agent
 > **Parallel with:** Phase 10
 
-- [ ] 11.1 Update GitHub Actions to install pkl via mise
+- [x] 11.1 Update GitHub Actions to install pkl via mise — already done
+  - pkl = "0.30.2" in mise.toml
+  - mise-action automatically installs all tools from mise.toml
 - [ ] 11.2 Create workflow for publishing PKL schemas on tag `schemas/v*`
-- [ ] 11.3 Verify CI passes on macOS
-- [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04)
+- [ ] 11.3 Verify CI passes on macOS — requires PR
+- [ ] 11.4 Verify CI passes on Linux (Ubuntu 22.04) — requires PR
 
 **Completion criteria:** CI green on both platforms
 
