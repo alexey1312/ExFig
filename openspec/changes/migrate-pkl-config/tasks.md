@@ -297,14 +297,16 @@ Phase 12 (Final Verification)
   - Method: `exportIcons(entries:platformConfig:context:) async throws -> Int`
 - [ ] 7b.1.2 Create `Sources/ExFigCore/Protocol/IconsExportContext.swift`
   - `IconsExportContext` protocol extending `ExportContext`
-  - Methods: `downloadIcons(from:)`, `convertToVector(_:format:)`
+  - Methods: `fetchIconNodes(from:)`, `requestRenders(nodes:format:)`, `convertToVector(_:format:)`
+  - Method: `downloadFiles(_:context:onProgress:)` — uses PipelinedDownloader in batch mode
 - [ ] 7b.1.3 Create `Sources/ExFigCore/Protocol/ImagesExporter.swift`
   - `ImagesExporter` protocol extending `AssetExporter`
   - Associated types: `Entry`, `PlatformConfig`
   - Method: `exportImages(entries:platformConfig:context:) async throws -> Int`
 - [ ] 7b.1.4 Create `Sources/ExFigCore/Protocol/ImagesExportContext.swift`
   - `ImagesExportContext` protocol extending `ExportContext`
-  - Methods: `downloadImages(from:)`, `renderImage(_:scale:format:)`
+  - Methods: `fetchImageNodes(from:)`, `requestRenders(nodes:scales:format:)`, `convertFormat(_:to:)`
+  - Method: `downloadFiles(_:context:onProgress:)` — uses PipelinedDownloader in batch mode
 - [ ] 7b.1.5 Create `Sources/ExFig/Context/IconsExportContextImpl.swift`
 - [ ] 7b.1.6 Create `Sources/ExFig/Context/ImagesExportContextImpl.swift`
 
