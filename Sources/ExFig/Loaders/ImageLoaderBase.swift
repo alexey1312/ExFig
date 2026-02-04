@@ -401,7 +401,7 @@ class ImageLoaderBase: @unchecked Sendable {
                 logger.warning(
                     """
                     Found a component with empty name.
-                    Page name: \(component.containingFrame.pageName)
+                    Page name: \(component.containingFrame.pageName ?? "nil")
                     Frame: \(component.containingFrame.name ?? "nil")
                     Description: \(component.description ?? "nil")
                     The component wont be exported. Fix component name in the Figma file and try again.

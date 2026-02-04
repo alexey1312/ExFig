@@ -54,13 +54,9 @@ public struct Component: Codable, Sendable {
 // MARK: - ContainingFrame
 
 public struct ContainingFrame: Codable, Sendable {
-    public let nodeID: String?
+    public let nodeId: String?
     public let name: String?
-    public let pageName: String
-
-    private enum CodingKeys: String, CodingKey {
-        case nodeID = "node_id"
-        case name
-        case pageName = "page_name"
-    }
+    public let pageId: String?
+    public let pageName: String?
+    public let backgroundColor: String?
 }
