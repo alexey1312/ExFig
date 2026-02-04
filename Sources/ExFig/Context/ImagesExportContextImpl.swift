@@ -11,7 +11,8 @@ import Foundation
 /// - Uses `TerminalUI` for progress and logging
 /// - Uses `PipelinedDownloader` for batch-optimized downloads
 /// - Uses format converters for HEIC/WebP conversion
-struct ImagesExportContextImpl: ImagesExportContext {
+/// - Supports granular cache for incremental exports
+struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
     let client: Client
     let ui: TerminalUI
     let params: Params
@@ -19,6 +20,8 @@ struct ImagesExportContextImpl: ImagesExportContext {
     let isBatchMode: Bool
     let fileDownloader: FileDownloader
     let configExecutionContext: ConfigExecutionContext?
+    let granularCacheManager: GranularCacheManager?
+    let platform: Platform
 
     init(
         client: Client,
@@ -27,7 +30,9 @@ struct ImagesExportContextImpl: ImagesExportContext {
         filter: String? = nil,
         isBatchMode: Bool = false,
         fileDownloader: FileDownloader = FileDownloader(),
-        configExecutionContext: ConfigExecutionContext? = nil
+        configExecutionContext: ConfigExecutionContext? = nil,
+        granularCacheManager: GranularCacheManager? = nil,
+        platform: Platform = .ios
     ) {
         self.client = client
         self.ui = ui
@@ -36,6 +41,12 @@ struct ImagesExportContextImpl: ImagesExportContext {
         self.isBatchMode = isBatchMode
         self.fileDownloader = fileDownloader
         self.configExecutionContext = configExecutionContext
+        self.granularCacheManager = granularCacheManager
+        self.platform = platform
+    }
+
+    var isGranularCacheEnabled: Bool {
+        granularCacheManager != nil
     }
 
     // MARK: - ExportContext
@@ -299,5 +310,68 @@ struct ImagesExportContextImpl: ImagesExportContext {
             }
             return file
         }
+    }
+
+    // MARK: - ImagesExportContextWithGranularCache
+
+    func loadImagesWithGranularCache(
+        from source: ImagesSourceInput,
+        onProgress: (@Sendable (Int, Int) -> Void)?
+    ) async throws -> ImagesLoadOutputWithHashes {
+        let loaderSourceFormat: ImagesSourceFormat = source.sourceFormat == .svg ? .svg : .png
+
+        let config = ImagesLoaderConfig(
+            frameName: source.frameName,
+            scales: source.scales,
+            format: nil,
+            sourceFormat: loaderSourceFormat
+        )
+
+        let loader = ImagesLoader(
+            client: client,
+            params: params,
+            platform: platform,
+            logger: ExFigCommand.logger,
+            config: config
+        )
+
+        if let manager = granularCacheManager {
+            loader.granularCacheManager = manager
+            let result = try await loader.loadWithGranularCache(
+                filter: filter,
+                onBatchProgress: onProgress ?? { _, _ in }
+            )
+            return ImagesLoadOutputWithHashes(
+                light: result.light,
+                dark: result.dark ?? [],
+                computedHashes: result.computedHashes,
+                allSkipped: result.allSkipped,
+                allAssetMetadata: result.allAssetMetadata
+            )
+        } else {
+            let result = try await loader.load(filter: filter, onBatchProgress: onProgress ?? { _, _ in })
+            return ImagesLoadOutputWithHashes(
+                light: result.light,
+                dark: result.dark ?? [],
+                computedHashes: [:],
+                allSkipped: false,
+                allAssetMetadata: []
+            )
+        }
+    }
+
+    func processImageNames(
+        _ names: [String],
+        nameValidateRegexp: String?,
+        nameReplaceRegexp: String?,
+        nameStyle: NameStyle
+    ) -> [String] {
+        let processor = ImagesProcessor(
+            platform: platform,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp,
+            nameStyle: nameStyle
+        )
+        return processor.processNames(names)
     }
 }

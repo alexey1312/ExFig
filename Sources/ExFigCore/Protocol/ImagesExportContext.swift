@@ -175,3 +175,87 @@ public struct ImagesProcessResult: Sendable {
         self.warning = warning
     }
 }
+
+// MARK: - Granular Cache Support
+
+/// Extended images load output with granular cache hashes.
+///
+/// Used when granular cache is enabled to return both images and
+/// computed hashes for cache updates.
+public struct ImagesLoadOutputWithHashes: Sendable {
+    /// Loaded light mode images.
+    public let light: [ImagePack]
+
+    /// Loaded dark mode images (if available).
+    public let dark: [ImagePack]
+
+    /// Computed content hashes for cache update (fileId → (nodeId → hash)).
+    public let computedHashes: [String: [String: String]]
+
+    /// Whether all images were skipped (unchanged from cache).
+    public let allSkipped: Bool
+
+    /// All asset metadata (for template generation even when images skipped).
+    public let allAssetMetadata: [AssetMetadata]
+
+    public init(
+        light: [ImagePack],
+        dark: [ImagePack] = [],
+        computedHashes: [String: [String: String]] = [:],
+        allSkipped: Bool = false,
+        allAssetMetadata: [AssetMetadata] = []
+    ) {
+        self.light = light
+        self.dark = dark
+        self.computedHashes = computedHashes
+        self.allSkipped = allSkipped
+        self.allAssetMetadata = allAssetMetadata
+    }
+
+    /// Converts to basic ImagesLoadOutput (without cache info).
+    public var asLoadOutput: ImagesLoadOutput {
+        ImagesLoadOutput(light: light, dark: dark)
+    }
+}
+
+/// Context protocol extension for granular cache support.
+///
+/// Plugins can optionally use this protocol when granular cache is enabled.
+/// The default implementation falls back to regular loading.
+public protocol ImagesExportContextWithGranularCache: ImagesExportContext {
+    /// Whether granular cache is enabled.
+    var isGranularCacheEnabled: Bool { get }
+
+    /// Loads images with granular cache support.
+    ///
+    /// When granular cache is enabled, filters components to only changed ones
+    /// and returns computed hashes for cache updates.
+    ///
+    /// - Parameters:
+    ///   - source: Images source configuration.
+    ///   - onProgress: Optional progress callback (current, total).
+    /// - Returns: Images with hash information for cache.
+    func loadImagesWithGranularCache(
+        from source: ImagesSourceInput,
+        onProgress: (@Sendable (Int, Int) -> Void)?
+    ) async throws -> ImagesLoadOutputWithHashes
+
+    /// Processes image names for template generation.
+    ///
+    /// Applies the same name transformations as processImages() but only
+    /// returns processed names. Used for generating templates with all images
+    /// when granular cache skips unchanged images.
+    ///
+    /// - Parameters:
+    ///   - names: Raw image names from Figma.
+    ///   - nameValidateRegexp: Optional regex for name validation.
+    ///   - nameReplaceRegexp: Optional regex for name replacement.
+    ///   - nameStyle: Naming style for generated code.
+    /// - Returns: Processed image names.
+    func processImageNames(
+        _ names: [String],
+        nameValidateRegexp: String?,
+        nameReplaceRegexp: String?,
+        nameStyle: NameStyle
+    ) -> [String]
+}

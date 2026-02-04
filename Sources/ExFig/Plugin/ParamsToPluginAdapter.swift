@@ -136,6 +136,57 @@ extension Params.iOS.ColorsConfiguration {
     }
 }
 
+extension Params.iOS.ImagesEntry {
+    /// Converts Params.iOS.ImagesEntry to iOSImagesEntry.
+    func toPluginEntry(common: Params.Common?) -> iOSImagesEntry {
+        iOSImagesEntry(
+            figmaFrameName: figmaFrameName ?? common?.images?.figmaFrameName,
+            sourceFormat: sourceFormat.map { ExFigCore.ImageSourceFormat(rawValue: $0.rawValue) ?? .png },
+            scales: scales,
+            nameValidateRegexp: common?.images?.nameValidateRegexp,
+            nameReplaceRegexp: common?.images?.nameReplaceRegexp,
+            nameStyle: nameStyle,
+            assetsFolder: assetsFolder,
+            outputFormat: outputFormat.map { ExFigCore.ImageOutputFormat(rawValue: $0.rawValue) ?? .png },
+            heicOptions: heicOptions.map { ExFig_iOS.HeicOptions(quality: $0.quality.map { Double($0) }) },
+            imageSwift: imageSwift,
+            swiftUIImageSwift: swiftUIImageSwift,
+            codeConnectSwift: codeConnectSwift,
+            renderMode: renderMode,
+            renderModeDefaultSuffix: renderModeDefaultSuffix,
+            renderModeOriginalSuffix: renderModeOriginalSuffix,
+            renderModeTemplateSuffix: renderModeTemplateSuffix
+        )
+    }
+}
+
+extension Params.iOS.ImagesConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [iOSImagesEntry] {
+        switch self {
+        case let .single(images):
+            [Params.iOS.ImagesEntry(
+                figmaFrameName: common?.images?.figmaFrameName,
+                assetsFolder: images.assetsFolder,
+                nameStyle: images.nameStyle,
+                scales: images.scales,
+                imageSwift: images.imageSwift,
+                swiftUIImageSwift: images.swiftUIImageSwift,
+                codeConnectSwift: images.codeConnectSwift,
+                sourceFormat: nil,
+                outputFormat: nil,
+                heicOptions: nil,
+                renderMode: images.renderMode,
+                renderModeDefaultSuffix: images.renderModeDefaultSuffix,
+                renderModeOriginalSuffix: images.renderModeOriginalSuffix,
+                renderModeTemplateSuffix: images.renderModeTemplateSuffix
+            ).toPluginEntry(common: common)]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry(common: common) }
+        }
+    }
+}
+
 // MARK: - Android Adapters
 
 extension Params.Android {
@@ -272,6 +323,47 @@ extension Params.Android.ColorsConfiguration {
     }
 }
 
+extension Params.Android.ImagesEntry {
+    /// Converts Params.Android.ImagesEntry to AndroidImagesEntry.
+    func toPluginEntry(common: Params.Common?) -> AndroidImagesEntry {
+        AndroidImagesEntry(
+            figmaFrameName: figmaFrameName ?? common?.images?.figmaFrameName,
+            sourceFormat: sourceFormat.map { ExFigCore.ImageSourceFormat(rawValue: $0.rawValue) ?? .png },
+            scales: scales,
+            nameValidateRegexp: common?.images?.nameValidateRegexp,
+            nameReplaceRegexp: common?.images?.nameReplaceRegexp,
+            nameStyle: nil,
+            output: output,
+            format: ExFig_Android.AndroidImageFormat(rawValue: format.rawValue) ?? .png,
+            webpOptions: webpOptions.map { opts in
+                ExFig_Android.WebpOptions(
+                    lossless: opts.encoding == .lossless,
+                    quality: opts.quality
+                )
+            }
+        )
+    }
+}
+
+extension Params.Android.ImagesConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [AndroidImagesEntry] {
+        switch self {
+        case let .single(images):
+            [Params.Android.ImagesEntry(
+                figmaFrameName: common?.images?.figmaFrameName,
+                scales: images.scales,
+                output: images.output,
+                format: images.format,
+                webpOptions: images.webpOptions,
+                sourceFormat: images.sourceFormat
+            ).toPluginEntry(common: common)]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry(common: common) }
+        }
+    }
+}
+
 // MARK: - Flutter Adapters
 
 extension Params.Flutter {
@@ -362,6 +454,52 @@ extension Params.Flutter.ColorsConfiguration {
             )]
         case let .multiple(entries):
             return entries.map { $0.toPluginEntry() }
+        }
+    }
+}
+
+extension Params.Flutter.ImagesEntry {
+    /// Converts Params.Flutter.ImagesEntry to FlutterImagesEntry.
+    func toPluginEntry(common: Params.Common?) -> FlutterImagesEntry {
+        FlutterImagesEntry(
+            figmaFrameName: figmaFrameName ?? common?.images?.figmaFrameName,
+            sourceFormat: sourceFormat.map { ExFigCore.ImageSourceFormat(rawValue: $0.rawValue) ?? .png },
+            scales: scales,
+            nameValidateRegexp: common?.images?.nameValidateRegexp,
+            nameReplaceRegexp: common?.images?.nameReplaceRegexp,
+            nameStyle: nameStyle,
+            output: output,
+            dartFile: dartFile,
+            className: className,
+            format: format.map { ExFig_Flutter.FlutterImageFormat(rawValue: $0.rawValue) ?? .png },
+            webpOptions: webpOptions.map { opts in
+                ExFig_Flutter.WebpOptions(
+                    lossless: opts.encoding == .lossless,
+                    quality: opts.quality
+                )
+            }
+        )
+    }
+}
+
+extension Params.Flutter.ImagesConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [FlutterImagesEntry] {
+        switch self {
+        case let .single(images):
+            [Params.Flutter.ImagesEntry(
+                figmaFrameName: common?.images?.figmaFrameName,
+                output: images.output,
+                dartFile: images.dartFile,
+                className: images.className,
+                scales: images.scales,
+                format: images.format,
+                webpOptions: images.webpOptions,
+                sourceFormat: images.sourceFormat,
+                nameStyle: images.nameStyle
+            ).toPluginEntry(common: common)]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry(common: common) }
         }
     }
 }
@@ -462,6 +600,38 @@ extension Params.Web.ColorsConfiguration {
             )]
         case let .multiple(entries):
             return entries.map { $0.toPluginEntry() }
+        }
+    }
+}
+
+extension Params.Web.ImagesEntry {
+    /// Converts Params.Web.ImagesEntry to WebImagesEntry.
+    func toPluginEntry(common: Params.Common?) -> WebImagesEntry {
+        WebImagesEntry(
+            figmaFrameName: figmaFrameName ?? common?.images?.figmaFrameName,
+            nameValidateRegexp: common?.images?.nameValidateRegexp,
+            nameReplaceRegexp: common?.images?.nameReplaceRegexp,
+            nameStyle: nil,
+            outputDirectory: outputDirectory,
+            assetsDirectory: assetsDirectory,
+            generateReactComponents: generateReactComponents
+        )
+    }
+}
+
+extension Params.Web.ImagesConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [WebImagesEntry] {
+        switch self {
+        case let .single(images):
+            [Params.Web.ImagesEntry(
+                figmaFrameName: common?.images?.figmaFrameName,
+                outputDirectory: images.outputDirectory,
+                assetsDirectory: images.assetsDirectory,
+                generateReactComponents: images.generateReactComponents
+            ).toPluginEntry(common: common)]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry(common: common) }
         }
     }
 }

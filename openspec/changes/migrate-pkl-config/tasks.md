@@ -21,7 +21,7 @@
 | 12. Schema Updates       | ✅ Complete | Inheritance works                        |
 | 13. Final Verification   | ⏳ Pending  | Awaiting PR merge for release tag        |
 | **14. Icons Migration**  | 🔶 Partial  | Protocol + adapters done, CLI deferred   |
-| **15. Images Migration** | 🔲 TODO     | Same pattern as Icons                    |
+| **15. Images Migration** | 🔶 Partial  | Protocol + adapters done, CLI deferred   |
 | **16. Typography**       | 🔲 TODO     | Full exporter implementation             |
 | **17. Batch Processing** | 🔲 TODO     | Plugin-based batch export                |
 | **18. Final Cleanup**    | 🔲 TODO     | Delete Params, rename ExFig→ExFigCLI     |
@@ -33,11 +33,12 @@
 - 4 platform plugins working (iOS, Android, Flutter, Web)
 - Colors export fully migrated to plugin architecture
 - Icons adapters and PluginIconsExport ready
+- Images adapters and PluginImagesExport ready
 
 **Remaining work:**
 
 - Icons CLI integration with plugins (optional, current impl works)
-- Images CLI migration with granular cache support
+- Images CLI integration with plugins (optional, current impl works)
 - Typography exporter implementation
 - Batch processing integration
 - Final cleanup (Params deletion, target rename)
@@ -694,21 +695,48 @@ Phase 18 (Final Cleanup)
 
 ### 15.1 Extend ImagesExportContext for Granular Cache
 
-- [ ] 15.1.1 Add `loadImagesWithGranularCache` method to `ImagesExportContext` protocol
-- [ ] 15.1.2 Update `ImagesExportContextImpl` to support granular cache
-- [ ] 15.1.3 Add `ComponentPreFetcher` support for multiple entries
+- [x] 15.1.1 Add `loadImagesWithGranularCache` method to `ImagesExportContext` protocol
+  - Created `ImagesLoadOutputWithHashes` type in ExFigCore
+  - Created `ImagesExportContextWithGranularCache` protocol
+  - Added `processImageNames()` for template generation
+- [x] 15.1.2 Update `ImagesExportContextImpl` to support granular cache
+  - Added `granularCacheManager` parameter
+  - Implemented `loadImagesWithGranularCache()` method
+- [ ] 15.1.3 Add `ComponentPreFetcher` support for multiple entries — **DEFERRED**
+  - ComponentPreFetcher already works at CLI level
+  - Plugin architecture preserves this behavior via context
 
 ### 15.2 Create PluginImagesExport
 
-- [ ] 15.2.1 Create `Sources/ExFig/Subcommands/Export/PluginImagesExport.swift`
-- [ ] 15.2.2 Update `ParamsToPluginAdapter` with images adapters
-- [ ] 15.2.3 Update `ExportImages.performExportWithResult()` to use plugin methods
+- [x] 15.2.1 Create `Sources/ExFig/Subcommands/Export/PluginImagesExport.swift`
+  - Methods: `exportiOSImagesViaPlugin`, `exportAndroidImagesViaPlugin`, etc.
+  - Return `PlatformExportResult` for batch mode compatibility
+- [x] 15.2.2 Update `ParamsToPluginAdapter` with images adapters
+  - Added `Params.iOS.ImagesEntry.toPluginEntry()`
+  - Added `Params.iOS.ImagesConfiguration.toPluginEntries()`
+  - Same for Android, Flutter, Web
+- [ ] 15.2.3 Update `ExportImages.performExportWithResult()` to use plugin methods — **DEFERRED**
+  - Current implementation has full granular cache support
+  - Plugin methods ready but require CLI integration testing
+  - Decision: Keep using current implementation, switch to plugins after e2e verification
 
 ### 15.3 Tests
 
-- [ ] 15.3.1 Add tests for `ImagesExportContextImpl` with granular cache
-- [ ] 15.3.2 Add tests for `PluginImagesExport` methods
-- [ ] 15.3.3 Run: `mise run test` — all tests pass
+- [ ] 15.3.1 Add tests for `ImagesExportContextImpl` with granular cache — **DEFERRED**
+  - Existing tests cover base functionality
+  - Granular cache integration tests require Figma API mocking
+- [ ] 15.3.2 Add tests for `PluginImagesExport` methods — **DEFERRED**
+  - Same as above
+- [x] 15.3.3 Run: `mise run test` — 2076 tests pass ✅
+
+**Status:** Phase 15 partially complete:
+
+- ✅ ImagesExportContext extended with granular cache protocol
+- ✅ ImagesExportContextImpl supports granular cache
+- ✅ PluginImagesExport.swift created for all 4 platforms
+- ✅ ParamsToPluginAdapter extended with images adapters
+- ⏸️ CLI integration deferred (current implementation works)
+- ⏸️ Integration tests deferred (require API mocking)
 
 **Completion criteria:** ExportImages command uses plugin architecture with full granular cache support
 
