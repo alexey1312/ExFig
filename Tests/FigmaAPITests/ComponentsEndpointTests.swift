@@ -32,7 +32,7 @@ final class ComponentsEndpointTests: XCTestCase {
         XCTAssertEqual(arrowRight.name, "Icons/24/arrow_right")
         XCTAssertEqual(arrowRight.nodeId, "10:1")
         XCTAssertEqual(arrowRight.description, "Arrow pointing right")
-        XCTAssertEqual(arrowRight.containingFrame.pageName, "Components")
+        XCTAssertEqual(arrowRight.containingFrame.pageName, Optional("Components"))
         XCTAssertEqual(arrowRight.containingFrame.name, "Icons")
     }
 
@@ -55,7 +55,7 @@ final class ComponentsEndpointTests: XCTestCase {
 
         let heroBanner = components[3]
         XCTAssertEqual(heroBanner.name, "Images/hero_banner")
-        XCTAssertEqual(heroBanner.containingFrame.pageName, "Assets")
+        XCTAssertEqual(heroBanner.containingFrame.pageName, Optional("Assets"))
     }
 
     func testContentFromResponseWithBody() throws {
