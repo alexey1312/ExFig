@@ -1,5 +1,5 @@
 {
-  "originHash" : "91d23f4d2611f4d5a7c16cd57c10ecb3862ca385d8eb2b092121ba480b3ef842",
+  "originHash" : "ca25806337de2c50c001e9e58dbfb76c4e2315ab99f476434562a8ae77d7ec16",
   "pins" : [
     {
       "identity" : "aexml",
@@ -186,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mattt/swift-yyjson",
       "state" : {
-        "revision" : "04748af87a40eba45b52b11a8a9834103725bfe3",
-        "version" : "0.3.0"
+        "revision" : "ec2a739f20b964e648a2ee110409240b5547d3e3",
+        "version" : "0.3.1"
       }
     },
     {

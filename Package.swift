@@ -26,7 +26,7 @@ let package = Package(
         .package(url: "https://github.com/tuist/Noora", from: "0.54.0"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
         .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.3"),
-        .package(url: "https://github.com/mattt/swift-yyjson", from: "0.3.0"),
+        .package(url: "https://github.com/mattt/swift-yyjson", from: "0.3.1"),
     ],
     targets: [
         // Main target
