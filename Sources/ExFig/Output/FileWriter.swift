@@ -7,6 +7,10 @@ import Foundation
 /// Progress callback type for write operations
 typealias WriteProgressCallback = @Sendable (Int, Int) async -> Void
 
+/// Cache of parent directory contents for case mismatch detection.
+/// Key: parent path, Value: lowercase name -> actual URL
+private typealias ParentContentsCache = [String: [String: URL]]
+
 final class FileWriter: Sendable {
     private let maxConcurrentWrites: Int
 
@@ -16,8 +20,9 @@ final class FileWriter: Sendable {
 
     /// Writes files sequentially (original behavior)
     func write(files: [FileContents]) throws {
+        var parentCache: ParentContentsCache = [:]
         try files.forEach { file in
-            try writeFile(file)
+            try writeFile(file, parentCache: &parentCache)
         }
     }
 
@@ -34,10 +39,12 @@ final class FileWriter: Sendable {
         let totalCount = files.count
 
         // 1. Collect unique directories and create them (sequential, fast)
+        var parentCache: ParentContentsCache = [:]
         let directories = Set(files.map { URL(fileURLWithPath: $0.destination.directory.path) })
         for directory in directories {
-            try fixCaseMismatchIfNeeded(for: directory)
+            try fixCaseMismatchIfNeeded(for: directory, parentCache: &parentCache)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
+            updateCacheAfterCreation(directory: directory, parentCache: &parentCache)
         }
 
         // 2. Write files in parallel
@@ -84,10 +91,14 @@ final class FileWriter: Sendable {
 
     // MARK: - Private
 
-    private func writeFile(_ file: FileContents) throws {
+    private func writeFile(_ file: FileContents, parentCache: inout ParentContentsCache) throws {
         let directoryURL = URL(fileURLWithPath: file.destination.directory.path)
-        try fixCaseMismatchIfNeeded(for: directoryURL)
+        try fixCaseMismatchIfNeeded(for: directoryURL, parentCache: &parentCache)
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+
+        // Update cache with newly created directory
+        updateCacheAfterCreation(directory: directoryURL, parentCache: &parentCache)
+
         try writeFileData(file)
     }
 
@@ -95,31 +106,56 @@ final class FileWriter: Sendable {
     ///
     /// On case-insensitive FS, `speech2text.imageset` and `speech2Text.imageset` are the same directory.
     /// When asset name casing changes, the old directory name persists. This method renames it.
-    private func fixCaseMismatchIfNeeded(for targetURL: URL) throws {
+    ///
+    /// Uses a cache to avoid re-scanning the same parent directory multiple times.
+    private func fixCaseMismatchIfNeeded(for targetURL: URL, parentCache: inout ParentContentsCache) throws {
         let fileManager = FileManager.default
         let parent = targetURL.deletingLastPathComponent()
+        let parentPath = parent.path
         let targetName = targetURL.lastPathComponent
 
-        // Parent must exist for enumeration
-        guard fileManager.fileExists(atPath: parent.path) else { return }
+        // Build cache on first access to this parent
+        if parentCache[parentPath] == nil {
+            guard fileManager.fileExists(atPath: parentPath) else { return }
 
-        // Find existing directory with different case
-        guard let contents = try? fileManager.contentsOfDirectory(
-            at: parent,
-            includingPropertiesForKeys: [.isDirectoryKey]
-        ) else { return }
-
-        for item in contents {
-            let itemName = item.lastPathComponent
-            // Case-insensitive match but different actual case
-            if itemName.lowercased() == targetName.lowercased(), itemName != targetName {
-                // Rename via temp directory (direct rename fails on case-insensitive FS)
-                let tempURL = parent.appendingPathComponent(UUID().uuidString)
-                try fileManager.moveItem(at: item, to: tempURL)
-                try fileManager.moveItem(at: tempURL, to: targetURL)
-                return
+            do {
+                let contents = try fileManager.contentsOfDirectory(
+                    at: parent,
+                    includingPropertiesForKeys: [.isDirectoryKey]
+                )
+                parentCache[parentPath] = contents.reduce(into: [:]) { map, item in
+                    map[item.lastPathComponent.lowercased()] = item
+                }
+            } catch {
+                // Non-fatal: case-mismatch detection unavailable for this directory.
+                // Store empty sentinel to prevent repeated failed attempts.
+                parentCache[parentPath] = [:]
             }
         }
+
+        guard let lowercaseMap = parentCache[parentPath] else { return }
+
+        let lowercaseName = targetName.lowercased()
+        guard let existingItem = lowercaseMap[lowercaseName],
+              existingItem.lastPathComponent != targetName
+        else {
+            return
+        }
+
+        // Rename via temp directory (direct rename fails on case-insensitive FS)
+        let tempURL = parent.appendingPathComponent(UUID().uuidString)
+        try fileManager.moveItem(at: existingItem, to: tempURL)
+        try fileManager.moveItem(at: tempURL, to: targetURL)
+
+        // Update cache after rename
+        parentCache[parentPath]?[lowercaseName] = targetURL
+    }
+
+    /// Updates the parent cache after a directory is created.
+    private func updateCacheAfterCreation(directory: URL, parentCache: inout ParentContentsCache) {
+        let parent = directory.deletingLastPathComponent()
+        let parentPath = parent.path
+        parentCache[parentPath]?[directory.lastPathComponent.lowercased()] = directory
     }
 
     private func writeFileData(_ file: FileContents) throws {
