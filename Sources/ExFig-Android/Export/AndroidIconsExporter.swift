@@ -20,7 +20,7 @@ public struct AndroidIconsExporter: IconsExporter {
         entries: [AndroidIconsEntry],
         platformConfig: AndroidPlatformConfig,
         context: some IconsExportContext
-    ) async throws -> Int {
+    ) async throws -> IconsExportResult {
         var totalCount = 0
 
         for entry in entries {
@@ -35,7 +35,7 @@ public struct AndroidIconsExporter: IconsExporter {
             context.success("Done! Exported \(totalCount) icons to Android project.")
         }
 
-        return totalCount
+        return .simple(count: totalCount)
     }
 
     // MARK: - Private

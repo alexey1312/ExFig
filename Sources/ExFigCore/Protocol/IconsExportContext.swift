@@ -242,3 +242,70 @@ public protocol IconsExportContextWithGranularCache: IconsExportContext {
         nameStyle: NameStyle
     ) -> [String]
 }
+
+// MARK: - Icons Export Result
+
+/// Result of icons export operation.
+///
+/// Contains export statistics and granular cache information for batch mode.
+public struct IconsExportResult: Sendable {
+    /// Number of icons successfully exported.
+    public let count: Int
+
+    /// Number of icons skipped due to granular cache (unchanged).
+    public let skippedCount: Int
+
+    /// Computed content hashes for cache update (fileId → (nodeId → hash)).
+    public let computedHashes: [String: [String: String]]
+
+    /// All asset metadata for template generation.
+    public let allAssetMetadata: [AssetMetadata]
+
+    public init(
+        count: Int,
+        skippedCount: Int = 0,
+        computedHashes: [String: [String: String]] = [:],
+        allAssetMetadata: [AssetMetadata] = []
+    ) {
+        self.count = count
+        self.skippedCount = skippedCount
+        self.computedHashes = computedHashes
+        self.allAssetMetadata = allAssetMetadata
+    }
+
+    /// Creates a simple result with just count (no granular cache).
+    public static func simple(count: Int) -> IconsExportResult {
+        IconsExportResult(count: count)
+    }
+
+    /// Merges multiple results into one.
+    public static func merge(_ results: [IconsExportResult]) -> IconsExportResult {
+        var totalCount = 0
+        var totalSkipped = 0
+        var allHashes: [String: [String: String]] = [:]
+        var allMetadata: [AssetMetadata] = []
+
+        for result in results {
+            totalCount += result.count
+            totalSkipped += result.skippedCount
+
+            // Merge hashes
+            for (fileId, nodeHashes) in result.computedHashes {
+                if allHashes[fileId] == nil {
+                    allHashes[fileId] = nodeHashes
+                } else {
+                    allHashes[fileId]?.merge(nodeHashes) { _, new in new }
+                }
+            }
+
+            allMetadata.append(contentsOf: result.allAssetMetadata)
+        }
+
+        return IconsExportResult(
+            count: totalCount,
+            skippedCount: totalSkipped,
+            computedHashes: allHashes,
+            allAssetMetadata: allMetadata
+        )
+    }
+}

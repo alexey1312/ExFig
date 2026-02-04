@@ -17,7 +17,7 @@ public struct WebIconsExporter: IconsExporter {
         entries: [WebIconsEntry],
         platformConfig: WebPlatformConfig,
         context: some IconsExportContext
-    ) async throws -> Int {
+    ) async throws -> IconsExportResult {
         var totalCount = 0
 
         for entry in entries {
@@ -32,7 +32,7 @@ public struct WebIconsExporter: IconsExporter {
             context.success("Done! Exported \(totalCount) icons to Web project.")
         }
 
-        return totalCount
+        return .simple(count: totalCount)
     }
 
     // MARK: - Private

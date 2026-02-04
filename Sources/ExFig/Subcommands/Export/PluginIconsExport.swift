@@ -14,8 +14,9 @@ import XcodeExport
 extension ExFigCommand.ExportIcons {
     /// Exports iOS icons using plugin architecture.
     ///
-    /// This method uses `iOSIconsExporter` from the plugin system. For granular
-    /// cache support, the context internally routes to cache-aware loading.
+    /// This method uses `iOSIconsExporter` from the plugin system with full
+    /// granular cache support. The exporter detects cache context and uses
+    /// appropriate loading methods.
     ///
     /// - Parameters:
     ///   - entries: Params entries to convert and export.
@@ -24,7 +25,7 @@ extension ExFigCommand.ExportIcons {
     ///   - params: Full params for context creation.
     ///   - ui: Terminal UI for output.
     ///   - granularCacheManager: Optional granular cache manager.
-    /// - Returns: Platform export result with count and hashes.
+    /// - Returns: Platform export result with count, hashes, and skipped count.
     func exportiOSIconsViaPlugin(
         entries: [Params.iOS.IconsEntry],
         ios: Params.iOS,
@@ -50,9 +51,9 @@ extension ExFigCommand.ExportIcons {
             platform: .ios
         )
 
-        // Export via plugin
+        // Export via plugin (returns IconsExportResult with hashes)
         let exporter = iOSIconsExporter()
-        let count = try await exporter.exportIcons(
+        let result = try await exporter.exportIcons(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -84,7 +85,8 @@ extension ExFigCommand.ExportIcons {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        // Convert IconsExportResult to PlatformExportResult
+        return result.toPlatformExportResult()
     }
 
     /// Exports Android icons using plugin architecture.
@@ -114,7 +116,7 @@ extension ExFigCommand.ExportIcons {
         )
 
         let exporter = AndroidIconsExporter()
-        let count = try await exporter.exportIcons(
+        let result = try await exporter.exportIcons(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -124,7 +126,7 @@ extension ExFigCommand.ExportIcons {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        return result.toPlatformExportResult()
     }
 
     /// Exports Flutter icons using plugin architecture.
@@ -154,7 +156,7 @@ extension ExFigCommand.ExportIcons {
         )
 
         let exporter = FlutterIconsExporter()
-        let count = try await exporter.exportIcons(
+        let result = try await exporter.exportIcons(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -164,7 +166,7 @@ extension ExFigCommand.ExportIcons {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        return result.toPlatformExportResult()
     }
 
     /// Exports Web icons using plugin architecture.
@@ -194,7 +196,7 @@ extension ExFigCommand.ExportIcons {
         )
 
         let exporter = WebIconsExporter()
-        let count = try await exporter.exportIcons(
+        let result = try await exporter.exportIcons(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -204,7 +206,22 @@ extension ExFigCommand.ExportIcons {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        return result.toPlatformExportResult()
+    }
+}
+
+// MARK: - IconsExportResult Extension
+
+extension IconsExportResult {
+    /// Converts to CLI's PlatformExportResult format.
+    ///
+    /// `NodeId` is a typealias for `String`, so we just use the hashes directly.
+    func toPlatformExportResult() -> PlatformExportResult {
+        PlatformExportResult(
+            count: count,
+            hashes: computedHashes,
+            skippedCount: skippedCount
+        )
     }
 }
 

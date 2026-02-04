@@ -39,12 +39,12 @@ public protocol IconsExporter: AssetExporter {
     ///   - entries: Array of icons configuration entries.
     ///   - platformConfig: Platform-wide configuration.
     ///   - context: Export context with dependencies.
-    /// - Returns: Number of icons exported.
+    /// - Returns: Export result with count and granular cache information.
     func exportIcons(
         entries: [Entry],
         platformConfig: PlatformConfig,
         context: some IconsExportContext
-    ) async throws -> Int
+    ) async throws -> IconsExportResult
 }
 
 // Default implementation for AssetExporter conformance
