@@ -4,27 +4,27 @@
 
 **Status: Ready for PR Merge**
 
-| Phase                    | Status      | Notes                                    |
-| ------------------------ | ----------- | ---------------------------------------- |
-| 1. PKL Schemas           | ✅ Complete | All schemas created and validated        |
-| 2. PKL Infrastructure    | ✅ Complete | PKLLocator, PKLEvaluator, 9 tests        |
-| 3. Core Protocols        | ✅ Complete | PlatformPlugin, AssetExporter, 161 tests |
-| 4. ExFig Integration     | ✅ Complete | PKL config loading works                 |
-| 5. ExFigConfig Module    | ✅ Complete | 22 tests                                 |
-| 6. Dependency Cleanup    | ✅ Complete | Yams removed                             |
-| 7. Platform Plugins      | ✅ Complete | 62 plugin tests                          |
-| 7b. Icons & Images       | ✅ Complete | All exporters implemented                |
-| 8. Test Updates          | ✅ Complete | Coverage maintained                      |
-| 9. CLI Refactoring       | 🔶 Partial  | Colors migrated                          |
-| 10. Documentation        | ✅ Complete | CLAUDE.md, PKL.md, MIGRATION.md          |
-| 11. CI/CD                | ⏳ Pending  | pkl installed, awaiting CI verification  |
-| 12. Schema Updates       | ✅ Complete | Inheritance works                        |
-| 13. Final Verification   | ⏳ Pending  | Awaiting PR merge for release tag        |
-| **14. Icons Migration**  | 🔶 Partial  | Protocol + adapters done, CLI deferred   |
-| **15. Images Migration** | 🔶 Partial  | Protocol + adapters done, CLI deferred   |
-| **16. Typography**       | ✅ Complete | Full exporter implementation, 16 tests   |
-| **17. Batch Processing** | ✅ Complete | Already works via CLI commands           |
-| **18. Final Cleanup**    | 🔲 DEFERRED | Blocked until full CLI migration (v2.1)  |
+| Phase                    | Status      | Notes                                     |
+| ------------------------ | ----------- | ----------------------------------------- |
+| 1. PKL Schemas           | ✅ Complete | All schemas created and validated         |
+| 2. PKL Infrastructure    | ✅ Complete | PKLLocator, PKLEvaluator, 9 tests         |
+| 3. Core Protocols        | ✅ Complete | PlatformPlugin, AssetExporter, 161 tests  |
+| 4. ExFig Integration     | ✅ Complete | PKL config loading works                  |
+| 5. ExFigConfig Module    | ✅ Complete | 22 tests                                  |
+| 6. Dependency Cleanup    | ✅ Complete | Yams removed                              |
+| 7. Platform Plugins      | ✅ Complete | 62 plugin tests                           |
+| 7b. Icons & Images       | ✅ Complete | All exporters implemented                 |
+| 8. Test Updates          | ✅ Complete | Coverage maintained                       |
+| 9. CLI Refactoring       | 🔶 Partial  | Colors migrated                           |
+| 10. Documentation        | ✅ Complete | CLAUDE.md, PKL.md, MIGRATION.md           |
+| 11. CI/CD                | ⏳ Pending  | pkl installed, awaiting CI verification   |
+| 12. Schema Updates       | ✅ Complete | Inheritance works                         |
+| 13. Final Verification   | ⏳ Pending  | Awaiting PR merge for release tag         |
+| **14. Icons Migration**  | 🔶 Partial  | Granular cache in exporters, CLI deferred |
+| **15. Images Migration** | 🔶 Partial  | Protocol + adapters done, CLI deferred    |
+| **16. Typography**       | ✅ Complete | Full exporter implementation, 16 tests    |
+| **17. Batch Processing** | ✅ Complete | Already works via CLI commands            |
+| **18. Final Cleanup**    | 🔲 DEFERRED | Blocked until full CLI migration (v2.1)   |
 
 **Metrics:**
 
@@ -32,7 +32,7 @@
 - Debug + Release builds successful
 - 4 platform plugins working (iOS, Android, Flutter, Web)
 - Colors export fully migrated to plugin architecture
-- Icons adapters and PluginIconsExport ready
+- Icons: IconsExportResult + granular cache in iOSIconsExporter
 - Images adapters and PluginImagesExport ready
 - Typography exporters implemented (iOS, Android)
 - Batch processing verified working
@@ -648,7 +648,19 @@ Phase 18 (Final Cleanup)
   - Added `granularCacheManager` parameter
   - Implemented `loadIconsWithGranularCache()` method
   - Added `processIconNames()` for template generation
-- [ ] 14.1.3 Add `ComponentPreFetcher` support for multiple entries — **DEFERRED**
+- [x] 14.1.3 Create `IconsExportResult` type in ExFigCore
+  - Contains: count, skippedCount, computedHashes, allAssetMetadata
+  - Added `merge()` for combining multiple entry results
+  - Added `toPlatformExportResult()` extension for CLI integration
+- [x] 14.1.4 Update `IconsExporter` protocol to return `IconsExportResult`
+  - Changed return type from `Int` to `IconsExportResult`
+  - Updated all 4 platform exporters (iOS, Android, Flutter, Web)
+- [x] 14.1.5 Implement granular cache support in `iOSIconsExporter`
+  - Detects `IconsExportContextWithGranularCache` via runtime type check
+  - Uses `loadIconsWithGranularCache()` when enabled
+  - Passes `allIconNames` and `allAssetMetadata` to templates
+  - Returns full `IconsExportResult` with hashes
+- [ ] 14.1.6 Add `ComponentPreFetcher` support for multiple entries — **DEFERRED**
   - ComponentPreFetcher already works at CLI level (iOSIconsExport.swift)
   - Plugin architecture preserves this behavior via context
 
@@ -675,13 +687,16 @@ Phase 18 (Final Cleanup)
   - Same as above
 - [x] 14.3.3 Run: `mise run test` — 2076 tests pass ✅
 
-**Status:** Phase 14 partially complete:
+**Status:** Phase 14 substantially complete:
 
 - ✅ IconsExportContext extended with granular cache protocol
 - ✅ IconsExportContextImpl supports granular cache
 - ✅ PluginIconsExport.swift created for all 4 platforms
 - ✅ ParamsToPluginAdapter extended with icons adapters
-- ⏸️ CLI integration deferred (current implementation works)
+- ✅ IconsExportResult type created with merge() and conversion
+- ✅ IconsExporter protocol returns IconsExportResult
+- ✅ iOSIconsExporter supports granular cache via context detection
+- ⏸️ CLI command integration deferred (legacy methods work)
 - ⏸️ Integration tests deferred (require API mocking)
 
 **Completion criteria:** ExportIcons command uses plugin architecture with full granular cache support
