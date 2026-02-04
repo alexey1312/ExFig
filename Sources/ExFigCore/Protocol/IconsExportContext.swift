@@ -158,3 +158,87 @@ public protocol ProgressReporter: Sendable {
     /// Increments progress by one.
     func increment()
 }
+
+// MARK: - Granular Cache Support
+
+/// Extended icons load output with granular cache hashes.
+///
+/// Used when granular cache is enabled to return both icons and
+/// computed hashes for cache updates.
+public struct IconsLoadOutputWithHashes: Sendable {
+    /// Loaded light mode icons.
+    public let light: [ImagePack]
+
+    /// Loaded dark mode icons (if available).
+    public let dark: [ImagePack]
+
+    /// Computed content hashes for cache update (fileId → (nodeId → hash)).
+    public let computedHashes: [String: [String: String]]
+
+    /// Whether all icons were skipped (unchanged from cache).
+    public let allSkipped: Bool
+
+    /// All asset metadata (for template generation even when icons skipped).
+    public let allAssetMetadata: [AssetMetadata]
+
+    public init(
+        light: [ImagePack],
+        dark: [ImagePack] = [],
+        computedHashes: [String: [String: String]] = [:],
+        allSkipped: Bool = false,
+        allAssetMetadata: [AssetMetadata] = []
+    ) {
+        self.light = light
+        self.dark = dark
+        self.computedHashes = computedHashes
+        self.allSkipped = allSkipped
+        self.allAssetMetadata = allAssetMetadata
+    }
+
+    /// Converts to basic IconsLoadOutput (without cache info).
+    public var asLoadOutput: IconsLoadOutput {
+        IconsLoadOutput(light: light, dark: dark)
+    }
+}
+
+/// Context protocol extension for granular cache support.
+///
+/// Plugins can optionally use this protocol when granular cache is enabled.
+/// The default implementation falls back to regular loading.
+public protocol IconsExportContextWithGranularCache: IconsExportContext {
+    /// Whether granular cache is enabled.
+    var isGranularCacheEnabled: Bool { get }
+
+    /// Loads icons with granular cache support.
+    ///
+    /// When granular cache is enabled, filters components to only changed ones
+    /// and returns computed hashes for cache updates.
+    ///
+    /// - Parameters:
+    ///   - source: Icons source configuration.
+    ///   - onProgress: Optional progress callback (current, total).
+    /// - Returns: Icons with hash information for cache.
+    func loadIconsWithGranularCache(
+        from source: IconsSourceInput,
+        onProgress: (@Sendable (Int, Int) -> Void)?
+    ) async throws -> IconsLoadOutputWithHashes
+
+    /// Processes icon names for template generation.
+    ///
+    /// Applies the same name transformations as processIcons() but only
+    /// returns processed names. Used for generating templates with all icons
+    /// when granular cache skips unchanged icons.
+    ///
+    /// - Parameters:
+    ///   - names: Raw icon names from Figma.
+    ///   - nameValidateRegexp: Optional regex for name validation.
+    ///   - nameReplaceRegexp: Optional regex for name replacement.
+    ///   - nameStyle: Naming style for generated code.
+    /// - Returns: Processed icon names.
+    func processIconNames(
+        _ names: [String],
+        nameValidateRegexp: String?,
+        nameReplaceRegexp: String?,
+        nameStyle: NameStyle
+    ) -> [String]
+}

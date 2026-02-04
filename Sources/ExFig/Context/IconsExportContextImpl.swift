@@ -10,7 +10,8 @@ import Foundation
 /// - Uses `ExFigCommand.fileWriter` for file output
 /// - Uses `TerminalUI` for progress and logging
 /// - Uses `PipelinedDownloader` for batch-optimized downloads
-struct IconsExportContextImpl: IconsExportContext {
+/// - Supports granular cache for incremental exports
+struct IconsExportContextImpl: IconsExportContextWithGranularCache {
     let client: Client
     let ui: TerminalUI
     let params: Params
@@ -18,6 +19,8 @@ struct IconsExportContextImpl: IconsExportContext {
     let isBatchMode: Bool
     let fileDownloader: FileDownloader
     let configExecutionContext: ConfigExecutionContext?
+    let granularCacheManager: GranularCacheManager?
+    let platform: Platform
 
     init(
         client: Client,
@@ -26,7 +29,9 @@ struct IconsExportContextImpl: IconsExportContext {
         filter: String? = nil,
         isBatchMode: Bool = false,
         fileDownloader: FileDownloader = FileDownloader(),
-        configExecutionContext: ConfigExecutionContext? = nil
+        configExecutionContext: ConfigExecutionContext? = nil,
+        granularCacheManager: GranularCacheManager? = nil,
+        platform: Platform = .ios
     ) {
         self.client = client
         self.ui = ui
@@ -35,6 +40,12 @@ struct IconsExportContextImpl: IconsExportContext {
         self.isBatchMode = isBatchMode
         self.fileDownloader = fileDownloader
         self.configExecutionContext = configExecutionContext
+        self.granularCacheManager = granularCacheManager
+        self.platform = platform
+    }
+
+    var isGranularCacheEnabled: Bool {
+        granularCacheManager != nil
     }
 
     // MARK: - ExportContext
@@ -78,7 +89,7 @@ struct IconsExportContextImpl: IconsExportContext {
         let loader = IconsLoader(
             client: client,
             params: params,
-            platform: .ios, // Platform is determined by caller, loader just fetches
+            platform: platform,
             logger: ExFigCommand.logger,
             config: config
         )
@@ -151,6 +162,69 @@ struct IconsExportContextImpl: IconsExportContext {
             let reporter = ProgressBarReporter(progressBar: progress)
             return try await operation(reporter)
         }
+    }
+
+    // MARK: - IconsExportContextWithGranularCache
+
+    func loadIconsWithGranularCache(
+        from source: IconsSourceInput,
+        onProgress: (@Sendable (Int, Int) -> Void)?
+    ) async throws -> IconsLoadOutputWithHashes {
+        let config = IconsLoaderConfig(
+            frameName: source.frameName,
+            format: source.format == .pdf ? .pdf : nil,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+        )
+
+        let loader = IconsLoader(
+            client: client,
+            params: params,
+            platform: platform,
+            logger: ExFigCommand.logger,
+            config: config
+        )
+
+        if let manager = granularCacheManager {
+            loader.granularCacheManager = manager
+            let result = try await loader.loadWithGranularCache(
+                filter: filter,
+                onBatchProgress: onProgress ?? { _, _ in }
+            )
+            return IconsLoadOutputWithHashes(
+                light: result.light,
+                dark: result.dark ?? [],
+                computedHashes: result.computedHashes,
+                allSkipped: result.allSkipped,
+                allAssetMetadata: result.allAssetMetadata
+            )
+        } else {
+            let result = try await loader.load(filter: filter, onBatchProgress: onProgress ?? { _, _ in })
+            return IconsLoadOutputWithHashes(
+                light: result.light,
+                dark: result.dark ?? [],
+                computedHashes: [:],
+                allSkipped: false,
+                allAssetMetadata: []
+            )
+        }
+    }
+
+    func processIconNames(
+        _ names: [String],
+        nameValidateRegexp: String?,
+        nameReplaceRegexp: String?,
+        nameStyle: NameStyle
+    ) -> [String] {
+        let processor = ImagesProcessor(
+            platform: platform,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp,
+            nameStyle: nameStyle
+        )
+        return processor.processNames(names)
     }
 }
 

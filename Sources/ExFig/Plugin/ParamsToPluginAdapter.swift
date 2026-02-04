@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import ExFig_Android
 import ExFig_Flutter
 import ExFig_iOS
@@ -45,6 +47,55 @@ extension Params.iOS.ColorsEntry {
             syncCodeSyntax: syncCodeSyntax,
             codeSyntaxTemplate: codeSyntaxTemplate
         )
+    }
+}
+
+extension Params.iOS.IconsEntry {
+    /// Converts Params.iOS.IconsEntry to iOSIconsEntry.
+    func toPluginEntry() -> iOSIconsEntry {
+        iOSIconsEntry(
+            figmaFrameName: figmaFrameName,
+            format: ExFigCore.VectorFormat(rawValue: format.rawValue) ?? .svg,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp,
+            nameStyle: nameStyle,
+            assetsFolder: assetsFolder,
+            preservesVectorRepresentation: preservesVectorRepresentation,
+            imageSwift: imageSwift,
+            swiftUIImageSwift: swiftUIImageSwift,
+            codeConnectSwift: codeConnectSwift,
+            renderMode: renderMode,
+            renderModeDefaultSuffix: renderModeDefaultSuffix,
+            renderModeOriginalSuffix: renderModeOriginalSuffix,
+            renderModeTemplateSuffix: renderModeTemplateSuffix
+        )
+    }
+}
+
+extension Params.iOS.IconsConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [iOSIconsEntry] {
+        switch self {
+        case let .single(icons):
+            [Params.iOS.IconsEntry(
+                figmaFrameName: common?.icons?.figmaFrameName,
+                format: icons.format,
+                assetsFolder: icons.assetsFolder,
+                preservesVectorRepresentation: icons.preservesVectorRepresentation,
+                nameStyle: icons.nameStyle,
+                nameValidateRegexp: common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: common?.icons?.nameReplaceRegexp,
+                imageSwift: icons.imageSwift,
+                swiftUIImageSwift: icons.swiftUIImageSwift,
+                codeConnectSwift: icons.codeConnectSwift,
+                renderMode: icons.renderMode,
+                renderModeDefaultSuffix: icons.renderModeDefaultSuffix,
+                renderModeOriginalSuffix: icons.renderModeOriginalSuffix,
+                renderModeTemplateSuffix: icons.renderModeTemplateSuffix
+            ).toPluginEntry()]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry() }
+        }
     }
 }
 
@@ -96,6 +147,48 @@ extension Params.Android {
             mainSrc: mainSrc,
             templatesPath: templatesPath
         )
+    }
+}
+
+extension Params.Android.IconsEntry {
+    /// Converts Params.Android.IconsEntry to AndroidIconsEntry.
+    func toPluginEntry() -> AndroidIconsEntry {
+        AndroidIconsEntry(
+            figmaFrameName: figmaFrameName,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp,
+            nameStyle: nameStyle,
+            output: output,
+            composePackageName: composePackageName,
+            composeFormat: composeFormat
+                .map { ExFig_Android.ComposeIconFormat(rawValue: $0.rawValue) ?? .resourceReference },
+            composeExtensionTarget: composeExtensionTarget,
+            pathPrecision: pathPrecision,
+            strictPathValidation: strictPathValidation
+        )
+    }
+}
+
+extension Params.Android.IconsConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [AndroidIconsEntry] {
+        switch self {
+        case let .single(icons):
+            [Params.Android.IconsEntry(
+                figmaFrameName: common?.icons?.figmaFrameName,
+                output: icons.output,
+                composePackageName: icons.composePackageName,
+                composeFormat: icons.composeFormat,
+                composeExtensionTarget: icons.composeExtensionTarget,
+                nameStyle: nil,
+                nameValidateRegexp: common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: common?.icons?.nameReplaceRegexp,
+                pathPrecision: icons.pathPrecision,
+                strictPathValidation: icons.strictPathValidation
+            ).toPluginEntry()]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry() }
+        }
     }
 }
 
@@ -191,6 +284,41 @@ extension Params.Flutter {
     }
 }
 
+extension Params.Flutter.IconsEntry {
+    /// Converts Params.Flutter.IconsEntry to FlutterIconsEntry.
+    func toPluginEntry() -> FlutterIconsEntry {
+        FlutterIconsEntry(
+            figmaFrameName: figmaFrameName,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp,
+            nameStyle: nameStyle,
+            output: output,
+            dartFile: dartFile,
+            className: className
+        )
+    }
+}
+
+extension Params.Flutter.IconsConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [FlutterIconsEntry] {
+        switch self {
+        case let .single(icons):
+            [Params.Flutter.IconsEntry(
+                figmaFrameName: common?.icons?.figmaFrameName,
+                output: icons.output,
+                dartFile: icons.dartFile,
+                className: icons.className,
+                nameStyle: nil,
+                nameValidateRegexp: common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: common?.icons?.nameReplaceRegexp
+            ).toPluginEntry()]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry() }
+        }
+    }
+}
+
 extension Params.Flutter.ColorsEntry {
     /// Converts Params.Flutter.ColorsEntry to FlutterColorsEntry.
     func toPluginEntry() -> FlutterColorsEntry {
@@ -247,6 +375,43 @@ extension Params.Web {
             output: output,
             templatesPath: templatesPath
         )
+    }
+}
+
+extension Params.Web.IconsEntry {
+    /// Converts Params.Web.IconsEntry to WebIconsEntry.
+    func toPluginEntry() -> WebIconsEntry {
+        WebIconsEntry(
+            figmaFrameName: figmaFrameName,
+            nameValidateRegexp: nameValidateRegexp,
+            nameReplaceRegexp: nameReplaceRegexp,
+            nameStyle: nameStyle,
+            outputDirectory: outputDirectory,
+            svgDirectory: svgDirectory,
+            generateReactComponents: generateReactComponents,
+            iconSize: iconSize
+        )
+    }
+}
+
+extension Params.Web.IconsConfiguration {
+    /// Converts legacy format entries to plugin entries.
+    func toPluginEntries(common: Params.Common?) -> [WebIconsEntry] {
+        switch self {
+        case let .single(icons):
+            [Params.Web.IconsEntry(
+                figmaFrameName: common?.icons?.figmaFrameName,
+                outputDirectory: icons.outputDirectory,
+                svgDirectory: icons.svgDirectory,
+                generateReactComponents: icons.generateReactComponents,
+                iconSize: icons.iconSize,
+                nameStyle: nil,
+                nameValidateRegexp: common?.icons?.nameValidateRegexp,
+                nameReplaceRegexp: common?.icons?.nameReplaceRegexp
+            ).toPluginEntry()]
+        case let .multiple(entries):
+            entries.map { $0.toPluginEntry() }
+        }
     }
 }
 
