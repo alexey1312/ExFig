@@ -4,20 +4,24 @@ import FigmaAPI
 /// Loads text styles from Figma
 final class TextStylesLoader: Sendable {
     private let client: Client
-    private let params: Params.Figma
+    private let fileId: String
 
     init(client: Client, params: Params.Figma) {
         self.client = client
-        self.params = params
+        guard let fileId = params.lightFileId else {
+            fatalError("figma.lightFileId is required for typography export")
+        }
+        self.fileId = fileId
+    }
+
+    /// Creates a loader with explicit file ID (for plugin architecture).
+    init(client: Client, fileId: String) {
+        self.client = client
+        self.fileId = fileId
     }
 
     func load() async throws -> [TextStyle] {
-        guard let fileId = params.lightFileId else {
-            throw ExFigError.custom(errorString:
-                "figma.lightFileId is required for typography export."
-            )
-        }
-        return try await loadTextStyles(fileId: fileId)
+        try await loadTextStyles(fileId: fileId)
     }
 
     private func loadTextStyles(fileId: String) async throws -> [TextStyle] {

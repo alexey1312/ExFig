@@ -11,7 +11,7 @@ import Foundation
 
 extension Params.iOS {
     /// Creates iOSPlatformConfig from Params.iOS.
-    func platformConfig() -> iOSPlatformConfig {
+    func platformConfig(figma: Params.Figma? = nil) -> iOSPlatformConfig {
         iOSPlatformConfig(
             xcodeprojPath: xcodeprojPath,
             target: target,
@@ -20,7 +20,9 @@ extension Params.iOS {
             xcassetsInSwiftPackage: xcassetsInSwiftPackage,
             resourceBundleNames: resourceBundleNames,
             addObjcAttribute: addObjcAttribute,
-            templatesPath: templatesPath
+            templatesPath: templatesPath,
+            figmaFileId: figma?.lightFileId,
+            figmaTimeout: figma?.timeout
         )
     }
 }
@@ -191,12 +193,14 @@ extension Params.iOS.ImagesConfiguration {
 
 extension Params.Android {
     /// Creates AndroidPlatformConfig from Params.Android.
-    func platformConfig() -> AndroidPlatformConfig {
+    func platformConfig(figma: Params.Figma? = nil) -> AndroidPlatformConfig {
         AndroidPlatformConfig(
             mainRes: mainRes,
             resourcePackage: resourcePackage,
             mainSrc: mainSrc,
-            templatesPath: templatesPath
+            templatesPath: templatesPath,
+            figmaFileId: figma?.lightFileId,
+            figmaTimeout: figma?.timeout
         )
     }
 }
@@ -633,5 +637,37 @@ extension Params.Web.ImagesConfiguration {
         case let .multiple(entries):
             entries.map { $0.toPluginEntry(common: common) }
         }
+    }
+}
+
+// MARK: - Typography Adapters
+
+extension Params.iOS.Typography {
+    /// Converts Params.iOS.Typography to iOSTypographyEntry.
+    func toPluginEntry(common: Params.Common?) -> iOSTypographyEntry {
+        iOSTypographyEntry(
+            fileId: nil, // Comes from figma.lightFileId via platformConfig
+            nameValidateRegexp: common?.typography?.nameValidateRegexp,
+            nameReplaceRegexp: common?.typography?.nameReplaceRegexp,
+            nameStyle: nameStyle,
+            fontSwift: fontSwift,
+            swiftUIFontSwift: swiftUIFontSwift,
+            generateLabels: generateLabels,
+            labelsDirectory: labelsDirectory,
+            labelStyleSwift: labelStyleSwift
+        )
+    }
+}
+
+extension Params.Android.Typography {
+    /// Converts Params.Android.Typography to AndroidTypographyEntry.
+    func toPluginEntry(common: Params.Common?) -> AndroidTypographyEntry {
+        AndroidTypographyEntry(
+            fileId: nil, // Comes from figma.lightFileId via platformConfig
+            nameValidateRegexp: common?.typography?.nameValidateRegexp,
+            nameReplaceRegexp: common?.typography?.nameReplaceRegexp,
+            nameStyle: nameStyle,
+            composePackageName: composePackageName
+        )
     }
 }

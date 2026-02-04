@@ -19,15 +19,25 @@ public struct AndroidPlatformConfig: Sendable {
     /// Custom templates path for code generation.
     public let templatesPath: URL?
 
+    /// Figma file ID for typography (from figma.lightFileId).
+    public let figmaFileId: String?
+
+    /// Timeout for Figma API requests.
+    public let figmaTimeout: TimeInterval?
+
     public init(
         mainRes: URL,
         resourcePackage: String? = nil,
         mainSrc: URL? = nil,
-        templatesPath: URL? = nil
+        templatesPath: URL? = nil,
+        figmaFileId: String? = nil,
+        figmaTimeout: TimeInterval? = nil
     ) {
         self.mainRes = mainRes
         self.resourcePackage = resourcePackage
         self.mainSrc = mainSrc
         self.templatesPath = templatesPath
+        self.figmaFileId = figmaFileId
+        self.figmaTimeout = figmaTimeout
     }
 }
