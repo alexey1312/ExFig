@@ -52,7 +52,7 @@ final class SharedDownloadQueueTests: XCTestCase {
         XCTAssertEqual(result2.configId, "high-priority")
     }
 
-    func testCancelConfig() async throws {
+    func testCancelConfig() async {
         // Given: A queue with pending jobs
         let queue = SharedDownloadQueue(maxConcurrentDownloads: 1)
 
@@ -71,7 +71,7 @@ final class SharedDownloadQueueTests: XCTestCase {
         XCTAssertEqual(stats.pendingJobs, 0)
     }
 
-    func testQueueStats() async throws {
+    func testQueueStats() async {
         // Given: A queue
         let queue = SharedDownloadQueue(maxConcurrentDownloads: 10)
 

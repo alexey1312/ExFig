@@ -65,10 +65,10 @@ final class FileWriterTests: XCTestCase {
     func testWriteCreatesDirectories() throws {
         let writer = FileWriter()
         let subdir = tempDirectory.appendingPathComponent("subdir/nested")
-        let destination = Destination(
+        let destination = try Destination(
             directory: subdir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "test.txt")!
+            file: XCTUnwrap(URL(string: "test.txt"))
         )
         let file = FileContents(destination: destination, data: Data("test".utf8))
 
@@ -175,10 +175,10 @@ final class FileWriterTests: XCTestCase {
 
         // Write file to directory with new case
         let newCaseDir = tempDirectory.appendingPathComponent("speechtotext.imageset")
-        let destination = Destination(
+        let destination = try Destination(
             directory: newCaseDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "test.svg")!
+            file: XCTUnwrap(URL(string: "test.svg"))
         )
         let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
 
@@ -216,10 +216,10 @@ final class FileWriterTests: XCTestCase {
 
         // Write file to directory with new case
         let newCaseDir = tempDirectory.appendingPathComponent("icon24px.imageset")
-        let destination = Destination(
+        let destination = try Destination(
             directory: newCaseDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "icon.svg")!
+            file: XCTUnwrap(URL(string: "icon.svg"))
         )
         let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
 
@@ -245,10 +245,10 @@ final class FileWriterTests: XCTestCase {
         try FileManager.default.createDirectory(at: existingDir, withIntermediateDirectories: true)
 
         // Write file to same directory (same case)
-        let destination = Destination(
+        let destination = try Destination(
             directory: existingDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "test.svg")!
+            file: XCTUnwrap(URL(string: "test.svg"))
         )
         let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
 
@@ -264,10 +264,10 @@ final class FileWriterTests: XCTestCase {
 
         // No existing directory - should just create new one
         let newDir = tempDirectory.appendingPathComponent("brand-new.imageset")
-        let destination = Destination(
+        let destination = try Destination(
             directory: newDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "test.svg")!
+            file: XCTUnwrap(URL(string: "test.svg"))
         )
         let file = FileContents(destination: destination, data: Data("<svg/>".utf8))
 
@@ -288,10 +288,10 @@ final class FileWriterTests: XCTestCase {
 
         // Create FileContents with dataFile
         let destDir = tempDirectory.appendingPathComponent("dest")
-        let destination = Destination(
+        let destination = try Destination(
             directory: destDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "copied.txt")!
+            file: XCTUnwrap(URL(string: "copied.txt"))
         )
         let file = FileContents(destination: destination, dataFile: sourceURL)
 

@@ -75,8 +75,8 @@ final class SVGElementOrderTests: XCTestCase {
         XCTAssertNotNil(redIndex)
         XCTAssertNotNil(groupIndex)
         XCTAssertNotNil(blueIndex)
-        XCTAssertTrue(redIndex! < groupIndex!, "Red path should come before group")
-        XCTAssertTrue(groupIndex! < blueIndex!, "Group should come before blue path")
+        XCTAssertTrue(try XCTUnwrap(redIndex) < groupIndex!, "Red path should come before group")
+        XCTAssertTrue(try XCTUnwrap(groupIndex) < blueIndex!, "Group should come before blue path")
     }
 
     // MARK: - Group Level Order
@@ -97,7 +97,7 @@ final class SVGElementOrderTests: XCTestCase {
         let parsed = try parser.parse(data, normalize: false)
 
         XCTAssertEqual(parsed.groups?.count, 1)
-        let group = parsed.groups![0]
+        let group = try XCTUnwrap(parsed.groups?[0])
         XCTAssertEqual(group.elements.count, 3, "Group should have 3 elements")
 
         if case let .path(path1) = group.elements[0] {
@@ -139,7 +139,7 @@ final class SVGElementOrderTests: XCTestCase {
 
         XCTAssertNotNil(blueIndex, "Blue background should be in output")
         XCTAssertNotNil(yellowIndex, "Yellow foreground should be in output")
-        XCTAssertTrue(blueIndex! < yellowIndex!, "Background should come before foreground")
+        XCTAssertTrue(try XCTUnwrap(blueIndex) < yellowIndex!, "Background should come before foreground")
     }
 
     func testElementsInDocumentOrder() throws {
@@ -163,6 +163,6 @@ final class SVGElementOrderTests: XCTestCase {
 
         XCTAssertNotNil(redIndex)
         XCTAssertNotNil(blueIndex)
-        XCTAssertTrue(redIndex! < blueIndex!, "Elements should maintain SVG document order")
+        XCTAssertTrue(try XCTUnwrap(redIndex) < blueIndex!, "Elements should maintain SVG document order")
     }
 }

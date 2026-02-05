@@ -4,7 +4,7 @@ import XCTest
 final class BatchExecutorTests: XCTestCase {
     // MARK: - Basic Execution Tests
 
-    func testExecuteSingleConfig() async throws {
+    func testExecuteSingleConfig() async {
         // Given: A single config
         let config = ConfigFile(url: URL(fileURLWithPath: "/test/config.yaml"), name: "config")
         let executor = BatchExecutor(maxParallel: 3)
@@ -29,7 +29,7 @@ final class BatchExecutorTests: XCTestCase {
         XCTAssertTrue(result.results.first?.isSuccess ?? false)
     }
 
-    func testExecuteMultipleConfigs() async throws {
+    func testExecuteMultipleConfigs() async {
         // Given: Multiple configs
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
@@ -60,7 +60,7 @@ final class BatchExecutorTests: XCTestCase {
 
     // MARK: - Parallelism Tests
 
-    func testRespectsMaxParallelism() async throws {
+    func testRespectsMaxParallelism() async {
         // Given: More configs than max parallelism
         let configs = (1 ... 10).map { i in
             ConfigFile(url: URL(fileURLWithPath: "/test/config\(i).yaml"), name: "config\(i)")
@@ -94,7 +94,7 @@ final class BatchExecutorTests: XCTestCase {
 
     // MARK: - Error Handling Tests
 
-    func testContinueOnErrorByDefault() async throws {
+    func testContinueOnErrorByDefault() async {
         // Given: Some configs that will fail
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/good1.yaml"), name: "good1"),
@@ -128,7 +128,7 @@ final class BatchExecutorTests: XCTestCase {
         XCTAssertEqual(result.failureCount, 1)
     }
 
-    func testFailFastStopsOnFirstError() async throws {
+    func testFailFastStopsOnFirstError() async {
         // Given: Some configs that will fail
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/good1.yaml"), name: "good1"),
@@ -163,7 +163,7 @@ final class BatchExecutorTests: XCTestCase {
 
     // MARK: - Result Aggregation Tests
 
-    func testBatchResultAggregatesStats() async throws {
+    func testBatchResultAggregatesStats() async {
         // Given: Configs with various stats
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
@@ -191,7 +191,7 @@ final class BatchExecutorTests: XCTestCase {
         XCTAssertEqual(result.totalStats.typography, 6)
     }
 
-    func testBatchResultTracksTimings() async throws {
+    func testBatchResultTracksTimings() async {
         // Given: A config
         let config = ConfigFile(url: URL(fileURLWithPath: "/test/config.yaml"), name: "config")
         let executor = BatchExecutor(maxParallel: 1)

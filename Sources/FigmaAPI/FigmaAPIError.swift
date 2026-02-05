@@ -20,6 +20,9 @@ public struct FigmaAPIError: LocalizedError, Sendable {
     /// Underlying URL error (for network failures).
     public let urlErrorCode: URLError.Code?
 
+    /// Underlying error message for unclassified errors.
+    public let underlyingMessage: String?
+
     /// Create a Figma API error.
     /// - Parameters:
     ///   - statusCode: HTTP status code.
@@ -27,18 +30,21 @@ public struct FigmaAPIError: LocalizedError, Sendable {
     ///   - attempt: Current retry attempt (1-based).
     ///   - maxAttempts: Maximum retry attempts.
     ///   - urlErrorCode: Underlying URL error code.
+    ///   - underlyingMessage: Message from the original error (for unclassified errors).
     public init(
         statusCode: Int,
         retryAfter: TimeInterval? = nil,
         attempt: Int? = nil,
         maxAttempts: Int? = nil,
-        urlErrorCode: URLError.Code? = nil
+        urlErrorCode: URLError.Code? = nil,
+        underlyingMessage: String? = nil
     ) {
         self.statusCode = statusCode
         self.retryAfter = retryAfter
         self.attempt = attempt
         self.maxAttempts = maxAttempts
         self.urlErrorCode = urlErrorCode
+        self.underlyingMessage = underlyingMessage
     }
 
     // MARK: - LocalizedError
@@ -62,6 +68,12 @@ public struct FigmaAPIError: LocalizedError, Sendable {
             return "Rate limited by Figma API. Waiting \(wait)s..."
         case 500 ... 504:
             return "Figma server error (\(statusCode)). This is usually temporary."
+        case 0:
+            // Unclassified error (not HTTP, not URLError)
+            if let msg = underlyingMessage {
+                return "Figma API error: \(msg)"
+            }
+            return "Unknown network error (no HTTP response received)"
         default:
             return "Figma API error: HTTP \(statusCode)"
         }

@@ -101,8 +101,7 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
         let env = makeEnvironment(templatesPath: output.templatesPath)
         let contents = try env.renderTemplate(name: "LabelStyle+extension.swift.stencil", context: ["styles": dict])
 
-        let labelStylesSwiftExtension = try makeFileContents(for: contents, url: labelStyleExtensionURL)
-        return labelStylesSwiftExtension
+        return try makeFileContents(for: contents, url: labelStyleExtensionURL)
     }
 
     private func makeLabel(textStyles: [TextStyle], labelsDirectory: URL, separateStyles: Bool) throws -> FileContents {

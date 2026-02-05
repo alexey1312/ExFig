@@ -47,7 +47,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         XCTAssertEqual(client.requestCount, 1, "Should fetch components via API")
     }
 
-    func testPreFetchInBatchModeFetchesAndStoresComponents() async throws {
+    func testPreFetchInBatchModeFetchesAndStoresComponents() async {
         // Given: Existing batch context with versions but no components
         let existingVersions = PreFetchedFileVersions(versions: ["fileA": makeMetadata(version: "v1")])
         let existingContext = BatchContext(versions: existingVersions)
@@ -83,7 +83,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         XCTAssertTrue(storedComponents?.hasComponents(for: "file123") ?? false)
     }
 
-    func testPreFetchSkipsWhenComponentsAlreadyAvailableInBatch() async throws {
+    func testPreFetchSkipsWhenComponentsAlreadyAvailableInBatch() async {
         // Given: Existing batch context already has components for required file
         let existingComponents = PreFetchedComponents(components: ["file123": [
             Component.make(nodeId: "1:1", name: "existing_icon", frameName: "Icons"),
@@ -112,7 +112,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         XCTAssertEqual(client.requestCount, 0, "No API calls should be made when components exist")
     }
 
-    func testPreFetchFetchesOnlyMissingComponents() async throws {
+    func testPreFetchFetchesOnlyMissingComponents() async {
         // Given: Existing batch context has components for some files but not all
         let existingComponents = PreFetchedComponents(components: ["fileA": [
             Component.make(nodeId: "1:1", name: "existing_icon", frameName: "Icons"),
@@ -170,7 +170,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         XCTAssertEqual(client.requestCount, 1)
     }
 
-    func testPreFetchComponentsSkipsInBatchModeWhenExists() async throws {
+    func testPreFetchComponentsSkipsInBatchModeWhenExists() async {
         // Given: Batch mode with existing components
         let existingComponents = PreFetchedComponents(components: ["file123": [
             Component.make(nodeId: "1:1", name: "existing_icon", frameName: "Icons"),

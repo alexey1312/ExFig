@@ -133,7 +133,7 @@ public enum BlendMode: String, Decodable, Sendable {
     case luminosity = "LUMINOSITY"
 }
 
-// https://www.figma.com/plugin-docs/api/Paint/
+/// https://www.figma.com/plugin-docs/api/Paint/
 public struct Paint: Decodable, Sendable {
     public let type: PaintType
     public let blendMode: BlendMode?

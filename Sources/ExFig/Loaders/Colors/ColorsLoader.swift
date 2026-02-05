@@ -104,14 +104,13 @@ final class ColorsLoader: Sendable {
     }
 
     private func filteredColors(_ colors: [Color], suffix: String) -> [Color] {
-        let filteredColors = colors
+        colors
             .filter { $0.name.hasSuffix(suffix) }
             .map { color -> Color in
                 var newColor = color
                 newColor.name = String(color.name.dropLast(suffix.count))
                 return newColor
             }
-        return filteredColors
     }
 
     private func loadColors(fileId: String) async throws -> [Color] {

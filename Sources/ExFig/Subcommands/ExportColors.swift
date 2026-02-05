@@ -29,7 +29,8 @@ extension ExFigCommand {
             [Optional] Name of the colors to export. For example \"background/default\" \
             to export single color, \"background/default, background/secondary\" to export several colors and \
             \"background/*\" to export all colors from the folder.
-            """)
+            """
+        )
         var filter: String?
 
         func run() async throws {

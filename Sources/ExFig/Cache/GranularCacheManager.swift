@@ -134,7 +134,7 @@ final class GranularCacheManager: Sendable {
         let batches = nodeIds.chunked(into: batchSize)
 
         // Fetch all batches in parallel with limited concurrency
-        let allNodes = try await withThrowingTaskGroup(
+        return try await withThrowingTaskGroup(
             of: [NodeId: Node].self
         ) { [self] group in
             for batch in batches {
@@ -150,7 +150,5 @@ final class GranularCacheManager: Sendable {
             }
             return results
         }
-
-        return allNodes
     }
 }

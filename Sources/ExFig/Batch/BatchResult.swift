@@ -116,7 +116,9 @@ struct GranularCacheStats: Sendable {
     let exported: Int
 
     /// Total nodes processed.
-    var total: Int { skipped + exported }
+    var total: Int {
+        skipped + exported
+    }
 
     /// Merges two stats, returning nil if both are nil.
     static func merge(_ lhs: GranularCacheStats?, _ rhs: GranularCacheStats?) -> GranularCacheStats? {

@@ -1,13 +1,14 @@
 import CustomDump
+import ExFigCore
 @testable import FigmaAPI
 import XCTest
 
 final class VariablesEndpointTests: XCTestCase {
     // MARK: - URL Construction
 
-    func testMakeRequestConstructsCorrectURL() {
+    func testMakeRequestConstructsCorrectURL() throws {
         let endpoint = VariablesEndpoint(fileId: "abc123")
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
@@ -106,5 +107,61 @@ final class VariablesEndpointTests: XCTestCase {
         let endpoint = VariablesEndpoint(fileId: "test")
 
         XCTAssertThrowsError(try endpoint.content(from: nil, with: invalidData))
+    }
+
+    func testJSONCodecDirectDecode() throws {
+        // Test decoding VariableCollectionValue - API uses camelCase
+        let collectionJson = """
+        {
+            "defaultModeId": "1:0",
+            "id": "VariableCollectionId:1:1",
+            "name": "Colors",
+            "modes": [
+              { "modeId": "1:0", "name": "Light" }
+            ],
+            "variableIds": ["id1"]
+        }
+        """
+        let collectionData = Data(collectionJson.utf8)
+
+        let collection = try JSONCodec.decode(VariableCollectionValue.self, from: collectionData)
+        XCTAssertEqual(collection.name, "Colors")
+    }
+
+    func testFoundationDecoderDirectDecode() throws {
+        // Test Foundation decoder with camelCase JSON (matching Figma API)
+        let json = """
+        {
+          "meta": {
+            "variableCollections": {
+              "VariableCollectionId:1:1": {
+                "defaultModeId": "1:0",
+                "id": "VariableCollectionId:1:1",
+                "name": "Colors",
+                "modes": [
+                  { "modeId": "1:0", "name": "Light" }
+                ],
+                "variableIds": ["id1"]
+              }
+            },
+            "variables": {
+              "VariableID:1:2": {
+                "id": "VariableID:1:2",
+                "name": "test",
+                "variableCollectionId": "VariableCollectionId:1:1",
+                "valuesByMode": {
+                  "1:0": { "r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0 }
+                },
+                "description": "Test"
+              }
+            }
+          }
+        }
+        """
+        let data = Data(json.utf8)
+        let decoder = JSONDecoder()
+
+        let response = try decoder.decode(VariablesResponse.self, from: data)
+        XCTAssertEqual(response.meta.variableCollections.count, 1)
     }
 }

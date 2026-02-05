@@ -1,15 +1,15 @@
 {
   "meta": {
-    "variable_collections": {
+    "variableCollections": {
       "VariableCollectionId:1:1": {
-        "default_mode_id": "1:0",
+        "defaultModeId": "1:0",
         "id": "VariableCollectionId:1:1",
         "name": "Colors",
         "modes": [
-          { "mode_id": "1:0", "name": "Light" },
-          { "mode_id": "1:1", "name": "Dark" }
+          { "modeId": "1:0", "name": "Light" },
+          { "modeId": "1:1", "name": "Dark" }
         ],
-        "variable_ids": [
+        "variableIds": [
           "VariableID:1:2",
           "VariableID:1:3"
         ]
@@ -19,8 +19,8 @@
       "VariableID:1:2": {
         "id": "VariableID:1:2",
         "name": "primary/background",
-        "variable_collection_id": "VariableCollectionId:1:1",
-        "values_by_mode": {
+        "variableCollectionId": "VariableCollectionId:1:1",
+        "valuesByMode": {
           "1:0": { "r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0 },
           "1:1": { "r": 0.1, "g": 0.1, "b": 0.1, "a": 1.0 }
         },
@@ -29,8 +29,8 @@
       "VariableID:1:3": {
         "id": "VariableID:1:3",
         "name": "primary/text",
-        "variable_collection_id": "VariableCollectionId:1:1",
-        "values_by_mode": {
+        "variableCollectionId": "VariableCollectionId:1:1",
+        "valuesByMode": {
           "1:0": { "r": 0.0, "g": 0.0, "b": 0.0, "a": 1.0 },
           "1:1": { "r": 1.0, "g": 1.0, "b": 1.0, "a": 1.0 }
         },

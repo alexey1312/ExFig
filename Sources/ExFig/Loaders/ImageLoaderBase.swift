@@ -401,11 +401,12 @@ class ImageLoaderBase: @unchecked Sendable {
                 logger.warning(
                     """
                     Found a component with empty name.
-                    Page name: \(component.containingFrame.pageName)
+                    Page name: \(component.containingFrame.pageName ?? "nil")
                     Frame: \(component.containingFrame.name ?? "nil")
                     Description: \(component.description ?? "nil")
                     The component wont be exported. Fix component name in the Figma file and try again.
-                    """)
+                    """
+                )
                 return false
             }
             return true
@@ -785,7 +786,8 @@ class ImageLoaderBase: @unchecked Sendable {
 extension String {
     /// Cached regex for parsing idiom suffix (e.g., "icon~ipad" -> name: "icon", idiom: "ipad")
     private static let idiomRegex: NSRegularExpression? = try? NSRegularExpression(
-        pattern: "(.*)~(.*)$")
+        pattern: "(.*)~(.*)$"
+    )
 
     func parseNameAndIdiom(platform: Platform) -> (name: String, idiom: String) {
         switch platform {

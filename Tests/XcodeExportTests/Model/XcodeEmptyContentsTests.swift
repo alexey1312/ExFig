@@ -66,13 +66,13 @@ final class XcodeEmptyContentsTests: XCTestCase {
 
     // MARK: - String Representation Tests
 
-    func testDataAsString() {
+    func testDataAsString() throws {
         let emptyContents = XcodeEmptyContents()
 
         let string = String(data: emptyContents.data, encoding: .utf8)
 
         XCTAssertNotNil(string)
-        XCTAssertTrue(string!.contains("xcode"))
-        XCTAssertTrue(string!.contains("version"))
+        XCTAssertTrue(try XCTUnwrap(string?.contains("xcode")))
+        XCTAssertTrue(try XCTUnwrap(string?.contains("version")))
     }
 }

@@ -107,9 +107,13 @@ final class WebIconsExporterTests: XCTestCase {
         let exporter = WebIconsExporter(output: output, generateReactComponents: true)
 
         // Create multiple icons
-        let icon2Light = ImagePack(
+        let icon2Light = try ImagePack(
             name: "ic_remove",
-            images: [Image(name: "ic_remove", url: URL(string: "https://example.com/remove.svg")!, format: "svg")]
+            images: [Image(
+                name: "ic_remove",
+                url: XCTUnwrap(URL(string: "https://example.com/remove.svg")),
+                format: "svg"
+            )]
         )
         let iconPair2 = AssetPair<ImagePack>(light: icon2Light, dark: nil)
 

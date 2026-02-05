@@ -12,7 +12,7 @@ struct SVGFillOpacityTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         #expect(parsed.paths.count == 1)
         #expect(parsed.paths[0].fillOpacity == 0.5)
@@ -27,7 +27,7 @@ struct SVGFillOpacityTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         #expect(parsed.paths.count == 1)
         #expect(parsed.paths[0].fillOpacity == 0.3)
@@ -42,7 +42,7 @@ struct SVGFillOpacityTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         let generator = VectorDrawableXMLGenerator()
         let xml = generator.generate(from: parsed)
@@ -59,7 +59,7 @@ struct SVGFillOpacityTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         let config = ImageVectorGenerator.Config(packageName: "com.test", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
@@ -77,7 +77,7 @@ struct SVGFillOpacityTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         // Path with fill="none" should still parse fill-opacity
         #expect(parsed.paths[0].fillOpacity == 0.5)
@@ -94,7 +94,7 @@ struct SVGFillOpacityTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         // Check that the circle inherits fill-opacity from the group
         #expect(parsed.groups?.first?.paths.first?.fillOpacity == 0.7)

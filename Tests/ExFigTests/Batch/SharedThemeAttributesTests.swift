@@ -110,21 +110,21 @@ final class SharedThemeAttributesTests: XCTestCase {
         XCTAssertTrue(content.contains("<!-- FIGMA COLORS MARKER END: Theme.B -->"))
 
         // Verify Theme.A content is between Theme.A markers
-        let rangeA = content.range(of: "<!-- FIGMA COLORS MARKER START: Theme.A -->")!
-        let rangeEndA = content.range(of: "<!-- FIGMA COLORS MARKER END: Theme.A -->")!
+        let rangeA = try XCTUnwrap(content.range(of: "<!-- FIGMA COLORS MARKER START: Theme.A -->"))
+        let rangeEndA = try XCTUnwrap(content.range(of: "<!-- FIGMA COLORS MARKER END: Theme.A -->"))
         let sectionA = String(content[rangeA.upperBound ..< rangeEndA.lowerBound])
         XCTAssertTrue(sectionA.contains("colorPrimaryA"))
         XCTAssertFalse(sectionA.contains("colorPrimaryB"))
 
         // Verify Theme.B content is between Theme.B markers
-        let rangeB = content.range(of: "<!-- FIGMA COLORS MARKER START: Theme.B -->")!
-        let rangeEndB = content.range(of: "<!-- FIGMA COLORS MARKER END: Theme.B -->")!
+        let rangeB = try XCTUnwrap(content.range(of: "<!-- FIGMA COLORS MARKER START: Theme.B -->"))
+        let rangeEndB = try XCTUnwrap(content.range(of: "<!-- FIGMA COLORS MARKER END: Theme.B -->"))
         let sectionB = String(content[rangeB.upperBound ..< rangeEndB.lowerBound])
         XCTAssertTrue(sectionB.contains("colorPrimaryB"))
         XCTAssertFalse(sectionB.contains("colorPrimaryA"))
     }
 
-    func testTaskLocalStorageIsolation() async {
+    func testTaskLocalStorageIsolation() {
         // Test that TaskLocal storage is properly isolated via BatchSharedState
         let collector = SharedThemeAttributesCollector()
         let batchState = BatchSharedState(

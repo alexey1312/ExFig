@@ -81,8 +81,7 @@ actor CheckpointTracker {
             return nil
         }
 
-        let tracker = CheckpointTracker(existing: existing, directory: directory, assetType: assetType)
-        return tracker
+        return CheckpointTracker(existing: existing, directory: directory, assetType: assetType)
     }
 
     /// Private init for loading existing checkpoint.

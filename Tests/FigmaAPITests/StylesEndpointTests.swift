@@ -5,9 +5,9 @@ import XCTest
 final class StylesEndpointTests: XCTestCase {
     // MARK: - URL Construction
 
-    func testMakeRequestConstructsCorrectURL() {
+    func testMakeRequestConstructsCorrectURL() throws {
         let endpoint = StylesEndpoint(fileId: "abc123")
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
@@ -17,9 +17,9 @@ final class StylesEndpointTests: XCTestCase {
         )
     }
 
-    func testMakeRequestWithSpecialCharactersInFileId() {
+    func testMakeRequestWithSpecialCharactersInFileId() throws {
         let endpoint = StylesEndpoint(fileId: "file-with-dashes")
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 

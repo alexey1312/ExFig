@@ -1,3 +1,4 @@
+import ExFigCore
 import Foundation
 
 /// Checkpoint for resuming interrupted exports.
@@ -146,7 +147,7 @@ public extension ExportCheckpoint {
         }
 
         let data = try Data(contentsOf: fileURL)
-        let decoder = JSONDecoder()
+        var decoder = JSONCodec.makeDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return try decoder.decode(ExportCheckpoint.self, from: data)
     }
@@ -156,9 +157,9 @@ public extension ExportCheckpoint {
     func save(to directory: URL) throws {
         let fileURL = directory.appendingPathComponent(Self.fileName)
 
-        let encoder = JSONEncoder()
+        var encoder = JSONCodec.makeEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.writeOptions = [.prettyPrinted]
 
         let data = try encoder.encode(self)
         try data.write(to: fileURL, options: .atomic)

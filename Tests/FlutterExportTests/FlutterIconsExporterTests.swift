@@ -110,9 +110,9 @@ final class FlutterIconsExporterTests: XCTestCase {
     }
 
     func testExportIconsCustomClassName() throws {
-        let customOutput = FlutterOutput(
-            outputDirectory: URL(string: "~/lib/generated/")!,
-            iconsAssetsDirectory: URL(string: "assets/icons")!,
+        let customOutput = try FlutterOutput(
+            outputDirectory: XCTUnwrap(URL(string: "~/lib/generated/")),
+            iconsAssetsDirectory: XCTUnwrap(URL(string: "assets/icons")),
             templatesPath: nil,
             iconsClassName: "MyIcons"
         )

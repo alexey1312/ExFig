@@ -5,10 +5,10 @@ import XCTest
 final class ImageEndpointTests: XCTestCase {
     // MARK: - URL Construction
 
-    func testMakeRequestWithPNGParams() {
+    func testMakeRequestWithPNGParams() throws {
         let params = PNGParams(scale: 2.0)
         let endpoint = ImageEndpoint(fileId: "abc123", nodeIds: ["1:2", "1:3"], params: params)
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""
@@ -19,13 +19,13 @@ final class ImageEndpointTests: XCTestCase {
         XCTAssertTrue(url.contains("ids=1:2,1:3"))
     }
 
-    func testMakeRequestWithSVGParams() {
+    func testMakeRequestWithSVGParams() throws {
         let params = SVGParams()
         params.svgIncludeId = true
         params.svgSimplifyStroke = true
 
         let endpoint = ImageEndpoint(fileId: "file123", nodeIds: ["10:1"], params: params)
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""
@@ -35,10 +35,10 @@ final class ImageEndpointTests: XCTestCase {
         XCTAssertTrue(url.contains("svg_simplify_stroke=true"))
     }
 
-    func testMakeRequestWithPDFParams() {
+    func testMakeRequestWithPDFParams() throws {
         let params = PDFParams()
         let endpoint = ImageEndpoint(fileId: "file123", nodeIds: ["5:1"], params: params)
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""
@@ -47,10 +47,10 @@ final class ImageEndpointTests: XCTestCase {
         XCTAssertFalse(url.contains("scale="))
     }
 
-    func testMakeRequestIncludesUseAbsoluteBounds() {
+    func testMakeRequestIncludesUseAbsoluteBounds() throws {
         let params = PNGParams(scale: 1.0)
         let endpoint = ImageEndpoint(fileId: "file123", nodeIds: ["1:1"], params: params)
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""

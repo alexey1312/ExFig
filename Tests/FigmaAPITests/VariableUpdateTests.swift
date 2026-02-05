@@ -26,9 +26,9 @@ final class VariableUpdateTests: XCTestCase {
         let json = String(data: data, encoding: .utf8)
 
         XCTAssertNotNil(json)
-        XCTAssertTrue(json!.contains("\"action\":\"UPDATE\""))
-        XCTAssertTrue(json!.contains("\"id\":\"VariableID:123:456\""))
-        XCTAssertTrue(json!.contains("\"iOS\":\"Color.primary\""))
+        XCTAssertTrue(try XCTUnwrap(json?.contains("\"action\":\"UPDATE\"")))
+        XCTAssertTrue(try XCTUnwrap(json?.contains("\"id\":\"VariableID:123:456\"")))
+        XCTAssertTrue(try XCTUnwrap(json?.contains("\"iOS\":\"Color.primary\"")))
     }
 
     func testVariableUpdateDecodesFromJSON() throws {
@@ -84,8 +84,8 @@ final class VariableUpdateTests: XCTestCase {
         let json = String(data: data, encoding: .utf8)
 
         XCTAssertNotNil(json)
-        XCTAssertTrue(json!.contains("\"iOS\":\"Color.primary\""))
-        XCTAssertTrue(json!.contains("\"ANDROID\":\"R.color.primary\""))
+        XCTAssertTrue(try XCTUnwrap(json?.contains("\"iOS\":\"Color.primary\"")))
+        XCTAssertTrue(try XCTUnwrap(json?.contains("\"ANDROID\":\"R.color.primary\"")))
     }
 
     func testVariableCodeSyntaxDecodesFromJSON() throws {

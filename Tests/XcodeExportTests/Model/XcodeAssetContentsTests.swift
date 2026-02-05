@@ -27,11 +27,11 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"red\" : \"1.000\""))
-        XCTAssertTrue(jsonString!.contains("\"green\" : \"0.000\""))
-        XCTAssertTrue(jsonString!.contains("\"blue\" : \"0.000\""))
-        XCTAssertTrue(jsonString!.contains("\"alpha\" : \"1.000\""))
-        XCTAssertTrue(jsonString!.contains("\"color-space\" : \"srgb\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"red\" : \"1.000\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"green\" : \"0.000\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"blue\" : \"0.000\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"alpha\" : \"1.000\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"color-space\" : \"srgb\"")))
     }
 
     func testColorContentsWithDarkAppearance() throws {
@@ -51,8 +51,8 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"appearance\" : \"luminosity\""))
-        XCTAssertTrue(jsonString!.contains("\"value\" : \"dark\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"appearance\" : \"luminosity\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"value\" : \"dark\"")))
     }
 
     func testColorContentsWithHighContrastAppearance() throws {
@@ -72,8 +72,8 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"appearance\" : \"contrast\""))
-        XCTAssertTrue(jsonString!.contains("\"value\" : \"high\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"appearance\" : \"contrast\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"value\" : \"high\"")))
     }
 
     func testColorContentsWithMultipleAppearances() throws {
@@ -93,8 +93,8 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("luminosity"))
-        XCTAssertTrue(jsonString!.contains("contrast"))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("luminosity")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("contrast")))
     }
 
     // MARK: - Image Contents Tests
@@ -113,8 +113,8 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"filename\" : \"icon.pdf\""))
-        XCTAssertTrue(jsonString!.contains("\"idiom\" : \"universal\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"filename\" : \"icon.pdf\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"idiom\" : \"universal\"")))
     }
 
     func testImageContentsWithScale() throws {
@@ -131,7 +131,7 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"scale\" : \"2x\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"scale\" : \"2x\"")))
     }
 
     func testImageContentsWithRTL() throws {
@@ -148,7 +148,7 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"language-direction\" : \"left-to-right\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"language-direction\" : \"left-to-right\"")))
     }
 
     func testImageContentsWithDarkAppearance() throws {
@@ -165,8 +165,8 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"appearance\" : \"luminosity\""))
-        XCTAssertTrue(jsonString!.contains("\"value\" : \"dark\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"appearance\" : \"luminosity\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"value\" : \"dark\"")))
     }
 
     func testImageContentsWithMultipleIdioms() throws {
@@ -190,8 +190,8 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"idiom\" : \"iphone\""))
-        XCTAssertTrue(jsonString!.contains("\"idiom\" : \"ipad\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"idiom\" : \"iphone\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"idiom\" : \"ipad\"")))
     }
 
     // MARK: - Properties Tests
@@ -214,7 +214,7 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"preserves-vector-representation\" : true"))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"preserves-vector-representation\" : true")))
     }
 
     func testImageContentsWithTemplateRenderMode() throws {
@@ -235,7 +235,7 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"template-rendering-intent\" : \"template\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"template-rendering-intent\" : \"template\"")))
     }
 
     func testImageContentsWithOriginalRenderMode() throws {
@@ -256,7 +256,7 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"template-rendering-intent\" : \"original\""))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"template-rendering-intent\" : \"original\"")))
     }
 
     func testPropertiesNilWhenBothNil() {
@@ -286,8 +286,8 @@ final class XcodeAssetContentsTests: XCTestCase {
         let jsonString = String(data: json, encoding: .utf8)
 
         XCTAssertNotNil(jsonString)
-        XCTAssertTrue(jsonString!.contains("\"author\" : \"xcode\""))
-        XCTAssertTrue(jsonString!.contains("\"version\" : 1"))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"author\" : \"xcode\"")))
+        XCTAssertTrue(try XCTUnwrap(jsonString?.contains("\"version\" : 1")))
     }
 
     // MARK: - Idiom Tests

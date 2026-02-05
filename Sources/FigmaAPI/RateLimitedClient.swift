@@ -94,7 +94,12 @@ public final class RateLimitedClient: Client, @unchecked Sendable {
         if let urlError = error as? URLError {
             return FigmaAPIError.from(urlError)
         }
-        // For other errors, wrap as generic error
-        return FigmaAPIError(statusCode: 0)
+        // For other errors, preserve the original error message
+        // Use bestDescription to get proper error message from CustomStringConvertible
+        // (e.g., YYJSONError which doesn't implement LocalizedError)
+        return FigmaAPIError(
+            statusCode: 0,
+            underlyingMessage: error.bestDescription
+        )
     }
 }

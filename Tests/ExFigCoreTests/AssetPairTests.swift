@@ -61,9 +61,9 @@ final class AssetPairTests: XCTestCase {
 
     // MARK: - Generic Type Support
 
-    func testWithImagePack() {
+    func testWithImagePack() throws {
         // swiftlint:disable:next force_unwrapping
-        let testURL = URL(string: "https://figma.com/image.png")!
+        let testURL = try XCTUnwrap(URL(string: "https://figma.com/image.png"))
         let lightImage = Image(name: "icon", url: testURL, format: "png")
         let darkImage = Image(name: "icon", url: testURL, format: "png")
 

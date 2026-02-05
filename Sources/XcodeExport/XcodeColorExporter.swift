@@ -224,9 +224,7 @@ public final class XcodeColorExporter: XcodeExporterBase {
     }
 
     private func makeXcodeAssetFileContents(contents: XcodeAssetContents, directory: URL) throws -> FileContents {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let data = try encoder.encode(contents)
+        let data = try JSONCodec.encodePrettySorted(contents)
         // swiftlint:disable:next force_unwrapping
         let fileURL = URL(string: "Contents.json")!
         return FileContents(

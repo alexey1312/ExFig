@@ -91,9 +91,13 @@ final class WebImagesExporterTests: XCTestCase {
         let exporter = WebImagesExporter(output: output, generateReactComponents: true)
 
         // Create multiple images
-        let image2Light = ImagePack(
+        let image2Light = try ImagePack(
             name: "promo_card",
-            images: [Image(name: "promo_card", url: URL(string: "https://example.com/promo.svg")!, format: "svg")]
+            images: [Image(
+                name: "promo_card",
+                url: XCTUnwrap(URL(string: "https://example.com/promo.svg")),
+                format: "svg"
+            )]
         )
         let imagePair2 = AssetPair<ImagePack>(light: image2Light, dark: nil)
 

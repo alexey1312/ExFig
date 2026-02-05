@@ -175,9 +175,11 @@ extension ExFigCommand.ExportIcons {
 
         // Create empty temp directory
         let tempDirectoryLightURL = FileManager.default.temporaryDirectory.appendingPathComponent(
-            UUID().uuidString)
+            UUID().uuidString
+        )
         let tempDirectoryDarkURL = FileManager.default.temporaryDirectory.appendingPathComponent(
-            UUID().uuidString)
+            UUID().uuidString
+        )
 
         // 3. Download SVG files to user's temp directory
         let remoteFiles = icons.flatMap { asset -> [FileContents] in
@@ -224,7 +226,8 @@ extension ExFigCommand.ExportIcons {
         let rtlFileNames = Set(
             remoteFiles.filter(\.isRTL).map {
                 $0.destination.file.deletingPathExtension().lastPathComponent
-            })
+            }
+        )
 
         // Create converter with config options (CLI flag overrides entry, entry overrides common)
         let strictValidation = strictPathValidationOverride
@@ -252,12 +255,14 @@ extension ExFigCommand.ExportIcons {
         let lightDirectory = URL(
             fileURLWithPath: android.mainRes
                 .appendingPathComponent(entry.output)
-                .appendingPathComponent("drawable", isDirectory: true).path)
+                .appendingPathComponent("drawable", isDirectory: true).path
+        )
 
         let darkDirectory = URL(
             fileURLWithPath: android.mainRes
                 .appendingPathComponent(entry.output)
-                .appendingPathComponent("drawable-night", isDirectory: true).path)
+                .appendingPathComponent("drawable-night", isDirectory: true).path
+        )
 
         if filter == nil, granularCacheManager == nil {
             // Clear output directory
@@ -298,7 +303,8 @@ extension ExFigCommand.ExportIcons {
                 !fileContents.dark
             }.map { fileContents -> String in
                 fileContents.destination.file.deletingPathExtension().lastPathComponent
-            })
+            }
+        )
         // Process allNames with the same transformations applied to icons
         let allIconNames =
             granularCacheManager != nil
@@ -413,7 +419,8 @@ extension ExFigCommand.ExportIcons {
 
         // Create temp directory for SVG files
         let tempDirectoryURL = FileManager.default.temporaryDirectory.appendingPathComponent(
-            UUID().uuidString)
+            UUID().uuidString
+        )
 
         // 3. Download SVG files to temp directory
         let remoteFiles = icons.flatMap { asset -> [FileContents] in

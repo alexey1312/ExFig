@@ -5,9 +5,9 @@ import XCTest
 final class XcodeImagesOutputTests: XCTestCase {
     // MARK: - Initialization Tests
 
-    func testInitWithRequiredParameters() {
+    func testInitWithRequiredParameters() throws {
         // swiftlint:disable:next force_unwrapping
-        let assetsFolderURL = URL(string: "~/Assets.xcassets/Images")!
+        let assetsFolderURL = try XCTUnwrap(URL(string: "~/Assets.xcassets/Images"))
 
         let output = XcodeImagesOutput(
             assetsFolderURL: assetsFolderURL,
@@ -25,15 +25,15 @@ final class XcodeImagesOutputTests: XCTestCase {
         XCTAssertNil(output.swiftUIImageExtensionURL)
     }
 
-    func testInitWithAllParameters() {
+    func testInitWithAllParameters() throws {
         // swiftlint:disable:next force_unwrapping
-        let assetsFolderURL = URL(string: "~/Assets.xcassets/Images")!
+        let assetsFolderURL = try XCTUnwrap(URL(string: "~/Assets.xcassets/Images"))
         // swiftlint:disable:next force_unwrapping
-        let uiKitURL = URL(string: "~/UIImage+extension.swift")!
+        let uiKitURL = try XCTUnwrap(URL(string: "~/UIImage+extension.swift"))
         // swiftlint:disable:next force_unwrapping
-        let swiftUIURL = URL(string: "~/Image+extension.swift")!
+        let swiftUIURL = try XCTUnwrap(URL(string: "~/Image+extension.swift"))
         // swiftlint:disable:next force_unwrapping
-        let templatesURL = URL(string: "~/Templates")!
+        let templatesURL = try XCTUnwrap(URL(string: "~/Templates"))
 
         let output = XcodeImagesOutput(
             assetsFolderURL: assetsFolderURL,
@@ -60,10 +60,10 @@ final class XcodeImagesOutputTests: XCTestCase {
 
     // MARK: - Default Values Tests
 
-    func testDefaultAssetsInSwiftPackage() {
+    func testDefaultAssetsInSwiftPackage() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             assetsInSwiftPackage: nil
         )
@@ -71,10 +71,10 @@ final class XcodeImagesOutputTests: XCTestCase {
         XCTAssertFalse(output.assetsInSwiftPackage)
     }
 
-    func testDefaultAddObjcAttribute() {
+    func testDefaultAddObjcAttribute() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             addObjcAttribute: nil
         )
@@ -84,10 +84,10 @@ final class XcodeImagesOutputTests: XCTestCase {
 
     // MARK: - Bundle Configuration Tests
 
-    func testMainBundleConfiguration() {
+    func testMainBundleConfiguration() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             assetsInSwiftPackage: false
         )
@@ -96,10 +96,10 @@ final class XcodeImagesOutputTests: XCTestCase {
         XCTAssertFalse(output.assetsInSwiftPackage)
     }
 
-    func testSwiftPackageBundleConfiguration() {
+    func testSwiftPackageBundleConfiguration() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: true
         )
@@ -108,10 +108,10 @@ final class XcodeImagesOutputTests: XCTestCase {
         XCTAssertTrue(output.assetsInSwiftPackage)
     }
 
-    func testSeparateBundleConfiguration() {
+    func testSeparateBundleConfiguration() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: false
         )
@@ -122,10 +122,10 @@ final class XcodeImagesOutputTests: XCTestCase {
 
     // MARK: - Resource Bundle Names Tests
 
-    func testEmptyResourceBundleNames() {
+    func testEmptyResourceBundleNames() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             resourceBundleNames: []
         )
@@ -134,10 +134,10 @@ final class XcodeImagesOutputTests: XCTestCase {
         XCTAssertTrue(output.resourceBundleNames?.isEmpty ?? false)
     }
 
-    func testMultipleResourceBundleNames() {
+    func testMultipleResourceBundleNames() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             resourceBundleNames: ["Bundle1", "Bundle2", "Bundle3"]
         )
@@ -147,10 +147,10 @@ final class XcodeImagesOutputTests: XCTestCase {
 
     // MARK: - Preserves Vector Representation Tests
 
-    func testPreservesVectorRepresentationPatterns() {
+    func testPreservesVectorRepresentationPatterns() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             preservesVectorRepresentation: ["ic24*", "tabBar*", "navBar*"]
         )
@@ -159,10 +159,10 @@ final class XcodeImagesOutputTests: XCTestCase {
         XCTAssertTrue(output.preservesVectorRepresentation?.contains("ic24*") ?? false)
     }
 
-    func testPreservesVectorRepresentationWildcard() {
+    func testPreservesVectorRepresentationWildcard() throws {
         // swiftlint:disable:next force_unwrapping
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             preservesVectorRepresentation: ["*"]
         )

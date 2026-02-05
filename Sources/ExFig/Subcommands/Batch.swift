@@ -1,5 +1,6 @@
 // swiftlint:disable file_length
 import ArgumentParser
+import ExFigCore
 import FigmaAPI
 import Foundation
 
@@ -46,7 +47,7 @@ extension ExFigCommand {
         @Option(name: .long, help: "Path to write JSON report")
         var report: String?
 
-        // Cache options
+        /// Cache options
         @Flag(name: .long, help: "Enable version tracking cache (skip export if unchanged)")
         var cache: Bool = false
 
@@ -65,11 +66,11 @@ extension ExFigCommand {
         )
         var experimentalGranularCache: Bool = false
 
-        // Download concurrency
+        /// Download concurrency
         @Option(name: .long, help: "Maximum concurrent CDN downloads")
         var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
 
-        // Connection options
+        /// Connection options
         @Option(name: .long, help: "Figma API request timeout in seconds (overrides config)")
         var timeout: Int?
 
@@ -410,9 +411,12 @@ extension ExFigCommand {
         }
 
         /// Prepares shared granular cache for batch mode.
+        /// Creates cache when --cache is enabled (for file versions), granular node hashes only when
+        /// --experimental-granular-cache.
         private func prepareSharedGranularCache() -> SharedGranularCache? {
-            // Only enable if granular cache is requested and cache is enabled
-            guard experimentalGranularCache, cache, !noCache else { return nil }
+            // Create cache when --cache is enabled (for file versions tracking)
+            // Node hashes are only used when --experimental-granular-cache is also set
+            guard cache, !noCache else { return nil }
 
             let resolvedCachePath = ImageTrackingCache.resolvePath(customPath: cachePath)
             var cacheData = ImageTrackingCache.load(from: resolvedCachePath)
@@ -497,20 +501,28 @@ extension ExFigCommand {
                     )
                 }
 
-                for (fileId, hashes) in success.stats.computedNodeHashes {
-                    let nodeHashes = Dictionary(uniqueKeysWithValues: hashes.map { ($0.key, $0.value) })
-                    updatedCache.updateNodeHashes(fileId: fileId, hashes: nodeHashes)
+                // Node hashes are only saved when --experimental-granular-cache is enabled
+                if experimentalGranularCache {
+                    for (fileId, hashes) in success.stats.computedNodeHashes {
+                        let nodeHashes = Dictionary(uniqueKeysWithValues: hashes.map { ($0.key, $0.value) })
+                        updatedCache.updateNodeHashes(fileId: fileId, hashes: nodeHashes)
+                    }
                 }
             }
 
             do {
                 try updatedCache.save(to: sharedCache.cachePath)
                 if globalOptions.verbose {
-                    let totalHashes = result.totalStats.computedNodeHashes.values.reduce(0) { $0 + $1.count }
-                    ui.info("Granular cache saved: \(totalHashes) node hashes")
+                    let fileCount = updatedCache.files.count
+                    if experimentalGranularCache {
+                        let totalHashes = result.totalStats.computedNodeHashes.values.reduce(0) { $0 + $1.count }
+                        ui.info("Cache saved: \(fileCount) file versions, \(totalHashes) node hashes")
+                    } else {
+                        ui.info("Cache saved: \(fileCount) file versions")
+                    }
                 }
             } catch {
-                ui.warning("Failed to save granular cache: \(error.localizedDescription)")
+                ui.warning("Failed to save cache: \(error.localizedDescription)")
             }
         }
 
@@ -781,9 +793,7 @@ extension ExFigCommand {
                 }
             )
 
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            let data = try encoder.encode(report)
+            let data = try JSONCodec.encodePrettySorted(report)
 
             let url = URL(fileURLWithPath: path)
             try data.write(to: url)

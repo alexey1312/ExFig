@@ -346,12 +346,12 @@ final class SVGColorTests: XCTestCase {
         XCTAssertEqual(color?.blue, 0)
     }
 
-    func testParseHex8() {
+    func testParseHex8() throws {
         let color = SVGColor.parse("#FF000080")
         XCTAssertEqual(color?.red, 255)
         XCTAssertEqual(color?.green, 0)
         XCTAssertEqual(color?.blue, 0)
-        XCTAssertEqual(color!.alpha, 128.0 / 255.0, accuracy: 0.01)
+        XCTAssertEqual(try XCTUnwrap(color?.alpha), 128.0 / 255.0, accuracy: 0.01)
     }
 
     // MARK: - RGB Color Parsing

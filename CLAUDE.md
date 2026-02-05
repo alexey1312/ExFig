@@ -94,6 +94,7 @@ and Flutter projects.
 ./bin/mise run format               # Format all (Swift + Markdown)
 ./bin/mise run format:swift         # Format Swift only
 ./bin/mise run format:md            # Format Markdown only
+./bin/mise run format-check         # Check formatting (CI) - fix with format:swift
 ./bin/mise run lint                 # SwiftLint + actionlint
 
 # Docs & Coverage
@@ -190,22 +191,23 @@ Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after 
 
 ## Dependencies
 
-| Package               | Version | Purpose                    |
-| --------------------- | ------- | -------------------------- |
-| swift-argument-parser | 1.5.0+  | CLI framework              |
-| swift-collections     | 1.2.x   | Ordered collections        |
-| Yams                  | 5.3.0+  | YAML parsing               |
-| Stencil               | 0.15.1+ | Template engine            |
-| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions   |
-| XcodeProj             | 8.27.0+ | Xcode project manipulation |
-| swift-log             | 1.6.0+  | Logging                    |
-| Rainbow               | 4.2.0+  | Terminal colors            |
-| libwebp               | 1.4.1+  | WebP encoding              |
-| libpng                | 1.6.45+ | PNG decoding               |
-| swift-custom-dump     | 1.3.0+  | Test assertions            |
-| Noora                 | 0.54.0+ | Terminal UI design system  |
-| swift-resvg           | 0.45.1  | SVG parsing/rendering      |
-| swift-docc-plugin     | 1.4.5+  | DocC documentation         |
+| Package               | Version | Purpose                     |
+| --------------------- | ------- | --------------------------- |
+| swift-argument-parser | 1.5.0+  | CLI framework               |
+| swift-collections     | 1.2.x   | Ordered collections         |
+| Yams                  | 5.3.0+  | YAML parsing                |
+| Stencil               | 0.15.1+ | Template engine             |
+| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions    |
+| XcodeProj             | 8.27.0+ | Xcode project manipulation  |
+| swift-log             | 1.6.0+  | Logging                     |
+| Rainbow               | 4.2.0+  | Terminal colors             |
+| libwebp               | 1.4.1+  | WebP encoding               |
+| libpng                | 1.6.45+ | PNG decoding                |
+| swift-custom-dump     | 1.3.0+  | Test assertions             |
+| Noora                 | 0.54.0+ | Terminal UI design system   |
+| swift-resvg           | 0.45.1  | SVG parsing/rendering       |
+| swift-docc-plugin     | 1.4.5+  | DocC documentation          |
+| swift-yyjson          | 0.4.0+  | High-performance JSON codec |
 
 ## Troubleshooting
 

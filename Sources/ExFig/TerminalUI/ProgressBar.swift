@@ -28,7 +28,7 @@ final class ProgressBar: @unchecked Sendable {
     private let useColors: Bool
     private let useAnimations: Bool
     private let isSilent: Bool
-    // Timer is not Sendable, so we keep it separate and only access from renderQueue
+    /// Timer is not Sendable, so we keep it separate and only access from renderQueue
     private var timer: DispatchSourceTimer?
 
     private var current: Int {

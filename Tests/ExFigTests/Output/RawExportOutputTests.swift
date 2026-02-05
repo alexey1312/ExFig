@@ -7,7 +7,7 @@ import XCTest
 final class RawExportOutputTests: XCTestCase {
     // MARK: - Metadata
 
-    func testMetadataContainsSourceInfo() throws {
+    func testMetadataContainsSourceInfo() {
         let metadata = RawExportMetadata(
             name: "Design System",
             fileId: "abc123",
@@ -41,7 +41,7 @@ final class RawExportOutputTests: XCTestCase {
 
     // MARK: - RawExportOutput
 
-    func testRawExportOutputStructure() throws {
+    func testRawExportOutputStructure() {
         let metadata = RawExportMetadata(
             name: "Test File",
             fileId: "test123",
@@ -121,7 +121,7 @@ final class RawExportOutputTests: XCTestCase {
 
     // MARK: - Date Formatting
 
-    func testExportedAtUsesISO8601Format() throws {
+    func testExportedAtUsesISO8601Format() {
         let metadata = RawExportMetadata(
             name: "Test",
             fileId: "test",

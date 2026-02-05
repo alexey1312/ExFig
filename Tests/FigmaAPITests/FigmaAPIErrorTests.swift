@@ -197,4 +197,31 @@ struct FigmaAPIErrorTests {
 
         #expect(apiError.errorDescription?.lowercased().contains("internet") == true)
     }
+
+    // MARK: - Unclassified Errors (HTTP 0)
+
+    @Test("HTTP 0 without underlying message shows generic message")
+    func unclassifiedErrorWithoutMessage() {
+        let error = FigmaAPIError(statusCode: 0)
+
+        #expect(error.errorDescription?.contains("Unknown network error") == true)
+    }
+
+    @Test("HTTP 0 with underlying message shows that message")
+    func unclassifiedErrorWithMessage() {
+        let error = FigmaAPIError(statusCode: 0, underlyingMessage: "File not found")
+
+        #expect(error.errorDescription == "Figma API error: File not found")
+    }
+
+    @Test("HTTP 0 preserves detailed error context")
+    func unclassifiedErrorPreservesContext() {
+        let error = FigmaAPIError(
+            statusCode: 0,
+            underlyingMessage: "JSON decoding failed: key 'nodes' not found"
+        )
+
+        #expect(error.errorDescription?.contains("JSON decoding failed") == true)
+        #expect(error.errorDescription?.contains("nodes") == true)
+    }
 }

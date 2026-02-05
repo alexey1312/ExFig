@@ -381,6 +381,48 @@ actor RetryAttemptTracker {
     }
 }
 
+@Suite("RateLimitedClient Error Conversion")
+struct RateLimitedClientErrorConversionTests {
+    @Test("Preserves underlying error message for non-HTTP/non-URLError")
+    func preservesUnderlyingErrorMessage() async throws {
+        let mockClient = MockSequenceClient()
+        // Custom error that is neither HTTPError nor URLError
+        let customError = CustomTestError(message: "JSON decoding failed: key 'nodes' not found")
+        mockClient.addResponse(throwing: customError)
+
+        let rateLimiter = SharedRateLimiter(requestsPerMinute: 600.0, burstCapacity: 10.0)
+        // No retries for this test
+        let retryPolicy = RetryPolicy(maxRetries: 0, baseDelay: 0.01, jitterFactor: 0)
+        let client = RateLimitedClient(
+            client: mockClient,
+            rateLimiter: rateLimiter,
+            configID: ConfigID("test"),
+            retryPolicy: retryPolicy
+        )
+
+        do {
+            _ = try await client.request(MockEndpoint(response: "ignored"))
+            Issue.record("Expected FigmaAPIError to be thrown")
+        } catch let error as FigmaAPIError {
+            // The underlying message should be preserved
+            #expect(error.statusCode == 0)
+            #expect(error.errorDescription?.contains("JSON decoding failed") == true)
+            #expect(error.errorDescription?.contains("nodes") == true)
+        } catch {
+            Issue.record("Expected FigmaAPIError but got \(type(of: error))")
+        }
+    }
+}
+
+/// Custom test error for testing non-HTTP/non-URLError handling.
+private struct CustomTestError: LocalizedError {
+    let message: String
+
+    var errorDescription: String? {
+        message
+    }
+}
+
 @Suite("HTTPError")
 struct HTTPErrorTests {
     @Test("HTTPError stores status code")

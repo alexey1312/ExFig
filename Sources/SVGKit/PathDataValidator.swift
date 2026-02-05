@@ -178,8 +178,13 @@ public struct PathValidationSummary: Sendable {
     public let iconsWithCriticalErrors: Int
     public let allIssues: [(iconName: String, issues: [PathValidationIssue])]
 
-    public var hasWarnings: Bool { iconsWithWarnings > 0 }
-    public var hasCriticalErrors: Bool { iconsWithCriticalErrors > 0 }
+    public var hasWarnings: Bool {
+        iconsWithWarnings > 0
+    }
+
+    public var hasCriticalErrors: Bool {
+        iconsWithCriticalErrors > 0
+    }
 
     public init(results: [(iconName: String, issues: [PathValidationIssue])]) {
         totalIcons = results.count

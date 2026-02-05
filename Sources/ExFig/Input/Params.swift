@@ -25,7 +25,9 @@ struct Params: Decodable {
             let path: String?
 
             /// Whether cache is enabled (with default value).
-            var isEnabled: Bool { enabled ?? false }
+            var isEnabled: Bool {
+                enabled ?? false
+            }
         }
 
         struct Colors: Decodable {
@@ -116,10 +118,14 @@ struct Params: Decodable {
         let quality: Int?
 
         /// Resolved encoding mode (default: lossy).
-        var resolvedEncoding: Encoding { encoding ?? .lossy }
+        var resolvedEncoding: Encoding {
+            encoding ?? .lossy
+        }
 
         /// Resolved quality (default: 90).
-        var resolvedQuality: Int { quality ?? 90 }
+        var resolvedQuality: Int {
+            quality ?? 90
+        }
     }
 
     struct iOS: Decodable {
@@ -533,13 +539,33 @@ struct Params: Decodable {
             /// If true, create file with markers if missing.
             let autoCreateMarkers: Bool?
 
-            var isEnabled: Bool { enabled ?? false }
-            var resolvedMarkerStart: String { markerStart ?? "FIGMA COLORS MARKER START" }
-            var resolvedMarkerEnd: String { markerEnd ?? "FIGMA COLORS MARKER END" }
-            var shouldAutoCreateMarkers: Bool { autoCreateMarkers ?? false }
-            var resolvedAttrsFile: String { attrsFile ?? "values/attrs.xml" }
-            var resolvedStylesFile: String { stylesFile ?? "values/styles.xml" }
-            var resolvedStylesNightFile: String { stylesNightFile ?? "values-night/styles.xml" }
+            var isEnabled: Bool {
+                enabled ?? false
+            }
+
+            var resolvedMarkerStart: String {
+                markerStart ?? "FIGMA COLORS MARKER START"
+            }
+
+            var resolvedMarkerEnd: String {
+                markerEnd ?? "FIGMA COLORS MARKER END"
+            }
+
+            var shouldAutoCreateMarkers: Bool {
+                autoCreateMarkers ?? false
+            }
+
+            var resolvedAttrsFile: String {
+                attrsFile ?? "values/attrs.xml"
+            }
+
+            var resolvedStylesFile: String {
+                stylesFile ?? "values/styles.xml"
+            }
+
+            var resolvedStylesNightFile: String {
+                stylesNightFile ?? "values-night/styles.xml"
+            }
 
             /// Name transformation options.
             struct NameTransform: Decodable, Sendable {
@@ -552,9 +578,17 @@ struct Params: Decodable {
                 /// Prefixes to strip from color names before transformation.
                 let stripPrefixes: [String]?
 
-                var resolvedStyle: NameStyle { style ?? .pascalCase }
-                var resolvedPrefix: String { prefix ?? "color" }
-                var resolvedStripPrefixes: [String] { stripPrefixes ?? [] }
+                var resolvedStyle: NameStyle {
+                    style ?? .pascalCase
+                }
+
+                var resolvedPrefix: String {
+                    prefix ?? "color"
+                }
+
+                var resolvedStripPrefixes: [String] {
+                    stripPrefixes ?? []
+                }
             }
         }
 
@@ -582,14 +616,14 @@ struct Params: Decodable {
             let nameValidateRegexp: String?
             let nameReplaceRegexp: String?
 
-            // Output (Android-specific)
+            /// Output (Android-specific)
             let xmlOutputFileName: String?
             /// When true, skip XML generation entirely. Useful for Compose-only projects with custom templates.
             let xmlDisabled: Bool?
             let composePackageName: String?
             let colorKotlin: URL?
 
-            // Theme attributes
+            /// Theme attributes
             let themeAttributes: ThemeAttributes?
         }
 

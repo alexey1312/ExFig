@@ -109,7 +109,7 @@ struct FileVersionPreFetcher: Sendable {
             // Pre-fetch failed, proceed without optimization
             // Individual configs will fetch their own metadata
             if configuration.verbose {
-                ui.warning("Pre-fetch failed: \(error.localizedDescription)")
+                ui.warning("Pre-fetch failed: \(error.bestDescription)")
             }
             return nil
         }
@@ -161,7 +161,7 @@ struct FileVersionPreFetcher: Sendable {
             )
         } catch {
             if configuration.verbose {
-                ui.warning("Pre-fetch failed: \(error.localizedDescription)")
+                ui.warning("Pre-fetch failed: \(error.bestDescription)")
             }
             return PreFetchResult(versions: nil, components: nil, nodes: nil)
         }
@@ -325,7 +325,7 @@ struct FileVersionPreFetcher: Sendable {
                         let metadata = try await client.request(endpoint)
                         return (fileId, metadata)
                     } catch {
-                        logger.warning("Pre-fetch metadata failed for file \(fileId): \(error.localizedDescription)")
+                        logger.warning("Pre-fetch metadata failed for file \(fileId): \(error.bestDescription)")
                         return (fileId, nil)
                     }
                 }
@@ -381,13 +381,11 @@ struct FileVersionPreFetcher: Sendable {
         // Capture into let for concurrent access
         let nodeIdsByFileSnapshot = nodeIdsByFile
 
-        let result = try await ui.withSpinner(
+        return try await ui.withSpinner(
             "Pre-fetching nodes for granular cache (\(totalNodes) nodes)..."
         ) {
             try await fetchAllNodes(nodeIdsByFile: nodeIdsByFileSnapshot)
         }
-
-        return result
     }
 
     /// Fetch node documents for all files in parallel.
@@ -433,7 +431,7 @@ struct FileVersionPreFetcher: Sendable {
                         let components = try await client.request(endpoint)
                         return (fileId, components)
                     } catch {
-                        logger.warning("Pre-fetch components failed for file \(fileId): \(error.localizedDescription)")
+                        logger.warning("Pre-fetch components failed for file \(fileId): \(error.bestDescription)")
                         return (fileId, nil)
                     }
                 }

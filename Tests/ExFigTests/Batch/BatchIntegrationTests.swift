@@ -18,7 +18,7 @@ final class BatchIntegrationTests: XCTestCase {
 
     // MARK: - End-to-End Tests
 
-    func testBatchProcessesMultipleConfigsInParallel() async throws {
+    func testBatchProcessesMultipleConfigsInParallel() async {
         // Given: Multiple valid config files
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
@@ -56,7 +56,7 @@ final class BatchIntegrationTests: XCTestCase {
         XCTAssertEqual(result.totalStats.typography, 10) // 5 * 2
     }
 
-    func testBatchHandlesMixedSuccessAndFailure() async throws {
+    func testBatchHandlesMixedSuccessAndFailure() async {
         // Given: Configs with some that will fail
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/good1.yaml"), name: "good1"),
@@ -93,7 +93,7 @@ final class BatchIntegrationTests: XCTestCase {
         XCTAssertEqual(failedNames, ["bad1", "bad2"])
     }
 
-    func testBatchWithRateLimitedClient() async throws {
+    func testBatchWithRateLimitedClient() async {
         // Given: Multiple configs with rate-limited execution
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),
@@ -158,7 +158,7 @@ final class BatchIntegrationTests: XCTestCase {
         XCTAssertEqual(result.totalStats.colors, 15)
     }
 
-    func testBatchWithOutputPathConflicts() async throws {
+    func testBatchWithOutputPathConflicts() throws {
         // Given: Configs with conflicting output paths
         try createConfigFileWithXcassets(name: "app1.yaml", path: "./Shared/Assets.xcassets")
         try createConfigFileWithXcassets(name: "app2.yaml", path: "./Shared/Assets.xcassets")
@@ -175,7 +175,7 @@ final class BatchIntegrationTests: XCTestCase {
         XCTAssertTrue(conflicts.first?.path.contains("Shared/Assets.xcassets") ?? false)
     }
 
-    func testBatchReportsCorrectTiming() async throws {
+    func testBatchReportsCorrectTiming() async {
         // Given: Configs with known processing time
         let configs = [
             ConfigFile(url: URL(fileURLWithPath: "/test/config1.yaml"), name: "config1"),

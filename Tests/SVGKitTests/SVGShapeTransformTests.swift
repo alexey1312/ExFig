@@ -12,7 +12,7 @@ struct SVGShapeTransformTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         // Should have an element which is a group
         #expect(!parsed.elements.isEmpty)
@@ -40,7 +40,7 @@ struct SVGShapeTransformTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         #expect(!parsed.elements.isEmpty)
 
@@ -61,7 +61,7 @@ struct SVGShapeTransformTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         // Without transform, it should be a direct path
         #expect(parsed.paths.count == 1)
@@ -80,7 +80,7 @@ struct SVGShapeTransformTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         let generator = VectorDrawableXMLGenerator()
         let xml = generator.generate(from: parsed)
@@ -103,7 +103,7 @@ struct SVGShapeTransformTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         // Should have nested group structure
         #expect(parsed.groups?.count == 1)

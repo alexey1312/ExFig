@@ -5,10 +5,10 @@ import XCTest
 final class FileMetadataEndpointTests: XCTestCase {
     // MARK: - URL Construction
 
-    func testMakeRequestConstructsCorrectURL() {
+    func testMakeRequestConstructsCorrectURL() throws {
         let endpoint = FileMetadataEndpoint(fileId: "abc123")
         // swiftlint:disable:next force_unwrapping
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
@@ -18,10 +18,10 @@ final class FileMetadataEndpointTests: XCTestCase {
         )
     }
 
-    func testMakeRequestIncludesDepthParameter() {
+    func testMakeRequestIncludesDepthParameter() throws {
         let endpoint = FileMetadataEndpoint(fileId: "test")
         // swiftlint:disable:next force_unwrapping
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 

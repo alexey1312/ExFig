@@ -47,7 +47,7 @@ final class SVGOpacityTests: XCTestCase {
 
     // MARK: - VectorDrawable Generation
 
-    func testVectorDrawableFillAlpha() throws {
+    func testVectorDrawableFillAlpha() {
         let path = SVGPath(
             pathData: "M0 0h24v24H0z",
             commands: [],
@@ -70,7 +70,7 @@ final class SVGOpacityTests: XCTestCase {
 
     // MARK: - ImageVector Generation
 
-    func testImageVectorFillAlpha() throws {
+    func testImageVectorFillAlpha() {
         let path = SVGPath(
             pathData: "M0 0h24v24H0z",
             commands: [.moveTo(x: 0, y: 0, relative: false), .closePath],
@@ -93,7 +93,7 @@ final class SVGOpacityTests: XCTestCase {
         XCTAssertTrue(kotlin.contains("fillAlpha = 0.3f"), "Should have fillAlpha:\n\(kotlin)")
     }
 
-    func testImageVectorOmitsFillAlphaForFullOpacity() throws {
+    func testImageVectorOmitsFillAlphaForFullOpacity() {
         let path = SVGPath(
             pathData: "M0 0h24v24H0z",
             commands: [.moveTo(x: 0, y: 0, relative: false), .closePath],
@@ -116,7 +116,7 @@ final class SVGOpacityTests: XCTestCase {
         XCTAssertFalse(kotlin.contains("fillAlpha"), "Should not have fillAlpha for 1.0:\n\(kotlin)")
     }
 
-    func testImageVectorOmitsFillAlphaForNilOpacity() throws {
+    func testImageVectorOmitsFillAlphaForNilOpacity() {
         let path = SVGPath(
             pathData: "M0 0h24v24H0z",
             commands: [.moveTo(x: 0, y: 0, relative: false), .closePath],

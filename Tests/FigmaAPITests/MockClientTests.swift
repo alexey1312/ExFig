@@ -165,7 +165,7 @@ final class MockClientTests: XCTestCase {
 
     func testConcurrentAccess() async throws {
         client.setResponse([Style](), for: StylesEndpoint.self)
-        let localClient = client!
+        let localClient = try XCTUnwrap(client)
 
         // Make many concurrent requests
         await withTaskGroup(of: Void.self) { group in
@@ -219,7 +219,7 @@ final class MockClientTests: XCTestCase {
     func testConcurrentRequestsCompleteInParallelTime() async throws {
         client.setResponse([Style](), for: StylesEndpoint.self)
         client.setRequestDelay(0.15) // 150ms per request
-        let localClient = client!
+        let localClient = try XCTUnwrap(client)
 
         let startTime = Date()
         await withTaskGroup(of: Void.self) { group in
@@ -237,7 +237,7 @@ final class MockClientTests: XCTestCase {
     func testRequestsStartedWithinTimeWindow() async throws {
         client.setResponse([Style](), for: StylesEndpoint.self)
         client.setRequestDelay(0.05)
-        let localClient = client!
+        let localClient = try XCTUnwrap(client)
 
         await withTaskGroup(of: Void.self) { group in
             group.addTask { _ = try? await localClient.request(StylesEndpoint(fileId: "a")) }

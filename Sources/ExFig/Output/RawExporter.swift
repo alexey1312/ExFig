@@ -1,3 +1,4 @@
+import ExFigCore
 import FigmaAPI
 import Foundation
 
@@ -48,8 +49,6 @@ public struct RawExporter: Sendable {
     ///   - compact: If true, outputs minified JSON; otherwise pretty-printed.
     /// - Returns: JSON data.
     public func serialize(_ output: RawExportOutput<some Encodable & Sendable>, compact: Bool) throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = compact ? [.sortedKeys] : [.prettyPrinted, .sortedKeys]
-        return try encoder.encode(output)
+        compact ? try JSONCodec.encodeSorted(output) : try JSONCodec.encodePrettySorted(output)
     }
 }

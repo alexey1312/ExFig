@@ -23,8 +23,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - Basic Export Tests
 
     func testExportSingleImage() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -42,8 +42,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     }
 
     func testExportMultipleImages() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -68,8 +68,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - Dark Mode Export Tests
 
     func testExportWithDarkVariant() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -90,8 +90,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     }
 
     func testExportMultipleWithDarkVariants() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -118,8 +118,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - UIKit Extension Tests
 
     func testExportGeneratesUIKitExtension() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -135,7 +135,7 @@ final class XcodeImagesExporterTests: XCTestCase {
         let content = result.last?.data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -157,8 +157,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - SwiftUI Extension Tests
 
     func testExportSwiftUIExtension() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             swiftUIImageExtensionURL: swiftUIImageExtensionURL
         )
@@ -177,7 +177,7 @@ final class XcodeImagesExporterTests: XCTestCase {
         let content = result[5].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -199,8 +199,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - Bundle Configuration Tests
 
     func testExportInSeparateBundle() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: false,
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -216,7 +216,7 @@ final class XcodeImagesExporterTests: XCTestCase {
         let content = result.last?.data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -235,8 +235,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     }
 
     func testExportInSwiftPackage() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -252,7 +252,7 @@ final class XcodeImagesExporterTests: XCTestCase {
         let content = result.last?.data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -271,8 +271,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     }
 
     func testExportSwiftUIInSeparateBundle() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             swiftUIImageExtensionURL: swiftUIImageExtensionURL
         )
@@ -287,7 +287,7 @@ final class XcodeImagesExporterTests: XCTestCase {
         let content = result.last?.data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -308,8 +308,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - Append Mode Tests
 
     func testAppendAfterExport() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -321,7 +321,7 @@ final class XcodeImagesExporterTests: XCTestCase {
             append: false
         )
 
-        try write(file: result.last!)
+        try write(file: XCTUnwrap(result.last))
 
         // Append export
         let appendResult = try exporter.export(
@@ -354,8 +354,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - ObjC Attribute Tests
 
     func testExportWithObjcAttribute() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             addObjcAttribute: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -371,7 +371,7 @@ final class XcodeImagesExporterTests: XCTestCase {
         let content = result.last?.data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -392,8 +392,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - Empty Assets Tests
 
     func testExportEmptyAssets() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -409,13 +409,13 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - Multiple Scales Tests
 
     func testExportMultipleScales() throws {
-        let image1x = Image(name: "hero", scale: .individual(1.0), url: URL(string: "1")!, format: "png")
-        let image2x = Image(name: "hero", scale: .individual(2.0), url: URL(string: "2")!, format: "png")
-        let image3x = Image(name: "hero", scale: .individual(3.0), url: URL(string: "3")!, format: "png")
+        let image1x = try Image(name: "hero", scale: .individual(1.0), url: XCTUnwrap(URL(string: "1")), format: "png")
+        let image2x = try Image(name: "hero", scale: .individual(2.0), url: XCTUnwrap(URL(string: "2")), format: "png")
+        let image3x = try Image(name: "hero", scale: .individual(3.0), url: XCTUnwrap(URL(string: "3")), format: "png")
         let pack = ImagePack(name: "hero", images: [image1x, image2x, image3x])
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -438,8 +438,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - No Extension URLs Tests
 
     func testExportWithoutExtensionURLs() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true
         )
         let exporter = XcodeImagesExporter(output: output)
@@ -458,8 +458,8 @@ final class XcodeImagesExporterTests: XCTestCase {
     // MARK: - Both Extension URLs Tests
 
     func testExportWithBothExtensionURLs() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL,
             swiftUIImageExtensionURL: swiftUIImageExtensionURL
@@ -484,8 +484,8 @@ final class XcodeImagesExporterTests: XCTestCase {
             .temporaryDirectory
             .appendingPathComponent("Images.figma.swift")
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL,
             codeConnectSwiftURL: codeConnectURL
@@ -556,8 +556,8 @@ final class XcodeImagesExporterTests: XCTestCase {
             .temporaryDirectory
             .appendingPathComponent("Images.figma.swift")
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL,
             codeConnectSwiftURL: codeConnectURL
@@ -587,8 +587,8 @@ final class XcodeImagesExporterTests: XCTestCase {
             .temporaryDirectory
             .appendingPathComponent("Images.figma.swift")
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL,
             codeConnectSwiftURL: codeConnectURL

@@ -3,9 +3,9 @@ import Foundation
 import XCTest
 
 final class DestinationTests: XCTestCase {
-    func testURL() {
+    func testURL() throws {
         let directory = URL(fileURLWithPath: "/output/images")
-        let file = URL(string: "icon.png")!
+        let file = try XCTUnwrap(URL(string: "icon.png"))
         let destination = Destination(directory: directory, file: file)
 
         XCTAssertEqual(destination.url.path, "/output/images/icon.png")
@@ -61,10 +61,10 @@ final class FileContentsTests: XCTestCase {
 
     // MARK: - Remote File Init
 
-    func testRemoteFileInit() {
+    func testRemoteFileInit() throws {
         let destination = makeDestination(file: "image.png")
         // swiftlint:disable:next force_unwrapping
-        let sourceURL = URL(string: "https://figma.com/image.png")!
+        let sourceURL = try XCTUnwrap(URL(string: "https://figma.com/image.png"))
 
         let contents = FileContents(destination: destination, sourceURL: sourceURL)
 
@@ -76,10 +76,10 @@ final class FileContentsTests: XCTestCase {
         XCTAssertFalse(contents.isRTL)
     }
 
-    func testRemoteFileInitWithAllParameters() {
+    func testRemoteFileInitWithAllParameters() throws {
         let destination = makeDestination(file: "image.png")
         // swiftlint:disable:next force_unwrapping
-        let sourceURL = URL(string: "https://figma.com/image.png")!
+        let sourceURL = try XCTUnwrap(URL(string: "https://figma.com/image.png"))
 
         let contents = FileContents(
             destination: destination,
@@ -142,10 +142,10 @@ final class FileContentsTests: XCTestCase {
         XCTAssertTrue(webpContents.dark)
     }
 
-    func testChangingExtensionForRemoteFile() {
+    func testChangingExtensionForRemoteFile() throws {
         let destination = makeDestination(file: "image.png")
         // swiftlint:disable:next force_unwrapping
-        let sourceURL = URL(string: "https://figma.com/image.png")!
+        let sourceURL = try XCTUnwrap(URL(string: "https://figma.com/image.png"))
         let contents = FileContents(destination: destination, sourceURL: sourceURL, scale: 3.0, dark: true)
 
         let webpContents = contents.changingExtension(newExtension: "webp")

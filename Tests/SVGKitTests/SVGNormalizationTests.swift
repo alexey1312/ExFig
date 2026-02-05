@@ -86,7 +86,7 @@ final class SVGNormalizationTests: XCTestCase {
 
         // usvg converts circle to path with arc commands
         XCTAssertEqual(parsed.paths.count, 1)
-        XCTAssertFalse(parsed.paths.first!.pathData.isEmpty)
+        XCTAssertFalse(try XCTUnwrap(parsed.paths.first?.pathData.isEmpty))
     }
 
     func testNormalizationConvertsRectToPath() throws {

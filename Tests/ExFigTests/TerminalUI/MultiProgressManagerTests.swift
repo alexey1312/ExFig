@@ -4,21 +4,21 @@ import XCTest
 final class MultiProgressManagerTests: XCTestCase {
     // MARK: - Initialization
 
-    func testInitialization() async {
+    func testInitialization() {
         let manager = MultiProgressManager(useColors: true, useAnimations: false)
 
         // Should not crash
         XCTAssertNotNil(manager)
     }
 
-    func testInitializationWithDefaultValues() async {
+    func testInitializationWithDefaultValues() {
         let manager = MultiProgressManager()
 
         // Should not crash
         XCTAssertNotNil(manager)
     }
 
-    func testInitializationWithoutColors() async {
+    func testInitializationWithoutColors() {
         let manager = MultiProgressManager(useColors: false, useAnimations: false)
 
         XCTAssertNotNil(manager)

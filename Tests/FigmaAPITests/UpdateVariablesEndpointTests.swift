@@ -4,11 +4,11 @@ import XCTest
 final class UpdateVariablesEndpointTests: XCTestCase {
     // MARK: - URL Construction
 
-    func testMakeRequestConstructsCorrectURL() {
+    func testMakeRequestConstructsCorrectURL() throws {
         let body = VariablesUpdateRequest(variables: [])
         let endpoint = UpdateVariablesEndpoint(fileId: "abc123", body: body)
         // swiftlint:disable:next force_unwrapping
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
@@ -18,22 +18,22 @@ final class UpdateVariablesEndpointTests: XCTestCase {
         )
     }
 
-    func testMakeRequestUsesPOSTMethod() {
+    func testMakeRequestUsesPOSTMethod() throws {
         let body = VariablesUpdateRequest(variables: [])
         let endpoint = UpdateVariablesEndpoint(fileId: "test", body: body)
         // swiftlint:disable:next force_unwrapping
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertEqual(request.httpMethod, "POST")
     }
 
-    func testMakeRequestSetsContentTypeHeader() {
+    func testMakeRequestSetsContentTypeHeader() throws {
         let body = VariablesUpdateRequest(variables: [])
         let endpoint = UpdateVariablesEndpoint(fileId: "test", body: body)
         // swiftlint:disable:next force_unwrapping
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
@@ -48,13 +48,13 @@ final class UpdateVariablesEndpointTests: XCTestCase {
         let body = VariablesUpdateRequest(variables: [update])
         let endpoint = UpdateVariablesEndpoint(fileId: "test", body: body)
         // swiftlint:disable:next force_unwrapping
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertNotNil(request.httpBody)
 
-        let decoded = try JSONDecoder().decode(VariablesUpdateRequest.self, from: request.httpBody!)
+        let decoded = try JSONDecoder().decode(VariablesUpdateRequest.self, from: XCTUnwrap(request.httpBody))
         XCTAssertEqual(decoded.variables.count, 1)
         XCTAssertEqual(decoded.variables[0].id, "VariableID:123:456")
         XCTAssertEqual(decoded.variables[0].action, "UPDATE")
