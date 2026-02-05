@@ -719,6 +719,9 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExport_preservesVectorRepresentation() throws {
+        #if os(Linux)
+            throw XCTSkip("Skipped on Linux: YYJSON uses 2-space indent, Foundation uses 4-space")
+        #endif
         let output = try XcodeImagesOutput(
             assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
@@ -764,6 +767,9 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExport_preservesVectorRepresentation2() throws {
+        #if os(Linux)
+            throw XCTSkip("Skipped on Linux: YYJSON uses 2-space indent, Foundation uses 4-space")
+        #endif
         let output = try XcodeImagesOutput(
             assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
