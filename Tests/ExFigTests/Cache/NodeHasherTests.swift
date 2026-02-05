@@ -142,99 +142,101 @@ final class NodeHasherTests: XCTestCase {
     func testCrossPlatformHashConsistency_FixtureWithChildren() throws {
         #if os(Linux)
             throw XCTSkip("Granular cache hashes are platform-specific (YYJSON vs Foundation)")
+        #else
+            let child = NodeHashableProperties(
+                name: "shape",
+                type: "VECTOR",
+                fills: [
+                    HashablePaint(
+                        type: "SOLID",
+                        color: HashableColor(r: 1.0, g: 0.5, b: 0.0, a: 0.8)
+                    ),
+                ],
+                strokes: [
+                    HashablePaint(
+                        type: "SOLID",
+                        color: HashableColor(r: 0.0, g: 0.0, b: 0.0, a: 1.0)
+                    ),
+                ],
+                strokeWeight: 2.0,
+                strokeAlign: "CENTER",
+                strokeJoin: "ROUND",
+                strokeCap: "ROUND",
+                effects: nil,
+                opacity: 1.0,
+                blendMode: "NORMAL",
+                clipsContent: nil,
+                rotation: nil,
+                children: nil
+            )
+
+            let props = NodeHashableProperties(
+                name: "fixture-complex",
+                type: "COMPONENT",
+                fills: [],
+                strokes: nil,
+                strokeWeight: nil,
+                strokeAlign: nil,
+                strokeJoin: nil,
+                strokeCap: nil,
+                effects: [
+                    HashableEffect(
+                        type: "DROP_SHADOW",
+                        radius: 4.0,
+                        offset: HashableVector(x: 0.0, y: 2.0),
+                        color: HashableColor(r: 0.0, g: 0.0, b: 0.0, a: 0.25)
+                    ),
+                ],
+                opacity: nil,
+                blendMode: nil,
+                clipsContent: true,
+                rotation: nil,
+                children: [child]
+            )
+
+            let hash = NodeHasher.computeHash(props)
+
+            XCTAssertEqual(hash, "2afce4b5fcc030f2", "Hash mismatch for complex node")
         #endif
-        let child = NodeHashableProperties(
-            name: "shape",
-            type: "VECTOR",
-            fills: [
-                HashablePaint(
-                    type: "SOLID",
-                    color: HashableColor(r: 1.0, g: 0.5, b: 0.0, a: 0.8)
-                ),
-            ],
-            strokes: [
-                HashablePaint(
-                    type: "SOLID",
-                    color: HashableColor(r: 0.0, g: 0.0, b: 0.0, a: 1.0)
-                ),
-            ],
-            strokeWeight: 2.0,
-            strokeAlign: "CENTER",
-            strokeJoin: "ROUND",
-            strokeCap: "ROUND",
-            effects: nil,
-            opacity: 1.0,
-            blendMode: "NORMAL",
-            clipsContent: nil,
-            rotation: nil,
-            children: nil
-        )
-
-        let props = NodeHashableProperties(
-            name: "fixture-complex",
-            type: "COMPONENT",
-            fills: [],
-            strokes: nil,
-            strokeWeight: nil,
-            strokeAlign: nil,
-            strokeJoin: nil,
-            strokeCap: nil,
-            effects: [
-                HashableEffect(
-                    type: "DROP_SHADOW",
-                    radius: 4.0,
-                    offset: HashableVector(x: 0.0, y: 2.0),
-                    color: HashableColor(r: 0.0, g: 0.0, b: 0.0, a: 0.25)
-                ),
-            ],
-            opacity: nil,
-            blendMode: nil,
-            clipsContent: true,
-            rotation: nil,
-            children: [child]
-        )
-
-        let hash = NodeHasher.computeHash(props)
-
-        XCTAssertEqual(hash, "2afce4b5fcc030f2", "Hash mismatch for complex node")
     }
 
     /// Test fixture with normalized float values for hash verification.
     func testCrossPlatformHashConsistency_FixtureNormalizedFloats() throws {
         #if os(Linux)
             throw XCTSkip("Granular cache hashes are platform-specific (YYJSON vs Foundation)")
+        #else
+            // Use normalized float values (6 decimal places)
+            let props = NodeHashableProperties(
+                name: "float-test",
+                type: "COMPONENT",
+                fills: [
+                    HashablePaint(
+                        type: "SOLID",
+                        color: HashableColor(
+                            r: 0.333333, // Normalized from 0.33333334
+                            g: 0.666667, // Normalized from 0.66666668
+                            b: 0.123457, // Normalized from 0.123456789
+                            a: 1.0
+                        )
+                    ),
+                ],
+                strokes: nil,
+                strokeWeight: nil,
+                strokeAlign: nil,
+                strokeJoin: nil,
+                strokeCap: nil,
+                effects: nil,
+                opacity: nil,
+                blendMode: nil,
+                clipsContent: nil,
+                rotation: nil,
+                children: nil
+            )
+
+            let hash = NodeHasher.computeHash(props)
+
+            XCTAssertEqual(hash, "fb90b6a9927d1234", "Hash mismatch for normalized floats")
         #endif
-        // Use normalized float values (6 decimal places)
-        let props = NodeHashableProperties(
-            name: "float-test",
-            type: "COMPONENT",
-            fills: [
-                HashablePaint(
-                    type: "SOLID",
-                    color: HashableColor(
-                        r: 0.333333, // Normalized from 0.33333334
-                        g: 0.666667, // Normalized from 0.66666668
-                        b: 0.123457, // Normalized from 0.123456789
-                        a: 1.0
-                    )
-                ),
-            ],
-            strokes: nil,
-            strokeWeight: nil,
-            strokeAlign: nil,
-            strokeJoin: nil,
-            strokeCap: nil,
-            effects: nil,
-            opacity: nil,
-            blendMode: nil,
-            clipsContent: nil,
-            rotation: nil,
-            children: nil
-        )
-
-        let hash = NodeHasher.computeHash(props)
-
-        XCTAssertEqual(hash, "fb90b6a9927d1234", "Hash mismatch for normalized floats")
     }
 
     // MARK: - Helpers

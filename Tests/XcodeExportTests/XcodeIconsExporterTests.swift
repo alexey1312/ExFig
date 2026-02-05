@@ -721,97 +721,101 @@ final class XcodeIconsExporterTests: XCTestCase {
     func testExport_preservesVectorRepresentation() throws {
         #if os(Linux)
             throw XCTSkip("Skipped on Linux: YYJSON uses 2-space indent, Foundation uses 4-space")
-        #endif
-        let output = try XcodeImagesOutput(
-            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
-            assetsInMainBundle: true,
-            preservesVectorRepresentation: ["ic24TabBar*"],
-            uiKitImageExtensionURL: uiKitImageExtensionURL
-        )
-        let exporter = XcodeIconsExporter(output: output)
-        let result = try exporter.export(
-            icons: [AssetPair(light: ImagePack(image: tabBarIcon), dark: nil)],
-            append: false
-        )
+        #else
+            let output = try XcodeImagesOutput(
+                assetsFolderURL: XCTUnwrap(URL(string: "~/")),
+                assetsInMainBundle: true,
+                preservesVectorRepresentation: ["ic24TabBar*"],
+                uiKitImageExtensionURL: uiKitImageExtensionURL
+            )
+            let exporter = XcodeIconsExporter(output: output)
+            let result = try exporter.export(
+                icons: [AssetPair(light: ImagePack(image: tabBarIcon), dark: nil)],
+                append: false
+            )
 
-        XCTAssertEqual(result.count, 4)
-        XCTAssertTrue(result[0].destination.url.absoluteString.hasSuffix("Contents.json"))
-        XCTAssertTrue(result[1].destination.url.absoluteString.hasSuffix("ic24TabBarHome.imageset/Contents.json"))
-        XCTAssertTrue(result[2].destination.url.absoluteString.hasSuffix("ic24TabBarHome.imageset/ic24TabBarHome.pdf"))
-        XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("UIImage+extension.swift"))
+            XCTAssertEqual(result.count, 4)
+            XCTAssertTrue(result[0].destination.url.absoluteString.hasSuffix("Contents.json"))
+            XCTAssertTrue(result[1].destination.url.absoluteString.hasSuffix("ic24TabBarHome.imageset/Contents.json"))
+            XCTAssertTrue(result[2].destination.url.absoluteString
+                .hasSuffix("ic24TabBarHome.imageset/ic24TabBarHome.pdf"))
+            XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("UIImage+extension.swift"))
 
-        let content = result[1].data
-        XCTAssertNotNil(content)
+            let content = result[1].data
+            XCTAssertNotNil(content)
 
-        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
-        // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
-        let referenceCode = """
-        {
-          "images": [
+            let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
+            // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
+            let referenceCode = """
             {
-              "filename": "ic24TabBarHome.pdf",
-              "idiom": "universal"
+              "images": [
+                {
+                  "filename": "ic24TabBarHome.pdf",
+                  "idiom": "universal"
+                }
+              ],
+              "info": {
+                "author": "xcode",
+                "version": 1
+              },
+              "properties": {
+                "preserves-vector-representation": true,
+                "template-rendering-intent": "template"
+              }
             }
-          ],
-          "info": {
-            "author": "xcode",
-            "version": 1
-          },
-          "properties": {
-            "preserves-vector-representation": true,
-            "template-rendering-intent": "template"
-          }
-        }
-        """
-        expectNoDifference(generatedCode, referenceCode)
+            """
+            expectNoDifference(generatedCode, referenceCode)
+        #endif
     }
 
     func testExport_preservesVectorRepresentation2() throws {
         #if os(Linux)
             throw XCTSkip("Skipped on Linux: YYJSON uses 2-space indent, Foundation uses 4-space")
-        #endif
-        let output = try XcodeImagesOutput(
-            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
-            assetsInMainBundle: true,
-            preservesVectorRepresentation: ["*"],
-            uiKitImageExtensionURL: uiKitImageExtensionURL
-        )
-        let exporter = XcodeIconsExporter(output: output)
-        let result = try exporter.export(
-            icons: [AssetPair(light: ImagePack(image: tabBarIcon), dark: nil)],
-            append: false
-        )
+        #else
+            let output = try XcodeImagesOutput(
+                assetsFolderURL: XCTUnwrap(URL(string: "~/")),
+                assetsInMainBundle: true,
+                preservesVectorRepresentation: ["*"],
+                uiKitImageExtensionURL: uiKitImageExtensionURL
+            )
+            let exporter = XcodeIconsExporter(output: output)
+            let result = try exporter.export(
+                icons: [AssetPair(light: ImagePack(image: tabBarIcon), dark: nil)],
+                append: false
+            )
 
-        XCTAssertEqual(result.count, 4)
-        XCTAssertTrue(result[0].destination.url.absoluteString.hasSuffix("Contents.json"))
-        XCTAssertTrue(result[1].destination.url.absoluteString.hasSuffix("ic24TabBarHome.imageset/Contents.json"))
-        XCTAssertTrue(result[2].destination.url.absoluteString.hasSuffix("ic24TabBarHome.imageset/ic24TabBarHome.pdf"))
-        XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("UIImage+extension.swift"))
+            XCTAssertEqual(result.count, 4)
+            XCTAssertTrue(result[0].destination.url.absoluteString.hasSuffix("Contents.json"))
+            XCTAssertTrue(result[1].destination.url.absoluteString.hasSuffix("ic24TabBarHome.imageset/Contents.json"))
+            XCTAssertTrue(result[2].destination.url.absoluteString
+                .hasSuffix("ic24TabBarHome.imageset/ic24TabBarHome.pdf"))
+            XCTAssertTrue(result[3].destination.url.absoluteString.hasSuffix("UIImage+extension.swift"))
 
-        let content = result[1].data
-        XCTAssertNotNil(content)
+            let content = result[1].data
+            XCTAssertNotNil(content)
 
-        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
-        // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
-        let referenceCode = """
-        {
-          "images": [
+            let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
+            // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
+            let referenceCode = """
             {
-              "filename": "ic24TabBarHome.pdf",
-              "idiom": "universal"
+              "images": [
+                {
+                  "filename": "ic24TabBarHome.pdf",
+                  "idiom": "universal"
+                }
+              ],
+              "info": {
+                "author": "xcode",
+                "version": 1
+              },
+              "properties": {
+                "preserves-vector-representation": true,
+                "template-rendering-intent": "template"
+              }
             }
-          ],
-          "info": {
-            "author": "xcode",
-            "version": 1
-          },
-          "properties": {
-            "preserves-vector-representation": true,
-            "template-rendering-intent": "template"
-          }
-        }
-        """
-        expectNoDifference(generatedCode, referenceCode)
+            """
+            expectNoDifference(generatedCode, referenceCode)
+        #endif
     }
 
     // MARK: - Tests for allIconNames (granular cache support)
