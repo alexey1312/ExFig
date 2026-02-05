@@ -32,7 +32,7 @@ final class FlutterColorsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .colors)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = FlutterColorsExporter()
 
         // Type signature verification

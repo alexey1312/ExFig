@@ -50,9 +50,9 @@ extension ExFigCommand.ExportImages {
             platform: .ios
         )
 
-        // Export via plugin
+        // Export via plugin (returns ImagesExportResult with hashes)
         let exporter = iOSImagesExporter()
-        let count = try await exporter.exportImages(
+        let result = try await exporter.exportImages(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -84,7 +84,7 @@ extension ExFigCommand.ExportImages {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        return result.toPlatformExportResult()
     }
 
     /// Exports Android images using plugin architecture.
@@ -114,7 +114,7 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = AndroidImagesExporter()
-        let count = try await exporter.exportImages(
+        let result = try await exporter.exportImages(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -124,7 +124,7 @@ extension ExFigCommand.ExportImages {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        return result.toPlatformExportResult()
     }
 
     /// Exports Flutter images using plugin architecture.
@@ -154,7 +154,7 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = FlutterImagesExporter()
-        let count = try await exporter.exportImages(
+        let result = try await exporter.exportImages(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -164,7 +164,7 @@ extension ExFigCommand.ExportImages {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        return result.toPlatformExportResult()
     }
 
     /// Exports Web images using plugin architecture.
@@ -194,7 +194,7 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = WebImagesExporter()
-        let count = try await exporter.exportImages(
+        let result = try await exporter.exportImages(
             entries: pluginEntries,
             platformConfig: platformConfig,
             context: context
@@ -204,7 +204,20 @@ extension ExFigCommand.ExportImages {
             await checkForUpdate(logger: ExFigCommand.logger)
         }
 
-        return PlatformExportResult(count: count, hashes: [:], skippedCount: 0)
+        return result.toPlatformExportResult()
+    }
+}
+
+// MARK: - ImagesExportResult Extension
+
+extension ImagesExportResult {
+    /// Converts to CLI's PlatformExportResult format.
+    func toPlatformExportResult() -> PlatformExportResult {
+        PlatformExportResult(
+            count: count,
+            hashes: computedHashes,
+            skippedCount: skippedCount
+        )
     }
 }
 

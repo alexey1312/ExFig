@@ -47,7 +47,9 @@ public protocol IconsExporter: AssetExporter {
     ) async throws -> IconsExportResult
 }
 
-// Default implementation for AssetExporter conformance
+/// Default implementation for AssetExporter conformance
 public extension IconsExporter {
-    var assetType: AssetType { .icons }
+    var assetType: AssetType {
+        .icons
+    }
 }

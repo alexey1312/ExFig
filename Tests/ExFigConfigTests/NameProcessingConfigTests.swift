@@ -1,7 +1,6 @@
+@testable import ExFigConfig
 import Foundation
 import Testing
-
-@testable import ExFigConfig
 
 /// Tests for NameProcessingConfig — regexp validation and replacement.
 @Suite("NameProcessingConfig Tests")
@@ -9,7 +8,7 @@ struct NameProcessingConfigTests {
     // MARK: - Validation Regexp
 
     @Test("Validates name against regexp - matches")
-    func validatesNameMatches() throws {
+    func validatesNameMatches() {
         let config = NameProcessingConfig(
             nameValidateRegexp: "^icon_",
             nameReplaceRegexp: nil
@@ -20,7 +19,7 @@ struct NameProcessingConfigTests {
     }
 
     @Test("Validates name against regexp - no match")
-    func validatesNameNoMatch() throws {
+    func validatesNameNoMatch() {
         let config = NameProcessingConfig(
             nameValidateRegexp: "^icon_",
             nameReplaceRegexp: nil
@@ -31,7 +30,7 @@ struct NameProcessingConfigTests {
     }
 
     @Test("Validates all names when no regexp provided")
-    func validatesAllWhenNoRegexp() throws {
+    func validatesAllWhenNoRegexp() {
         let config = NameProcessingConfig(
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
@@ -44,7 +43,7 @@ struct NameProcessingConfigTests {
     // MARK: - Replacement Regexp
 
     @Test("Applies replacement regexp with capture groups")
-    func appliesReplacementWithCapture() throws {
+    func appliesReplacementWithCapture() {
         let config = NameProcessingConfig(
             nameValidateRegexp: "^(icon|image)_(.+)$",
             nameReplaceRegexp: "$2"
@@ -56,7 +55,7 @@ struct NameProcessingConfigTests {
     }
 
     @Test("Returns original name when no replacement")
-    func returnsOriginalWhenNoReplacement() throws {
+    func returnsOriginalWhenNoReplacement() {
         let config = NameProcessingConfig(
             nameValidateRegexp: "^icon_",
             nameReplaceRegexp: nil
@@ -68,7 +67,7 @@ struct NameProcessingConfigTests {
     }
 
     @Test("Returns original name when regexp doesn't match")
-    func returnsOriginalWhenNoMatch() throws {
+    func returnsOriginalWhenNoMatch() {
         let config = NameProcessingConfig(
             nameValidateRegexp: "^icon_(.+)$",
             nameReplaceRegexp: "$1"
@@ -80,7 +79,7 @@ struct NameProcessingConfigTests {
     }
 
     @Test("Handles complex replacement patterns")
-    func handlesComplexPatterns() throws {
+    func handlesComplexPatterns() {
         let config = NameProcessingConfig(
             nameValidateRegexp: "^([a-z]+)/([a-z]+)/(.+)$",
             nameReplaceRegexp: "$2_$3"
@@ -123,7 +122,7 @@ struct NameProcessingConfigTests {
     // MARK: - Edge Cases
 
     @Test("Handles invalid regexp gracefully")
-    func handlesInvalidRegexp() throws {
+    func handlesInvalidRegexp() {
         let config = NameProcessingConfig(
             nameValidateRegexp: "[invalid(", // Invalid regexp
             nameReplaceRegexp: nil

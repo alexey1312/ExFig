@@ -35,7 +35,7 @@ final class iOSImagesExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .images)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         // This test verifies the export method signature exists
         // Full integration test would require mock context
         let exporter = iOSImagesExporter()
@@ -45,7 +45,7 @@ final class iOSImagesExporterTests: XCTestCase {
             [iOSImagesEntry],
             iOSPlatformConfig,
             MockImagesExportContext
-        ) async throws -> Int = exporter.exportImages
+        ) async throws -> ImagesExportResult = exporter.exportImages
     }
 }
 

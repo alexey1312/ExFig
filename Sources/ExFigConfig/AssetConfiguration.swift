@@ -78,8 +78,13 @@ extension AssetConfiguration: Collection {
     public typealias Index = Int
     public typealias Element = Entry
 
-    public var startIndex: Index { entries.startIndex }
-    public var endIndex: Index { entries.endIndex }
+    public var startIndex: Index {
+        entries.startIndex
+    }
+
+    public var endIndex: Index {
+        entries.endIndex
+    }
 
     public subscript(position: Index) -> Entry {
         entries[position]

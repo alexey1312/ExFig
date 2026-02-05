@@ -137,9 +137,17 @@ public struct ThemeAttributes: Decodable, Sendable {
     /// If true, create file with markers if missing.
     public let autoCreateMarkers: Bool?
 
-    public var isEnabled: Bool { enabled ?? false }
-    public var resolvedMarkerStart: String { markerStart ?? "FIGMA COLORS MARKER START" }
-    public var resolvedMarkerEnd: String { markerEnd ?? "FIGMA COLORS MARKER END" }
+    public var isEnabled: Bool {
+        enabled ?? false
+    }
+
+    public var resolvedMarkerStart: String {
+        markerStart ?? "FIGMA COLORS MARKER START"
+    }
+
+    public var resolvedMarkerEnd: String {
+        markerEnd ?? "FIGMA COLORS MARKER END"
+    }
 
     public init(
         enabled: Bool? = nil,

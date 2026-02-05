@@ -1,7 +1,6 @@
+@testable import ExFigConfig
 import Foundation
 import Testing
-
-@testable import ExFigConfig
 
 /// Tests for AssetConfiguration — single/multiple configuration pattern.
 @Suite("AssetConfiguration Tests")

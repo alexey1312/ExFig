@@ -32,7 +32,7 @@ final class AndroidImagesExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .images)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = AndroidImagesExporter()
 
         // Type signature verification
@@ -40,7 +40,7 @@ final class AndroidImagesExporterTests: XCTestCase {
             [AndroidImagesEntry],
             AndroidPlatformConfig,
             MockAndroidImagesExportContext
-        ) async throws -> Int = exporter.exportImages
+        ) async throws -> ImagesExportResult = exporter.exportImages
     }
 }
 

@@ -21,11 +21,17 @@ import Foundation
 ///         entries: [Entry],
 ///         platformConfig: PlatformConfig,
 ///         context: some ImagesExportContext
-///     ) async throws -> Int {
+///     ) async throws -> ImagesExportResult {
 ///         // Platform-specific export logic
 ///     }
 /// }
 /// ```
+///
+/// ## Granular Cache Support
+///
+/// When the context conforms to `ImagesExportContextWithGranularCache`,
+/// the exporter can use granular cache to skip unchanged images.
+/// The result includes computed hashes for cache updates.
 public protocol ImagesExporter: AssetExporter {
     /// The configuration entry type for images.
     associatedtype Entry: Sendable
@@ -39,15 +45,17 @@ public protocol ImagesExporter: AssetExporter {
     ///   - entries: Array of images configuration entries.
     ///   - platformConfig: Platform-wide configuration.
     ///   - context: Export context with dependencies.
-    /// - Returns: Number of images exported.
+    /// - Returns: Export result with count and granular cache information.
     func exportImages(
         entries: [Entry],
         platformConfig: PlatformConfig,
         context: some ImagesExportContext
-    ) async throws -> Int
+    ) async throws -> ImagesExportResult
 }
 
-// Default implementation for AssetExporter conformance
+/// Default implementation for AssetExporter conformance
 public extension ImagesExporter {
-    var assetType: AssetType { .images }
+    var assetType: AssetType {
+        .images
+    }
 }

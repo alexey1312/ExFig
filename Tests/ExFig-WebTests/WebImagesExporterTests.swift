@@ -32,7 +32,7 @@ final class WebImagesExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .images)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = WebImagesExporter()
 
         // Type signature verification
@@ -40,7 +40,7 @@ final class WebImagesExporterTests: XCTestCase {
             [WebImagesEntry],
             WebPlatformConfig,
             MockWebImagesExportContext
-        ) async throws -> Int = exporter.exportImages
+        ) async throws -> ImagesExportResult = exporter.exportImages
     }
 }
 

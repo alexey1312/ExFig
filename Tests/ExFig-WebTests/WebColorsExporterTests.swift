@@ -32,7 +32,7 @@ final class WebColorsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .colors)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = WebColorsExporter()
 
         // Type signature verification

@@ -1,11 +1,10 @@
+@testable import ExFig
 import Foundation
 import Testing
 
-@testable import ExFig
-
 @Suite("PKLEvaluator Tests")
 struct PKLEvaluatorTests {
-    // Path to test fixtures
+    /// Path to test fixtures
     static let fixturesPath = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()

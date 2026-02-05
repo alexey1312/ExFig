@@ -21,7 +21,7 @@ public struct AndroidImagesExporter: ImagesExporter {
         entries: [AndroidImagesEntry],
         platformConfig: AndroidPlatformConfig,
         context: some ImagesExportContext
-    ) async throws -> Int {
+    ) async throws -> ImagesExportResult {
         var totalCount = 0
 
         for entry in entries {
@@ -36,7 +36,7 @@ public struct AndroidImagesExporter: ImagesExporter {
             context.success("Done! Exported \(totalCount) images to Android project.")
         }
 
-        return totalCount
+        return ImagesExportResult.simple(count: totalCount)
     }
 
     // MARK: - Private

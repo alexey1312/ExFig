@@ -32,7 +32,7 @@ final class AndroidColorsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .colors)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = AndroidColorsExporter()
 
         // Type signature verification

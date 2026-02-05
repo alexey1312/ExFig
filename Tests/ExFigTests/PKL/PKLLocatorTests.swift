@@ -1,12 +1,11 @@
+@testable import ExFig
 import Foundation
 import Testing
-
-@testable import ExFig
 
 @Suite("PKLLocator Tests")
 struct PKLLocatorTests {
     @Test("Finds pkl via mise installs or Homebrew or PATH")
-    func findsPkl() async throws {
+    func findsPkl() throws {
         let locator = PKLLocator()
 
         // This test assumes pkl is installed via mise, Homebrew, or is in PATH
@@ -17,7 +16,7 @@ struct PKLLocatorTests {
     }
 
     @Test("Found pkl is executable")
-    func foundPklIsExecutable() async throws {
+    func foundPklIsExecutable() throws {
         let locator = PKLLocator()
 
         let pklPath = try locator.findPKL()
@@ -27,7 +26,7 @@ struct PKLLocatorTests {
     }
 
     @Test("Throws NotFound when pkl is not installed")
-    func throwsNotFoundWhenMissing() async throws {
+    func throwsNotFoundWhenMissing() throws {
         // Create locator that won't find pkl
         let locator = PKLLocator(
             miseShimsPath: "/nonexistent/path",
@@ -40,7 +39,7 @@ struct PKLLocatorTests {
     }
 
     @Test("Returns cached path on subsequent calls")
-    func returnsCachedPath() async throws {
+    func returnsCachedPath() throws {
         let locator = PKLLocator()
 
         let firstPath = try locator.findPKL()

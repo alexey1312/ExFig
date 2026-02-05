@@ -20,7 +20,7 @@ public struct FlutterImagesExporter: ImagesExporter {
         entries: [FlutterImagesEntry],
         platformConfig: FlutterPlatformConfig,
         context: some ImagesExportContext
-    ) async throws -> Int {
+    ) async throws -> ImagesExportResult {
         var totalCount = 0
 
         for entry in entries {
@@ -35,7 +35,7 @@ public struct FlutterImagesExporter: ImagesExporter {
             context.success("Done! Exported \(totalCount) images to Flutter project.")
         }
 
-        return totalCount
+        return ImagesExportResult.simple(count: totalCount)
     }
 
     // MARK: - Private

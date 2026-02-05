@@ -1,9 +1,7 @@
-import AndroidExport
 import ArgumentParser
 import ExFigCore
 import FigmaAPI
 import Foundation
-import XcodeExport
 
 extension ExFigCommand {
     struct ExportTypography: AsyncParsableCommand {
@@ -90,132 +88,43 @@ extension ExFigCommand {
                 ui.info("Using ExFig \(ExFigCommand.version) to export typography.")
             }
 
-            guard let figmaParams = options.params.figma else {
-                throw ExFigError.custom(errorString: "figma section is required for typography export.")
-            }
+            var totalCount = 0
+            let input = TypographyExportInput(
+                figma: options.params.figma,
+                common: options.params.common,
+                client: client,
+                ui: ui
+            )
 
-            let textStyles = try await ui.withSpinner("Fetching text styles from Figma...") {
-                let loader = TextStylesLoader(client: client, params: figmaParams)
-                return try await loader.load()
-            }
-
+            // Export iOS typography via plugin
             if let ios = options.params.ios,
-               let typographyParams = ios.typography
+               let typographyEntry = ios.typography
             {
-                let processedTextStyles = try await ui.withSpinner("Processing typography for iOS...") {
-                    let processor = TypographyProcessor(
-                        platform: .ios,
-                        nameValidateRegexp: options.params.common?.typography?.nameValidateRegexp,
-                        nameReplaceRegexp: options.params.common?.typography?.nameReplaceRegexp,
-                        nameStyle: typographyParams.nameStyle
-                    )
-                    return try processor.process(assets: textStyles).get()
-                }
-
-                try await ui.withSpinner("Exporting typography to Xcode project...") {
-                    try exportXcodeTextStyles(textStyles: processedTextStyles, iosParams: ios, ui: ui)
-                }
-
-                // Suppress update check in batch mode (will be shown once at the end)
-                if BatchProgressViewStorage.progressView == nil {
-                    await checkForUpdate(logger: logger)
-                }
-
-                ui.success("Done! Exported \(processedTextStyles.count) text styles to Xcode project.")
+                let count = try await exportiOSTypographyViaPlugin(
+                    entry: typographyEntry,
+                    ios: ios,
+                    input: input
+                )
+                totalCount += count
             }
 
-            if let android = options.params.android {
-                let processedTextStyles = try await ui.withSpinner("Processing typography for Android...") {
-                    let processor = TypographyProcessor(
-                        platform: .android,
-                        nameValidateRegexp: options.params.common?.typography?.nameValidateRegexp,
-                        nameReplaceRegexp: options.params.common?.typography?.nameReplaceRegexp,
-                        nameStyle: options.params.android?.typography?.nameStyle
-                    )
-                    return try processor.process(assets: textStyles).get()
-                }
-
-                try await ui.withSpinner("Exporting typography to Android Studio project...") {
-                    try exportAndroidTextStyles(textStyles: processedTextStyles, androidParams: android)
-                }
-
-                // Suppress update check in batch mode (will be shown once at the end)
-                if BatchProgressViewStorage.progressView == nil {
-                    await checkForUpdate(logger: logger)
-                }
-
-                ui.success("Done! Exported \(processedTextStyles.count) text styles to Android project.")
+            // Export Android typography via plugin
+            if let android = options.params.android,
+               let typographyEntry = android.typography
+            {
+                let count = try await exportAndroidTypographyViaPlugin(
+                    entry: typographyEntry,
+                    android: android,
+                    input: input
+                )
+                totalCount += count
             }
 
             // Update cache after successful export (deferred in batch mode)
             try VersionTrackingHelper.updateCacheIfNeeded(manager: trackingManager, versions: fileVersions)
 
             // Return file versions only in batch mode (for deferred batch-level cache save)
-            return TypographyExportResult(count: textStyles.count, fileVersions: batchMode ? fileVersions : nil)
-        }
-
-        private func createXcodeOutput(from iosParams: Params.iOS) -> XcodeTypographyOutput {
-            let fontUrls = XcodeTypographyOutput.FontURLs(
-                fontExtensionURL: iosParams.typography?.fontSwift,
-                swiftUIFontExtensionURL: iosParams.typography?.swiftUIFontSwift
-            )
-            let labelUrls = XcodeTypographyOutput.LabelURLs(
-                labelsDirectory: iosParams.typography?.labelsDirectory,
-                labelStyleExtensionsURL: iosParams.typography?.labelStyleSwift
-            )
-            let urls = XcodeTypographyOutput.URLs(
-                fonts: fontUrls,
-                labels: labelUrls
-            )
-            return XcodeTypographyOutput(
-                urls: urls,
-                generateLabels: iosParams.typography?.generateLabels,
-                addObjcAttribute: iosParams.addObjcAttribute,
-                templatesPath: iosParams.templatesPath
-            )
-        }
-
-        private func exportXcodeTextStyles(textStyles: [TextStyle], iosParams: Params.iOS, ui: TerminalUI) throws {
-            let output = createXcodeOutput(from: iosParams)
-            let exporter = XcodeTypographyExporter(output: output)
-            let files = try exporter.export(textStyles: textStyles)
-
-            try fileWriter.write(files: files)
-
-            guard iosParams.xcassetsInSwiftPackage == false else { return }
-
-            do {
-                let xcodeProject = try XcodeProjectWriter(
-                    xcodeProjPath: iosParams.xcodeprojPath,
-                    target: iosParams.target
-                )
-                try files.forEach { file in
-                    if file.destination.file.pathExtension == "swift" {
-                        try xcodeProject.addFileReferenceToXcodeProj(file.destination.url)
-                    }
-                }
-                try xcodeProject.save()
-            } catch {
-                ui.warning(.xcodeProjectUpdateFailed)
-            }
-        }
-
-        private func exportAndroidTextStyles(textStyles: [TextStyle], androidParams: Params.Android) throws {
-            let output = AndroidOutput(
-                xmlOutputDirectory: androidParams.mainRes,
-                xmlResourcePackage: androidParams.resourcePackage,
-                srcDirectory: androidParams.mainSrc,
-                packageName: androidParams.typography?.composePackageName,
-                colorKotlinURL: nil,
-                templatesPath: androidParams.templatesPath
-            )
-            let exporter = AndroidTypographyExporter(output: output)
-            let files = try exporter.exportFonts(textStyles: textStyles)
-
-            let fileURL = androidParams.mainRes.appendingPathComponent("values/typography.xml")
-
-            try? FileManager.default.removeItem(atPath: fileURL.path)
-            try fileWriter.write(files: files)
+            return TypographyExportResult(count: totalCount, fileVersions: batchMode ? fileVersions : nil)
         }
     }
 }

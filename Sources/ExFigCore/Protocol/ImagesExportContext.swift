@@ -259,3 +259,71 @@ public protocol ImagesExportContextWithGranularCache: ImagesExportContext {
         nameStyle: NameStyle
     ) -> [String]
 }
+
+// MARK: - Images Export Result
+
+/// Result of images export operation.
+///
+/// Contains export statistics and granular cache information
+/// for batch mode and cache updates.
+public struct ImagesExportResult: Sendable {
+    /// Number of images successfully exported.
+    public let count: Int
+
+    /// Number of images skipped due to granular cache (unchanged).
+    public let skippedCount: Int
+
+    /// Computed content hashes for cache update (fileId → (nodeId → hash)).
+    public let computedHashes: [String: [String: String]]
+
+    /// All asset metadata for template generation.
+    public let allAssetMetadata: [AssetMetadata]
+
+    public init(
+        count: Int,
+        skippedCount: Int = 0,
+        computedHashes: [String: [String: String]] = [:],
+        allAssetMetadata: [AssetMetadata] = []
+    ) {
+        self.count = count
+        self.skippedCount = skippedCount
+        self.computedHashes = computedHashes
+        self.allAssetMetadata = allAssetMetadata
+    }
+
+    /// Creates a simple result with just count (no granular cache).
+    public static func simple(count: Int) -> ImagesExportResult {
+        ImagesExportResult(count: count)
+    }
+
+    /// Merges multiple results into one.
+    public static func merge(_ results: [ImagesExportResult]) -> ImagesExportResult {
+        var totalCount = 0
+        var totalSkipped = 0
+        var allHashes: [String: [String: String]] = [:]
+        var allMetadata: [AssetMetadata] = []
+
+        for result in results {
+            totalCount += result.count
+            totalSkipped += result.skippedCount
+
+            // Merge hashes
+            for (fileId, nodeHashes) in result.computedHashes {
+                if allHashes[fileId] == nil {
+                    allHashes[fileId] = nodeHashes
+                } else {
+                    allHashes[fileId]?.merge(nodeHashes) { _, new in new }
+                }
+            }
+
+            allMetadata.append(contentsOf: result.allAssetMetadata)
+        }
+
+        return ImagesExportResult(
+            count: totalCount,
+            skippedCount: totalSkipped,
+            computedHashes: allHashes,
+            allAssetMetadata: allMetadata
+        )
+    }
+}

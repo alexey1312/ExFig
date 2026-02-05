@@ -15,7 +15,7 @@ public struct WebImagesExporter: ImagesExporter {
         entries: [WebImagesEntry],
         platformConfig: WebPlatformConfig,
         context: some ImagesExportContext
-    ) async throws -> Int {
+    ) async throws -> ImagesExportResult {
         var totalCount = 0
 
         for entry in entries {
@@ -30,7 +30,7 @@ public struct WebImagesExporter: ImagesExporter {
             context.success("Done! Exported \(totalCount) images to Web project.")
         }
 
-        return totalCount
+        return ImagesExportResult.simple(count: totalCount)
     }
 
     // MARK: - Private

@@ -35,7 +35,7 @@ final class iOSColorsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .colors)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         // This test verifies the export method signature exists
         // Full integration test would require mock context
         let exporter = iOSColorsExporter()

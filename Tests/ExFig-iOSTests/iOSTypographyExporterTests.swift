@@ -35,7 +35,7 @@ final class iOSTypographyExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .typography)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         // This test verifies the export method signature exists
         // Full integration test would require mock context
         let exporter = iOSTypographyExporter()

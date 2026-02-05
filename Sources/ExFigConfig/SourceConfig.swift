@@ -72,7 +72,7 @@ public struct CombinedSourceConfig: Decodable, Sendable {
     public let darkHCModeName: String?
     public let primitivesModeName: String?
 
-    // Frame source
+    /// Frame source
     public let figmaFrameName: String?
 
     public init(

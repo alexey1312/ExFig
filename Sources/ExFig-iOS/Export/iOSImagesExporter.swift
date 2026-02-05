@@ -1,4 +1,4 @@
-// swiftlint:disable type_name file_length
+// swiftlint:disable type_name file_length type_body_length function_body_length
 
 import ExFigCore
 import Foundation
@@ -9,6 +9,14 @@ import XcodeExport
 /// Supports multiple workflows:
 /// - PNG source → PNG/HEIC output
 /// - SVG source → PNG/HEIC output (rasterization)
+///
+/// ## Granular Cache Support
+///
+/// When the context conforms to `ImagesExportContextWithGranularCache` and
+/// granular cache is enabled, the exporter will:
+/// - Only export changed images (based on content hash)
+/// - Return computed hashes for cache update
+/// - Still generate templates with all image names
 public struct iOSImagesExporter: ImagesExporter {
     public typealias Entry = iOSImagesEntry
     public typealias PlatformConfig = iOSPlatformConfig
@@ -19,46 +27,57 @@ public struct iOSImagesExporter: ImagesExporter {
         entries: [iOSImagesEntry],
         platformConfig: iOSPlatformConfig,
         context: some ImagesExportContext
-    ) async throws -> Int {
-        var totalCount = 0
+    ) async throws -> ImagesExportResult {
+        var results: [ImagesExportResult] = []
 
         for entry in entries {
-            totalCount += try await exportSingleEntry(
+            let result = try await exportSingleEntry(
                 entry: entry,
                 platformConfig: platformConfig,
                 context: context
             )
+            results.append(result)
         }
+
+        let merged = ImagesExportResult.merge(results)
 
         if !context.isBatchMode {
-            context.success("Done! Exported \(totalCount) images to Xcode project.")
+            context.success("Done! Exported \(merged.count) images to Xcode project.")
         }
 
-        return totalCount
+        return merged
     }
 
     // MARK: - Private
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func exportSingleEntry(
         entry: iOSImagesEntry,
         platformConfig: iOSPlatformConfig,
         context: some ImagesExportContext
-    ) async throws -> Int {
+    ) async throws -> ImagesExportResult {
+        // Check if context supports granular cache
+        let granularCacheContext = context as? (any ImagesExportContextWithGranularCache)
+        let useGranularCache = granularCacheContext?.isGranularCacheEnabled ?? false
+
         let sourceFormat = entry.sourceFormat ?? .png
         let outputFormat = entry.effectiveOutputFormat
 
         switch (sourceFormat, outputFormat) {
         case (.svg, _):
             return try await exportSVGSource(
-                entry: entry, platformConfig: platformConfig, context: context, outputFormat: outputFormat
+                entry: entry, platformConfig: platformConfig, context: context,
+                outputFormat: outputFormat, useGranularCache: useGranularCache
             )
         case (.png, .heic):
             return try await exportPNGSourceHeic(
-                entry: entry, platformConfig: platformConfig, context: context
+                entry: entry, platformConfig: platformConfig, context: context,
+                useGranularCache: useGranularCache
             )
         case (.png, _):
             return try await exportPNGSourceRaster(
-                entry: entry, platformConfig: platformConfig, context: context
+                entry: entry, platformConfig: platformConfig, context: context,
+                useGranularCache: useGranularCache
             )
         }
     }
@@ -66,19 +85,61 @@ public struct iOSImagesExporter: ImagesExporter {
     private func exportPNGSourceRaster(
         entry: iOSImagesEntry,
         platformConfig: iOSPlatformConfig,
-        context: some ImagesExportContext
-    ) async throws -> Int {
-        let (imagePairs, assetsURL) = try await loadAndProcess(
-            entry: entry, platformConfig: platformConfig, context: context
+        context: some ImagesExportContext,
+        useGranularCache: Bool
+    ) async throws -> ImagesExportResult {
+        let (imagePairs, assetsURL, loadResult) = try await loadAndProcess(
+            entry: entry, platformConfig: platformConfig, context: context, useGranularCache: useGranularCache
         )
+
+        // If all images unchanged, skip export but return metadata
+        if loadResult.allSkipped {
+            context.success("All images unchanged (granular cache). Skipping export.")
+            return ImagesExportResult(
+                count: 0,
+                skippedCount: loadResult.allAssetMetadata.count,
+                computedHashes: loadResult.computedHashes,
+                allAssetMetadata: loadResult.allAssetMetadata
+            )
+        }
+
+        // For granular cache: process all image names for templates
+        let allImageNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if useGranularCache, let gcContext = context as? (any ImagesExportContextWithGranularCache) {
+            allImageNames = gcContext.processImageNames(
+                loadResult.allAssetMetadata.map(\.name),
+                nameValidateRegexp: entry.nameValidateRegexp,
+                nameReplaceRegexp: entry.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
+            )
+            allAssetMetadata = loadResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: gcContext.processImageNames(
+                        [meta.name],
+                        nameValidateRegexp: entry.nameValidateRegexp,
+                        nameReplaceRegexp: entry.nameReplaceRegexp,
+                        nameStyle: entry.nameStyle
+                    ).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allImageNames = nil
+            allAssetMetadata = nil
+        }
 
         let output = entry.makeXcodeImagesOutput(platformConfig: platformConfig, assetsURL: assetsURL)
         let exporter = XcodeImagesExporter(output: output)
         let localAndRemoteFiles = try exporter.export(
-            assets: imagePairs, allAssetNames: nil, allAssetMetadata: nil, append: context.filter != nil
+            assets: imagePairs, allAssetNames: allImageNames, allAssetMetadata: allAssetMetadata,
+            append: context.filter != nil
         )
 
-        if context.filter == nil { try? FileManager.default.removeItem(atPath: assetsURL.path) }
+        if context.filter == nil, !useGranularCache {
+            try? FileManager.default.removeItem(atPath: assetsURL.path)
+        }
 
         let localFiles = try await context.downloadFiles(localAndRemoteFiles, progressTitle: "Downloading images")
 
@@ -86,25 +147,76 @@ public struct iOSImagesExporter: ImagesExporter {
             try context.writeFiles(localFiles)
         }
 
-        return imagePairs.count
+        let skippedCount = useGranularCache
+            ? loadResult.allAssetMetadata.count - imagePairs.count
+            : 0
+
+        return ImagesExportResult(
+            count: imagePairs.count,
+            skippedCount: skippedCount,
+            computedHashes: loadResult.computedHashes,
+            allAssetMetadata: loadResult.allAssetMetadata
+        )
     }
 
     private func exportPNGSourceHeic(
         entry: iOSImagesEntry,
         platformConfig: iOSPlatformConfig,
-        context: some ImagesExportContext
-    ) async throws -> Int {
-        let (imagePairs, assetsURL) = try await loadAndProcess(
-            entry: entry, platformConfig: platformConfig, context: context
+        context: some ImagesExportContext,
+        useGranularCache: Bool
+    ) async throws -> ImagesExportResult {
+        let (imagePairs, assetsURL, loadResult) = try await loadAndProcess(
+            entry: entry, platformConfig: platformConfig, context: context, useGranularCache: useGranularCache
         )
+
+        // If all images unchanged, skip export but return metadata
+        if loadResult.allSkipped {
+            context.success("All images unchanged (granular cache). Skipping export.")
+            return ImagesExportResult(
+                count: 0,
+                skippedCount: loadResult.allAssetMetadata.count,
+                computedHashes: loadResult.computedHashes,
+                allAssetMetadata: loadResult.allAssetMetadata
+            )
+        }
+
+        // For granular cache: process all image names for templates
+        let allImageNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if useGranularCache, let gcContext = context as? (any ImagesExportContextWithGranularCache) {
+            allImageNames = gcContext.processImageNames(
+                loadResult.allAssetMetadata.map(\.name),
+                nameValidateRegexp: entry.nameValidateRegexp,
+                nameReplaceRegexp: entry.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
+            )
+            allAssetMetadata = loadResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: gcContext.processImageNames(
+                        [meta.name],
+                        nameValidateRegexp: entry.nameValidateRegexp,
+                        nameReplaceRegexp: entry.nameReplaceRegexp,
+                        nameStyle: entry.nameStyle
+                    ).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allImageNames = nil
+            allAssetMetadata = nil
+        }
 
         let output = entry.makeXcodeImagesOutput(platformConfig: platformConfig, assetsURL: assetsURL)
         let exporter = XcodeImagesExporter(output: output)
         let localAndRemoteFiles = try exporter.exportForHeic(
-            assets: imagePairs, allAssetNames: nil, allAssetMetadata: nil, append: context.filter != nil
+            assets: imagePairs, allAssetNames: allImageNames, allAssetMetadata: allAssetMetadata,
+            append: context.filter != nil
         )
 
-        if context.filter == nil { try? FileManager.default.removeItem(atPath: assetsURL.path) }
+        if context.filter == nil, !useGranularCache {
+            try? FileManager.default.removeItem(atPath: assetsURL.path)
+        }
 
         var localFiles = try await context.downloadFiles(localAndRemoteFiles, progressTitle: "Downloading images")
 
@@ -118,23 +230,73 @@ public struct iOSImagesExporter: ImagesExporter {
             try context.writeFiles(filesToWrite)
         }
 
-        return imagePairs.count
+        let skippedCount = useGranularCache
+            ? loadResult.allAssetMetadata.count - imagePairs.count
+            : 0
+
+        return ImagesExportResult(
+            count: imagePairs.count,
+            skippedCount: skippedCount,
+            computedHashes: loadResult.computedHashes,
+            allAssetMetadata: loadResult.allAssetMetadata
+        )
     }
 
     private func exportSVGSource(
         entry: iOSImagesEntry,
         platformConfig: iOSPlatformConfig,
         context: some ImagesExportContext,
-        outputFormat: ImageOutputFormat
-    ) async throws -> Int {
-        let (imagePairs, assetsURL) = try await loadAndProcessSVG(
-            entry: entry, platformConfig: platformConfig, context: context
+        outputFormat: ImageOutputFormat,
+        useGranularCache: Bool
+    ) async throws -> ImagesExportResult {
+        let (imagePairs, assetsURL, loadResult) = try await loadAndProcessSVG(
+            entry: entry, platformConfig: platformConfig, context: context, useGranularCache: useGranularCache
         )
+
+        // If all images unchanged, skip export but return metadata
+        if loadResult.allSkipped {
+            context.success("All images unchanged (granular cache). Skipping export.")
+            return ImagesExportResult(
+                count: 0,
+                skippedCount: loadResult.allAssetMetadata.count,
+                computedHashes: loadResult.computedHashes,
+                allAssetMetadata: loadResult.allAssetMetadata
+            )
+        }
+
+        // For granular cache: process all image names for templates
+        let allImageNames: [String]?
+        let allAssetMetadata: [AssetMetadata]?
+        if useGranularCache, let gcContext = context as? (any ImagesExportContextWithGranularCache) {
+            allImageNames = gcContext.processImageNames(
+                loadResult.allAssetMetadata.map(\.name),
+                nameValidateRegexp: entry.nameValidateRegexp,
+                nameReplaceRegexp: entry.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
+            )
+            allAssetMetadata = loadResult.allAssetMetadata.map { meta in
+                AssetMetadata(
+                    name: gcContext.processImageNames(
+                        [meta.name],
+                        nameValidateRegexp: entry.nameValidateRegexp,
+                        nameReplaceRegexp: entry.nameReplaceRegexp,
+                        nameStyle: entry.nameStyle
+                    ).first ?? meta.name,
+                    nodeId: meta.nodeId,
+                    fileId: meta.fileId
+                )
+            }
+        } else {
+            allImageNames = nil
+            allAssetMetadata = nil
+        }
 
         let svgRemoteFiles = iOSImagesExporterHelpers.makeSVGRemoteFiles(imagePairs: imagePairs, assetsURL: assetsURL)
         let downloadedSVGs = try await context.downloadFiles(svgRemoteFiles, progressTitle: "Downloading SVGs")
 
-        if context.filter == nil { try? FileManager.default.removeItem(atPath: assetsURL.path) }
+        if context.filter == nil, !useGranularCache {
+            try? FileManager.default.removeItem(atPath: assetsURL.path)
+        }
 
         let scales = entry.effectiveScales
         let rasterFiles = try await context.rasterizeSVGs(
@@ -145,7 +307,8 @@ public struct iOSImagesExporter: ImagesExporter {
         let output = entry.makeXcodeImagesOutput(platformConfig: platformConfig, assetsURL: assetsURL)
         let exporter = XcodeImagesExporter(output: output)
         let extensionFiles = try exporter.exportSwiftExtensions(
-            assets: imagePairs, allAssetNames: nil, allAssetMetadata: nil, append: context.filter != nil
+            assets: imagePairs, allAssetNames: allImageNames, allAssetMetadata: allAssetMetadata,
+            append: context.filter != nil
         )
 
         let contentsJsonFiles = iOSImagesExporterHelpers.makeImagesetContentsJson(
@@ -160,54 +323,89 @@ public struct iOSImagesExporter: ImagesExporter {
             try context.writeFiles(filesToWrite)
         }
 
-        return imagePairs.count
+        let skippedCount = useGranularCache
+            ? loadResult.allAssetMetadata.count - imagePairs.count
+            : 0
+
+        return ImagesExportResult(
+            count: imagePairs.count,
+            skippedCount: skippedCount,
+            computedHashes: loadResult.computedHashes,
+            allAssetMetadata: loadResult.allAssetMetadata
+        )
     }
 
     private func loadAndProcess(
         entry: iOSImagesEntry,
         platformConfig: iOSPlatformConfig,
-        context: some ImagesExportContext
-    ) async throws -> ([AssetPair<ImagePack>], URL) {
-        let images = try await context.withSpinner("Fetching images from Figma (\(entry.assetsFolder))...") {
-            try await context.loadImages(from: entry.imagesSourceInput(fileId: ""))
+        context: some ImagesExportContext,
+        useGranularCache: Bool
+    ) async throws -> ([AssetPair<ImagePack>], URL, ImagesLoadOutputWithHashes) {
+        let loadResult: ImagesLoadOutputWithHashes
+        if useGranularCache, let gcContext = context as? (any ImagesExportContextWithGranularCache) {
+            loadResult = try await gcContext.withSpinner("Fetching images from Figma (\(entry.assetsFolder))...") {
+                try await gcContext.loadImagesWithGranularCache(
+                    from: entry.imagesSourceInput(fileId: ""),
+                    onProgress: nil
+                )
+            }
+        } else {
+            let images = try await context.withSpinner("Fetching images from Figma (\(entry.assetsFolder))...") {
+                try await context.loadImages(from: entry.imagesSourceInput(fileId: ""))
+            }
+            loadResult = ImagesLoadOutputWithHashes(light: images.light, dark: images.dark)
         }
 
         let processResult = try await context.withSpinner("Processing images for iOS...") {
             try context.processImages(
-                images, platform: .ios,
+                loadResult.asLoadOutput, platform: .ios,
                 nameValidateRegexp: entry.nameValidateRegexp,
-                nameReplaceRegexp: entry.nameReplaceRegexp, nameStyle: entry.nameStyle
+                nameReplaceRegexp: entry.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
             )
         }
 
         if let warning = processResult.warning { context.warning(warning) }
 
         let assetsURL = platformConfig.xcassetsPath.appendingPathComponent(entry.assetsFolder)
-        return (processResult.imagePairs, assetsURL)
+        return (processResult.imagePairs, assetsURL, loadResult)
     }
 
     private func loadAndProcessSVG(
         entry: iOSImagesEntry,
         platformConfig: iOSPlatformConfig,
-        context: some ImagesExportContext
-    ) async throws -> ([AssetPair<ImagePack>], URL) {
-        let images = try await context.withSpinner("Fetching SVG images from Figma (\(entry.assetsFolder))...") {
-            let input = entry.svgSourceInput()
-            return try await context.loadImages(from: input)
+        context: some ImagesExportContext,
+        useGranularCache: Bool
+    ) async throws -> ([AssetPair<ImagePack>], URL, ImagesLoadOutputWithHashes) {
+        let loadResult: ImagesLoadOutputWithHashes
+        if useGranularCache, let gcContext = context as? (any ImagesExportContextWithGranularCache) {
+            loadResult = try await gcContext.withSpinner("Fetching SVG images from Figma (\(entry.assetsFolder))...") {
+                try await gcContext.loadImagesWithGranularCache(
+                    from: entry.svgSourceInput(),
+                    onProgress: nil
+                )
+            }
+        } else {
+            let images = try await context.withSpinner("Fetching SVG images from Figma (\(entry.assetsFolder))...") {
+                let input = entry.svgSourceInput()
+                return try await context.loadImages(from: input)
+            }
+            loadResult = ImagesLoadOutputWithHashes(light: images.light, dark: images.dark)
         }
 
         let processResult = try await context.withSpinner("Processing images for iOS...") {
             try context.processImages(
-                images, platform: .ios,
+                loadResult.asLoadOutput, platform: .ios,
                 nameValidateRegexp: entry.nameValidateRegexp,
-                nameReplaceRegexp: entry.nameReplaceRegexp, nameStyle: entry.nameStyle
+                nameReplaceRegexp: entry.nameReplaceRegexp,
+                nameStyle: entry.nameStyle
             )
         }
 
         if let warning = processResult.warning { context.warning(warning) }
 
         let assetsURL = platformConfig.xcassetsPath.appendingPathComponent(entry.assetsFolder)
-        return (processResult.imagePairs, assetsURL)
+        return (processResult.imagePairs, assetsURL, loadResult)
     }
 }
 

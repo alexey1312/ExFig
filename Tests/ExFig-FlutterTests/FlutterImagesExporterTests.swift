@@ -32,7 +32,7 @@ final class FlutterImagesExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .images)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = FlutterImagesExporter()
 
         // Type signature verification
@@ -40,7 +40,7 @@ final class FlutterImagesExporterTests: XCTestCase {
             [FlutterImagesEntry],
             FlutterPlatformConfig,
             MockFlutterImagesExportContext
-        ) async throws -> Int = exporter.exportImages
+        ) async throws -> ImagesExportResult = exporter.exportImages
     }
 }
 

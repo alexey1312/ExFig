@@ -37,12 +37,26 @@ actor MockFullExporter: AssetExporter {
         )
     }
 
-    // Test inspection methods
-    func wasLoadCalled() -> Bool { loadCalled }
-    func wasProcessCalled() -> Bool { processCalled }
-    func wasExportCalled() -> Bool { exportCalled }
-    func getLoadedData() -> [String] { loadedData }
-    func getProcessedData() -> [String] { processedData }
+    /// Test inspection methods
+    func wasLoadCalled() -> Bool {
+        loadCalled
+    }
+
+    func wasProcessCalled() -> Bool {
+        processCalled
+    }
+
+    func wasExportCalled() -> Bool {
+        exportCalled
+    }
+
+    func getLoadedData() -> [String] {
+        loadedData
+    }
+
+    func getProcessedData() -> [String] {
+        processedData
+    }
 }
 
 /// Mock exporter that simulates load failure.

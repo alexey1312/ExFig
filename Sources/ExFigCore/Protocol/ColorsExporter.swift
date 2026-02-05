@@ -47,7 +47,9 @@ public protocol ColorsExporter: AssetExporter {
     ) async throws -> Int
 }
 
-// Default implementation for AssetExporter conformance
+/// Default implementation for AssetExporter conformance
 public extension ColorsExporter {
-    var assetType: AssetType { .colors }
+    var assetType: AssetType {
+        .colors
+    }
 }

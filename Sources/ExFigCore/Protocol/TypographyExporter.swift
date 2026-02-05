@@ -47,7 +47,9 @@ public protocol TypographyExporter: AssetExporter {
     ) async throws -> Int
 }
 
-// Default implementation for AssetExporter conformance
+/// Default implementation for AssetExporter conformance
 public extension TypographyExporter {
-    var assetType: AssetType { .typography }
+    var assetType: AssetType {
+        .typography
+    }
 }
