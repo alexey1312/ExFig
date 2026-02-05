@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-02-05
+
+### Bug Fixes
+
+- **linux**: Use #if os(macOS) instead of canImport for YYJSON by @alexey1312
+
+- **tests**: Skip platform-specific tests on Linux by @alexey1312
+
+
+### Features
+
+- Integrate Noora terminal UI design system  by @alexey1312 in [#46](https://github.com/alexey1312/ExFig/pull/46)
+
+- Add YYJSON  by @alexey1312 in [#47](https://github.com/alexey1312/ExFig/pull/47)
+
+
+### Miscellaneous Tasks
+
+- Update doc by @alexey1312
+
+
 ## [1.2.34] - 2026-02-02
 
 ### Refactor
