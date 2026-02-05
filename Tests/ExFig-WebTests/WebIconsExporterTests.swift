@@ -32,15 +32,15 @@ final class WebIconsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .icons)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = WebIconsExporter()
 
-        // Type signature verification
+        // Type signature verification - exportIcons returns IconsExportResult
         let _: (
             [WebIconsEntry],
             WebPlatformConfig,
             MockWebIconsExportContext
-        ) async throws -> Int = exporter.exportIcons
+        ) async throws -> IconsExportResult = exporter.exportIcons
     }
 }
 

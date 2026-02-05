@@ -32,15 +32,15 @@ final class AndroidIconsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .icons)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = AndroidIconsExporter()
 
-        // Type signature verification
+        // Type signature verification - exportIcons returns IconsExportResult
         let _: (
             [AndroidIconsEntry],
             AndroidPlatformConfig,
             MockAndroidIconsExportContext
-        ) async throws -> Int = exporter.exportIcons
+        ) async throws -> IconsExportResult = exporter.exportIcons
     }
 }
 

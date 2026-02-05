@@ -122,66 +122,98 @@ extension ExFigCommand {
             var totalSkipped = 0
             var allComputedHashes: [String: [NodeId: String]] = [:]
 
-            if options.params.ios != nil {
+            // Export icons via plugin architecture
+            if let ios = options.params.ios, let iconsConfig = ios.icons {
                 // Suppress version message in batch mode
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Xcode project.")
                 }
-                let result = try await exportiOSIcons(
-                    client: client,
-                    params: options.params,
-                    ui: ui,
-                    granularCacheManager: granularCacheManager
-                )
+                let entries = iconsConfig.entries
+                let result = try await withComponentPreFetchIfNeeded(
+                    entries: entries,
+                    client: client
+                ) {
+                    try await exportiOSIconsViaPlugin(
+                        entries: entries,
+                        ios: ios,
+                        client: client,
+                        params: options.params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
                 allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
-            if options.params.android != nil {
+            if let android = options.params.android, let iconsConfig = android.icons {
                 // Suppress version message in batch mode
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Android Studio project.")
                 }
-                let result = try await exportAndroidIcons(
-                    client: client,
-                    params: options.params,
-                    ui: ui,
-                    granularCacheManager: granularCacheManager,
-                    strictPathValidationOverride: strictPathValidation
-                )
+                let entries = iconsConfig.entries
+                let result = try await withComponentPreFetchIfNeeded(
+                    entries: entries,
+                    client: client
+                ) {
+                    try await exportAndroidIconsViaPlugin(
+                        entries: entries,
+                        android: android,
+                        client: client,
+                        params: options.params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
                 allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
-            if options.params.flutter != nil {
+            if let flutter = options.params.flutter, let iconsConfig = flutter.icons {
                 // Suppress version message in batch mode
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
                 }
-                let result = try await exportFlutterIcons(
-                    client: client,
-                    params: options.params,
-                    ui: ui,
-                    granularCacheManager: granularCacheManager
-                )
+                let entries = iconsConfig.entries
+                let result = try await withComponentPreFetchIfNeeded(
+                    entries: entries,
+                    client: client
+                ) {
+                    try await exportFlutterIconsViaPlugin(
+                        entries: entries,
+                        flutter: flutter,
+                        client: client,
+                        params: options.params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
                 allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
             }
 
-            if options.params.web != nil {
+            if let web = options.params.web, let iconsConfig = web.icons {
                 // Suppress version message in batch mode
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Web project.")
                 }
-                let result = try await exportWebIcons(
-                    client: client,
-                    params: options.params,
-                    ui: ui,
-                    granularCacheManager: granularCacheManager
-                )
+                let entries = iconsConfig.entries
+                let result = try await withComponentPreFetchIfNeeded(
+                    entries: entries,
+                    client: client
+                ) {
+                    try await exportWebIconsViaPlugin(
+                        entries: entries,
+                        web: web,
+                        client: client,
+                        params: options.params,
+                        ui: ui,
+                        granularCacheManager: granularCacheManager
+                    )
+                }
                 totalIcons += result.count
                 totalSkipped += result.skippedCount
                 allComputedHashes = HashMerger.merge(allComputedHashes, result.hashes)
@@ -214,5 +246,27 @@ extension ExFigCommand {
         }
 
         // swiftlint:enable function_body_length cyclomatic_complexity
+
+        // MARK: - Helpers
+
+        /// Wraps export operation in ComponentPreFetcher if multiple entries exist.
+        ///
+        /// For single entry, executes directly. For multiple entries, pre-fetches
+        /// Figma components once to avoid redundant API calls.
+        private func withComponentPreFetchIfNeeded<T>(
+            entries: [some Any],
+            client: Client,
+            process: () async throws -> T
+        ) async throws -> T {
+            if entries.count > 1 {
+                try await ComponentPreFetcher.withPreFetchedComponentsIfNeeded(
+                    client: client,
+                    params: options.params,
+                    process: process
+                )
+            } else {
+                try await process()
+            }
+        }
     }
 }

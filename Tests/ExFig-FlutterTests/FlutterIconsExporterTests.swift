@@ -32,15 +32,15 @@ final class FlutterIconsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .icons)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         let exporter = FlutterIconsExporter()
 
-        // Type signature verification
+        // Type signature verification - exportIcons returns IconsExportResult
         let _: (
             [FlutterIconsEntry],
             FlutterPlatformConfig,
             MockFlutterIconsExportContext
-        ) async throws -> Int = exporter.exportIcons
+        ) async throws -> IconsExportResult = exporter.exportIcons
     }
 }
 

@@ -35,17 +35,17 @@ final class iOSIconsExporterTests: XCTestCase {
         XCTAssertEqual(exporter.assetType, .icons)
     }
 
-    func testExportMethodExists() async throws {
+    func testExportMethodExists() {
         // This test verifies the export method signature exists
         // Full integration test would require mock context
         let exporter = iOSIconsExporter()
 
-        // Type signature verification
+        // Type signature verification - exportIcons returns IconsExportResult
         let _: (
             [iOSIconsEntry],
             iOSPlatformConfig,
             MockIconsExportContext
-        ) async throws -> Int = exporter.exportIcons
+        ) async throws -> IconsExportResult = exporter.exportIcons
     }
 }
 
