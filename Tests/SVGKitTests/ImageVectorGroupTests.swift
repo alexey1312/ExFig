@@ -6,7 +6,7 @@ import XCTest
 final class ImageVectorGroupTests: XCTestCase {
     // MARK: - Group with Rotation
 
-    func testImageVectorGeneratesGroupWithRotation() throws {
+    func testImageVectorGeneratesGroupWithRotation() {
         let transform = SVGTransform(rotation: 45, pivotX: 12, pivotY: 12)
         let path = SVGPath(
             pathData: "M0 0h24v24H0z",
@@ -45,7 +45,7 @@ final class ImageVectorGroupTests: XCTestCase {
 
     // MARK: - Group with Translation
 
-    func testImageVectorGeneratesGroupWithTranslation() throws {
+    func testImageVectorGeneratesGroupWithTranslation() {
         let transform = SVGTransform(translateX: 5, translateY: 10)
         let path = SVGPath(
             pathData: "M0 0h10v10H0z",
@@ -81,7 +81,7 @@ final class ImageVectorGroupTests: XCTestCase {
 
     // MARK: - Group with Scale
 
-    func testImageVectorGeneratesGroupWithScale() throws {
+    func testImageVectorGeneratesGroupWithScale() {
         let transform = SVGTransform(scaleX: 2, scaleY: 0.5)
         let path = SVGPath(
             pathData: "M0 0h10v10H0z",
@@ -117,7 +117,7 @@ final class ImageVectorGroupTests: XCTestCase {
 
     // MARK: - No Import Without Groups
 
-    func testNoGroupImportWithoutGroups() throws {
+    func testNoGroupImportWithoutGroups() {
         let path = SVGPath(
             pathData: "M0 0h24v24H0z",
             commands: [.moveTo(x: 0, y: 0, relative: false), .closePath],

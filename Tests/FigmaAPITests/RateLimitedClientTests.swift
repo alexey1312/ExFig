@@ -418,7 +418,9 @@ struct RateLimitedClientErrorConversionTests {
 private struct CustomTestError: LocalizedError {
     let message: String
 
-    var errorDescription: String? { message }
+    var errorDescription: String? {
+        message
+    }
 }
 
 @Suite("HTTPError")

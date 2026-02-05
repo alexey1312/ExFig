@@ -275,7 +275,7 @@ final class XcodeAssetContentsExtensionTests: XCTestCase {
 
         XCTAssertNotNil(contents.data)
 
-        let json = String(data: contents.data!, encoding: .utf8)
+        let json = try String(data: XCTUnwrap(contents.data), encoding: .utf8)
         XCTAssertTrue(json?.contains("icon.png") == true)
     }
 }

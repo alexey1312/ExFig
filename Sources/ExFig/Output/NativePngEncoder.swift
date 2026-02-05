@@ -138,7 +138,7 @@ struct NativePngEncoder: Sendable {
             return result
         }
     #else
-        // libpng format constants
+        /// libpng format constants
         private static let pngFormatRGBA: UInt32 = 6
 
         /// Encodes PNG using libpng (Linux)

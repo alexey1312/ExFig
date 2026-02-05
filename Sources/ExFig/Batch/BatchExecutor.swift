@@ -237,7 +237,7 @@ actor BatchExecutor {
             var running = 0
             var configIterator = configs.makeIterator()
 
-            // Helper to create rate-limited client and process config
+            /// Helper to create rate-limited client and process config
             func processConfig(_ config: ConfigFile) async -> ConfigResult {
                 let rateLimitedClient = Self.makeRateLimitedClient(
                     for: config,

@@ -138,9 +138,11 @@ extension ExFigCommand.ExportColors {
             let fileName = entry.xmlOutputFileName ?? "colors.xml"
 
             let lightColorsFileURL = android.mainRes.appendingPathComponent(
-                "values/" + fileName)
+                "values/" + fileName
+            )
             let darkColorsFileURL = android.mainRes.appendingPathComponent(
-                "values-night/" + fileName)
+                "values-night/" + fileName
+            )
 
             try? FileManager.default.removeItem(atPath: lightColorsFileURL.path)
             try? FileManager.default.removeItem(atPath: darkColorsFileURL.path)

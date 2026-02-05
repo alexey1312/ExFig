@@ -131,9 +131,9 @@ final class AndroidColorExporterTests: XCTestCase {
     // MARK: - Custom Color Kotlin Path Tests
 
     func testExportWithCustomColorKotlinPath() throws {
-        let customURL = URL(string: "./custom/path/Ds3Colors.kt")!
-        let outputWithCustomPath = AndroidOutput(
-            xmlOutputDirectory: URL(string: "~/")!,
+        let customURL = try XCTUnwrap(URL(string: "./custom/path/Ds3Colors.kt"))
+        let outputWithCustomPath = try AndroidOutput(
+            xmlOutputDirectory: XCTUnwrap(URL(string: "~/")),
             xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
             srcDirectory: nil,
             packageName: AndroidColorExporterTests.packageName,
@@ -148,15 +148,15 @@ final class AndroidColorExporterTests: XCTestCase {
         XCTAssertEqual(result.count, 2) // Only light XML + Kotlin (no dark since colorPair1 has no dark)
 
         // Last file should be the Kotlin file with custom name
-        let kotlinFile = result.last!
+        let kotlinFile = try XCTUnwrap(result.last)
         XCTAssertEqual(kotlinFile.destination.directory.lastPathComponent, "path")
         XCTAssertEqual(kotlinFile.destination.file.absoluteString, "Ds3Colors.kt")
     }
 
     func testExportWithCustomColorKotlinPath_overridesPackageDirectory() throws {
-        let customURL = URL(string: "./app/src/main/java/com/example/ui/theme/CustomColors.kt")!
-        let outputWithCustomPath = AndroidOutput(
-            xmlOutputDirectory: URL(string: "~/")!,
+        let customURL = try XCTUnwrap(URL(string: "./app/src/main/java/com/example/ui/theme/CustomColors.kt"))
+        let outputWithCustomPath = try AndroidOutput(
+            xmlOutputDirectory: XCTUnwrap(URL(string: "~/")),
             xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
             srcDirectory: URL(string: "~/src"),
             packageName: "com.different.package",
@@ -168,7 +168,7 @@ final class AndroidColorExporterTests: XCTestCase {
         let result = try exporter.export(colorPairs: [colorPair1])
 
         // Last file should use custom path, not computed from package
-        let kotlinFile = result.last!
+        let kotlinFile = try XCTUnwrap(result.last)
         XCTAssertEqual(kotlinFile.destination.directory.lastPathComponent, "theme")
         XCTAssertEqual(kotlinFile.destination.file.absoluteString, "CustomColors.kt")
     }
@@ -176,9 +176,9 @@ final class AndroidColorExporterTests: XCTestCase {
     // MARK: - XML Disabled Tests
 
     func testExportWithXmlDisabled_noXmlFilesGenerated() throws {
-        let customURL = URL(string: "./custom/Ds3Colors.kt")!
-        let outputWithXmlDisabled = AndroidOutput(
-            xmlOutputDirectory: URL(string: "~/")!,
+        let customURL = try XCTUnwrap(URL(string: "./custom/Ds3Colors.kt"))
+        let outputWithXmlDisabled = try AndroidOutput(
+            xmlOutputDirectory: XCTUnwrap(URL(string: "~/")),
             xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
             srcDirectory: nil,
             packageName: AndroidColorExporterTests.packageName,
@@ -198,9 +198,9 @@ final class AndroidColorExporterTests: XCTestCase {
     }
 
     func testExportWithXmlDisabled_kotlinOnlyGenerated() throws {
-        let customURL = URL(string: "./app/compose/Colors.kt")!
-        let outputWithXmlDisabled = AndroidOutput(
-            xmlOutputDirectory: URL(string: "~/res/")!,
+        let customURL = try XCTUnwrap(URL(string: "./app/compose/Colors.kt"))
+        let outputWithXmlDisabled = try AndroidOutput(
+            xmlOutputDirectory: XCTUnwrap(URL(string: "~/res/")),
             xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
             srcDirectory: nil,
             packageName: "com.example.compose",
@@ -222,8 +222,8 @@ final class AndroidColorExporterTests: XCTestCase {
     }
 
     func testExportWithXmlDisabledFalse_generatesXml() throws {
-        let outputWithXmlEnabled = AndroidOutput(
-            xmlOutputDirectory: URL(string: "~/")!,
+        let outputWithXmlEnabled = try AndroidOutput(
+            xmlOutputDirectory: XCTUnwrap(URL(string: "~/")),
             xmlResourcePackage: AndroidColorExporterTests.resourcePackage,
             srcDirectory: URL(string: "~/"),
             packageName: AndroidColorExporterTests.packageName,

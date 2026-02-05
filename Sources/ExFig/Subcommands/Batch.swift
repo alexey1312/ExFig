@@ -3,7 +3,6 @@ import ArgumentParser
 import ExFigCore
 import FigmaAPI
 import Foundation
-import YYJSON
 
 extension ExFigCommand {
     // swiftlint:disable:next type_body_length
@@ -48,7 +47,7 @@ extension ExFigCommand {
         @Option(name: .long, help: "Path to write JSON report")
         var report: String?
 
-        // Cache options
+        /// Cache options
         @Flag(name: .long, help: "Enable version tracking cache (skip export if unchanged)")
         var cache: Bool = false
 
@@ -67,11 +66,11 @@ extension ExFigCommand {
         )
         var experimentalGranularCache: Bool = false
 
-        // Download concurrency
+        /// Download concurrency
         @Option(name: .long, help: "Maximum concurrent CDN downloads")
         var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
 
-        // Connection options
+        /// Connection options
         @Option(name: .long, help: "Figma API request timeout in seconds (overrides config)")
         var timeout: Int?
 
@@ -794,13 +793,7 @@ extension ExFigCommand {
                 }
             )
 
-            // Encode to JSON, then re-serialize with sorted keys for stable output
-            let jsonData = try JSONCodec.encode(report)
-            let object = try YYJSONSerialization.jsonObject(with: jsonData)
-            let data = try YYJSONSerialization.data(
-                withJSONObject: object,
-                options: [.prettyPrinted, .sortedKeys]
-            )
+            let data = try JSONCodec.encodePrettySorted(report)
 
             let url = URL(fileURLWithPath: path)
             try data.write(to: url)

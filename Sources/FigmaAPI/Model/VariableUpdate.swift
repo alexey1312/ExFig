@@ -1,5 +1,5 @@
-/// Models for updating Figma Variables via REST API
-/// POST /v1/files/:file_key/variables
+// Models for updating Figma Variables via REST API
+// POST /v1/files/:file_key/variables
 
 /// Request body for updating variables
 public struct VariablesUpdateRequest: Codable, Sendable {

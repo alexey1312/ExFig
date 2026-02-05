@@ -38,7 +38,7 @@ final class AndroidImageVectorExporterTests: XCTestCase {
         XCTAssertEqual(fileContents.destination.file.absoluteString, "ArrowDown.kt")
         XCTAssertEqual(fileContents.destination.directory, outputDirectory)
 
-        let code = String(data: fileContents.data!, encoding: .utf8)!
+        let code = try XCTUnwrap(try String(data: XCTUnwrap(fileContents.data), encoding: .utf8))
         XCTAssertTrue(code.contains("package com.example.icons"))
         XCTAssertTrue(code.contains("public val ArrowDown: ImageVector"))
     }
@@ -59,7 +59,7 @@ final class AndroidImageVectorExporterTests: XCTestCase {
         let svgData = Data(svg.utf8)
 
         let fileContents = try exporter.exportSingle(name: "star", svgData: svgData)
-        let code = String(data: fileContents.data!, encoding: .utf8)!
+        let code = try XCTUnwrap(try String(data: XCTUnwrap(fileContents.data), encoding: .utf8))
 
         XCTAssertTrue(code.contains("public val AppIcons.Star: ImageVector"))
         XCTAssertTrue(code.contains("@Preview"))
@@ -118,7 +118,7 @@ final class AndroidImageVectorExporterTests: XCTestCase {
         let svgData = Data(svg.utf8)
 
         let fileContents = try exporter.exportSingle(name: "icon", svgData: svgData)
-        let code = String(data: fileContents.data!, encoding: .utf8)!
+        let code = try XCTUnwrap(try String(data: XCTUnwrap(fileContents.data), encoding: .utf8))
 
         XCTAssertTrue(code.contains("MaterialTheme.colorScheme.onSurface"))
         XCTAssertFalse(code.contains("Color(0xFF000000)"))
@@ -171,7 +171,7 @@ final class AndroidImageVectorExporterTests: XCTestCase {
         let svgData = Data(svg.utf8)
 
         let fileContents = try exporter.exportSingle(name: "check", svgData: svgData)
-        let code = String(data: fileContents.data!, encoding: .utf8)!
+        let code = try XCTUnwrap(try String(data: XCTUnwrap(fileContents.data), encoding: .utf8))
 
         XCTAssertTrue(code.contains("moveTo("))
         XCTAssertTrue(code.contains("lineTo("))
@@ -194,7 +194,7 @@ final class AndroidImageVectorExporterTests: XCTestCase {
         let svgData = Data(svg.utf8)
 
         let fileContents = try exporter.exportSingle(name: "circle", svgData: svgData)
-        let code = String(data: fileContents.data!, encoding: .utf8)!
+        let code = try XCTUnwrap(try String(data: XCTUnwrap(fileContents.data), encoding: .utf8))
 
         // Circle is converted to cubic Bezier curves for better Android compatibility
         XCTAssertTrue(code.contains("curveTo"))
@@ -217,7 +217,7 @@ final class AndroidImageVectorExporterTests: XCTestCase {
         let svgData = Data(svg.utf8)
 
         let fileContents = try exporter.exportSingle(name: "line", svgData: svgData)
-        let code = String(data: fileContents.data!, encoding: .utf8)!
+        let code = try XCTUnwrap(try String(data: XCTUnwrap(fileContents.data), encoding: .utf8))
 
         XCTAssertTrue(code.contains("strokeLineWidth = 2f"))
         XCTAssertTrue(code.contains("strokeLineCap = StrokeCap.Round"))

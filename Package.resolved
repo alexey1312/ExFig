@@ -186,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mattt/swift-yyjson",
       "state" : {
-        "revision" : "ec2a739f20b964e648a2ee110409240b5547d3e3",
-        "version" : "0.3.1"
+        "revision" : "5773979483dda1d26ab7b9cfc04088256a758e36",
+        "version" : "0.4.0"
       }
     },
     {

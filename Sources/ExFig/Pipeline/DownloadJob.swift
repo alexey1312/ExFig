@@ -17,7 +17,9 @@ struct DownloadJob: Sendable {
     let priority: Int
 
     /// Total number of files in this job (for progress tracking)
-    var fileCount: Int { files.count }
+    var fileCount: Int {
+        files.count
+    }
 
     init(
         id: UUID = UUID(),

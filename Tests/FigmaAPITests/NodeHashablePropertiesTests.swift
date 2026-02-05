@@ -25,13 +25,13 @@ final class NodeHashablePropertiesTests: XCTestCase {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(props)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try XCTUnwrap(String(data: data, encoding: .utf8))
 
         // Keys should be in alphabetical order
         // "fills" should come before "name", "name" before "type"
-        let fillsIndex = json.range(of: "\"fills\"")!.lowerBound
-        let nameIndex = json.range(of: "\"name\"")!.lowerBound
-        let typeIndex = json.range(of: "\"type\"")!.lowerBound
+        let fillsIndex = try XCTUnwrap(json.range(of: "\"fills\"")?.lowerBound)
+        let nameIndex = try XCTUnwrap(json.range(of: "\"name\"")?.lowerBound)
+        let typeIndex = try XCTUnwrap(json.range(of: "\"type\"")?.lowerBound)
 
         XCTAssertLessThan(fillsIndex, nameIndex)
         XCTAssertLessThan(nameIndex, typeIndex)
@@ -77,7 +77,7 @@ final class NodeHashablePropertiesTests: XCTestCase {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(parentProps)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try XCTUnwrap(String(data: data, encoding: .utf8))
 
         // Child properties should be included
         XCTAssertTrue(json.contains("\"children\""))
@@ -110,7 +110,7 @@ final class NodeHashablePropertiesTests: XCTestCase {
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(props)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try XCTUnwrap(String(data: data, encoding: .utf8))
 
         // Should NOT contain boundVariables
         XCTAssertFalse(json.contains("boundVariables"))
@@ -137,7 +137,7 @@ final class NodeHashablePropertiesTests: XCTestCase {
 
         let encoder = JSONEncoder()
         let data = try encoder.encode(props)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try XCTUnwrap(String(data: data, encoding: .utf8))
 
         // Should NOT contain absoluteBoundingBox
         XCTAssertFalse(json.contains("absoluteBoundingBox"))
@@ -237,7 +237,7 @@ final class NodeHashablePropertiesTests: XCTestCase {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(props)
-        let json = String(data: data, encoding: .utf8)!
+        let json = try XCTUnwrap(String(data: data, encoding: .utf8))
 
         // All visual properties should be present
         XCTAssertTrue(json.contains("\"fills\""))

@@ -193,13 +193,12 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
         }
 
         // Create new checkpoint
-        let tracker = try CheckpointTracker(
+        return try CheckpointTracker(
             configPath: configPath,
             directory: workingDirectory,
             assetType: assetType,
             assetNames: assetNames
         )
-        return tracker
     }
 
     /// Filter files to download based on checkpoint state.

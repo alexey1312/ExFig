@@ -16,7 +16,9 @@ protocol BaseEndpoint: Endpoint where Content: Decodable {
 }
 
 extension BaseEndpoint where Root == Content {
-    func content(from root: Root) -> Content { root }
+    func content(from root: Root) -> Content {
+        root
+    }
 }
 
 extension BaseEndpoint {

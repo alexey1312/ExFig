@@ -95,8 +95,8 @@ final class FlutterColorExporterTests: XCTestCase {
     }
 
     func testExportCustomClassName() throws {
-        let customOutput = FlutterOutput(
-            outputDirectory: URL(string: "~/lib/generated/")!,
+        let customOutput = try FlutterOutput(
+            outputDirectory: XCTUnwrap(URL(string: "~/lib/generated/")),
             templatesPath: nil,
             colorsClassName: "MyColors"
         )

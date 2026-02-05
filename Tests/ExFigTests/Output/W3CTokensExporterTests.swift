@@ -82,7 +82,7 @@ final class W3CTokensExporterTests: XCTestCase {
 
     // MARK: - W3C Token Structure
 
-    func testExportColorsToW3CFormat() throws {
+    func testExportColorsToW3CFormat() {
         // Given: Colors with modes
         let exporter = W3CTokensExporter()
         let colorsByMode: [String: [ExFigCore.Color]] = [
@@ -114,7 +114,7 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertEqual(value["Dark"], "#1a1a1a")
     }
 
-    func testExportColorsWithDescription() throws {
+    func testExportColorsWithDescription() {
         let exporter = W3CTokensExporter()
         let colorsByMode: [String: [ExFigCore.Color]] = [
             "Light": [
@@ -132,7 +132,7 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertEqual(primary["$description"] as? String, "Primary brand color")
     }
 
-    func testExportColorsSingleMode() throws {
+    func testExportColorsSingleMode() {
         // Given: Colors with only one mode
         let exporter = W3CTokensExporter()
         let colorsByMode: [String: [ExFigCore.Color]] = [
@@ -197,7 +197,7 @@ final class W3CTokensExporterTests: XCTestCase {
 
     // MARK: - Complex Hierarchy
 
-    func testExportDeepNesting() throws {
+    func testExportDeepNesting() {
         let exporter = W3CTokensExporter()
         let colorsByMode: [String: [ExFigCore.Color]] = [
             "Light": [
@@ -222,7 +222,7 @@ final class W3CTokensExporterTests: XCTestCase {
 
     // MARK: - Typography Export
 
-    func testExportTypographyBasic() throws {
+    func testExportTypographyBasic() {
         let exporter = W3CTokensExporter()
         let textStyles = [
             TextStyle(
@@ -256,7 +256,7 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertEqual(value["letterSpacing"] as? Double, -0.5)
     }
 
-    func testExportTypographyWithTextCase() throws {
+    func testExportTypographyWithTextCase() {
         let exporter = W3CTokensExporter()
         let textStyles = [
             TextStyle(
@@ -283,7 +283,7 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertEqual(value["textTransform"] as? String, "uppercase")
     }
 
-    func testExportTypographyNoLineHeight() throws {
+    func testExportTypographyNoLineHeight() {
         let exporter = W3CTokensExporter()
         let textStyles = [
             TextStyle(
@@ -310,7 +310,7 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertNil(value["lineHeight"])
     }
 
-    func testExportTypographyMultipleStyles() throws {
+    func testExportTypographyMultipleStyles() {
         let exporter = W3CTokensExporter()
         let textStyles = [
             TextStyle(
@@ -346,7 +346,7 @@ final class W3CTokensExporterTests: XCTestCase {
 
     // MARK: - Asset Export
 
-    func testExportAssetsBasic() throws {
+    func testExportAssetsBasic() {
         let exporter = W3CTokensExporter()
         let assets: [AssetToken] = [
             AssetToken(
@@ -374,7 +374,7 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertEqual(arrowLeft["$description"] as? String, "Left arrow icon")
     }
 
-    func testExportAssetsNoDescription() throws {
+    func testExportAssetsNoDescription() {
         let exporter = W3CTokensExporter()
         let assets: [AssetToken] = [
             AssetToken(name: "icon", url: "https://example.com/icon.png", description: nil),
@@ -390,7 +390,7 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertNil(icon["$description"])
     }
 
-    func testExportAssetsMultiple() throws {
+    func testExportAssetsMultiple() {
         let exporter = W3CTokensExporter()
         let assets: [AssetToken] = [
             AssetToken(name: "UI/Button/Plus", url: "https://example.com/plus.svg", description: nil),

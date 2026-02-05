@@ -13,7 +13,7 @@ struct SVGPathFormatTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         #expect(parsed.paths.count == 1)
         let pathData = parsed.paths[0].pathData
@@ -37,7 +37,7 @@ struct SVGPathFormatTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         let pathData = parsed.paths[0].pathData
         print("Simple rect path: \(pathData)")
@@ -63,7 +63,7 @@ struct SVGPathFormatTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         // The path data should be exactly preserved
         #expect(parsed.paths.count == 1)
@@ -90,7 +90,7 @@ struct SVGPathFormatTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: true)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: true)
 
         print("Normalized path: \(parsed.paths.first?.pathData ?? "none")")
 
@@ -107,7 +107,7 @@ struct SVGPathFormatTests {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         let generator = VectorDrawableXMLGenerator()
         let xml = generator.generate(from: parsed)

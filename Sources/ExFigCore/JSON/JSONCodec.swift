@@ -40,13 +40,10 @@ public enum JSONCodec {
     /// Encode with sorted keys for deterministic output.
     ///
     /// Use for hashing where key order matters.
-    /// YYJSONEncoder doesn't support sortedKeys directly, so we use two-step approach:
-    /// 1. Encode → Data
-    /// 2. Parse → Object → Serialize with sortedKeys
     public static func encodeSorted(_ value: some Encodable) throws -> Data {
-        let data = try makeEncoder().encode(value)
-        let object = try YYJSONSerialization.jsonObject(with: data)
-        return try YYJSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+        var encoder = YYJSONEncoder()
+        encoder.writeOptions = [.sortedKeys]
+        return try encoder.encode(value)
     }
 
     /// Encode with pretty-print and sorted keys.
@@ -54,9 +51,9 @@ public enum JSONCodec {
     /// Use for Contents.json in xcassets where human-readable output
     /// with deterministic key order is needed.
     public static func encodePrettySorted(_ value: some Encodable) throws -> Data {
-        let data = try makeEncoder().encode(value)
-        let object = try YYJSONSerialization.jsonObject(with: data)
-        return try YYJSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys])
+        var encoder = YYJSONEncoder()
+        encoder.writeOptions = [.prettyPrintedTwoSpaces, .sortedKeys]
+        return try encoder.encode(value)
     }
 
     /// Decode JSON data to type.

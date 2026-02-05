@@ -6,9 +6,9 @@ import XCTest
 final class VariablesEndpointTests: XCTestCase {
     // MARK: - URL Construction
 
-    func testMakeRequestConstructsCorrectURL() {
+    func testMakeRequestConstructsCorrectURL() throws {
         let endpoint = VariablesEndpoint(fileId: "abc123")
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 

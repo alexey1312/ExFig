@@ -5,9 +5,9 @@ import XCTest
 final class NodesEndpointTests: XCTestCase {
     // MARK: - URL Construction
 
-    func testMakeRequestConstructsCorrectURL() {
+    func testMakeRequestConstructsCorrectURL() throws {
         let endpoint = NodesEndpoint(fileId: "abc123", nodeIds: ["1:2", "1:3"])
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
@@ -15,19 +15,19 @@ final class NodesEndpointTests: XCTestCase {
         XCTAssertTrue(request.url?.absoluteString.contains("ids=1:2,1:3") ?? false)
     }
 
-    func testMakeRequestWithSingleNodeId() {
+    func testMakeRequestWithSingleNodeId() throws {
         let endpoint = NodesEndpoint(fileId: "file123", nodeIds: ["10:5"])
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertTrue(request.url?.absoluteString.contains("ids=10:5") ?? false)
     }
 
-    func testMakeRequestWithManyNodeIds() {
+    func testMakeRequestWithManyNodeIds() throws {
         let nodeIds = (1 ... 100).map { "1:\($0)" }
         let endpoint = NodesEndpoint(fileId: "file123", nodeIds: nodeIds)
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
         let request = endpoint.makeRequest(baseURL: baseURL)
 

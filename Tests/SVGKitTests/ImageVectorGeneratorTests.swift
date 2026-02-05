@@ -7,7 +7,7 @@ import XCTest
 final class ImageVectorGeneratorTests: XCTestCase {
     // MARK: - Basic Generation
 
-    func testGenerateSimpleIcon() throws {
+    func testGenerateSimpleIcon() {
         let config = ImageVectorGenerator.Config(
             packageName: "com.example.icons",
             extensionTarget: nil,
@@ -47,7 +47,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertFalse(code.contains("@Preview"))
     }
 
-    func testGenerateWithPreview() throws {
+    func testGenerateWithPreview() {
         let config = ImageVectorGenerator.Config(
             packageName: "com.example.icons",
             extensionTarget: nil,
@@ -71,7 +71,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("import androidx.compose.ui.tooling.preview.Preview"))
     }
 
-    func testGenerateWithExtensionTarget() throws {
+    func testGenerateWithExtensionTarget() {
         let config = ImageVectorGenerator.Config(
             packageName: "com.example.icons",
             extensionTarget: "com.example.AppIcons",
@@ -95,7 +95,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
 
     // MARK: - Path Commands Generation
 
-    func testGenerateMoveToAbsolute() throws {
+    func testGenerateMoveToAbsolute() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -105,7 +105,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("moveTo(10.5f, 20.5f)"))
     }
 
-    func testGenerateMoveToRelative() throws {
+    func testGenerateMoveToRelative() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -115,7 +115,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("moveToRelative(5f, 10f)"))
     }
 
-    func testGenerateLineToAbsolute() throws {
+    func testGenerateLineToAbsolute() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -125,7 +125,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("lineTo(100f, 200f)"))
     }
 
-    func testGenerateLineToRelative() throws {
+    func testGenerateLineToRelative() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -135,7 +135,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("lineToRelative(10f, 20f)"))
     }
 
-    func testGenerateHorizontalLineTo() throws {
+    func testGenerateHorizontalLineTo() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -145,7 +145,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("horizontalLineTo(50f)"))
     }
 
-    func testGenerateVerticalLineTo() throws {
+    func testGenerateVerticalLineTo() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -155,7 +155,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("verticalLineTo(75f)"))
     }
 
-    func testGenerateCurveTo() throws {
+    func testGenerateCurveTo() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -165,7 +165,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("curveTo(1f, 2f, 3f, 4f, 5f, 6f)"))
     }
 
-    func testGenerateSmoothCurveTo() throws {
+    func testGenerateSmoothCurveTo() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -175,7 +175,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("reflectiveCurveTo(10f, 20f, 30f, 40f)"))
     }
 
-    func testGenerateQuadraticBezierCurveTo() throws {
+    func testGenerateQuadraticBezierCurveTo() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -185,7 +185,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("quadTo(5f, 10f, 15f, 20f)"))
     }
 
-    func testGenerateSmoothQuadraticBezierCurveTo() throws {
+    func testGenerateSmoothQuadraticBezierCurveTo() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -195,7 +195,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("reflectiveQuadTo(25f, 35f)"))
     }
 
-    func testGenerateArcTo() throws {
+    func testGenerateArcTo() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -216,7 +216,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("arcTo(10f, 10f, 0f, true, false, 50f, 50f)"))
     }
 
-    func testGenerateClosePath() throws {
+    func testGenerateClosePath() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -228,7 +228,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
 
     // MARK: - Path Attributes
 
-    func testGeneratePathWithFill() throws {
+    func testGeneratePathWithFill() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -257,7 +257,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("fill = SolidColor(Color(0xFFFF0000))"))
     }
 
-    func testGeneratePathWithStroke() throws {
+    func testGeneratePathWithStroke() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -289,7 +289,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertTrue(code.contains("strokeLineJoin = StrokeJoin.Bevel"))
     }
 
-    func testGeneratePathWithEvenOddFillRule() throws {
+    func testGeneratePathWithEvenOddFillRule() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -321,7 +321,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
 
     // MARK: - Color Mappings
 
-    func testGenerateWithColorMapping() throws {
+    func testGenerateWithColorMapping() {
         let config = ImageVectorGenerator.Config(
             packageName: "com.example",
             generatePreview: false,
@@ -355,7 +355,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
         XCTAssertFalse(code.contains("Color(0xFF000000)"))
     }
 
-    func testGenerateWithWildcardColorMapping() throws {
+    func testGenerateWithWildcardColorMapping() {
         let config = ImageVectorGenerator.Config(
             packageName: "com.example",
             generatePreview: false,
@@ -390,7 +390,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
 
     // MARK: - Icon Naming
 
-    func testIconNameConversion() throws {
+    func testIconNameConversion() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -412,7 +412,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
 
     // MARK: - Dimensions
 
-    func testGenerateWithDifferentDimensions() throws {
+    func testGenerateWithDifferentDimensions() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 
@@ -434,7 +434,7 @@ final class ImageVectorGeneratorTests: XCTestCase {
 
     // MARK: - Imports
 
-    func testGenerateImportsWithStroke() throws {
+    func testGenerateImportsWithStroke() {
         let config = ImageVectorGenerator.Config(packageName: "com.example", generatePreview: false)
         let generator = ImageVectorGenerator(config: config)
 

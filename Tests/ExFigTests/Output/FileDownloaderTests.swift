@@ -28,10 +28,10 @@ final class FileDownloaderTests: XCTestCase {
         try testData.write(to: testFile)
         defer { try? FileManager.default.removeItem(at: testFile) }
 
-        let destination = Destination(
+        let destination = try Destination(
             directory: tempDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "output.txt")!
+            file: XCTUnwrap(URL(string: "output.txt"))
         )
         let localFile = FileContents(destination: destination, dataFile: testFile)
 
@@ -65,10 +65,10 @@ final class FileDownloaderTests: XCTestCase {
             try testData.write(to: testFile)
             testFileURLs.append(testFile)
 
-            let destination = Destination(
+            let destination = try Destination(
                 directory: tempDir,
                 // swiftlint:disable:next force_unwrapping
-                file: URL(string: "output_\(i).txt")!
+                file: XCTUnwrap(URL(string: "output_\(i).txt"))
             )
             localFiles.append(FileContents(destination: destination, dataFile: testFile))
         }
@@ -100,10 +100,10 @@ final class FileDownloaderTests: XCTestCase {
         try testData.write(to: testFile)
         defer { try? FileManager.default.removeItem(at: testFile) }
 
-        let localDestination = Destination(
+        let localDestination = try Destination(
             directory: tempDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "local_output.txt")!
+            file: XCTUnwrap(URL(string: "local_output.txt"))
         )
         let localFile = FileContents(destination: localDestination, dataFile: testFile)
 
@@ -124,10 +124,10 @@ final class FileDownloaderTests: XCTestCase {
         try testData.write(to: testFile)
         defer { try? FileManager.default.removeItem(at: testFile) }
 
-        let destination = Destination(
+        let destination = try Destination(
             directory: tempDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "output.txt")!
+            file: XCTUnwrap(URL(string: "output.txt"))
         )
         let file = FileContents(destination: destination, dataFile: testFile, scale: 2.0, dark: true, isRTL: true)
 
@@ -154,10 +154,10 @@ final class FileDownloaderTests: XCTestCase {
             try testData.write(to: testFile)
             tempFiles.append(testFile)
 
-            let destination = Destination(
+            let destination = try Destination(
                 directory: tempDir,
                 // swiftlint:disable:next force_unwrapping
-                file: URL(string: "out_\(i).txt")!
+                file: XCTUnwrap(URL(string: "out_\(i).txt"))
             )
             files.append(FileContents(destination: destination, dataFile: testFile))
         }
@@ -179,10 +179,10 @@ final class FileDownloaderTests: XCTestCase {
         let downloader = FileDownloader()
         let tempDir = FileManager.default.temporaryDirectory
 
-        let destination = Destination(
+        let destination = try Destination(
             directory: tempDir,
             // swiftlint:disable:next force_unwrapping
-            file: URL(string: "memory.txt")!
+            file: XCTUnwrap(URL(string: "memory.txt"))
         )
         let inMemoryFile = FileContents(
             destination: destination,

@@ -149,9 +149,9 @@ final class FlutterImagesExporterTests: XCTestCase {
     }
 
     func testExportImagesCustomClassName() throws {
-        let customOutput = FlutterOutput(
-            outputDirectory: URL(string: "~/lib/generated/")!,
-            imagesAssetsDirectory: URL(string: "assets/images")!,
+        let customOutput = try FlutterOutput(
+            outputDirectory: XCTUnwrap(URL(string: "~/lib/generated/")),
+            imagesAssetsDirectory: XCTUnwrap(URL(string: "assets/images")),
             templatesPath: nil,
             imagesClassName: "MyImages"
         )

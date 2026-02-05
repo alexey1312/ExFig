@@ -1,7 +1,6 @@
 import ExFigCore
 import FigmaAPI
 import Foundation
-import YYJSON
 
 /// Metadata wrapper for raw Figma export.
 public struct RawExportMetadata: Codable, Sendable {
@@ -50,10 +49,6 @@ public struct RawExporter: Sendable {
     ///   - compact: If true, outputs minified JSON; otherwise pretty-printed.
     /// - Returns: JSON data.
     public func serialize(_ output: RawExportOutput<some Encodable & Sendable>, compact: Bool) throws -> Data {
-        // Encode to JSON, then re-serialize with sorted keys
-        let data = try JSONCodec.encode(output)
-        let object = try YYJSONSerialization.jsonObject(with: data)
-        let options: YYJSONSerialization.WritingOptions = compact ? [.sortedKeys] : [.prettyPrinted, .sortedKeys]
-        return try YYJSONSerialization.data(withJSONObject: object, options: options)
+        compact ? try JSONCodec.encodeSorted(output) : try JSONCodec.encodePrettySorted(output)
     }
 }

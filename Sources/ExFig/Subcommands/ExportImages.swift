@@ -29,7 +29,8 @@ extension ExFigCommand {
             [Optional] Name of the images to export. For example \"img/login\" to export \
             single image, \"img/onboarding/1, img/onboarding/2\" to export several images \
             and \"img/onboarding/*\" to export all images from onboarding group
-            """)
+            """
+        )
         var filter: String?
 
         func run() async throws {
@@ -125,7 +126,8 @@ extension ExFigCommand {
                 // Suppress version message in batch mode
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info(
-                        "Using ExFig \(ExFigCommand.version) to export images to Xcode project.")
+                        "Using ExFig \(ExFigCommand.version) to export images to Xcode project."
+                    )
                 }
                 let result = try await exportiOSImages(
                     client: client,
@@ -160,7 +162,8 @@ extension ExFigCommand {
                 // Suppress version message in batch mode
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info(
-                        "Using ExFig \(ExFigCommand.version) to export images to Flutter project.")
+                        "Using ExFig \(ExFigCommand.version) to export images to Flutter project."
+                    )
                 }
                 let result = try await exportFlutterImages(
                     client: client,

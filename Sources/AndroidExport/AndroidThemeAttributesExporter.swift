@@ -38,10 +38,14 @@ public struct ThemeAttributesExportResult: Sendable {
     public let collisions: [ThemeAttributeCollision]
 
     /// Number of attributes generated.
-    public var count: Int { attributeMap.count }
+    public var count: Int {
+        attributeMap.count
+    }
 
     /// Whether any collisions were detected.
-    public var hasCollisions: Bool { !collisions.isEmpty }
+    public var hasCollisions: Bool {
+        !collisions.isEmpty
+    }
 
     public init(
         attrsContent: String,

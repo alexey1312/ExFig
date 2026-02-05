@@ -134,7 +134,7 @@ final class NodeHasherTests: XCTestCase {
 
         // This expected hash was computed on macOS and verified.
         // If this test fails on Linux, there's a cross-platform issue.
-        XCTAssertEqual(hash, "12ff28aab4c720c1", "Cross-platform hash mismatch")
+        XCTAssertEqual(hash, "68988f8b6635b4c7", "Cross-platform hash mismatch")
     }
 
     /// Test fixture with complex nested children for cross-platform verification.
@@ -193,7 +193,7 @@ final class NodeHasherTests: XCTestCase {
         let hash = NodeHasher.computeHash(props)
 
         // This expected hash was computed on macOS and verified.
-        XCTAssertEqual(hash, "9107a65bbf73a96e", "Cross-platform hash mismatch for complex node")
+        XCTAssertEqual(hash, "2afce4b5fcc030f2", "Cross-platform hash mismatch for complex node")
     }
 
     /// Test fixture with normalized float values for cross-platform verification.
@@ -229,7 +229,7 @@ final class NodeHasherTests: XCTestCase {
         let hash = NodeHasher.computeHash(props)
 
         // This expected hash was computed on macOS and verified.
-        XCTAssertEqual(hash, "7de3f482aded0036", "Cross-platform hash mismatch for normalized floats")
+        XCTAssertEqual(hash, "fb90b6a9927d1234", "Cross-platform hash mismatch for normalized floats")
     }
 
     // MARK: - Helpers

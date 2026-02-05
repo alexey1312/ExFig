@@ -4,9 +4,9 @@ import XCTest
 
 final class AssetsProcessorTests: XCTestCase {
     func testProcessCamelCase() throws {
-        let images = [
-            ImagePack(image: Image(name: "ic_24_icon", url: URL(string: "1")!, format: "pdf")),
-            ImagePack(image: Image(name: "ic_24_icon_name", url: URL(string: "2")!, format: "pdf")),
+        let images = try [
+            ImagePack(image: Image(name: "ic_24_icon", url: XCTUnwrap(URL(string: "1")), format: "pdf")),
+            ImagePack(image: Image(name: "ic_24_icon_name", url: XCTUnwrap(URL(string: "2")), format: "pdf")),
         ]
 
         let processor = ImagesProcessor(
@@ -22,9 +22,9 @@ final class AssetsProcessorTests: XCTestCase {
     }
 
     func testProcessSnakeCase() throws {
-        let images = [
-            ImagePack(image: Image(name: "ic/24/Icon", url: URL(string: "1")!, format: "pdf")),
-            ImagePack(image: Image(name: "ic/24/icon/name", url: URL(string: "2")!, format: "pdf")),
+        let images = try [
+            ImagePack(image: Image(name: "ic/24/Icon", url: XCTUnwrap(URL(string: "1")), format: "pdf")),
+            ImagePack(image: Image(name: "ic/24/icon/name", url: XCTUnwrap(URL(string: "2")), format: "pdf")),
         ]
 
         let processor = ImagesProcessor(
@@ -40,9 +40,9 @@ final class AssetsProcessorTests: XCTestCase {
     }
 
     func testProcessWithValidateAndReplace() throws {
-        let images = [
-            ImagePack(image: Image(name: "ic_24_icon", url: URL(string: "1")!, format: "pdf")),
-            ImagePack(image: Image(name: "ic_24_icon_name", url: URL(string: "2")!, format: "pdf")),
+        let images = try [
+            ImagePack(image: Image(name: "ic_24_icon", url: XCTUnwrap(URL(string: "1")), format: "pdf")),
+            ImagePack(image: Image(name: "ic_24_icon_name", url: XCTUnwrap(URL(string: "2")), format: "pdf")),
         ]
 
         let processor = ImagesProcessor(
@@ -60,8 +60,8 @@ final class AssetsProcessorTests: XCTestCase {
     }
 
     func testProcessWithReplaceImageNameInSnakeCase() throws {
-        let images = [
-            ImagePack(image: Image(name: "32 - Profile", url: URL(string: "1")!, format: "pdf")),
+        let images = try [
+            ImagePack(image: Image(name: "32 - Profile", url: XCTUnwrap(URL(string: "1")), format: "pdf")),
         ]
 
         let processor = ImagesProcessor(
@@ -79,8 +79,8 @@ final class AssetsProcessorTests: XCTestCase {
     }
 
     func testProcessWithReplaceImageName() throws {
-        let images = [
-            ImagePack(image: Image(name: "32 - Profile", url: URL(string: "1")!, format: "pdf")),
+        let images = try [
+            ImagePack(image: Image(name: "32 - Profile", url: XCTUnwrap(URL(string: "1")), format: "pdf")),
         ]
 
         let processor = ImagesProcessor(
@@ -98,8 +98,8 @@ final class AssetsProcessorTests: XCTestCase {
     }
 
     func testProcessWithReplaceImageName2() throws {
-        let images = [
-            ImagePack(image: Image(name: "32 - Profile", url: URL(string: "1")!, format: "pdf")),
+        let images = try [
+            ImagePack(image: Image(name: "32 - Profile", url: XCTUnwrap(URL(string: "1")), format: "pdf")),
         ]
 
         let processor = ImagesProcessor(
@@ -117,8 +117,8 @@ final class AssetsProcessorTests: XCTestCase {
     }
 
     func testProcessWithReplaceForInvalidAsssetName() throws {
-        let images = [
-            ImagePack(image: Image(name: "ic24", url: URL(string: "1")!, format: "pdf")),
+        let images = try [
+            ImagePack(image: Image(name: "ic24", url: XCTUnwrap(URL(string: "1")), format: "pdf")),
         ]
 
         let processor = ImagesProcessor(
@@ -131,7 +131,7 @@ final class AssetsProcessorTests: XCTestCase {
         XCTAssertThrowsError(try processor.process(assets: images).get())
     }
 
-    // Light count can exceed dark count
+    /// Light count can exceed dark count
     func testProcessWithUniversalAsset() throws {
         let lights = [
             Color(name: "primaryText", platform: .ios, red: 0, green: 0, blue: 0, alpha: 0),
@@ -156,7 +156,7 @@ final class AssetsProcessorTests: XCTestCase {
         )
     }
 
-    // Dark count cannot exceed light count
+    /// Dark count cannot exceed light count
     func testProcessWithUniversalAsset2() throws {
         let lights = [
             Color(name: "primaryText", platform: .ios, red: 0, green: 0, blue: 0, alpha: 0),
@@ -177,7 +177,7 @@ final class AssetsProcessorTests: XCTestCase {
         XCTAssertThrowsError(try processor.process(light: lights, dark: darks).get())
     }
 
-    // Light count can exceed lightHC count
+    /// Light count can exceed lightHC count
     func testProcessWithUniversalAsset3() throws {
         let lights = [
             Color(name: "primaryText", platform: .ios, red: 0, green: 0, blue: 0, alpha: 0),
@@ -202,7 +202,7 @@ final class AssetsProcessorTests: XCTestCase {
         )
     }
 
-    // LightHC count cannot exceed light count
+    /// LightHC count cannot exceed light count
     func testProcessWithUniversalAsset4() throws {
         let lights = [
             Color(name: "primaryText", platform: .ios, red: 0, green: 0, blue: 0, alpha: 0),
@@ -225,7 +225,7 @@ final class AssetsProcessorTests: XCTestCase {
         XCTAssertThrowsError(try processor.process(light: lights, dark: nil, lightHC: lightHC).get())
     }
 
-    // LightHC count cannot exceed light count
+    /// LightHC count cannot exceed light count
     func testProcessWithUniversalAsset5() throws {
         let lights = [
             Color(name: "primaryText", platform: .ios, red: 0, green: 0, blue: 0, alpha: 0),
@@ -253,7 +253,7 @@ final class AssetsProcessorTests: XCTestCase {
         XCTAssertThrowsError(try processor.process(light: lights, dark: darks, lightHC: lightsHC).get())
     }
 
-    // DarkHC count cannot exceed lightHC count
+    /// DarkHC count cannot exceed lightHC count
     func testProcessWithUniversalAsset6() throws {
         let lights = [
             Color(name: "primaryText", platform: .ios, red: 0, green: 0, blue: 0, alpha: 0),
@@ -287,7 +287,7 @@ final class AssetsProcessorTests: XCTestCase {
             .get())
     }
 
-    // Light count can exceed dark, lightHC and darkHC count
+    /// Light count can exceed dark, lightHC and darkHC count
     func testProcessWithUniversalAsset7() throws {
         let lights = [
             Color(name: "primaryText", platform: .ios, red: 0, green: 0, blue: 0, alpha: 0),
@@ -334,9 +334,9 @@ final class AssetsProcessorTests: XCTestCase {
     }
 
     func testProcess() throws {
-        let images = [
+        let images = try [
             ImagePack(
-                image: Image(name: "icons / 24 / arrow back", url: URL(string: "/")!, format: "png"),
+                image: Image(name: "icons / 24 / arrow back", url: XCTUnwrap(URL(string: "/")), format: "png"),
                 platform: .android
             ),
         ]

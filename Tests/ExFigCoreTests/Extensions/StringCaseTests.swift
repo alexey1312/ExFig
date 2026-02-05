@@ -2,7 +2,7 @@
 import XCTest
 
 final class StringCaseTests: XCTestCase {
-    func testSnakeCase() throws {
+    func testSnakeCase() {
         XCTAssertTrue("snake".isSnakeCase)
         XCTAssertTrue("snake_case".isSnakeCase)
         XCTAssertTrue("snake_case_example".isSnakeCase)
@@ -19,7 +19,7 @@ final class StringCaseTests: XCTestCase {
         XCTAssertEqual("snakeCASE".snakeCased(), "snake_case")
     }
 
-    func testLowerCamelCase() throws {
+    func testLowerCamelCase() {
         XCTAssertTrue("lower".isLowerCamelCase)
         XCTAssertTrue("lowerCamelCase".isLowerCamelCase)
         XCTAssertFalse("lowerCamelCase_with_underscore".isLowerCamelCase)
@@ -33,7 +33,7 @@ final class StringCaseTests: XCTestCase {
         XCTAssertEqual("_this is*  not-Very%difficult".lowerCamelCased(), "thisIsNotVeryDifficult")
     }
 
-    func testPascalCase() throws {
+    func testPascalCase() {
         XCTAssertEqual("pascal".camelCased(), "Pascal")
         XCTAssertEqual("PascalCase".camelCased(), "PascalCase")
         XCTAssertEqual("pascal_case".camelCased(), "PascalCase")
@@ -41,7 +41,7 @@ final class StringCaseTests: XCTestCase {
         XCTAssertEqual("_this is*  not-Very%difficult".camelCased(), "ThisIsNotVeryDifficult")
     }
 
-    func testKebabCase() throws {
+    func testKebabCase() {
         // isKebabCase checks
         XCTAssertTrue("kebab".isKebabCase)
         XCTAssertTrue("kebab-case".isKebabCase)
@@ -65,7 +65,7 @@ final class StringCaseTests: XCTestCase {
         XCTAssertEqual("icon_24px".kebabCased(), "icon-24px")
     }
 
-    func testScreamingSnakeCase() throws {
+    func testScreamingSnakeCase() {
         XCTAssertEqual("screaming".screamingSnakeCased(), "SCREAMING")
         XCTAssertEqual("SCREAMING_SNAKE".screamingSnakeCased(), "SCREAMING_SNAKE")
         XCTAssertEqual("screamingSnake".screamingSnakeCased(), "SCREAMING_SNAKE")
@@ -74,7 +74,7 @@ final class StringCaseTests: XCTestCase {
         XCTAssertEqual("_this is*  not-Very%difficult".screamingSnakeCased(), "THIS_IS_NOT_VERY_DIFFICULT")
     }
 
-    func testNumbersInNames() throws {
+    func testNumbersInNames() {
         // snake_case from CamelCase - numbers are separated from preceding letters
         XCTAssertEqual("discount10".snakeCased(), "discount10") // already snake_case
         XCTAssertEqual("discount10Color".snakeCased(), "discount_10_color")

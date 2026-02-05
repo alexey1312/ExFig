@@ -13,7 +13,7 @@ struct SVGMinusIconTest {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         let generator = VectorDrawableXMLGenerator()
         let xml = generator.generate(from: parsed)
@@ -43,7 +43,7 @@ struct SVGMinusIconTest {
         """
 
         let parser = SVGParser()
-        let parsed = try parser.parse(svg.data(using: .utf8)!, normalize: false)
+        let parsed = try parser.parse(#require(svg.data(using: .utf8)), normalize: false)
 
         let generator = VectorDrawableXMLGenerator()
         let xml = generator.generate(from: parsed)

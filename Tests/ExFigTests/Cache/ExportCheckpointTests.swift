@@ -51,26 +51,26 @@ final class ExportCheckpointTests: XCTestCase {
         XCTAssertFalse(checkpoint.isExpired())
     }
 
-    func testIsExpired_returnsTrueForOldCheckpoint() {
+    func testIsExpired_returnsTrueForOldCheckpoint() throws {
         var checkpoint = ExportCheckpoint(configPath: "/path", configHash: "hash")
 
         // Manually set startedAt to 25 hours ago
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         // swiftlint:disable:next force_try
-        var data = try! encoder.encode(checkpoint)
+        var data = try encoder.encode(checkpoint)
         // swiftlint:disable:next force_try force_cast
-        var json = try! JSONSerialization.jsonObject(with: data) as! [String: Any]
+        var json = try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let oldDate = Date().addingTimeInterval(-25 * 60 * 60)
         let formatter = ISO8601DateFormatter()
         json["startedAt"] = formatter.string(from: oldDate)
         // swiftlint:disable:next force_try
-        data = try! JSONSerialization.data(withJSONObject: json)
+        data = try JSONSerialization.data(withJSONObject: json)
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         // swiftlint:disable:next force_try
-        checkpoint = try! decoder.decode(ExportCheckpoint.self, from: data)
+        checkpoint = try decoder.decode(ExportCheckpoint.self, from: data)
 
         XCTAssertTrue(checkpoint.isExpired())
     }

@@ -163,15 +163,22 @@ final class ExFigErrorFormatterTests: XCTestCase {
 private struct SimpleError: LocalizedError {
     let description: String
 
-    var errorDescription: String? { description }
+    var errorDescription: String? {
+        description
+    }
 }
 
 private struct RecoverableError: LocalizedError {
     let description: String
     let recovery: String
 
-    var errorDescription: String? { description }
-    var recoverySuggestion: String? { recovery }
+    var errorDescription: String? {
+        description
+    }
+
+    var recoverySuggestion: String? {
+        recovery
+    }
 }
 
 // MARK: - TerminalText API Tests

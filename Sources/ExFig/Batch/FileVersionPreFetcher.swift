@@ -381,13 +381,11 @@ struct FileVersionPreFetcher: Sendable {
         // Capture into let for concurrent access
         let nodeIdsByFileSnapshot = nodeIdsByFile
 
-        let result = try await ui.withSpinner(
+        return try await ui.withSpinner(
             "Pre-fetching nodes for granular cache (\(totalNodes) nodes)..."
         ) {
             try await fetchAllNodes(nodeIdsByFile: nodeIdsByFileSnapshot)
         }
-
-        return result
     }
 
     /// Fetch node documents for all files in parallel.

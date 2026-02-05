@@ -49,7 +49,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
     // MARK: - Shared Cache in Batch Mode
 
-    func testUsesSharedCacheInBatchMode() throws {
+    func testUsesSharedCacheInBatchMode() {
         // Create cache with pre-populated node hashes
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "fileA", version: "v1")
@@ -192,7 +192,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
     // MARK: - Batch Mode with TaskLocal Injection
 
-    func testBatchModeWorksWithTaskLocalInjection() throws {
+    func testBatchModeWorksWithTaskLocalInjection() {
         // Create shared cache with node hashes
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "icons-file", version: "v5")
@@ -225,7 +225,7 @@ final class ImageTrackingManagerBatchModeTests: XCTestCase {
 
     // MARK: - Parallel Access in Batch Mode
 
-    func testMultipleManagersShareSameCache() throws {
+    func testMultipleManagersShareSameCache() {
         // Create shared cache
         var cache = ImageTrackingCache()
         cache.updateFileVersion(fileId: "shared-file", version: "v1")

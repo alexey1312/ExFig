@@ -25,8 +25,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     // MARK: - Tests
 
     func testExport() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -50,7 +50,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[5].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -70,8 +70,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportPair() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -97,7 +97,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[7].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -117,11 +117,11 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportWithObjc() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             addObjcAttribute: true,
-            uiKitImageExtensionURL: URL(string: "~/UIImage+extension.swift")!
+            uiKitImageExtensionURL: XCTUnwrap(URL(string: "~/UIImage+extension.swift"))
         )
         let exporter = XcodeIconsExporter(output: output)
         let result = try exporter.export(
@@ -143,7 +143,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[5].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -163,11 +163,11 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportPairWithObjc() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             addObjcAttribute: true,
-            uiKitImageExtensionURL: URL(string: "~/UIImage+extension.swift")!
+            uiKitImageExtensionURL: XCTUnwrap(URL(string: "~/UIImage+extension.swift"))
         )
         let exporter = XcodeIconsExporter(output: output)
         let result = try exporter.export(
@@ -191,7 +191,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[7].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -211,8 +211,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportInSeparateBundle() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: false,
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -237,7 +237,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[5].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -257,8 +257,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportPairInSeparateBundle() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: false,
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -285,7 +285,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[7].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -305,8 +305,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportInSwiftPackage() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -331,7 +331,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[5].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -351,8 +351,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportPairInSwiftPackage() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             assetsInSwiftPackage: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -379,7 +379,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[7].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -399,8 +399,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportSwiftUI() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             swiftUIImageExtensionURL: swiftUIImageExtensionURL
         )
@@ -424,7 +424,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[5].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -444,8 +444,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportPairSwiftUI() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             swiftUIImageExtensionURL: swiftUIImageExtensionURL
         )
@@ -471,7 +471,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[7].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -491,8 +491,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportSwiftUIInSeparateBundle() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             swiftUIImageExtensionURL: swiftUIImageExtensionURL
         )
@@ -516,7 +516,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[5].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -536,8 +536,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportPairSwiftUIInSeparateBundle() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: false,
             swiftUIImageExtensionURL: swiftUIImageExtensionURL
         )
@@ -563,7 +563,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[7].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
         let referenceCode = """
         \(header)
 
@@ -583,8 +583,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testAppendAfterExport() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -634,8 +634,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testAppendPairAfterExport() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -687,8 +687,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExportImageWithKeyword() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -719,8 +719,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     }
 
     func testExport_preservesVectorRepresentation() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             preservesVectorRepresentation: ["ic24TabBar*"],
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -740,32 +740,32 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[1].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
-        // YYJSON prettyPrinted format: 4-space indent, no space before colon
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
+        // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
         let referenceCode = """
         {
-            "images": [
-                {
-                    "filename": "ic24TabBarHome.pdf",
-                    "idiom": "universal"
-                }
-            ],
-            "info": {
-                "author": "xcode",
-                "version": 1
-            },
-            "properties": {
-                "preserves-vector-representation": true,
-                "template-rendering-intent": "template"
+          "images": [
+            {
+              "filename": "ic24TabBarHome.pdf",
+              "idiom": "universal"
             }
+          ],
+          "info": {
+            "author": "xcode",
+            "version": 1
+          },
+          "properties": {
+            "preserves-vector-representation": true,
+            "template-rendering-intent": "template"
+          }
         }
         """
         expectNoDifference(generatedCode, referenceCode)
     }
 
     func testExport_preservesVectorRepresentation2() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             preservesVectorRepresentation: ["*"],
             uiKitImageExtensionURL: uiKitImageExtensionURL
@@ -785,24 +785,24 @@ final class XcodeIconsExporterTests: XCTestCase {
         let content = result[1].data
         XCTAssertNotNil(content)
 
-        let generatedCode = String(data: content!, encoding: .utf8)
-        // YYJSON prettyPrinted format: 4-space indent, no space before colon
+        let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
+        // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
         let referenceCode = """
         {
-            "images": [
-                {
-                    "filename": "ic24TabBarHome.pdf",
-                    "idiom": "universal"
-                }
-            ],
-            "info": {
-                "author": "xcode",
-                "version": 1
-            },
-            "properties": {
-                "preserves-vector-representation": true,
-                "template-rendering-intent": "template"
+          "images": [
+            {
+              "filename": "ic24TabBarHome.pdf",
+              "idiom": "universal"
             }
+          ],
+          "info": {
+            "author": "xcode",
+            "version": 1
+          },
+          "properties": {
+            "preserves-vector-representation": true,
+            "template-rendering-intent": "template"
+          }
         }
         """
         expectNoDifference(generatedCode, referenceCode)
@@ -813,8 +813,8 @@ final class XcodeIconsExporterTests: XCTestCase {
     /// Tests that when allIconNames is provided, the extension file contains all icons
     /// even when only a subset of icons is exported (simulating granular cache behavior).
     func testExportWithAllIconNames_generatesExtensionWithAllNames() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -831,7 +831,7 @@ final class XcodeIconsExporterTests: XCTestCase {
         XCTAssertEqual(result.count, 4)
 
         // Verify extension file contains all 3 icons, not just the exported one
-        let extensionFile = result.last!
+        let extensionFile = try XCTUnwrap(result.last)
         let content = try XCTUnwrap(extensionFile.data)
         let generatedCode = String(data: content, encoding: .utf8)
 
@@ -856,8 +856,8 @@ final class XcodeIconsExporterTests: XCTestCase {
 
     /// Tests that when allIconNames is nil, the extension file is derived from exported icons.
     func testExportWithoutAllIconNames_generatesExtensionFromExportedIcons() throws {
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL
         )
@@ -869,7 +869,7 @@ final class XcodeIconsExporterTests: XCTestCase {
             append: false
         )
 
-        let extensionFile = result.last!
+        let extensionFile = try XCTUnwrap(result.last)
         let content = try XCTUnwrap(extensionFile.data)
         let generatedCode = String(data: content, encoding: .utf8)
 
@@ -899,8 +899,8 @@ final class XcodeIconsExporterTests: XCTestCase {
             .temporaryDirectory
             .appendingPathComponent("Icons.figma.swift")
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL,
             codeConnectSwiftURL: codeConnectURL
@@ -971,8 +971,8 @@ final class XcodeIconsExporterTests: XCTestCase {
             .temporaryDirectory
             .appendingPathComponent("Icons.figma.swift")
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL,
             codeConnectSwiftURL: codeConnectURL
@@ -1002,8 +1002,8 @@ final class XcodeIconsExporterTests: XCTestCase {
             .temporaryDirectory
             .appendingPathComponent("Icons.figma.swift")
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             uiKitImageExtensionURL: uiKitImageExtensionURL,
             codeConnectSwiftURL: codeConnectURL
@@ -1061,8 +1061,8 @@ final class XcodeIconsExporterTests: XCTestCase {
             .temporaryDirectory
             .appendingPathComponent("Icons.figma.swift")
 
-        let output = XcodeImagesOutput(
-            assetsFolderURL: URL(string: "~/")!,
+        let output = try XcodeImagesOutput(
+            assetsFolderURL: XCTUnwrap(URL(string: "~/")),
             assetsInMainBundle: true,
             codeConnectSwiftURL: codeConnectURL
         )

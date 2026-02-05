@@ -48,7 +48,9 @@ struct DecodedPng: Sendable {
     let rgba: [UInt8]
 
     /// Total number of bytes (should equal width * height * 4)
-    var byteCount: Int { rgba.count }
+    var byteCount: Int {
+        rgba.count
+    }
 }
 
 /// Decodes PNG images to raw RGBA pixel data
@@ -152,9 +154,9 @@ struct PngDecoder: Sendable {
             }
         }
     #else
-        // libpng format constants (not available as Swift constants due to macro limitations)
-        // PNG_FORMAT_FLAG_COLOR = 2, PNG_FORMAT_FLAG_ALPHA = 4
-        // PNG_FORMAT_RGBA = PNG_FORMAT_FLAG_COLOR | PNG_FORMAT_FLAG_ALPHA = 6
+        /// libpng format constants (not available as Swift constants due to macro limitations)
+        /// PNG_FORMAT_FLAG_COLOR = 2, PNG_FORMAT_FLAG_ALPHA = 4
+        /// PNG_FORMAT_RGBA = PNG_FORMAT_FLAG_COLOR | PNG_FORMAT_FLAG_ALPHA = 6
         private static let pngFormatRGBA: UInt32 = 6
 
         /// Decodes PNG using libpng (Linux)

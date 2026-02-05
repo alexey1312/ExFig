@@ -16,7 +16,7 @@
 ///     dark: Color(name: "background", red: 0.1, green: 0.1, blue: 0.1, alpha: 1)
 /// )
 /// ```
-public struct AssetPair<AssetType>: Sendable where AssetType: Asset {
+public struct AssetPair<AssetType: Asset>: Sendable {
     /// The light mode variant of the asset. Always required.
     public let light: AssetType
 

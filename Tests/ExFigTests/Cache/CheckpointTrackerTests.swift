@@ -153,8 +153,8 @@ final class CheckpointTrackerTests: XCTestCase {
         )
 
         XCTAssertNotNil(loaded)
-        let completed = await loaded!.completedNames
-        let pending = await loaded!.pendingNames
+        let completed = try await XCTUnwrap(loaded?.completedNames)
+        let pending = try await XCTUnwrap(loaded?.pendingNames)
 
         XCTAssertEqual(completed, ["icon1"])
         XCTAssertEqual(pending, ["icon2", "icon3"])
@@ -163,11 +163,11 @@ final class CheckpointTrackerTests: XCTestCase {
     func testLoadIfValid_returnsNilWhenNoCheckpoint() throws {
         let emptyDir = tempDirectory.appendingPathComponent("empty")
         // swiftlint:disable:next force_try
-        try! FileManager.default.createDirectory(at: emptyDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: emptyDir, withIntermediateDirectories: true)
 
         let configInEmptyDir = emptyDir.appendingPathComponent("config.yaml")
         // swiftlint:disable:next force_try
-        try! "figma:\n  fileKey: test\n".write(to: configInEmptyDir, atomically: true, encoding: .utf8)
+        try "figma:\n  fileKey: test\n".write(to: configInEmptyDir, atomically: true, encoding: .utf8)
 
         let loaded = try CheckpointTracker.loadIfValid(
             configPath: configInEmptyDir.path,

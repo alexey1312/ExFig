@@ -94,7 +94,7 @@ final class SVGGradientTransformTests: XCTestCase {
 
     // MARK: - VectorDrawable Application
 
-    func testVectorDrawableAppliesLinearGradientTransform() throws {
+    func testVectorDrawableAppliesLinearGradientTransform() {
         let transform = SVGTransform(translateX: 5, translateY: 10)
         let gradient = SVGLinearGradient(
             id: "grad1",
@@ -133,7 +133,7 @@ final class SVGGradientTransformTests: XCTestCase {
         XCTAssertTrue(xml.contains("android:endY=\"10\""), "endY should be transformed:\n\(xml)")
     }
 
-    func testVectorDrawableAppliesRadialGradientTransform() throws {
+    func testVectorDrawableAppliesRadialGradientTransform() {
         let transform = SVGTransform(translateX: 6, translateY: 6, scaleX: 2, scaleY: 2)
         let gradient = SVGRadialGradient(
             id: "grad1",

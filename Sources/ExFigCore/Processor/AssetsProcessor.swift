@@ -423,14 +423,12 @@ public extension AssetsProcessable {
     }
 
     private func replace(_ name: String, matchRegExp: String, replaceRegExp: String) -> String {
-        let result = name.replace(matchRegExp) { array in
+        name.replace(matchRegExp) { array in
             replaceRegExp.replace(#"\$(\d)"#) {
                 guard let index = Int($0[1]) else { return "" }
                 return array[index]
             }
         }
-
-        return result
     }
 
     /// Runs the name replacement and name validation regexps, and name styles, if they are defined
