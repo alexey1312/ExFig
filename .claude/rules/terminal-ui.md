@@ -7,6 +7,15 @@ paths:
 
 This rule covers TerminalUI usage, Noora design system, warnings, and errors.
 
+## Required: Use Noora Instead of Rainbow
+
+| Area              | Use                              | Instead of                  |
+| ----------------- | -------------------------------- | --------------------------- |
+| Semantic text     | `TerminalText` + `NooraUI`       | Rainbow `.red`, `.green`    |
+| Status messages   | `NooraUI.formatSuccess/Error/...`| Manual string coloring      |
+| Multi-line errors | `NooraUI.formatMultilineError`   | Custom formatting           |
+| Progress/spinners | `TerminalUI` facade              | Direct Noora progress calls |
+
 **Design system:** Use [Noora](https://github.com/tuist/Noora) (tuist/Noora) for semantic terminal text formatting.
 
 ## TerminalUI Usage

@@ -314,9 +314,9 @@ final class ResumeIntegrationTests: XCTestCase {
         )
 
         // THEN: Checkpoint is loaded with correct state
-        XCTAssertNotNil(resumedTracker)
-        let completed = try await XCTUnwrap(resumedTracker?.completedNames)
-        let pending = try await XCTUnwrap(resumedTracker?.pendingNames)
+        let tracker = try XCTUnwrap(resumedTracker)
+        let completed = await tracker.completedNames
+        let pending = await tracker.pendingNames
 
         XCTAssertEqual(completed, ["icon1", "icon2"])
         XCTAssertEqual(pending, ["icon3", "icon4", "icon5"])
@@ -373,13 +373,14 @@ final class ResumeIntegrationTests: XCTestCase {
         let options = try HeavyFaultToleranceOptions.parse(["--resume"])
         let ui = TerminalUI(outputMode: .quiet)
 
-        let resumedTracker = try try await XCTUnwrap(options.loadOrCreateCheckpoint(
+        let loadedCheckpoint = try await options.loadOrCreateCheckpoint(
             configPath: configFile.path,
             workingDirectory: tempDirectory,
             assetType: .icons,
             assetNames: ["icon1", "icon2"],
             ui: ui
-        ))
+        )
+        let resumedTracker = try XCTUnwrap(loadedCheckpoint)
 
         // WHEN: Completing the last icon
         let remainingFiles = [makeFileContents(name: "icon2")]
@@ -447,9 +448,9 @@ final class ResumeIntegrationTests: XCTestCase {
         )
 
         // THEN: A fresh checkpoint is created (old one invalidated by hash mismatch)
-        XCTAssertNotNil(resumedTracker)
-        let completed = try await XCTUnwrap(resumedTracker?.completedNames)
-        let pending = try await XCTUnwrap(resumedTracker?.pendingNames)
+        let freshTracker = try XCTUnwrap(resumedTracker)
+        let completed = await freshTracker.completedNames
+        let pending = await freshTracker.pendingNames
 
         XCTAssertTrue(completed.isEmpty)
         XCTAssertEqual(pending, ["icon1", "icon2"])

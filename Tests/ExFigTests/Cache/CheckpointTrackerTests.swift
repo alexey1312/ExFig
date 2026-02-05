@@ -152,9 +152,9 @@ final class CheckpointTrackerTests: XCTestCase {
             assetType: .icons
         )
 
-        XCTAssertNotNil(loaded)
-        let completed = try await XCTUnwrap(loaded?.completedNames)
-        let pending = try await XCTUnwrap(loaded?.pendingNames)
+        let loadedTracker = try XCTUnwrap(loaded)
+        let completed = await loadedTracker.completedNames
+        let pending = await loadedTracker.pendingNames
 
         XCTAssertEqual(completed, ["icon1"])
         XCTAssertEqual(pending, ["icon2", "icon3"])

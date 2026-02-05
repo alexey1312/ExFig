@@ -56,7 +56,7 @@ let package = Package(
         .target(
             name: "ExFigCore",
             dependencies: [
-                .product(name: "YYJSON", package: "swift-yyjson"),
+                .product(name: "YYJSON", package: "swift-yyjson", condition: .when(platforms: [.macOS])),
             ]
         ),
 

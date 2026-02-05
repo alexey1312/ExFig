@@ -98,21 +98,14 @@ public extension BatchCheckpoint {
         }
 
         let data = try Data(contentsOf: fileURL)
-        var decoder = JSONCodec.makeDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(BatchCheckpoint.self, from: data)
+        return try JSONCodec.decodeWithISO8601Date(BatchCheckpoint.self, from: data)
     }
 
     /// Save checkpoint to file.
     /// - Parameter directory: Directory to save checkpoint in.
     func save(to directory: URL) throws {
         let fileURL = directory.appendingPathComponent(Self.fileName)
-
-        var encoder = JSONCodec.makeEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.writeOptions = [.prettyPrinted]
-
-        let data = try encoder.encode(self)
+        let data = try JSONCodec.encodeWithISO8601DatePretty(self)
         try data.write(to: fileURL, options: .atomic)
     }
 

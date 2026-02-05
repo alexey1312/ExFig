@@ -111,9 +111,7 @@ extension ImageTrackingCache {
 
     /// Saves cache to a file at the specified path.
     func save(to path: URL) throws {
-        var encoder = JSONCodec.makeEncoder()
-        encoder.writeOptions = [.prettyPrinted]
-        let data = try encoder.encode(self)
+        let data = try JSONCodec.encodePretty(self)
         try data.write(to: path, options: .atomic)
     }
 

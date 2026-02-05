@@ -189,6 +189,28 @@ Tests/               # Test targets mirror source structure
 
 Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after changes.
 
+## Code Conventions
+
+| Area            | Use                               | Instead of                  |
+| --------------- | --------------------------------- | --------------------------- |
+| JSON parsing    | `JSONCodec` (swift-yyjson)        | `JSONDecoder`/`JSONEncoder` |
+| Terminal UI     | Noora (`NooraUI`, `TerminalText`) | Rainbow color methods       |
+| Terminal output | `TerminalUI` facade               | Direct `print()` calls      |
+
+**JSONCodec usage:**
+
+```swift
+import YYJSON
+
+// Decode
+let data = try JSONCodec.decode(MyType.self, from: jsonData)
+
+// Encode
+let jsonData = try JSONCodec.encode(myValue)
+```
+
+**Noora usage:** See `.claude/rules/terminal-ui.md` for full patterns.
+
 ## Dependencies
 
 | Package               | Version | Purpose                     |
