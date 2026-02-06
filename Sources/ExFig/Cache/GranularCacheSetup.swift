@@ -24,7 +24,7 @@ enum GranularCacheHelper {
         trackingManager: ImageTrackingManager,
         cacheOptions: CacheOptions,
         configCacheEnabled: Bool,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI
     ) throws -> GranularCacheSetup {
         // Check for granular cache warning

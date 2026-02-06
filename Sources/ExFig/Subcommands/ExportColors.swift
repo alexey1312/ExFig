@@ -136,8 +136,8 @@ extension ExFigCommand {
 
         /// Configuration for legacy colors export (using common.variablesColors or common.colors).
         struct LegacyExportConfig {
-            let commonParams: Params.Common?
-            let figmaParams: Params.Figma?
+            let commonParams: PKLConfig.Common?
+            let figmaParams: PKLConfig.Figma?
             let client: Client
             let ui: TerminalUI
         }
@@ -145,7 +145,7 @@ extension ExFigCommand {
         // MARK: - Legacy Helper Methods
 
         /// Validates that both common.colors and common.variablesColors are not set at the same time.
-        func validateLegacyConfig(_ commonParams: Params.Common?) throws {
+        func validateLegacyConfig(_ commonParams: PKLConfig.Common?) throws {
             if commonParams?.colors != nil, commonParams?.variablesColors != nil {
                 throw ExFigError.custom(
                     errorString:
@@ -185,7 +185,7 @@ extension ExFigCommand {
 
         /// Extracts name validation and replacement regexps from common params.
         func extractNameRegexps(
-            from commonParams: Params.Common?
+            from commonParams: PKLConfig.Common?
         ) -> (validate: String?, replace: String?) {
             if let variableParams = commonParams?.variablesColors {
                 return (variableParams.nameValidateRegexp, variableParams.nameReplaceRegexp)

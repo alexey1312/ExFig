@@ -10,7 +10,7 @@ extension ExFigCommand.ExportImages {
     /// For multiple entries, uses ComponentPreFetcher to optimize Figma API calls.
     func exportWebImages(
         client: Client,
-        params: Params,
+        params: PKLConfig,
         granularCacheManager: GranularCacheManager?,
         ui: TerminalUI
     ) async throws -> PlatformExportResult {

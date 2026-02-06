@@ -149,6 +149,22 @@ public struct ThemeAttributes: Decodable, Sendable {
         markerEnd ?? "FIGMA COLORS MARKER END"
     }
 
+    public var shouldAutoCreateMarkers: Bool {
+        autoCreateMarkers ?? false
+    }
+
+    public var resolvedAttrsFile: String {
+        attrsFile ?? "values/attrs.xml"
+    }
+
+    public var resolvedStylesFile: String {
+        stylesFile ?? "values/styles.xml"
+    }
+
+    public var resolvedStylesNightFile: String {
+        stylesNightFile ?? "values-night/styles.xml"
+    }
+
     public init(
         enabled: Bool? = nil,
         attrsFile: String? = nil,
@@ -174,15 +190,40 @@ public struct ThemeAttributes: Decodable, Sendable {
 
 /// Name transformation configuration for theme attributes.
 public struct NameTransform: Decodable, Sendable {
-    /// Prefix to add to color names.
+    /// Prefix to add to color names (default: "color").
     public let prefix: String?
 
     /// Suffix to add to color names.
     public let suffix: String?
 
-    public init(prefix: String? = nil, suffix: String? = nil) {
+    /// Target case style for attribute names (default: PascalCase).
+    public let style: NameStyle?
+
+    /// Prefixes to strip from color names before transformation.
+    public let stripPrefixes: [String]?
+
+    public var resolvedStyle: NameStyle {
+        style ?? .pascalCase
+    }
+
+    public var resolvedPrefix: String {
+        prefix ?? "color"
+    }
+
+    public var resolvedStripPrefixes: [String] {
+        stripPrefixes ?? []
+    }
+
+    public init(
+        prefix: String? = nil,
+        suffix: String? = nil,
+        style: NameStyle? = nil,
+        stripPrefixes: [String]? = nil
+    ) {
         self.prefix = prefix
         self.suffix = suffix
+        self.style = style
+        self.stripPrefixes = stripPrefixes
     }
 }
 

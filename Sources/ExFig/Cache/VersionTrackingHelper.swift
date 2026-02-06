@@ -14,7 +14,7 @@ enum VersionTrackingCheckResult: Sendable {
 /// Configuration for version tracking check.
 struct VersionTrackingConfig {
     let client: Client
-    let params: Params
+    let params: PKLConfig
     let cacheOptions: CacheOptions
     let configCacheEnabled: Bool
     let configCachePath: String?
@@ -26,7 +26,7 @@ struct VersionTrackingConfig {
 
     init(
         client: Client,
-        params: Params,
+        params: PKLConfig,
         cacheOptions: CacheOptions,
         configCacheEnabled: Bool,
         configCachePath: String?,

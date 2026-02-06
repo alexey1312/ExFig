@@ -1,3 +1,4 @@
+import ExFig_Web
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -8,8 +9,8 @@ import WebExport
 extension ExFigCommand.ExportColors {
     /// Exports Web colors using legacy format (common.variablesColors or common.colors).
     func exportWebColorsLegacy(
-        colorsConfig: Params.Web.ColorsConfiguration,
-        web: Params.Web,
+        colorsConfig: PKLConfig.Web.ColorsConfiguration,
+        web: PKLConfig.Web,
         config: LegacyExportConfig
     ) async throws -> Int {
         try validateLegacyConfig(config.commonParams)
@@ -52,8 +53,8 @@ extension ExFigCommand.ExportColors {
 
     func exportWebColorsEntry(
         colorPairs: [AssetPair<Color>],
-        entry: Params.Web.ColorsEntry,
-        web: Params.Web
+        entry: WebColorsEntry,
+        web: PKLConfig.Web
     ) throws {
         let outputDir = if let dir = entry.outputDirectory {
             web.output.appendingPathComponent(dir)

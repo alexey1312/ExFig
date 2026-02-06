@@ -1,3 +1,4 @@
+import ExFig_iOS
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -8,8 +9,8 @@ import XcodeExport
 extension ExFigCommand.ExportColors {
     /// Exports iOS colors using legacy format (common.variablesColors or common.colors).
     func exportiOSColorsLegacy(
-        colorsConfig: Params.iOS.ColorsConfiguration,
-        ios: Params.iOS,
+        colorsConfig: PKLConfig.iOS.ColorsConfiguration,
+        ios: PKLConfig.iOS,
         config: LegacyExportConfig
     ) async throws -> Int {
         try validateLegacyConfig(config.commonParams)
@@ -80,8 +81,8 @@ extension ExFigCommand.ExportColors {
 
     func exportXcodeColorsEntry(
         colorPairs: [AssetPair<Color>],
-        entry: Params.iOS.ColorsEntry,
-        ios: Params.iOS,
+        entry: iOSColorsEntry,
+        ios: PKLConfig.iOS,
         ui: TerminalUI
     ) throws {
         var colorsURL: URL?

@@ -24,7 +24,7 @@ enum ComponentPreFetcher {
     /// - Returns: Result from the process closure.
     static func withPreFetchedComponentsIfNeeded<T>(
         client: Client,
-        params: Params,
+        params: PKLConfig,
         process: () async throws -> T
     ) async throws -> T {
         // Check if we need to pre-fetch components
@@ -69,7 +69,7 @@ enum ComponentPreFetcher {
     /// - Returns: Pre-fetched components, or nil if all were already cached.
     static func preFetchComponents(
         client: Client,
-        params: Params
+        params: PKLConfig
     ) async throws -> PreFetchedComponents? {
         let fileIds = Set(
             (params.figma?.lightFileId.flatMap { [$0] } ?? []) +

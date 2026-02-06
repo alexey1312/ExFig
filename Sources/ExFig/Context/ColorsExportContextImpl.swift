@@ -55,7 +55,7 @@ struct ColorsExportContextImpl: ColorsExportContext {
     // MARK: - ColorsExportContext
 
     func loadColors(from source: ColorsSourceInput) async throws -> ColorsLoadOutput {
-        let variableParams = Params.Common.VariablesColors(
+        let variableParams = PKLConfig.Common.VariablesColors(
             tokensFileId: source.tokensFileId,
             tokensCollectionName: source.tokensCollectionName,
             lightModeName: source.lightModeName,

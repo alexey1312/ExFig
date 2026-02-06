@@ -15,7 +15,7 @@ import Foundation
 struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
     let client: Client
     let ui: TerminalUI
-    let params: Params
+    let params: PKLConfig
     let filter: String?
     let isBatchMode: Bool
     let fileDownloader: FileDownloader
@@ -26,7 +26,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
     init(
         client: Client,
         ui: TerminalUI,
-        params: Params,
+        params: PKLConfig,
         filter: String? = nil,
         isBatchMode: Bool = false,
         fileDownloader: FileDownloader = FileDownloader(),

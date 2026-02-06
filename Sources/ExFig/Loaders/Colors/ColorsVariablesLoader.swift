@@ -4,12 +4,12 @@ import FigmaAPI
 /// Loads color variables from Figma
 final class ColorsVariablesLoader: Sendable {
     private let client: Client
-    private let variableParams: Params.Common.VariablesColors?
+    private let variableParams: PKLConfig.Common.VariablesColors?
     private let filter: String?
 
     init(
         client: Client,
-        variableParams: Params.Common.VariablesColors?,
+        variableParams: PKLConfig.Common.VariablesColors?,
         filter: String?
     ) {
         self.client = client

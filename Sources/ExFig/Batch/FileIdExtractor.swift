@@ -30,20 +30,20 @@ struct FileIdExtractor {
         return fileIds
     }
 
-    /// Parse Params from a PKL config file URL.
+    /// Parse PKLConfig from a PKL config file URL.
     ///
     /// - Parameter url: URL to the config file.
-    /// - Returns: Parsed Params or nil if parsing fails.
-    private func parseParams(from url: URL) -> Params? {
+    /// - Returns: Parsed PKLConfig or nil if parsing fails.
+    private func parseParams(from url: URL) -> PKLConfig? {
         do {
             let evaluator = try PKLEvaluator()
 
             // Run async evaluation synchronously
             let semaphore = DispatchSemaphore(value: 0)
-            var result: Params?
+            var result: PKLConfig?
 
             Task {
-                result = try? await evaluator.evaluateToParams(configPath: url)
+                result = try? await evaluator.evaluateToPKLConfig(configPath: url)
                 semaphore.signal()
             }
 

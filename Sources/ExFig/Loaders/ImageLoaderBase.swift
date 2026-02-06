@@ -33,14 +33,14 @@ struct ImagesWithHashesResult {
 /// Provides shared functionality for IconsLoader and ImagesLoader.
 class ImageLoaderBase: @unchecked Sendable {
     let client: Client
-    let params: Params
+    let params: PKLConfig
     let platform: Platform
     let logger: Logger
 
     /// Optional granular cache manager for per-node change detection.
     var granularCacheManager: GranularCacheManager?
 
-    init(client: Client, params: Params, platform: Platform, logger: Logger) {
+    init(client: Client, params: PKLConfig, platform: Platform, logger: Logger) {
         self.client = client
         self.params = params
         self.platform = platform

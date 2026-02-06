@@ -1,4 +1,5 @@
 import AndroidExport
+import ExFig_Android
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -8,8 +9,8 @@ import Foundation
 extension ExFigCommand.ExportColors {
     /// Exports Android colors using legacy format (common.variablesColors or common.colors).
     func exportAndroidColorsLegacy(
-        colorsConfig: Params.Android.ColorsConfiguration,
-        android: Params.Android,
+        colorsConfig: PKLConfig.Android.ColorsConfiguration,
+        android: PKLConfig.Android,
         config: LegacyExportConfig
     ) async throws -> Int {
         try validateLegacyConfig(config.commonParams)
@@ -54,8 +55,8 @@ extension ExFigCommand.ExportColors {
 
     func exportAndroidColorsEntry(
         colorPairs: [AssetPair<Color>],
-        entry: Params.Android.ColorsEntry,
-        android: Params.Android,
+        entry: AndroidColorsEntry,
+        android: PKLConfig.Android,
         ui: TerminalUI
     ) async throws {
         let output = AndroidOutput(
@@ -105,8 +106,8 @@ extension ExFigCommand.ExportColors {
 
     func exportThemeAttributes(
         colorPairs: [AssetPair<Color>],
-        config: Params.Android.ThemeAttributes,
-        android: Params.Android,
+        config: ExFig_Android.ThemeAttributes,
+        android: PKLConfig.Android,
         ui: TerminalUI
     ) async throws {
         let nameTransform = config.nameTransform
@@ -174,7 +175,7 @@ extension ExFigCommand.ExportColors {
     }
 
     func writeThemeAttributesImmediately(
-        config: Params.Android.ThemeAttributes,
+        config: ExFig_Android.ThemeAttributes,
         result: ThemeAttributesExportResult,
         attrsURL: URL,
         stylesURL: URL,

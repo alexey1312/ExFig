@@ -1,3 +1,8 @@
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
+
 // swiftlint:disable file_length
 import ExFigCore
 import FigmaAPI
@@ -33,7 +38,7 @@ struct ImagesLoaderConfig: Sendable {
     let sourceFormat: ImagesSourceFormat
 
     /// Creates config for a specific iOS images entry.
-    static func forIOS(entry: Params.iOS.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    static func forIOS(entry: iOSImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
@@ -43,7 +48,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates config for a specific Android images entry.
-    static func forAndroid(entry: Params.Android.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    static func forAndroid(entry: AndroidImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
@@ -53,7 +58,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates config for a specific Flutter images entry.
-    static func forFlutter(entry: Params.Flutter.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    static func forFlutter(entry: FlutterImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
@@ -63,7 +68,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates config for a specific Web images entry.
-    static func forWeb(entry: Params.Web.ImagesEntry, params: Params) -> ImagesLoaderConfig {
+    static func forWeb(entry: WebImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
@@ -73,7 +78,7 @@ struct ImagesLoaderConfig: Sendable {
     }
 
     /// Creates default config from params (for backward compatibility).
-    static func defaultConfig(params: Params) -> ImagesLoaderConfig {
+    static func defaultConfig(params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
             frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
@@ -82,7 +87,7 @@ struct ImagesLoaderConfig: Sendable {
         )
     }
 
-    private static func convertAndroidFormat(_ format: Params.Android.Images.Format) -> ImagesLoaderFormat {
+    private static func convertAndroidFormat(_ format: AndroidImageFormat) -> ImagesLoaderFormat {
         switch format {
         case .svg: .svg
         case .png: .png
@@ -90,7 +95,7 @@ struct ImagesLoaderConfig: Sendable {
         }
     }
 
-    private static func convertFlutterFormat(_ format: Params.Flutter.ImageFormat) -> ImagesLoaderFormat {
+    private static func convertFlutterFormat(_ format: FlutterImageFormat) -> ImagesLoaderFormat {
         switch format {
         case .svg: .svg
         case .png: .png
@@ -98,7 +103,7 @@ struct ImagesLoaderConfig: Sendable {
         }
     }
 
-    private static func convertSourceFormat(_ sourceFormat: Params.SourceFormat?) -> ImagesSourceFormat {
+    private static func convertSourceFormat(_ sourceFormat: ImageSourceFormat?) -> ImagesSourceFormat {
         switch sourceFormat {
         case .svg: .svg
         case .png, nil: .png
@@ -128,7 +133,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
 
     init(
         client: Client,
-        params: Params,
+        params: PKLConfig,
         platform: Platform,
         logger: Logger,
         config: ImagesLoaderConfig? = nil

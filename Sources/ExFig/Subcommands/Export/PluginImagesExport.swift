@@ -19,21 +19,21 @@ extension ExFigCommand.ExportImages {
     ///
     /// - Parameters:
     ///   - entries: Params entries to convert and export.
-    ///   - ios: iOS platform configuration from Params.
+    ///   - ios: iOS platform configuration from PKLConfig.
     ///   - client: Figma API client.
     ///   - params: Full params for context creation.
     ///   - ui: Terminal UI for output.
     ///   - granularCacheManager: Optional granular cache manager.
     /// - Returns: Platform export result with count and hashes.
     func exportiOSImagesViaPlugin(
-        entries: [Params.iOS.ImagesEntry],
-        ios: Params.iOS,
+        entries: [iOSImagesEntry],
+        ios: PKLConfig.iOS,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry(common: params.common) }
+        let pluginEntries = entries
         let platformConfig = ios.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -89,14 +89,14 @@ extension ExFigCommand.ExportImages {
 
     /// Exports Android images using plugin architecture.
     func exportAndroidImagesViaPlugin(
-        entries: [Params.Android.ImagesEntry],
-        android: Params.Android,
+        entries: [AndroidImagesEntry],
+        android: PKLConfig.Android,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry(common: params.common) }
+        let pluginEntries = entries
         let platformConfig = android.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -129,14 +129,14 @@ extension ExFigCommand.ExportImages {
 
     /// Exports Flutter images using plugin architecture.
     func exportFlutterImagesViaPlugin(
-        entries: [Params.Flutter.ImagesEntry],
-        flutter: Params.Flutter,
+        entries: [FlutterImagesEntry],
+        flutter: PKLConfig.Flutter,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry(common: params.common) }
+        let pluginEntries = entries
         let platformConfig = flutter.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -169,14 +169,14 @@ extension ExFigCommand.ExportImages {
 
     /// Exports Web images using plugin architecture.
     func exportWebImagesViaPlugin(
-        entries: [Params.Web.ImagesEntry],
-        web: Params.Web,
+        entries: [WebImagesEntry],
+        web: PKLConfig.Web,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry(common: params.common) }
+        let pluginEntries = entries
         let platformConfig = web.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false

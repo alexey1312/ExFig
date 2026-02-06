@@ -18,18 +18,18 @@ extension ExFigCommand.ExportColors {
     ///
     /// - Parameters:
     ///   - entries: Params entries to convert and export.
-    ///   - ios: iOS platform configuration from Params.
+    ///   - ios: iOS platform configuration from PKLConfig.
     ///   - client: Figma API client.
     ///   - ui: Terminal UI for output.
     /// - Returns: Number of colors exported.
     func exportiOSColorsViaPlugin(
-        entries: [Params.iOS.ColorsEntry],
-        ios: Params.iOS,
+        entries: [iOSColorsEntry],
+        ios: PKLConfig.iOS,
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
         // Convert Params to plugin types
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = ios.platformConfig()
 
         // Create context
@@ -99,12 +99,12 @@ extension ExFigCommand.ExportColors {
 
     /// Exports Android colors using plugin architecture.
     func exportAndroidColorsViaPlugin(
-        entries: [Params.Android.ColorsEntry],
-        android: Params.Android,
+        entries: [AndroidColorsEntry],
+        android: PKLConfig.Android,
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = android.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -131,12 +131,12 @@ extension ExFigCommand.ExportColors {
 
     /// Exports Flutter colors using plugin architecture.
     func exportFlutterColorsViaPlugin(
-        entries: [Params.Flutter.ColorsEntry],
-        flutter: Params.Flutter,
+        entries: [FlutterColorsEntry],
+        flutter: PKLConfig.Flutter,
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = flutter.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -163,12 +163,12 @@ extension ExFigCommand.ExportColors {
 
     /// Exports Web colors using plugin architecture.
     func exportWebColorsViaPlugin(
-        entries: [Params.Web.ColorsEntry],
-        web: Params.Web,
+        entries: [WebColorsEntry],
+        web: PKLConfig.Web,
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = web.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false

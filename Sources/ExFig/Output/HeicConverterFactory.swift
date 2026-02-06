@@ -6,7 +6,7 @@ enum HeicConverterFactory {
     /// - Parameter options: Optional HEIC options specifying encoding and quality.
     /// - Returns: Configured HeicConverter instance.
     static func createHeicConverter(
-        from options: Params.HeicOptions?
+        from options: PKLConfig.HeicOptions?
     ) -> HeicConverter {
         let quality = options?.resolvedQuality ?? 90
         let isLossless = options?.resolvedEncoding == .lossless
@@ -22,7 +22,7 @@ enum HeicConverterFactory {
     /// - Parameter options: Optional HEIC options specifying encoding and quality.
     /// - Returns: Configured SvgToHeicConverter instance.
     static func createSvgToHeicConverter(
-        from options: Params.HeicOptions?
+        from options: PKLConfig.HeicOptions?
     ) -> SvgToHeicConverter {
         let quality = options?.resolvedQuality ?? 90
         let isLossless = options?.resolvedEncoding == .lossless

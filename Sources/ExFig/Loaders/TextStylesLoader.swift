@@ -6,7 +6,7 @@ final class TextStylesLoader: Sendable {
     private let client: Client
     private let fileId: String
 
-    init(client: Client, params: Params.Figma) {
+    init(client: Client, params: PKLConfig.Figma) {
         self.client = client
         guard let fileId = params.lightFileId else {
             fatalError("figma.lightFileId is required for typography export")

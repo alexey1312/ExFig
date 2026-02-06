@@ -7,14 +7,14 @@ typealias ColorsLoaderOutput = (light: [Color], dark: [Color]?, lightHC: [Color]
 /// Loads colors from Figma
 final class ColorsLoader: Sendable {
     private let client: Client
-    private let figmaParams: Params.Figma
-    private let colorParams: Params.Common.Colors?
+    private let figmaParams: PKLConfig.Figma
+    private let colorParams: PKLConfig.Common.Colors?
     private let filter: String?
 
     init(
         client: Client,
-        figmaParams: Params.Figma,
-        colorParams: Params.Common.Colors?,
+        figmaParams: PKLConfig.Figma,
+        colorParams: PKLConfig.Common.Colors?,
         filter: String?
     ) {
         self.client = client

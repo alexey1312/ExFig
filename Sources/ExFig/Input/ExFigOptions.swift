@@ -29,7 +29,7 @@ struct ExFigOptions: ParsableArguments {
 
     /// Parsed configuration from the PKL input file.
     /// Populated during `validate()`.
-    private(set) var params: Params!
+    private(set) var params: PKLConfig!
 
     // MARK: - Validation
 
@@ -73,18 +73,18 @@ struct ExFigOptions: ParsableArguments {
         )
     }
 
-    private func readParams(at path: String) throws -> Params {
+    private func readParams(at path: String) throws -> PKLConfig {
         let url = URL(fileURLWithPath: path)
         let evaluator = try PKLEvaluator()
 
         // PKLEvaluator is an actor, need to run async
         // Using blocking call since we're in validate() which is synchronous
         let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<Params, Error>!
+        var result: Result<PKLConfig, Error>!
 
         Task {
             do {
-                result = try await .success(evaluator.evaluateToParams(configPath: url))
+                result = try await .success(evaluator.evaluate(configPath: url, as: PKLConfig.self))
             } catch {
                 result = .failure(error)
             }

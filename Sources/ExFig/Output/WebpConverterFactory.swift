@@ -6,7 +6,7 @@ enum WebpConverterFactory {
     /// - Parameter options: Optional format options specifying encoding and quality.
     /// - Returns: Configured WebpConverter instance.
     static func createWebpConverter(
-        from options: Params.Android.Images.FormatOptions?
+        from options: PKLConfig.Android.WebpOptions?
     ) -> WebpConverter {
         guard let options else {
             // Default: lossy with quality 90
@@ -28,7 +28,7 @@ enum WebpConverterFactory {
     /// - Parameter options: Optional format options specifying encoding and quality.
     /// - Returns: Configured SvgToWebpConverter instance.
     static func createSvgToWebpConverter(
-        from options: Params.Android.Images.FormatOptions?
+        from options: PKLConfig.Android.WebpOptions?
     ) -> SvgToWebpConverter {
         guard let options else {
             // Default: lossy with quality 90

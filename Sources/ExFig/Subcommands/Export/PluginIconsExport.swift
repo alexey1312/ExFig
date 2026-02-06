@@ -20,21 +20,21 @@ extension ExFigCommand.ExportIcons {
     ///
     /// - Parameters:
     ///   - entries: Params entries to convert and export.
-    ///   - ios: iOS platform configuration from Params.
+    ///   - ios: iOS platform configuration from PKLConfig.
     ///   - client: Figma API client.
     ///   - params: Full params for context creation.
     ///   - ui: Terminal UI for output.
     ///   - granularCacheManager: Optional granular cache manager.
     /// - Returns: Platform export result with count, hashes, and skipped count.
     func exportiOSIconsViaPlugin(
-        entries: [Params.iOS.IconsEntry],
-        ios: Params.iOS,
+        entries: [iOSIconsEntry],
+        ios: PKLConfig.iOS,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = ios.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -91,14 +91,14 @@ extension ExFigCommand.ExportIcons {
 
     /// Exports Android icons using plugin architecture.
     func exportAndroidIconsViaPlugin(
-        entries: [Params.Android.IconsEntry],
-        android: Params.Android,
+        entries: [AndroidIconsEntry],
+        android: PKLConfig.Android,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = android.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -131,14 +131,14 @@ extension ExFigCommand.ExportIcons {
 
     /// Exports Flutter icons using plugin architecture.
     func exportFlutterIconsViaPlugin(
-        entries: [Params.Flutter.IconsEntry],
-        flutter: Params.Flutter,
+        entries: [FlutterIconsEntry],
+        flutter: PKLConfig.Flutter,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = flutter.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -171,14 +171,14 @@ extension ExFigCommand.ExportIcons {
 
     /// Exports Web icons using plugin architecture.
     func exportWebIconsViaPlugin(
-        entries: [Params.Web.IconsEntry],
-        web: Params.Web,
+        entries: [WebIconsEntry],
+        web: PKLConfig.Web,
         client: Client,
-        params: Params,
+        params: PKLConfig,
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries.map { $0.toPluginEntry() }
+        let pluginEntries = entries
         let platformConfig = web.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false

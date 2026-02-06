@@ -1,3 +1,7 @@
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -25,7 +29,7 @@ struct IconsLoaderConfig: Sendable {
     let frameName: String
 
     /// Icon format for iOS (pdf or svg). Android always uses svg.
-    let format: Params.VectorFormat?
+    let format: VectorFormat?
 
     /// Render mode for iOS icons.
     let renderMode: XcodeRenderMode?
@@ -34,7 +38,7 @@ struct IconsLoaderConfig: Sendable {
     let renderModeTemplateSuffix: String?
 
     /// Creates config for a specific iOS icons entry.
-    static func forIOS(entry: Params.iOS.IconsEntry, params: Params) -> IconsLoaderConfig {
+    static func forIOS(entry: iOSIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: entry.format,
@@ -46,7 +50,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates config for Android (no iOS-specific fields needed).
-    static func forAndroid(entry: Params.Android.IconsEntry, params: Params) -> IconsLoaderConfig {
+    static func forAndroid(entry: AndroidIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -58,7 +62,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates config for Flutter (no iOS-specific fields needed).
-    static func forFlutter(entry: Params.Flutter.IconsEntry, params: Params) -> IconsLoaderConfig {
+    static func forFlutter(entry: FlutterIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -70,7 +74,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates config for Web (no iOS-specific fields needed).
-    static func forWeb(entry: Params.Web.IconsEntry, params: Params) -> IconsLoaderConfig {
+    static func forWeb(entry: WebIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -82,7 +86,7 @@ struct IconsLoaderConfig: Sendable {
     }
 
     /// Creates default config using common.icons.figmaFrameName or "Icons".
-    static func defaultConfig(params: Params) -> IconsLoaderConfig {
+    static func defaultConfig(params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
@@ -100,7 +104,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
 
     init(
         client: Client,
-        params: Params,
+        params: PKLConfig,
         platform: Platform,
         logger: Logger,
         config: IconsLoaderConfig? = nil

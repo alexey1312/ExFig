@@ -9,8 +9,8 @@ import XcodeExport
 
 /// Groups common parameters for typography export to reduce function parameter count.
 struct TypographyExportInput {
-    let figma: Params.Figma?
-    let common: Params.Common?
+    let figma: PKLConfig.Figma?
+    let common: PKLConfig.Common?
     let client: Client
     let ui: TerminalUI
 }
@@ -26,16 +26,16 @@ extension ExFigCommand.ExportTypography {
     ///
     /// - Parameters:
     ///   - entry: Params typography entry to convert and export.
-    ///   - ios: iOS platform configuration from Params.
+    ///   - ios: iOS platform configuration from PKLConfig.
     ///   - input: Common export input (figma, common, client, ui).
     /// - Returns: Number of text styles exported.
     func exportiOSTypographyViaPlugin(
-        entry: Params.iOS.Typography,
-        ios: Params.iOS,
+        entry: iOSTypographyEntry,
+        ios: PKLConfig.iOS,
         input: TypographyExportInput
     ) async throws -> Int {
         // Convert Params to plugin types
-        let pluginEntry = entry.toPluginEntry(common: input.common)
+        let pluginEntry = entry
         let platformConfig = ios.platformConfig(figma: input.figma)
 
         // Create context
@@ -88,11 +88,11 @@ extension ExFigCommand.ExportTypography {
 
     /// Exports Android typography using plugin architecture.
     func exportAndroidTypographyViaPlugin(
-        entry: Params.Android.Typography,
-        android: Params.Android,
+        entry: AndroidTypographyEntry,
+        android: PKLConfig.Android,
         input: TypographyExportInput
     ) async throws -> Int {
-        let pluginEntry = entry.toPluginEntry(common: input.common)
+        let pluginEntry = entry
         let platformConfig = android.platformConfig(figma: input.figma)
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false

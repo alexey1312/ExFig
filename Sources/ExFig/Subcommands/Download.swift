@@ -144,8 +144,8 @@ extension ExFigCommand.Download {
 
         private func exportW3C(
             client: Client,
-            figmaParams: Params.Figma?,
-            commonParams: Params.Common?,
+            figmaParams: PKLConfig.Figma?,
+            commonParams: PKLConfig.Common?,
             outputURL: URL,
             ui: TerminalUI
         ) async throws {
@@ -187,8 +187,8 @@ extension ExFigCommand.Download {
 
         private func exportRaw(
             client: Client,
-            figmaParams: Params.Figma?,
-            commonParams: Params.Common?,
+            figmaParams: PKLConfig.Figma?,
+            commonParams: PKLConfig.Common?,
             outputURL: URL,
             ui: TerminalUI
         ) async throws {
@@ -217,7 +217,7 @@ extension ExFigCommand.Download {
 
         private func exportRawVariables(
             client: Client,
-            variableParams: Params.Common.VariablesColors,
+            variableParams: PKLConfig.Common.VariablesColors,
             outputURL: URL
         ) async throws {
             let fileId = variableParams.tokensFileId
@@ -239,8 +239,8 @@ extension ExFigCommand.Download {
 
         private func exportRawStyles(
             client: Client,
-            figmaParams: Params.Figma,
-            commonParams: Params.Common?,
+            figmaParams: PKLConfig.Figma,
+            commonParams: PKLConfig.Common?,
             outputURL: URL,
             ui: TerminalUI
         ) async throws {

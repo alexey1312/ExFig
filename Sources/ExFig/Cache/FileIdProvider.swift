@@ -13,7 +13,7 @@
 ///
 /// When adding a new configuration that uses Figma file IDs:
 /// 1. Implement `FileIdProvider` for the new configuration type
-/// 2. Add the new source to `Params.getFileIds()` aggregation
+/// 2. Add the new source to `PKLConfig.getFileIds()` aggregation
 /// 3. Add test cases for the new configuration
 protocol FileIdProvider {
     /// Returns all unique Figma file IDs used by this configuration.

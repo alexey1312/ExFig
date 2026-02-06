@@ -14,7 +14,7 @@ import Foundation
 struct IconsExportContextImpl: IconsExportContextWithGranularCache {
     let client: Client
     let ui: TerminalUI
-    let params: Params
+    let params: PKLConfig
     let filter: String?
     let isBatchMode: Bool
     let fileDownloader: FileDownloader
@@ -25,7 +25,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
     init(
         client: Client,
         ui: TerminalUI,
-        params: Params,
+        params: PKLConfig,
         filter: String? = nil,
         isBatchMode: Bool = false,
         fileDownloader: FileDownloader = FileDownloader(),

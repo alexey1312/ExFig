@@ -1,3 +1,4 @@
+import ExFig_Flutter
 import ExFigCore
 import FigmaAPI
 import FlutterExport
@@ -8,8 +9,8 @@ import Foundation
 extension ExFigCommand.ExportColors {
     /// Exports Flutter colors using legacy format (common.variablesColors or common.colors).
     func exportFlutterColorsLegacy(
-        colorsConfig: Params.Flutter.ColorsConfiguration,
-        flutter: Params.Flutter,
+        colorsConfig: PKLConfig.Flutter.ColorsConfiguration,
+        flutter: PKLConfig.Flutter,
         config: LegacyExportConfig
     ) async throws -> Int {
         try validateLegacyConfig(config.commonParams)
@@ -57,8 +58,8 @@ extension ExFigCommand.ExportColors {
 
     func exportFlutterColorsEntry(
         colorPairs: [AssetPair<Color>],
-        entry: Params.Flutter.ColorsEntry,
-        flutter: Params.Flutter
+        entry: FlutterColorsEntry,
+        flutter: PKLConfig.Flutter
     ) throws {
         let output = FlutterOutput(
             outputDirectory: flutter.output,
