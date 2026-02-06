@@ -182,8 +182,7 @@ Tests/               # Test targets mirror source structure
 1. Create entry type in `Sources/ExFig-{Platform}/Config/` (e.g., `iOSColorsEntry.swift`)
 2. Implement exporter in `Sources/ExFig-{Platform}/Export/` conforming to protocol (e.g., `ColorsExporter`)
 3. Register exporter in plugin's `exporters()` method
-4. Create adapter in `Sources/ExFig/Plugin/ParamsToPluginAdapter.swift` for Params -> Entry conversion
-5. Add export method in `Sources/ExFig/Subcommands/Export/Plugin*Export.swift`
+4. Add export method in `Sources/ExFigCLI/Subcommands/Export/Plugin*Export.swift` (PKL config maps directly to entry types)
 
 ### Modifying Generated Code
 
