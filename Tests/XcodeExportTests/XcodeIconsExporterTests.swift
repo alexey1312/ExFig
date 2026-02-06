@@ -745,7 +745,7 @@ final class XcodeIconsExporterTests: XCTestCase {
             XCTAssertNotNil(content)
 
             let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
-            // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
+            // YYJSON indentationTwoSpaces format: 2-space indent, no space before colon
             let referenceCode = """
             {
               "images": [
@@ -795,7 +795,7 @@ final class XcodeIconsExporterTests: XCTestCase {
             XCTAssertNotNil(content)
 
             let generatedCode = try String(data: XCTUnwrap(content), encoding: .utf8)
-            // YYJSON prettyPrintedTwoSpaces format: 2-space indent, no space before colon
+            // YYJSON indentationTwoSpaces format: 2-space indent, no space before colon
             let referenceCode = """
             {
               "images": [
