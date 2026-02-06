@@ -197,6 +197,75 @@ final class IconsLoaderConfigTests: XCTestCase {
         XCTAssertNil(config.renderModeTemplateSuffix)
     }
 
+    // MARK: - Regression: SVG format must not be mapped to nil
+
+    /// Regression test: when IconsLoaderConfig is constructed with .svg format,
+    /// it must remain .svg (not nil). A previous bug used `source.format == .pdf ? .pdf : nil`
+    /// which turned .svg into nil, causing iOS to always export PDF instead of SVG.
+    func testSVGFormatPreservedInDirectConstruction() {
+        let config = IconsLoaderConfig(
+            frameName: "Icons",
+            format: .svg,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+
+        XCTAssertEqual(config.format, .svg)
+    }
+
+    func testPDFFormatPreservedInDirectConstruction() {
+        let config = IconsLoaderConfig(
+            frameName: "Icons",
+            format: .pdf,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+
+        XCTAssertEqual(config.format, .pdf)
+    }
+
+    /// Regression test: verifies the full data path from iOSIconsEntry with SVG format
+    /// through IconsSourceInput to IconsLoaderConfig — format must be preserved at each step.
+    func testSVGFormatPreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(format: "svg")
+
+        // Step 1: entry → IconsSourceInput
+        let source = entry.iconsSourceInput()
+        XCTAssertEqual(source.format, .svg, "SVG format must survive entry → source conversion")
+
+        // Step 2: source → IconsLoaderConfig (simulates IconsExportContextImpl.loadIcons)
+        let config = IconsLoaderConfig(
+            frameName: source.frameName,
+            format: source.format,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+        )
+        XCTAssertEqual(config.format, .svg, "SVG format must survive source → config conversion")
+    }
+
+    func testPDFFormatPreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(format: "pdf")
+
+        let source = entry.iconsSourceInput()
+        XCTAssertEqual(source.format, .pdf)
+
+        let config = IconsLoaderConfig(
+            frameName: source.frameName,
+            format: source.format,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+        )
+        XCTAssertEqual(config.format, .pdf)
+    }
+
     // MARK: - Helpers
 
     private func makeIOSEntry(

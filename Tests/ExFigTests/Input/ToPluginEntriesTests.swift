@@ -823,6 +823,87 @@ final class ToPluginEntriesTests: XCTestCase {
         XCTAssertNil(entries[0].nameReplaceRegexp)
     }
 
+    // MARK: - Regression: .entries vs .toPluginEntries for images figmaFrameName
+
+    /// Regression test: legacy `.entries` must NOT include common.images.figmaFrameName,
+    /// while `.toPluginEntries(common:)` must merge it. Using `.entries` instead of
+    /// `.toPluginEntries(common:)` caused "Components not found" errors because the
+    /// Figma frame name was lost.
+    func testIOSImagesLegacyEntriesVsToPluginEntriesForFigmaFrameName() throws {
+        let json = """
+        {
+            "assetsFolder": "Images",
+            "nameStyle": "camelCase"
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.iOS.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let common = makeCommon(images: makeCommonImages(figmaFrameName: "CustomFrame"))
+
+        // .entries does NOT merge common fields
+        let rawEntries = config.entries
+        XCTAssertNil(rawEntries[0].figmaFrameName)
+
+        // .toPluginEntries(common:) merges figmaFrameName from common
+        let pluginEntries = config.toPluginEntries(common: common)
+        XCTAssertEqual(pluginEntries[0].figmaFrameName, "CustomFrame")
+    }
+
+    func testAndroidImagesLegacyEntriesVsToPluginEntriesForFigmaFrameName() throws {
+        let json = """
+        {
+            "output": "drawable",
+            "format": "png"
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Android.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let common = makeCommon(images: makeCommonImages(figmaFrameName: "CustomFrame"))
+
+        XCTAssertNil(config.entries[0].figmaFrameName)
+        XCTAssertEqual(config.toPluginEntries(common: common)[0].figmaFrameName, "CustomFrame")
+    }
+
+    func testFlutterImagesLegacyEntriesVsToPluginEntriesForFigmaFrameName() throws {
+        let json = """
+        {
+            "output": "assets/images"
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Flutter.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let common = makeCommon(images: makeCommonImages(figmaFrameName: "CustomFrame"))
+
+        XCTAssertNil(config.entries[0].figmaFrameName)
+        XCTAssertEqual(config.toPluginEntries(common: common)[0].figmaFrameName, "CustomFrame")
+    }
+
+    func testWebImagesLegacyEntriesVsToPluginEntriesForFigmaFrameName() throws {
+        let json = """
+        {
+            "outputDirectory": "src/images"
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Web.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let common = makeCommon(images: makeCommonImages(figmaFrameName: "CustomFrame"))
+
+        XCTAssertNil(config.entries[0].figmaFrameName)
+        XCTAssertEqual(config.toPluginEntries(common: common)[0].figmaFrameName, "CustomFrame")
+    }
+
     // MARK: - Format conversion tests (Issue 9)
 
     func testAndroidImagesLegacyConvertsSourceFormatPng() throws {

@@ -21,7 +21,7 @@ extension ExFigCommand.ExportImages {
             return PlatformExportResult(count: 0, hashes: [:])
         }
 
-        let entries = imagesConfig.entries
+        let entries = imagesConfig.toPluginEntries(common: params.common)
 
         // Multiple entries - pre-fetch Components once for all entries
         if entries.count > 1 {

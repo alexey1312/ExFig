@@ -79,7 +79,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
         // Create loader config from source input
         let config = IconsLoaderConfig(
             frameName: source.frameName,
-            format: source.format == .pdf ? .pdf : nil,
+            format: source.format,
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
             renderModeOriginalSuffix: source.renderModeOriginalSuffix,
@@ -172,7 +172,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
     ) async throws -> IconsLoadOutputWithHashes {
         let config = IconsLoaderConfig(
             frameName: source.frameName,
-            format: source.format == .pdf ? .pdf : nil,
+            format: source.format,
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
             renderModeOriginalSuffix: source.renderModeOriginalSuffix,
