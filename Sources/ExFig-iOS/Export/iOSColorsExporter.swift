@@ -112,7 +112,10 @@ public struct iOSColorsExporter: ColorsExporter {
             guard let folder = entry.assetsFolder else {
                 throw iOSColorsExportError.assetsFolderNotSpecified
             }
-            colorsURL = platformConfig.xcassetsPath.appendingPathComponent(folder)
+            guard let xcassetsPath = platformConfig.xcassetsPath else {
+                throw iOSColorsExportError.xcassetsPathNotSpecified
+            }
+            colorsURL = xcassetsPath.appendingPathComponent(folder)
         }
 
         // Create output configuration
@@ -148,11 +151,15 @@ public struct iOSColorsExporter: ColorsExporter {
 public enum iOSColorsExportError: LocalizedError {
     /// Assets folder not specified when useColorAssets is true.
     case assetsFolderNotSpecified
+    /// xcassetsPath not specified when exporting color assets.
+    case xcassetsPathNotSpecified
 
     public var errorDescription: String? {
         switch self {
         case .assetsFolderNotSpecified:
             "assetsFolder is required when useColorAssets is true"
+        case .xcassetsPathNotSpecified:
+            "xcassetsPath is required for iOS colors export with useColorAssets"
         }
     }
 
@@ -160,6 +167,8 @@ public enum iOSColorsExportError: LocalizedError {
         switch self {
         case .assetsFolderNotSpecified:
             "Add 'assetsFolder' to your iOS colors configuration"
+        case .xcassetsPathNotSpecified:
+            "Add 'xcassetsPath' to your iOS configuration"
         }
     }
 }

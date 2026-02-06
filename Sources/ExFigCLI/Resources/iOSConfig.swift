@@ -105,7 +105,9 @@ ios = new iOS.iOSConfig {
   xcodeprojPath = "./Example.xcodeproj"
   // Xcode Target containing resources and corresponding swift code
   target = "UIComponents"
-  // Absolute or relative path to the Assets.xcassets directory
+  // [optional] Absolute or relative path to the Assets.xcassets directory.
+  // Required for colors (with useColorAssets), icons, and images export.
+  // Can be omitted in base configs that don't directly export assets.
   xcassetsPath = "./Resources/Assets.xcassets"
   // Is Assets.xcassets located in the main bundle?
   xcassetsInMainBundle = true

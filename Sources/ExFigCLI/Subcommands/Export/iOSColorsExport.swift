@@ -88,7 +88,11 @@ extension ExFigCommand.ExportColors {
         var colorsURL: URL?
         if entry.useColorAssets {
             if let folder = entry.assetsFolder {
-                colorsURL = ios.xcassetsPath.appendingPathComponent(folder)
+                guard let xcassetsPath = ios.xcassetsPath else {
+                    throw ExFigError
+                        .configurationError("xcassetsPath is required for iOS colors export with useColorAssets")
+                }
+                colorsURL = xcassetsPath.appendingPathComponent(folder)
             } else {
                 throw ExFigError.colorsAssetsFolderNotSpecified
             }

@@ -12,6 +12,7 @@ enum SchemaExtractor {
     ]
 
     static let defaultOutputDir = ".exfig/schemas"
+    static let versionFileName = ".version"
 
     /// Extracts all PKL schema files from the app bundle to the specified directory.
     ///
@@ -61,6 +62,59 @@ enum SchemaExtractor {
             extracted.append(fileName)
         }
 
+        // Write version file when schemas are extracted
+        if !extracted.isEmpty {
+            let versionURL = outputURL.appendingPathComponent(versionFileName)
+            try Data(ExFigCommand.version.utf8).write(to: versionURL)
+        }
+
         return extracted
+    }
+
+    // MARK: - Version Check
+
+    /// Result of comparing extracted schema version with the current CLI version.
+    enum VersionCheckResult {
+        /// Versions match.
+        case matched
+        /// Versions don't match.
+        case mismatch(schemasVersion: String, cliVersion: String)
+        /// No version file found (schemas extracted by older version or manually).
+        case noVersionFile
+        /// Schemas directory doesn't exist.
+        case noSchemasDirectory
+    }
+
+    /// Checks whether extracted schemas match the current CLI version.
+    ///
+    /// - Parameter directory: Path to the schemas directory. Defaults to `.exfig/schemas`.
+    /// - Returns: Result of the version comparison.
+    static func checkVersion(at directory: String = defaultOutputDir) -> VersionCheckResult {
+        let fileManager = FileManager.default
+
+        let dirURL = if directory.hasPrefix("/") {
+            URL(fileURLWithPath: directory)
+        } else {
+            URL(fileURLWithPath: fileManager.currentDirectoryPath)
+                .appendingPathComponent(directory)
+        }
+
+        guard fileManager.fileExists(atPath: dirURL.path) else {
+            return .noSchemasDirectory
+        }
+
+        let versionURL = dirURL.appendingPathComponent(versionFileName)
+        guard let data = fileManager.contents(atPath: versionURL.path),
+              let schemasVersion = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        else {
+            return .noVersionFile
+        }
+
+        let cliVersion = ExFigCommand.version
+        if schemasVersion == cliVersion {
+            return .matched
+        } else {
+            return .mismatch(schemasVersion: schemasVersion, cliVersion: cliVersion)
+        }
     }
 }

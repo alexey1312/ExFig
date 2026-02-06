@@ -86,6 +86,7 @@ extension ExFigCommand {
         // swiftlint:disable:next function_body_length
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
+            ExFigCommand.checkSchemaVersionIfNeeded()
             let ui = ExFigCommand.terminalUI!
 
             // Discover and validate configs

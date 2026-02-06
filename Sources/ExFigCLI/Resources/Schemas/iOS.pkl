@@ -172,7 +172,9 @@ class iOSConfig {
   target: String
 
   /// Path to main .xcassets folder.
-  xcassetsPath: String
+  /// Required for colors (with useColorAssets), icons, and images export.
+  /// Can be omitted in base configs that don't directly export assets.
+  xcassetsPath: String?
 
   /// Whether assets are in main bundle.
   xcassetsInMainBundle: Boolean

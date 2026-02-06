@@ -35,7 +35,7 @@ final class PlatformConfigTests: XCTestCase {
 
         XCTAssertEqual(config.xcodeprojPath, "MyApp.xcodeproj")
         XCTAssertEqual(config.target, "MyApp")
-        XCTAssertEqual(config.xcassetsPath.lastPathComponent, "Assets.xcassets")
+        XCTAssertEqual(config.xcassetsPath?.lastPathComponent, "Assets.xcassets")
         XCTAssertTrue(config.xcassetsInMainBundle)
         XCTAssertEqual(config.xcassetsInSwiftPackage, true)
         XCTAssertEqual(config.resourceBundleNames, ["MyBundle"])

@@ -135,6 +135,7 @@ jobs:
           VERSION="${GITHUB_REF#refs/tags/}"
           FILE="Sources/ExFigCLI/ExFigCommand.swift"
           sed -i "s/static let version = \".*\"/static let version = \"$VERSION\"/" "$FILE"
+          sed -i "s/version = \".*\"/version = \"${VERSION#v}\"/" "Sources/ExFigCLI/Resources/Schemas/PklProject"
 
       - name: Update CHANGELOG.md
         uses: orhun/git-cliff-action@v4
@@ -148,7 +149,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Sources/ExFigCLI/ExFigCommand.swift CHANGELOG.md
+          git add Sources/ExFigCLI/ExFigCommand.swift Sources/ExFigCLI/Resources/Schemas/PklProject CHANGELOG.md
           git diff --staged --quiet || git commit -m "chore(release): bump version to ${GITHUB_REF#refs/tags/v}"
           git push origin main
 
@@ -175,12 +176,21 @@ jobs:
         env:
           GITHUB_REPO: ${{ github.repository }}
 
-      - name: Create schemas archive
+      - name: Install Pkl CLI
+        run: |
+          curl -sL https://github.com/apple/pkl/releases/download/0.30.2/pkl-linux-amd64 -o /usr/local/bin/pkl
+          chmod +x /usr/local/bin/pkl
+
+      - name: Update PklProject version
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
-          cd Sources/ExFigCLI/Resources/Schemas
-          zip -r "../../../../exfig-schemas@${VERSION}.zip" \
-            ExFig.pkl Figma.pkl Common.pkl iOS.pkl Android.pkl Flutter.pkl Web.pkl PklProject
+          sed -i "s/version = \".*\"/version = \"$VERSION\"/" Sources/ExFigCLI/Resources/Schemas/PklProject
+
+      - name: Package PKL schemas
+        run: |
+          pkl project package \
+            --output-path ".pkl-out/%{name}@%{version}/" \
+            Sources/ExFigCLI/Resources/Schemas
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -190,7 +200,7 @@ jobs:
           files: |
             artifacts/exfig-macos/exfig-macos.zip
             artifacts/exfig-linux-x64/exfig-linux-x64.tar.gz
-            exfig-schemas@*.zip
+            .pkl-out/exfig@*/*
 
   update-homebrew:
     name: Update Homebrew Tap

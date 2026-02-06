@@ -16,7 +16,9 @@ public struct iOSPlatformConfig: Sendable {
     public let target: String
 
     /// Path to the .xcassets directory.
-    public let xcassetsPath: URL
+    /// Required for colors (with useColorAssets), icons, and images export.
+    /// Can be nil in base configs that don't directly export assets.
+    public let xcassetsPath: URL?
 
     /// Whether assets are in the main bundle.
     public let xcassetsInMainBundle: Bool
@@ -42,7 +44,7 @@ public struct iOSPlatformConfig: Sendable {
     public init(
         xcodeprojPath: String,
         target: String,
-        xcassetsPath: URL,
+        xcassetsPath: URL? = nil,
         xcassetsInMainBundle: Bool = true,
         xcassetsInSwiftPackage: Bool? = nil,
         resourceBundleNames: [String]? = nil,

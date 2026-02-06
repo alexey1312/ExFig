@@ -100,4 +100,25 @@ extension ExFigCommand {
         terminalUI = TerminalUI(outputMode: outputMode)
         terminalUI.installSignalHandlers()
     }
+
+    /// Checks if extracted schemas match the current CLI version and warns if not.
+    static func checkSchemaVersionIfNeeded() {
+        guard let ui = terminalUI else { return }
+
+        switch SchemaExtractor.checkVersion() {
+        case .matched, .noSchemasDirectory:
+            break
+        case let .mismatch(schemasVersion, cliVersion):
+            ui.warning(
+                "Extracted schemas (\(schemasVersion)) don't match ExFig version (\(cliVersion)). "
+                    + "Run `exfig schemas --force` to update."
+            )
+        case .noVersionFile:
+            // Schemas exist but no version file — extracted by an older version
+            ui.warning(
+                "Schema version unknown (extracted by an older ExFig version). "
+                    + "Run `exfig schemas --force` to update."
+            )
+        }
+    }
 }

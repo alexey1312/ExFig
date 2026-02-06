@@ -372,7 +372,10 @@ public struct iOSImagesExporter: ImagesExporter {
 
         if let warning = processResult.warning { context.warning(warning) }
 
-        let assetsURL = platformConfig.xcassetsPath.appendingPathComponent(entry.assetsFolder)
+        guard let xcassetsPath = platformConfig.xcassetsPath else {
+            throw iOSImagesExportError.xcassetsPathNotSpecified
+        }
+        let assetsURL = xcassetsPath.appendingPathComponent(entry.assetsFolder)
         return (processResult.imagePairs, assetsURL, loadResult)
     }
 
@@ -409,8 +412,33 @@ public struct iOSImagesExporter: ImagesExporter {
 
         if let warning = processResult.warning { context.warning(warning) }
 
-        let assetsURL = platformConfig.xcassetsPath.appendingPathComponent(entry.assetsFolder)
+        guard let xcassetsPath = platformConfig.xcassetsPath else {
+            throw iOSImagesExportError.xcassetsPathNotSpecified
+        }
+        let assetsURL = xcassetsPath.appendingPathComponent(entry.assetsFolder)
         return (processResult.imagePairs, assetsURL, loadResult)
+    }
+}
+
+// MARK: - Errors
+
+/// Errors that can occur during iOS images export.
+public enum iOSImagesExportError: LocalizedError {
+    /// xcassetsPath not specified when exporting images.
+    case xcassetsPathNotSpecified
+
+    public var errorDescription: String? {
+        switch self {
+        case .xcassetsPathNotSpecified:
+            "xcassetsPath is required for iOS images export"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .xcassetsPathNotSpecified:
+            "Add 'xcassetsPath' to your iOS configuration"
+        }
     }
 }
 

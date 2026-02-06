@@ -233,7 +233,7 @@ struct PKLConfig: Decodable {
 
         let xcodeprojPath: String
         let target: String
-        let xcassetsPath: URL
+        let xcassetsPath: URL?
         let xcassetsInMainBundle: Bool
         let xcassetsInSwiftPackage: Bool?
         let resourceBundleNames: [String]?

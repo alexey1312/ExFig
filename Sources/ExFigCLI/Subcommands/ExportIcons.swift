@@ -38,6 +38,7 @@ extension ExFigCommand {
 
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
+            ExFigCommand.checkSchemaVersionIfNeeded()
             let ui = ExFigCommand.terminalUI!
 
             let client = resolveClient(

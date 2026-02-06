@@ -132,7 +132,10 @@ public struct iOSIconsExporter: IconsExporter {
         let iconPairs = processResult.iconPairs
 
         // 3. Generate files
-        let assetsURL = platformConfig.xcassetsPath.appendingPathComponent(entry.assetsFolder)
+        guard let xcassetsPath = platformConfig.xcassetsPath else {
+            throw iOSIconsExportError.xcassetsPathNotSpecified
+        }
+        let assetsURL = xcassetsPath.appendingPathComponent(entry.assetsFolder)
 
         let output = XcodeImagesOutput(
             assetsFolderURL: assetsURL,
@@ -210,6 +213,28 @@ public struct iOSIconsExporter: IconsExporter {
             computedHashes: loadResult.computedHashes,
             allAssetMetadata: loadResult.allAssetMetadata
         )
+    }
+}
+
+// MARK: - Errors
+
+/// Errors that can occur during iOS icons export.
+public enum iOSIconsExportError: LocalizedError {
+    /// xcassetsPath not specified when exporting icons.
+    case xcassetsPathNotSpecified
+
+    public var errorDescription: String? {
+        switch self {
+        case .xcassetsPathNotSpecified:
+            "xcassetsPath is required for iOS icons export"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .xcassetsPathNotSpecified:
+            "Add 'xcassetsPath' to your iOS configuration"
+        }
     }
 }
 

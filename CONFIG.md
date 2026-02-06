@@ -16,6 +16,19 @@ This creates a `.exfig/schemas/` directory with all schema files (`ExFig.pkl`, `
 `Android.pkl`, `Flutter.pkl`, `Web.pkl`). Your config file references these schemas via `amends` and `import`
 statements.
 
+Alternatively, you can reference schemas directly via the published PKL package URI (no local extraction needed):
+
+```pkl
+amends "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/ExFig.pkl"
+
+import "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/iOS.pkl"
+import "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/Figma.pkl"
+import "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/Common.pkl"
+```
+
+Replace `2.0.0` with your ExFig version. Using local schemas (`exfig schemas`) is recommended for faster evaluation
+and offline support.
+
 ## Quick Start
 
 Generate a working configuration file for your platform:
@@ -309,12 +322,15 @@ ios = new iOS.iOSConfig {
 | ------------------------ | ------------------ | -------- | ------------------------------------------------------ |
 | `xcodeprojPath`          | `String`           | Yes      | Path to `.xcodeproj` file                              |
 | `target`                 | `String`           | Yes      | Xcode target for resources and Swift code              |
-| `xcassetsPath`           | `String`           | Yes      | Path to `Assets.xcassets` directory                    |
+| `xcassetsPath`           | `String?`          | No*      | Path to `Assets.xcassets` directory                    |
 | `xcassetsInMainBundle`   | `Boolean`          | Yes      | Whether assets are in the main bundle                  |
 | `xcassetsInSwiftPackage` | `Boolean?`         | No       | Whether assets are in a Swift package (default: false) |
 | `resourceBundleNames`    | `Listing<String>?` | No       | Resource bundle names for SPM packages                 |
 | `addObjcAttribute`       | `Boolean?`         | No       | Add `@objc` to generated properties (default: false)   |
 | `templatesPath`          | `String?`          | No       | Path to custom Stencil templates                       |
+
+*Required when exporting colors (with `useColorAssets`), icons, or images. Can be omitted in base configs used only
+for inheritance.
 
 ### iOS Colors
 
@@ -999,6 +1015,52 @@ ios = new iOS.iOSConfig {
 
 The child config inherits all `figma` and `common` settings from `base.pkl` while adding its own iOS-specific
 configuration.
+
+---
+
+## Common PKL Patterns
+
+### Union Types: Single vs. Multiple Entries
+
+ExFig schema fields like `colors`, `icons`, and `images` accept either a single entry or a `Listing` (array). PKL
+cannot infer the type from `new { ... }` for union types, so you must use the typed constructor when writing multiple
+entries.
+
+**Single entry** — type is inferred, no explicit type needed:
+
+```pkl
+colors = new iOS.ColorsEntry {
+  figmaFrameName = "Colors"
+  useColorAssets = true
+  assetsFolder = "Colors"
+  nameStyle = "camelCase"
+}
+```
+
+**Multiple entries** — MUST use typed constructor (`new Type { ... }`):
+
+```pkl
+colors = new Listing {
+  new iOS.ColorsEntry {
+    figmaFrameName = "Light Colors"
+    useColorAssets = true
+    assetsFolder = "Colors/Light"
+    nameStyle = "camelCase"
+  }
+  new iOS.ColorsEntry {
+    figmaFrameName = "Dark Colors"
+    useColorAssets = true
+    assetsFolder = "Colors/Dark"
+    nameStyle = "camelCase"
+  }
+}
+```
+
+Without the typed constructor (e.g., `new { ... }` inside a Listing), PKL will report:
+`Expected type iOS.ColorsEntry, but got Dynamic`.
+
+This pattern applies to all platforms: `iOS.ColorsEntry`, `iOS.IconsEntry`, `iOS.ImagesEntry`,
+`Android.ColorsEntry`, `Android.IconsEntry`, `Android.ImagesEntry`, `Flutter.ColorsEntry`, etc.
 
 ---
 
