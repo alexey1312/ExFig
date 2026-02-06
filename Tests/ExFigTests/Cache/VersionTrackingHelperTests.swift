@@ -16,7 +16,7 @@ final class VersionTrackingConfigTests: XCTestCase {
         // Given: Config without explicit batchMode
         let config = VersionTrackingConfig(
             client: MockClient(),
-            params: Params.makeMinimal(),
+            params: PKLConfig.makeMinimal(),
             cacheOptions: CacheOptions(),
             configCacheEnabled: false,
             configCachePath: nil,
@@ -33,7 +33,7 @@ final class VersionTrackingConfigTests: XCTestCase {
         // Given: Config with explicit batchMode
         let config = VersionTrackingConfig(
             client: MockClient(),
-            params: Params.makeMinimal(),
+            params: PKLConfig.makeMinimal(),
             cacheOptions: CacheOptions(),
             configCacheEnabled: false,
             configCachePath: nil,
@@ -51,7 +51,7 @@ final class VersionTrackingConfigTests: XCTestCase {
         // Given: Different asset types
         let colorsConfig = VersionTrackingConfig(
             client: MockClient(),
-            params: Params.makeMinimal(),
+            params: PKLConfig.makeMinimal(),
             cacheOptions: CacheOptions(),
             configCacheEnabled: false,
             configCachePath: nil,
@@ -62,7 +62,7 @@ final class VersionTrackingConfigTests: XCTestCase {
 
         let iconsConfig = VersionTrackingConfig(
             client: MockClient(),
-            params: Params.makeMinimal(),
+            params: PKLConfig.makeMinimal(),
             cacheOptions: CacheOptions(),
             configCacheEnabled: false,
             configCachePath: nil,
@@ -123,8 +123,8 @@ final class VersionTrackingCheckResultTests: XCTestCase {
 
 // MARK: - Test Helpers
 
-private extension Params {
-    static func makeMinimal() -> Params {
+private extension PKLConfig {
+    static func makeMinimal() -> PKLConfig {
         let json = """
         {
             "figma": {
@@ -133,6 +133,6 @@ private extension Params {
         }
         """
         // swiftlint:disable:next force_try
-        return try! JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        return try! JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
     }
 }

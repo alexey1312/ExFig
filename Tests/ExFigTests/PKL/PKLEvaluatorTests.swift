@@ -62,12 +62,12 @@ struct PKLEvaluatorTests {
         }
     }
 
-    @Test("Evaluates config to Params struct")
+    @Test("Evaluates config to PKLConfig struct")
     func evaluatesToParams() async throws {
         let evaluator = try PKLEvaluator()
         let configPath = Self.fixturesPath.appendingPathComponent("valid-config.pkl")
 
-        let params = try await evaluator.evaluateToParams(configPath: configPath)
+        let params = try await evaluator.evaluateToPKLConfig(configPath: configPath)
 
         #expect(params.ios != nil)
         #expect(params.ios?.xcodeprojPath == "Test.xcodeproj")

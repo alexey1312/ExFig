@@ -1,4 +1,9 @@
 @testable import ExFig
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
+import ExFigCore
 import XCTest
 
 final class ImagesLoaderConfigTests: XCTestCase {
@@ -6,7 +11,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForIOS_entryFrameNameOverridesCommon() throws {
         let entry = try makeIOSEntry(figmaFrameName: "Promo")
-        let params = Params.make(lightFileId: "test", imagesFrameName: "CommonImages")
+        let params = PKLConfig.make(lightFileId: "test", imagesFrameName: "CommonImages")
 
         let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -15,7 +20,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForIOS_fallbackToCommonFrameName() throws {
         let entry = try makeIOSEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test", imagesFrameName: "CommonImages")
+        let params = PKLConfig.make(lightFileId: "test", imagesFrameName: "CommonImages")
 
         let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -24,7 +29,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForIOS_fallbackToDefaultFrameName() throws {
         let entry = try makeIOSEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -33,7 +38,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForIOS_passesScalesField() throws {
         let entry = try makeIOSEntry(scales: [1.0, 2.0, 3.0])
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -42,7 +47,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForIOS_nilScalesWhenNotProvided() throws {
         let entry = try makeIOSEntry()
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -51,7 +56,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForIOS_formatIsAlwaysNil() throws {
         let entry = try makeIOSEntry()
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -62,7 +67,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForAndroid_entryFrameNameOverridesCommon() throws {
         let entry = try makeAndroidEntry(figmaFrameName: "Photos")
-        let params = Params.make(lightFileId: "test", imagesFrameName: "CommonImages")
+        let params = PKLConfig.make(lightFileId: "test", imagesFrameName: "CommonImages")
 
         let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -71,7 +76,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForAndroid_fallbackToCommonFrameName() throws {
         let entry = try makeAndroidEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test", imagesFrameName: "CommonImages")
+        let params = PKLConfig.make(lightFileId: "test", imagesFrameName: "CommonImages")
 
         let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -80,7 +85,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForAndroid_fallbackToDefault() throws {
         let entry = try makeAndroidEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -89,7 +94,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForAndroid_passesScalesField() throws {
         let entry = try makeAndroidEntry(scales: [1.0, 1.5, 2.0, 3.0, 4.0])
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -98,7 +103,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForAndroid_formatSVG() throws {
         let entry = try makeAndroidEntry(format: "svg")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -107,7 +112,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForAndroid_formatPNG() throws {
         let entry = try makeAndroidEntry(format: "png")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -116,7 +121,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForAndroid_formatWebP() throws {
         let entry = try makeAndroidEntry(format: "webp")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -127,7 +132,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_entryFrameNameOverridesCommon() throws {
         let entry = try makeFlutterEntry(figmaFrameName: "Banners")
-        let params = Params.make(lightFileId: "test", imagesFrameName: "CommonImages")
+        let params = PKLConfig.make(lightFileId: "test", imagesFrameName: "CommonImages")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -136,7 +141,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_fallbackToCommonFrameName() throws {
         let entry = try makeFlutterEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test", imagesFrameName: "CommonImages")
+        let params = PKLConfig.make(lightFileId: "test", imagesFrameName: "CommonImages")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -145,7 +150,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_fallbackToDefault() throws {
         let entry = try makeFlutterEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -154,7 +159,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_passesScalesField() throws {
         let entry = try makeFlutterEntry(scales: [1.0, 2.0, 3.0])
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -163,7 +168,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_formatSVG() throws {
         let entry = try makeFlutterEntry(format: "svg")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -172,7 +177,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_formatPNG() throws {
         let entry = try makeFlutterEntry(format: "png")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -181,7 +186,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_formatWebP() throws {
         let entry = try makeFlutterEntry(format: "webp")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -190,7 +195,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     func testForFlutter_formatNilWhenNotProvided() throws {
         let entry = try makeFlutterEntry()
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -200,7 +205,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
     // MARK: - Default Config
 
     func testDefaultConfig_usesCommonFrameName() {
-        let params = Params.make(lightFileId: "test", imagesFrameName: "CommonImages")
+        let params = PKLConfig.make(lightFileId: "test", imagesFrameName: "CommonImages")
 
         let config = ImagesLoaderConfig.defaultConfig(params: params)
 
@@ -208,7 +213,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
     }
 
     func testDefaultConfig_fallbackToDefault() {
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.defaultConfig(params: params)
 
@@ -216,7 +221,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
     }
 
     func testDefaultConfig_hasNilScales() {
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.defaultConfig(params: params)
 
@@ -224,7 +229,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
     }
 
     func testDefaultConfig_hasNilFormat() {
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = ImagesLoaderConfig.defaultConfig(params: params)
 
@@ -238,7 +243,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
         assetsFolder: String = "Images",
         nameStyle: String = "camelCase",
         scales: [Double]? = nil
-    ) throws -> Params.iOS.ImagesEntry {
+    ) throws -> iOSImagesEntry {
         var json = """
         {
             "assetsFolder": "\(assetsFolder)",
@@ -254,7 +259,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
         }
         json += "}"
 
-        return try JSONDecoder().decode(Params.iOS.ImagesEntry.self, from: Data(json.utf8))
+        return try JSONDecoder().decode(iOSImagesEntry.self, from: Data(json.utf8))
     }
 
     private func makeAndroidEntry(
@@ -262,7 +267,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
         output: String = "drawable",
         format: String = "svg",
         scales: [Double]? = nil
-    ) throws -> Params.Android.ImagesEntry {
+    ) throws -> AndroidImagesEntry {
         var json = """
         {
             "output": "\(output)",
@@ -278,7 +283,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
         }
         json += "}"
 
-        return try JSONDecoder().decode(Params.Android.ImagesEntry.self, from: Data(json.utf8))
+        return try JSONDecoder().decode(AndroidImagesEntry.self, from: Data(json.utf8))
     }
 
     private func makeFlutterEntry(
@@ -286,7 +291,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
         output: String = "assets/images",
         scales: [Double]? = nil,
         format: String? = nil
-    ) throws -> Params.Flutter.ImagesEntry {
+    ) throws -> FlutterImagesEntry {
         var json = """
         {
             "output": "\(output)"
@@ -304,6 +309,6 @@ final class ImagesLoaderConfigTests: XCTestCase {
         }
         json += "}"
 
-        return try JSONDecoder().decode(Params.Flutter.ImagesEntry.self, from: Data(json.utf8))
+        return try JSONDecoder().decode(FlutterImagesEntry.self, from: Data(json.utf8))
     }
 }

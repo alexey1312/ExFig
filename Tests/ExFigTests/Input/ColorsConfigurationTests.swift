@@ -1,5 +1,10 @@
 // swiftlint:disable file_length type_body_length
 @testable import ExFig
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
+import ExFigCore
 import XCTest
 
 final class ColorsConfigurationTests: XCTestCase {
@@ -15,12 +20,12 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.ColorsConfiguration.self,
+            PKLConfig.iOS.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -56,7 +61,7 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.ColorsConfiguration.self,
+            PKLConfig.iOS.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -104,7 +109,7 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.iOS.ColorsEntry.self,
+            iOSColorsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -135,12 +140,12 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.ColorsConfiguration.self,
+            PKLConfig.Android.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -170,7 +175,7 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.ColorsConfiguration.self,
+            PKLConfig.Android.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -212,7 +217,7 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Android.ColorsEntry.self,
+            AndroidColorsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -239,12 +244,12 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.ColorsConfiguration.self,
+            PKLConfig.Android.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -264,12 +269,12 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.ColorsConfiguration.self,
+            PKLConfig.Flutter.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -301,7 +306,7 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.ColorsConfiguration.self,
+            PKLConfig.Flutter.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -342,7 +347,7 @@ final class ColorsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Flutter.ColorsEntry.self,
+            FlutterColorsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -359,7 +364,7 @@ final class ColorsConfigurationTests: XCTestCase {
         XCTAssertEqual(entry.className, "DesignColors")
     }
 
-    // MARK: - Full Params Integration
+    // MARK: - Full PKLConfig Integration
 
     func testFullParamsWithIOSColorsArray() throws {
         let json = """
@@ -394,7 +399,7 @@ final class ColorsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.ios?.colors)
         XCTAssertEqual(params.ios?.colors?.entries.count, 2)
@@ -421,7 +426,7 @@ final class ColorsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.ios?.colors)
         XCTAssertEqual(params.ios?.colors?.entries.count, 1)
@@ -454,7 +459,7 @@ final class ColorsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.android?.colors)
         XCTAssertEqual(params.android?.colors?.entries.count, 2)
@@ -489,7 +494,7 @@ final class ColorsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.flutter?.colors)
         XCTAssertEqual(params.flutter?.colors?.entries.count, 2)
@@ -502,7 +507,7 @@ final class ColorsConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.iOS.ColorsConfiguration.self,
+            PKLConfig.iOS.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -519,7 +524,7 @@ final class ColorsConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.Android.ColorsConfiguration.self,
+            PKLConfig.Android.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -536,7 +541,7 @@ final class ColorsConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.ColorsConfiguration.self,
+            PKLConfig.Flutter.ColorsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -554,7 +559,7 @@ final class ColorsConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.iOS.ColorsConfiguration.self,
+                PKLConfig.iOS.ColorsConfiguration.self,
                 from: Data(json.utf8)
             )
         )
@@ -565,7 +570,7 @@ final class ColorsConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.Android.ColorsConfiguration.self,
+                PKLConfig.Android.ColorsConfiguration.self,
                 from: Data(json.utf8)
             )
         )
@@ -576,7 +581,7 @@ final class ColorsConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.Flutter.ColorsConfiguration.self,
+                PKLConfig.Flutter.ColorsConfiguration.self,
                 from: Data(json.utf8)
             )
         )

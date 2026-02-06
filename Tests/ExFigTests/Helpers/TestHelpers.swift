@@ -3,17 +3,17 @@ import ExFigCore
 import FigmaAPI
 import Foundation
 
-// MARK: - Params.Figma Extension
+// MARK: - PKLConfig.Figma Extension
 
-extension Params.Figma {
-    /// Creates a Params.Figma for testing with minimal required fields.
+extension PKLConfig.Figma {
+    /// Creates a PKLConfig.Figma for testing with minimal required fields.
     static func make(
         lightFileId: String,
         darkFileId: String? = nil,
         lightHighContrastFileId: String? = nil,
         darkHighContrastFileId: String? = nil,
         timeout: TimeInterval? = nil
-    ) -> Params.Figma {
+    ) -> PKLConfig.Figma {
         let json = """
         {
             "lightFileId": "\(lightFileId)"
@@ -24,20 +24,20 @@ extension Params.Figma {
         }
         """
         // swiftlint:disable:next force_try
-        return try! JSONCodec.decode(Params.Figma.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(PKLConfig.Figma.self, from: Data(json.utf8))
     }
 }
 
-// MARK: - Params.Common.Colors Extension
+// MARK: - PKLConfig.Common.Colors Extension
 
-extension Params.Common.Colors {
-    /// Creates a Params.Common.Colors for testing.
+extension PKLConfig.Common.Colors {
+    /// Creates a PKLConfig.Common.Colors for testing.
     static func make(
         useSingleFile: Bool? = nil,
         darkModeSuffix: String? = nil,
         lightHCModeSuffix: String? = nil,
         darkHCModeSuffix: String? = nil
-    ) -> Params.Common.Colors {
+    ) -> PKLConfig.Common.Colors {
         var components: [String] = []
         if let useSingleFile {
             components.append("\"useSingleFile\": \(useSingleFile)")
@@ -54,7 +54,7 @@ extension Params.Common.Colors {
 
         let json = "{ \(components.joined(separator: ", ")) }"
         // swiftlint:disable:next force_try
-        return try! JSONCodec.decode(Params.Common.Colors.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(PKLConfig.Common.Colors.self, from: Data(json.utf8))
     }
 }
 
@@ -108,10 +108,10 @@ extension Style {
     }
 }
 
-// MARK: - Params.Common.VariablesColors Extension
+// MARK: - PKLConfig.Common.VariablesColors Extension
 
-extension Params.Common.VariablesColors {
-    /// Creates a Params.Common.VariablesColors for testing.
+extension PKLConfig.Common.VariablesColors {
+    /// Creates a PKLConfig.Common.VariablesColors for testing.
     static func make(
         tokensFileId: String,
         tokensCollectionName: String,
@@ -120,7 +120,7 @@ extension Params.Common.VariablesColors {
         lightHCModeName: String? = nil,
         darkHCModeName: String? = nil,
         primitivesModeName: String? = nil
-    ) -> Params.Common.VariablesColors {
+    ) -> PKLConfig.Common.VariablesColors {
         var components: [String] = [
             "\"tokensFileId\": \"\(tokensFileId)\"",
             "\"tokensCollectionName\": \"\(tokensCollectionName)\"",
@@ -139,7 +139,7 @@ extension Params.Common.VariablesColors {
 
         let json = "{ \(components.joined(separator: ", ")) }"
         // swiftlint:disable:next force_try
-        return try! JSONCodec.decode(Params.Common.VariablesColors.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(PKLConfig.Common.VariablesColors.self, from: Data(json.utf8))
     }
 }
 
@@ -180,10 +180,10 @@ extension Component {
     }
 }
 
-// MARK: - Params Extension
+// MARK: - PKLConfig Extension
 
-extension Params {
-    /// Creates a minimal Params for testing image loading.
+extension PKLConfig {
+    /// Creates a minimal PKLConfig for testing image loading.
     static func make(
         lightFileId: String,
         darkFileId: String? = nil,
@@ -192,7 +192,7 @@ extension Params {
         useSingleFileIcons: Bool? = nil,
         useSingleFileImages: Bool? = nil,
         iconsDarkModeSuffix: String? = nil
-    ) -> Params {
+    ) -> PKLConfig {
         var commonComponents: [String] = []
 
         if iconsFrameName != nil || useSingleFileIcons != nil || iconsDarkModeSuffix != nil {
@@ -232,7 +232,7 @@ extension Params {
         """
 
         // swiftlint:disable:next force_try
-        return try! JSONCodec.decode(Params.self, from: Data(json.utf8))
+        return try! JSONCodec.decode(PKLConfig.self, from: Data(json.utf8))
     }
 }
 

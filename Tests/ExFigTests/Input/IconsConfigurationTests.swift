@@ -1,5 +1,10 @@
 // swiftlint:disable file_length type_body_length
 @testable import ExFig
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
+import ExFigCore
 import XCTest
 
 final class IconsConfigurationTests: XCTestCase {
@@ -15,12 +20,12 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.IconsConfiguration.self,
+            PKLConfig.iOS.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -50,7 +55,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.IconsConfiguration.self,
+            PKLConfig.iOS.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -91,7 +96,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.iOS.IconsEntry.self,
+            iOSIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -118,7 +123,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.IconsConfiguration.self,
+            PKLConfig.iOS.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -141,12 +146,12 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.IconsConfiguration.self,
+            PKLConfig.Android.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -173,7 +178,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.IconsConfiguration.self,
+            PKLConfig.Android.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -207,7 +212,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Android.IconsEntry.self,
+            AndroidIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -228,12 +233,12 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.IconsConfiguration.self,
+            PKLConfig.Flutter.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -261,7 +266,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.IconsConfiguration.self,
+            PKLConfig.Flutter.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -293,7 +298,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Flutter.IconsEntry.self,
+            FlutterIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -303,7 +308,7 @@ final class IconsConfigurationTests: XCTestCase {
         XCTAssertEqual(entry.className, "AppIcons")
     }
 
-    // MARK: - Full Params Integration
+    // MARK: - Full PKLConfig Integration
 
     func testFullParamsWithIOSIconsArray() throws {
         let json = """
@@ -334,7 +339,7 @@ final class IconsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.ios?.icons)
         XCTAssertEqual(params.ios?.icons?.entries.count, 2)
@@ -361,7 +366,7 @@ final class IconsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.ios?.icons)
         XCTAssertEqual(params.ios?.icons?.entries.count, 1)
@@ -390,7 +395,7 @@ final class IconsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.android?.icons)
         XCTAssertEqual(params.android?.icons?.entries.count, 2)
@@ -419,7 +424,7 @@ final class IconsConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.flutter?.icons)
         XCTAssertEqual(params.flutter?.icons?.entries.count, 2)
@@ -432,7 +437,7 @@ final class IconsConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.iOS.IconsConfiguration.self,
+            PKLConfig.iOS.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -449,7 +454,7 @@ final class IconsConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.Android.IconsConfiguration.self,
+            PKLConfig.Android.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -466,7 +471,7 @@ final class IconsConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.IconsConfiguration.self,
+            PKLConfig.Flutter.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -484,7 +489,7 @@ final class IconsConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.iOS.IconsConfiguration.self,
+                PKLConfig.iOS.IconsConfiguration.self,
                 from: Data(json.utf8)
             )
         )
@@ -495,7 +500,7 @@ final class IconsConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.Android.IconsConfiguration.self,
+                PKLConfig.Android.IconsConfiguration.self,
                 from: Data(json.utf8)
             )
         )
@@ -506,7 +511,7 @@ final class IconsConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.Flutter.IconsConfiguration.self,
+                PKLConfig.Flutter.IconsConfiguration.self,
                 from: Data(json.utf8)
             )
         )
@@ -527,7 +532,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.iOS.IconsEntry.self,
+            iOSIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -547,7 +552,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.iOS.IconsEntry.self,
+            iOSIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -567,7 +572,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Android.IconsEntry.self,
+            AndroidIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -585,7 +590,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Android.IconsEntry.self,
+            AndroidIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -606,7 +611,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Flutter.IconsEntry.self,
+            FlutterIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -624,7 +629,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Flutter.IconsEntry.self,
+            FlutterIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -643,12 +648,12 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Web.IconsConfiguration.self,
+            PKLConfig.Web.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -673,7 +678,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Web.IconsConfiguration.self,
+            PKLConfig.Web.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -705,7 +710,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Web.IconsEntry.self,
+            WebIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -723,7 +728,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Web.IconsEntry.self,
+            WebIconsEntry.self,
             from: Data(json.utf8)
         )
 
@@ -744,7 +749,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.IconsConfiguration.self,
+            PKLConfig.iOS.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -762,7 +767,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.IconsConfiguration.self,
+            PKLConfig.Android.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -781,7 +786,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.IconsConfiguration.self,
+            PKLConfig.Flutter.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -800,7 +805,7 @@ final class IconsConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Web.IconsConfiguration.self,
+            PKLConfig.Web.IconsConfiguration.self,
             from: Data(json.utf8)
         )
 

@@ -445,8 +445,8 @@ final class FileIdProviderTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func parseParams(_ json: String) throws -> Params {
+    private func parseParams(_ json: String) throws -> PKLConfig {
         let decoder = JSONDecoder()
-        return try decoder.decode(Params.self, from: Data(json.utf8))
+        return try decoder.decode(PKLConfig.self, from: Data(json.utf8))
     }
 }

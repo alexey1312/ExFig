@@ -1,5 +1,10 @@
 // swiftlint:disable file_length type_body_length
 @testable import ExFig
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
+import ExFigCore
 import XCTest
 
 final class ImagesConfigurationTests: XCTestCase {
@@ -14,12 +19,12 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.ImagesConfiguration.self,
+            PKLConfig.iOS.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -48,7 +53,7 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.ImagesConfiguration.self,
+            PKLConfig.iOS.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -86,7 +91,7 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let entry = try JSONDecoder().decode(
-            Params.iOS.ImagesEntry.self,
+            iOSImagesEntry.self,
             from: Data(json.utf8)
         )
 
@@ -107,7 +112,7 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.iOS.ImagesConfiguration.self,
+            PKLConfig.iOS.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -129,12 +134,12 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.ImagesConfiguration.self,
+            PKLConfig.Android.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -158,7 +163,7 @@ final class ImagesConfigurationTests: XCTestCase {
                 "format": "webp",
                 "scales": [1.0, 1.5, 2.0, 3.0, 4.0],
                 "webpOptions": {
-                    "encoding": "lossy",
+                    "lossless": false,
                     "quality": 80
                 }
             }
@@ -166,7 +171,7 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Android.ImagesConfiguration.self,
+            PKLConfig.Android.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -187,7 +192,7 @@ final class ImagesConfigurationTests: XCTestCase {
         XCTAssertEqual(config.entries[1].output, "drawable-photos")
         XCTAssertEqual(config.entries[1].format, .webp)
         XCTAssertEqual(config.entries[1].scales, [1.0, 1.5, 2.0, 3.0, 4.0])
-        XCTAssertEqual(config.entries[1].webpOptions?.encoding, .lossy)
+        XCTAssertEqual(config.entries[1].webpOptions?.lossless, false)
         XCTAssertEqual(config.entries[1].webpOptions?.quality, 80)
     }
 
@@ -199,13 +204,13 @@ final class ImagesConfigurationTests: XCTestCase {
             "format": "png",
             "scales": [1.0, 2.0, 3.0],
             "webpOptions": {
-                "encoding": "lossless"
+                "lossless": true
             }
         }
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Android.ImagesEntry.self,
+            AndroidImagesEntry.self,
             from: Data(json.utf8)
         )
 
@@ -213,7 +218,7 @@ final class ImagesConfigurationTests: XCTestCase {
         XCTAssertEqual(entry.output, "drawable")
         XCTAssertEqual(entry.format, .png)
         XCTAssertEqual(entry.scales, [1.0, 2.0, 3.0])
-        XCTAssertEqual(entry.webpOptions?.encoding, .lossless)
+        XCTAssertEqual(entry.webpOptions?.lossless, true)
     }
 
     // MARK: - Flutter ImagesConfiguration
@@ -226,12 +231,12 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.ImagesConfiguration.self,
+            PKLConfig.Flutter.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
-        guard case .single = config else {
-            XCTFail("Expected .single case")
+        guard case .legacy = config else {
+            XCTFail("Expected .legacy case")
             return
         }
 
@@ -261,7 +266,7 @@ final class ImagesConfigurationTests: XCTestCase {
         """
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.ImagesConfiguration.self,
+            PKLConfig.Flutter.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -297,14 +302,14 @@ final class ImagesConfigurationTests: XCTestCase {
             "scales": [1.0, 2.0, 3.0],
             "format": "png",
             "webpOptions": {
-                "encoding": "lossy",
+                "lossless": false,
                 "quality": 90
             }
         }
         """
 
         let entry = try JSONDecoder().decode(
-            Params.Flutter.ImagesEntry.self,
+            FlutterImagesEntry.self,
             from: Data(json.utf8)
         )
 
@@ -314,11 +319,11 @@ final class ImagesConfigurationTests: XCTestCase {
         XCTAssertEqual(entry.className, "AppImages")
         XCTAssertEqual(entry.scales, [1.0, 2.0, 3.0])
         XCTAssertEqual(entry.format, .png)
-        XCTAssertEqual(entry.webpOptions?.encoding, .lossy)
+        XCTAssertEqual(entry.webpOptions?.lossless, false)
         XCTAssertEqual(entry.webpOptions?.quality, 90)
     }
 
-    // MARK: - Full Params Integration
+    // MARK: - Full PKLConfig Integration
 
     func testFullParamsWithIOSImagesArray() throws {
         let json = """
@@ -347,7 +352,7 @@ final class ImagesConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.ios?.images)
         XCTAssertEqual(params.ios?.images?.entries.count, 2)
@@ -373,7 +378,7 @@ final class ImagesConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.ios?.images)
         XCTAssertEqual(params.ios?.images?.entries.count, 1)
@@ -404,7 +409,7 @@ final class ImagesConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.android?.images)
         XCTAssertEqual(params.android?.images?.entries.count, 2)
@@ -433,7 +438,7 @@ final class ImagesConfigurationTests: XCTestCase {
         }
         """
 
-        let params = try JSONDecoder().decode(Params.self, from: Data(json.utf8))
+        let params = try JSONDecoder().decode(PKLConfig.self, from: Data(json.utf8))
 
         XCTAssertNotNil(params.flutter?.images)
         XCTAssertEqual(params.flutter?.images?.entries.count, 2)
@@ -446,7 +451,7 @@ final class ImagesConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.iOS.ImagesConfiguration.self,
+            PKLConfig.iOS.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -463,7 +468,7 @@ final class ImagesConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.Android.ImagesConfiguration.self,
+            PKLConfig.Android.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -480,7 +485,7 @@ final class ImagesConfigurationTests: XCTestCase {
         let json = "[]"
 
         let config = try JSONDecoder().decode(
-            Params.Flutter.ImagesConfiguration.self,
+            PKLConfig.Flutter.ImagesConfiguration.self,
             from: Data(json.utf8)
         )
 
@@ -498,7 +503,7 @@ final class ImagesConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.iOS.ImagesConfiguration.self,
+                PKLConfig.iOS.ImagesConfiguration.self,
                 from: Data(json.utf8)
             )
         )
@@ -509,7 +514,7 @@ final class ImagesConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.Android.ImagesConfiguration.self,
+                PKLConfig.Android.ImagesConfiguration.self,
                 from: Data(json.utf8)
             )
         )
@@ -520,7 +525,7 @@ final class ImagesConfigurationTests: XCTestCase {
 
         XCTAssertThrowsError(
             try JSONDecoder().decode(
-                Params.Flutter.ImagesConfiguration.self,
+                PKLConfig.Flutter.ImagesConfiguration.self,
                 from: Data(json.utf8)
             )
         )

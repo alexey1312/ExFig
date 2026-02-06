@@ -24,7 +24,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         XCTAssertNil(BatchSharedState.current)
 
         let client = MockClient()
-        let params = Params.make(lightFileId: "file123")
+        let params = PKLConfig.make(lightFileId: "file123")
 
         // Mock components response
         let mockComponents = [
@@ -54,7 +54,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         let batchState = BatchSharedState(context: existingContext)
 
         let client = MockClient()
-        let params = Params.make(lightFileId: "file123")
+        let params = PKLConfig.make(lightFileId: "file123")
 
         // Mock components response
         let mockComponents = [
@@ -92,7 +92,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         let batchState = BatchSharedState(context: existingContext)
 
         let client = MockClient()
-        let params = Params.make(lightFileId: "file123")
+        let params = PKLConfig.make(lightFileId: "file123")
 
         // When: Pre-fetching components when they're already available
         await BatchSharedState.$current.withValue(batchState) {
@@ -122,7 +122,7 @@ final class ComponentPreFetcherTests: XCTestCase {
 
         let client = MockClient()
         // Request components for both fileA (exists) and fileB (missing)
-        let params = Params.make(lightFileId: "fileA", darkFileId: "fileB")
+        let params = PKLConfig.make(lightFileId: "fileA", darkFileId: "fileB")
 
         // Mock components response for fileB
         let mockComponents = [
@@ -151,7 +151,7 @@ final class ComponentPreFetcherTests: XCTestCase {
     func testPreFetchComponentsDirectly() async throws {
         // Given: Client and params
         let client = MockClient()
-        let params = Params.make(lightFileId: "file123")
+        let params = PKLConfig.make(lightFileId: "file123")
 
         let mockComponents = [
             Component.make(nodeId: "1:1", name: "icon_test", frameName: "Icons"),
@@ -179,7 +179,7 @@ final class ComponentPreFetcherTests: XCTestCase {
         let batchState = BatchSharedState(context: existingContext)
 
         let client = MockClient()
-        let params = Params.make(lightFileId: "file123")
+        let params = PKLConfig.make(lightFileId: "file123")
 
         // When: Using the direct preFetchComponents method inside batch mode
         var result: PreFetchedComponents?
