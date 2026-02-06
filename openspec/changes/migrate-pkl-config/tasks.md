@@ -39,7 +39,9 @@
 
 **Remaining work (v2.1):**
 
-- Final cleanup (Params deletion, target rename) — blocked until full refactoring
+- PKLConfig.swift skeleton created (540 lines) — foundation for Params replacement
+- evaluateToPKLConfig() added to PKLEvaluator
+- Final cleanup (Params deletion, target rename) — blocked until PKLConfig migration complete
 
 ---
 
@@ -868,20 +870,33 @@ Phase 18 (Final Cleanup)
 > **Depends on:** Phase 14, 15, 16, 17
 > **Status:** DEFERRED — requires full CLI migration first
 
+### 18.0 PKLConfig Skeleton (Preparation for v2.1)
+
+- [x] 18.0.1 Create `Sources/ExFig/Input/PKLConfig.swift` — **DONE**
+  - Skeleton structure using plugin Entry types directly
+  - `PKLConfig.iOS.ColorsConfiguration.multiple([iOSColorsEntry])`
+  - Legacy types for backward compatibility
+  - 540 lines, compiles successfully
+- [x] 18.0.2 Add `evaluateToPKLConfig()` to PKLEvaluator — **DONE**
+  - Deprecated `evaluateToParams()` for future migration
+- [ ] 18.0.3 Create PKLConfigAdapters — **BLOCKED**
+  - API differences between Params Entry types and plugin Entry types
+  - Plugin entries have additional fields (nameValidateRegexp, nameReplaceRegexp)
+  - Requires significant adapter logic for legacy format
+
 ### 18.1 Remove Legacy Code
 
 **BLOCKED:** Cannot delete Params.swift until CLI commands fully migrated to plugins.
-Currently 34 files depend on Params — Icons/Images/Typography commands still use it.
+Currently 25+ files depend on Params (187 occurrences of `Params.`).
 
-- [ ] 18.1.1 Delete `Sources/ExFig/Input/Params.swift` (1141 lines) — **BLOCKED**
-  - 34 files depend on Params
-  - Requires CLI commands to use plugin entries directly
+- [ ] 18.1.1 Delete `Sources/ExFig/Input/Params.swift` (1175 lines) — **BLOCKED**
+  - 25 files depend on Params
+  - Plugin Entry types have different fields than Params Entry types
+  - Requires CLI commands to use PKLConfig directly
 - [ ] 18.1.2 Delete old export files — **BLOCKED**
-  - `iOSIconsExport.swift`, `AndroidIconsExport.swift`, etc. still in use
-  - `iOSImagesExport.swift`, `AndroidImagesExport.swift`, etc. still in use
-- [ ] 18.1.3 Remove unused helpers and adapters — **PARTIAL**
-  - Some adapters removed (Colors legacy)
-  - Full cleanup blocked
+  - Legacy export files still needed for backward compatibility
+- [ ] 18.1.3 Remove ParamsToPluginAdapter — **BLOCKED**
+  - Still needed until PKLConfig migration complete
 
 ### 18.2 Rename Target
 
@@ -897,12 +912,14 @@ Currently 34 files depend on Params — Icons/Images/Typography commands still u
 - [ ] 18.3.2 Run: `mise run test` — all tests pass
 - [ ] 18.3.3 Verify CLI works end-to-end
 
-**Status:** Phase 18 deferred:
+**Status:** Phase 18 partially started:
 
-- 🔒 Params deletion blocked (34 files depend on it)
-- 🔒 Old export files still in use
+- ✅ PKLConfig.swift skeleton created (540 lines)
+- ✅ evaluateToPKLConfig() added to PKLEvaluator
+- 🔒 PKLConfigAdapters blocked (API differences)
+- 🔒 Params deletion blocked (25+ files depend on it)
 - 🔒 Target rename would be disruptive
-- ℹ️ Recommend: merge current PR, plan Phase 18 as v2.1 cleanup
+- ℹ️ Recommend: merge current PR, plan Phase 18 completion as v2.1 cleanup
 
 **Completion criteria:** Clean codebase with no legacy code, ExFigCLI target
 
