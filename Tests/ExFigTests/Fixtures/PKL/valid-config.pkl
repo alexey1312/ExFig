@@ -1,8 +1,8 @@
 /// Test fixture: valid ExFig configuration.
-amends "../../../../Sources/ExFig/Resources/Schemas/ExFig.pkl"
+amends "../../../../Sources/ExFigCLI/Resources/Schemas/ExFig.pkl"
 
-import "../../../../Sources/ExFig/Resources/Schemas/Common.pkl"
-import "../../../../Sources/ExFig/Resources/Schemas/iOS.pkl"
+import "../../../../Sources/ExFigCLI/Resources/Schemas/Common.pkl"
+import "../../../../Sources/ExFigCLI/Resources/Schemas/iOS.pkl"
 
 common = new Common.CommonConfig {
   variablesColors = new Common.VariablesColors {

@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import XCTest
 
 final class TTYDetectorTests: XCTestCase {

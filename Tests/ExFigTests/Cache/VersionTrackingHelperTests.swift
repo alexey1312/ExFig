@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 @testable import FigmaAPI
 import Logging
 import XCTest

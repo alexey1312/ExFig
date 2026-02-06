@@ -131,7 +131,7 @@ mise run format-md
 
 ## Adding a New CLI Command
 
-1. Create command file in `Sources/ExFig/Subcommands/`:
+1. Create command file in `Sources/ExFigCLI/Subcommands/`:
 
 ```swift
 import ArgumentParser

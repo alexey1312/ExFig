@@ -1,9 +1,10 @@
-// swiftlint:disable file_length type_body_length
-@testable import ExFig
 import ExFig_Android
 import ExFig_Flutter
 import ExFig_iOS
 import ExFig_Web
+
+// swiftlint:disable file_length type_body_length
+@testable import ExFigCLI
 import ExFigCore
 import XCTest
 

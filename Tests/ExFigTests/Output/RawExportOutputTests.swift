@@ -1,5 +1,5 @@
 import CustomDump
-@testable import ExFig
+@testable import ExFigCLI
 import FigmaAPI
 import Foundation
 import XCTest

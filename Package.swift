@@ -9,7 +9,7 @@ let package = Package(
         .macOS(.v13),
     ],
     products: [
-        .executable(name: "exfig", targets: ["ExFig"]),
+        .executable(name: "exfig", targets: ["ExFigCLI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
@@ -30,7 +30,7 @@ let package = Package(
     targets: [
         // Main target
         .executableTarget(
-            name: "ExFig",
+            name: "ExFigCLI",
             dependencies: [
                 "FigmaAPI",
                 "ExFigCore",
@@ -187,7 +187,7 @@ let package = Package(
         .testTarget(
             name: "ExFigTests",
             dependencies: [
-                "ExFig",
+                "ExFigCLI",
                 "FigmaAPI",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "LibPNG", package: "libpng"),

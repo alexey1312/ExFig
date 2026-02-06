@@ -1,8 +1,8 @@
-@testable import ExFig
 import ExFig_Android
 import ExFig_Flutter
 import ExFig_iOS
 import ExFig_Web
+@testable import ExFigCLI
 import ExFigCore
 import XCTest
 

@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import XCTest
 
 /// Tests that export commands can be manually instantiated with all @Argument/@Flag properties

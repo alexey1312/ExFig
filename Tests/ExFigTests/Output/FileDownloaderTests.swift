@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 @testable import ExFigCore
 import XCTest
 
