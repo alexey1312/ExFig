@@ -178,7 +178,7 @@ final class AssetExporterTests: XCTestCase {
         let exporter = MockFullExporter(assetType: .typography)
 
         let result = await Task {
-            await exporter.assetType
+            exporter.assetType
         }.value
 
         XCTAssertEqual(result, .typography)

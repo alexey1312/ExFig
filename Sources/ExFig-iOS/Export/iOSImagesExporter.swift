@@ -527,9 +527,9 @@ private enum iOSImagesExporterHelpers {
                     withJSONObject: contentsJson, options: [.prettyPrinted, .sortedKeys]
                 )
             } catch {
-                fputs(
-                    "Warning: Failed to create Contents.json for \(imagesetDir.lastPathComponent): \(error)\n",
-                    stderr
+                FileHandle.standardError.write(
+                    Data("Warning: Failed to create Contents.json for \(imagesetDir.lastPathComponent): \(error)\n"
+                        .utf8)
                 )
                 return nil
             }

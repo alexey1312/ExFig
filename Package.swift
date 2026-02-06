@@ -52,6 +52,9 @@ let package = Package(
                 .product(name: "WebP", package: "libwebp"),
                 .product(name: "LibPNG", package: "libpng"),
                 .product(name: "Noora", package: "Noora"),
+            ],
+            resources: [
+                .copy("Resources/Schemas/"),
             ]
         ),
 
@@ -191,6 +194,9 @@ let package = Package(
                 "FigmaAPI",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "LibPNG", package: "libpng"),
+            ],
+            resources: [
+                .copy("Fixtures/"),
             ]
         ),
         .testTarget(

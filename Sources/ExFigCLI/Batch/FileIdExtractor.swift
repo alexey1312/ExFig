@@ -40,13 +40,14 @@ struct FileIdExtractor {
             let evaluator = try PKLEvaluator()
 
             // Run async evaluation synchronously
+            // Semaphore ensures sequential access, so @unchecked Sendable is safe
             let semaphore = DispatchSemaphore(value: 0)
-            var result: PKLConfig?
+            let box = SendableBox<PKLConfig?>(nil)
 
             Task {
                 defer { semaphore.signal() }
                 do {
-                    result = try await evaluator.evaluateToPKLConfig(configPath: url)
+                    box.value = try await evaluator.evaluateToPKLConfig(configPath: url)
                 } catch {
                     ExFigCommand.logger.warning(
                         "Failed to parse config \(url.lastPathComponent): \(error.localizedDescription)"
@@ -55,7 +56,7 @@ struct FileIdExtractor {
             }
 
             semaphore.wait()
-            return result
+            return box.value
         } catch {
             ExFigCommand.logger.warning(
                 "Failed to create PKL evaluator for \(url.lastPathComponent): \(error.localizedDescription)"

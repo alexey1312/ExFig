@@ -79,23 +79,24 @@ struct ExFigOptions: ParsableArguments {
 
         // PKLEvaluator is an actor, need to run async
         // Using blocking call since we're in validate() which is synchronous
+        // Semaphore ensures sequential access, so @unchecked Sendable is safe
         let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<PKLConfig, Error> = .failure(
-            PKLError.evaluationFailed(message: "PKL evaluation did not complete", exitCode: -1)
+        let box = SendableBox<Result<PKLConfig, Error>>(
+            .failure(PKLError.evaluationFailed(message: "PKL evaluation did not complete", exitCode: -1))
         )
 
         Task {
             do {
-                result = try await .success(evaluator.evaluate(configPath: url, as: PKLConfig.self))
+                box.value = try await .success(evaluator.evaluate(configPath: url, as: PKLConfig.self))
             } catch {
-                result = .failure(error)
+                box.value = .failure(error)
             }
             semaphore.signal()
         }
 
         semaphore.wait()
 
-        switch result {
+        switch box.value {
         case let .success(params):
             return params
         case let .failure(error):
