@@ -17,15 +17,22 @@ mkdir -p ./templates
 
 ### 2. Configure Template Path
 
-```yaml
-ios:
-  templatesPath: "./templates"
+```pkl
+import ".exfig/schemas/iOS.pkl"
+import ".exfig/schemas/Android.pkl"
+import ".exfig/schemas/Flutter.pkl"
 
-android:
-  templatesPath: "./templates"
+ios = new iOS.iOSConfig {
+  templatesPath = "./templates"
+}
 
-flutter:
-  templatesPath: "./templates"
+android = new Android.AndroidConfig {
+  templatesPath = "./templates"
+}
+
+flutter = new Flutter.FlutterConfig {
+  templatesPath = "./templates"
+}
 ```
 
 ### 3. Copy Default Templates

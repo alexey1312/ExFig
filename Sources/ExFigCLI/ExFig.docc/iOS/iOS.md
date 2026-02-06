@@ -21,37 +21,48 @@ exfig init --platform ios
 
 ### 2. Configure Your Project
 
-Edit `exfig.yaml`:
+Edit `exfig.pkl`:
 
-```yaml
-figma:
-  lightFileId: "YOUR_FILE_ID"
-  darkFileId: "YOUR_DARK_FILE_ID"  # Optional
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
 
-ios:
-  xcodeprojPath: "./MyApp.xcodeproj"
-  target: "MyApp"
-  xcassetsPath: "./Resources/Assets.xcassets"
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/iOS.pkl"
 
-  colors:
-    assetsFolder: "Colors"
-    colorSwift: "./Sources/UIColor+Colors.swift"
-    swiftUIColorSwift: "./Sources/Color+Colors.swift"
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID"
+  darkFileId = "YOUR_DARK_FILE_ID"  // Optional
+}
 
-  icons:
-    assetsFolder: "Icons"
-    format: pdf
-    imageSwift: "./Sources/UIImage+Icons.swift"
-    swiftUIImageSwift: "./Sources/Image+Icons.swift"
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "./Resources/Assets.xcassets"
 
-  images:
-    assetsFolder: "Images"
-    scales: [1, 2, 3]
-    imageSwift: "./Sources/UIImage+Images.swift"
+  colors = new iOS.ColorsEntry {
+    assetsFolder = "Colors"
+    colorSwift = "./Sources/UIColor+Colors.swift"
+    swiftuiColorSwift = "./Sources/Color+Colors.swift"
+  }
 
-  typography:
-    fontSwift: "./Sources/UIFont+Typography.swift"
-    swiftUIFontSwift: "./Sources/Font+Typography.swift"
+  icons = new iOS.IconsEntry {
+    assetsFolder = "Icons"
+    format = "pdf"
+    imageSwift = "./Sources/UIImage+Icons.swift"
+    swiftUIImageSwift = "./Sources/Image+Icons.swift"
+  }
+
+  images = new iOS.ImagesEntry {
+    assetsFolder = "Images"
+    scales = new Listing { 1; 2; 3 }
+    imageSwift = "./Sources/UIImage+Images.swift"
+  }
+
+  typography = new iOS.Typography {
+    fontSwift = "./Sources/UIFont+Typography.swift"
+    swiftUIFontSwift = "./Sources/Font+Typography.swift"
+  }
+}
 ```
 
 ### 3. Export Resources

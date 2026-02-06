@@ -22,31 +22,41 @@ exfig init --platform flutter
 
 ### 2. Configure Your Project
 
-Edit `exfig.yaml`:
+Edit `exfig.pkl`:
 
-```yaml
-figma:
-  lightFileId: "YOUR_FILE_ID"
-  darkFileId: "YOUR_DARK_FILE_ID"  # optional
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
 
-flutter:
-  output: "lib/generated"
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Flutter.pkl"
 
-  colors:
-    output: "colors.dart"
-    className: "AppColors"
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID"
+  darkFileId = "YOUR_DARK_FILE_ID"  // optional
+}
 
-  icons:
-    output: "assets/icons"
-    dartFile: "icons.dart"
-    className: "AppIcons"
+flutter = new Flutter.FlutterConfig {
+  output = "lib/generated"
 
-  images:
-    output: "assets/images"
-    dartFile: "images.dart"
-    className: "AppImages"
-    format: png
-    scales: [1, 2, 3]
+  colors = new Flutter.ColorsEntry {
+    output = "colors.dart"
+    className = "AppColors"
+  }
+
+  icons = new Flutter.IconsEntry {
+    output = "assets/icons"
+    dartFile = "icons.dart"
+    className = "AppIcons"
+  }
+
+  images = new Flutter.ImagesEntry {
+    output = "assets/images"
+    dartFile = "images.dart"
+    className = "AppImages"
+    format = "png"
+    scales = new Listing { 1; 2; 3 }
+  }
+}
 ```
 
 ### 3. Export Resources
@@ -255,15 +265,15 @@ flutter:
 
 ### WebP encoding quality not specified
 
-When using `format: webp` with `encoding: lossy`, you must specify a quality value:
+When using `format = "webp"` with `encoding = "lossy"`, you must specify a quality value:
 
-```yaml
-flutter:
-  images:
-    format: webp
-    webpOptions:
-      encoding: lossy
-      quality: 90  # Required for lossy encoding
+```pkl
+flutter = new Flutter.FlutterConfig {
+  images = new Flutter.ImagesEntry {
+    format = "webp"
+    // webpOptions configured via Android.WebpOptions
+  }
+}
 ```
 
 For lossless encoding, quality is not required.

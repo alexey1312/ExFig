@@ -92,6 +92,7 @@ jobs:
           cp -r .build/${{ matrix.build-path }}/exfig_XcodeExport.bundle dist/
           cp -r .build/${{ matrix.build-path }}/exfig_FlutterExport.bundle dist/
           cp -r .build/${{ matrix.build-path }}/exfig_WebExport.bundle dist/
+          cp -r .build/${{ matrix.build-path }}/exfig_ExFigCLI.bundle dist/
           cp LICENSE dist/
           cd dist && zip -r ../${{ matrix.archive-name }}.zip .
 
@@ -104,6 +105,7 @@ jobs:
           cp -r .build/${{ matrix.build-path }}/exfig_XcodeExport.resources dist/
           cp -r .build/${{ matrix.build-path }}/exfig_FlutterExport.resources dist/
           cp -r .build/${{ matrix.build-path }}/exfig_WebExport.resources dist/
+          cp -r .build/${{ matrix.build-path }}/exfig_ExFigCLI.resources dist/
           cp LICENSE dist/
           cd dist && tar -czf ../${{ matrix.archive-name }}.tar.gz -- *
 
@@ -173,6 +175,13 @@ jobs:
         env:
           GITHUB_REPO: ${{ github.repository }}
 
+      - name: Create schemas archive
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          cd Sources/ExFigCLI/Resources/Schemas
+          zip -r "../../../../exfig-schemas@${VERSION}.zip" \
+            ExFig.pkl Figma.pkl Common.pkl iOS.pkl Android.pkl Flutter.pkl Web.pkl PklProject
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -181,6 +190,7 @@ jobs:
           files: |
             artifacts/exfig-macos/exfig-macos.zip
             artifacts/exfig-linux-x64/exfig-linux-x64.tar.gz
+            exfig-schemas@*.zip
 
   update-homebrew:
     name: Update Homebrew Tap

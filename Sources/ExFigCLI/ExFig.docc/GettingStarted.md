@@ -89,7 +89,7 @@ exfig init --platform android
 exfig init --platform flutter
 ```
 
-This creates an `exfig.yaml` file in your current directory.
+This creates an `exfig.pkl` file in your current directory.
 
 ### 2. Get Your Figma File ID
 
@@ -101,18 +101,25 @@ https://www.figma.com/file/ABC123xyz/My-Design-System
                           This is your file ID
 ```
 
-### 3. Configure exfig.yaml
+### 3. Configure exfig.pkl
 
-Edit the generated `exfig.yaml`:
+Edit the generated `exfig.pkl`:
 
-```yaml
-figma:
-  lightFileId: "YOUR_FILE_ID_HERE"
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
 
-ios:
-  xcodeprojPath: "./MyApp.xcodeproj"
-  xcassetsPath: "./Resources/Assets.xcassets"
-  # ... other iOS settings
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/iOS.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID_HERE"
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  xcassetsPath = "./Resources/Assets.xcassets"
+  // ... other iOS settings
+}
 ```
 
 ### 4. Export Resources

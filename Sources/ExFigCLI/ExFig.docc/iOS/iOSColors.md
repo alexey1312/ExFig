@@ -11,25 +11,29 @@ ExFig exports colors as:
 
 ## Configuration
 
-```yaml
-ios:
-  xcodeprojPath: "./MyApp.xcodeproj"
-  target: "MyApp"
-  xcassetsPath: "./Resources/Assets.xcassets"
+```pkl
+import ".exfig/schemas/iOS.pkl"
 
-  colors:
-    # Folder name in Assets.xcassets
-    assetsFolder: Colors
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "./Resources/Assets.xcassets"
 
-    # Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
-    nameStyle: camelCase
+  colors = new iOS.ColorsEntry {
+    // Folder name in Assets.xcassets
+    assetsFolder = "Colors"
 
-    # Group colors in subfolders by prefix (e.g., text/primary -> text/primary.colorset)
-    groupByPrefix: true
+    // Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
+    nameStyle = "camelCase"
 
-    # Swift file paths (optional)
-    colorSwift: "./Sources/Generated/UIColor+Colors.swift"
-    swiftUIColorSwift: "./Sources/Generated/Color+Colors.swift"
+    // Group colors in subfolders by prefix (e.g., text/primary -> text/primary.colorset)
+    groupUsingNamespace = true
+
+    // Swift file paths (optional)
+    colorSwift = "./Sources/Generated/UIColor+Colors.swift"
+    swiftuiColorSwift = "./Sources/Generated/Color+Colors.swift"
+  }
+}
 ```
 
 ## Export Process
@@ -205,28 +209,35 @@ struct ContentView: View {
 
 ### Separate Files
 
-```yaml
-figma:
-  lightFileId: abc123
-  darkFileId: def456
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
 ```
 
 Create matching color styles in both files. ExFig merges them into a single Color Set with light and dark appearances.
 
 ### Using Figma Variables
 
-```yaml
-common:
-  colors:
-    useVariables: true
-    variableCollectionName: "Colors"
-    lightModeName: "Light"
-    darkModeName: "Dark"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  variablesColors = new Common.VariablesColors {
+    tokensFileId = "ABC123xyz"
+    tokensCollectionName = "Colors"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+  }
+}
 ```
 
 ## Color Grouping
 
-When `groupByPrefix: true`, colors are organized in folders:
+When `groupUsingNamespace = true`, colors are organized in folders:
 
 | Figma Name        | Asset Path                        | Swift Name       |
 | ----------------- | --------------------------------- | ---------------- |

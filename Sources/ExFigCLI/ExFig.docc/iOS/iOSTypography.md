@@ -12,23 +12,27 @@ ExFig exports typography as:
 
 ## Configuration
 
-```yaml
-ios:
-  typography:
-    # Generate label styling extensions
-    generateLabels: true
+```pkl
+import ".exfig/schemas/iOS.pkl"
 
-    # Font extension output path
-    fontSwift: "./Sources/Generated/UIFont+Typography.swift"
+ios = new iOS.iOSConfig {
+  typography = new iOS.Typography {
+    // Generate label styling extensions
+    generateLabels = true
 
-    # SwiftUI font extension output path
-    swiftUIFontSwift: "./Sources/Generated/Font+Typography.swift"
+    // Font extension output path
+    fontSwift = "./Sources/Generated/UIFont+Typography.swift"
 
-    # UIKit label extension output path
-    labelStyleSwift: "./Sources/Generated/UILabel+Typography.swift"
+    // SwiftUI font extension output path
+    swiftUIFontSwift = "./Sources/Generated/Font+Typography.swift"
 
-    # SwiftUI text extension output path
-    swiftUILabelStyleSwift: "./Sources/Generated/Text+Typography.swift"
+    // UIKit label extension output path
+    labelStyleSwift = "./Sources/Generated/UILabel+Typography.swift"
+
+    // Typography name style
+    nameStyle = "camelCase"
+  }
+}
 ```
 
 ## Export Process
@@ -178,16 +182,7 @@ struct ContentView: View {
 
 ### Font Mapping
 
-Map Figma fonts to iOS fonts:
-
-```yaml
-ios:
-  typography:
-    fontMapping:
-      "Inter": "Inter"
-      "SF Pro Text": ".AppleSystemUIFont"
-      "SF Pro Display": ".AppleSystemUIFont"
-```
+Map Figma fonts to iOS fonts using custom templates. See <doc:CustomTemplates> for details.
 
 ### Custom Font Files
 
@@ -202,15 +197,6 @@ If using custom fonts:
     <string>Inter-Regular.ttf</string>
     <string>Inter-Bold.ttf</string>
 </array>
-```
-
-3. Configure font mapping:
-
-```yaml
-ios:
-  typography:
-    fontMapping:
-      "Inter": "Inter"
 ```
 
 ### Generated Code with Custom Fonts

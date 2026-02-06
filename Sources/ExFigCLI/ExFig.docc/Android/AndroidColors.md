@@ -11,29 +11,26 @@ ExFig exports colors as:
 
 ## Configuration
 
-```yaml
-android:
-  mainRes: "./app/src/main/res"
-  mainSrc: "./app/src/main/java"
-  resourcePackage: "com.example.app"
+```pkl
+import ".exfig/schemas/Android.pkl"
 
-  colors:
-    # Output filename
-    output: "colors.xml"
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
+  mainSrc = "./app/src/main/java"
+  resourcePackage = "com.example.app"
 
-    # Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
-    nameStyle: snake_case
+  colors = new Android.ColorsEntry {
+    // Output filename
+    xmlOutputFileName = "colors.xml"
 
-    # Jetpack Compose package name (optional)
-    composePackageName: "com.example.app.ui.theme"
+    // Jetpack Compose package name (optional)
+    composePackageName = "com.example.app.ui.theme"
 
-    # Custom output path for Colors.kt file (optional)
-    # When set, overrides the automatic path computed from mainSrc + composePackageName
-    colorKotlin: "./app/src/main/java/com/example/app/ui/theme/Ds3Colors.kt"
-
-    # Skip XML generation entirely (optional)
-    # Useful for Compose-only projects with custom templates
-    xmlDisabled: false
+    // Custom output path for Colors.kt file (optional)
+    // When set, overrides the automatic path computed from mainSrc + composePackageName
+    colorKotlin = "./app/src/main/java/com/example/app/ui/theme/Ds3Colors.kt"
+  }
+}
 ```
 
 ## Export Process
@@ -183,10 +180,13 @@ fun MyScreen() {
 
 ### Separate Files
 
-```yaml
-figma:
-  lightFileId: abc123
-  darkFileId: def456
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
 ```
 
 ExFig creates:
@@ -196,11 +196,15 @@ ExFig creates:
 
 ### Single File Mode
 
-```yaml
-common:
-  colors:
-    useSingleFile: true
-    darkModeSuffix: "_dark"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    useSingleFile = true
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 Figma naming:

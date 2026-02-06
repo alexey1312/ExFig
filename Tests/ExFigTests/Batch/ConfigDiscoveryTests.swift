@@ -252,7 +252,7 @@ final class ConfigDiscoveryTests: XCTestCase {
 
     private func createConfigFile(name: String) throws {
         let content = """
-        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+        amends ".exfig/schemas/ExFig.pkl"
 
         figma {
           lightFileId = "abc123"
@@ -269,7 +269,7 @@ final class ConfigDiscoveryTests: XCTestCase {
 
     private func createConfigFileAndReturnURL(name: String, iosXcassetsPath: String) throws -> URL {
         let content = """
-        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+        amends ".exfig/schemas/ExFig.pkl"
 
         figma {
           lightFileId = "abc123"

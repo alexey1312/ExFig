@@ -14,33 +14,29 @@ ExFig exports images as:
 
 ## Configuration
 
-```yaml
-ios:
-  xcodeprojPath: "./MyApp.xcodeproj"
-  target: "MyApp"
-  xcassetsPath: "./Resources/Assets.xcassets"
+```pkl
+import ".exfig/schemas/iOS.pkl"
 
-  images:
-    # Folder name in Assets.xcassets
-    assetsFolder: Illustrations
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "./Resources/Assets.xcassets"
 
-    # Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
-    nameStyle: camelCase
+  images = new iOS.ImagesEntry {
+    // Folder name in Assets.xcassets
+    assetsFolder = "Illustrations"
 
-    # Image scales to export (optional, defaults to [1, 2, 3])
-    scales: [1, 2, 3]
+    // Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
+    nameStyle = "camelCase"
 
-    # Output format: png (default) or heic
-    outputFormat: png
+    // Image scales to export (optional, defaults to [1, 2, 3])
+    scales = new Listing { 1; 2; 3 }
 
-    # HEIC options (only used when outputFormat: heic)
-    heicOptions:
-      encoding: lossy  # lossy or lossless
-      quality: 90      # 0-100, only for lossy encoding
-
-    # Swift file paths (optional)
-    imageSwift: "./Sources/Generated/UIImage+Images.swift"
-    swiftUIImageSwift: "./Sources/Generated/Image+Images.swift"
+    // Swift file paths (optional)
+    imageSwift = "./Sources/Generated/UIImage+Images.swift"
+    swiftUIImageSwift = "./Sources/Generated/Image+Images.swift"
+  }
+}
 ```
 
 ## Export Process
@@ -184,13 +180,12 @@ HEIC (High Efficiency Image Container) offers ~40-50% smaller file sizes compare
 
 ### Configuration
 
-```yaml
-ios:
-  images:
-    outputFormat: heic
-    heicOptions:
-      encoding: lossy   # lossy or lossless
-      quality: 90       # 0-100, only for lossy encoding
+```pkl
+ios = new iOS.iOSConfig {
+  images = new iOS.ImagesEntry {
+    outputFormat = "heic"
+  }
+}
 ```
 
 ### Encoding Options
@@ -215,24 +210,25 @@ HEIC encoding requires macOS 10.13.4 or later. On Linux or older macOS:
 
 HEIC works with both PNG source (default) and SVG source:
 
-```yaml
-ios:
-  images:
-    sourceFormat: svg    # Fetch SVG, rasterize locally
-    outputFormat: heic   # Encode as HEIC
-    heicOptions:
-      encoding: lossy
-      quality: 90
+```pkl
+ios = new iOS.iOSConfig {
+  images = new iOS.ImagesEntry {
+    sourceFormat = "svg"    // Fetch SVG, rasterize locally
+    outputFormat = "heic"   // Encode as HEIC
+  }
+}
 ```
 
 ## Image Scales
 
 Configure which scales to export:
 
-```yaml
-ios:
-  images:
-    scales: [1, 2, 3]  # @1x, @2x, @3x
+```pkl
+ios = new iOS.iOSConfig {
+  images = new iOS.ImagesEntry {
+    scales = new Listing { 1; 2; 3 }  // @1x, @2x, @3x
+  }
+}
 ```
 
 **Scale options:**
@@ -240,7 +236,7 @@ ios:
 | Scale | Description     | Use Case                |
 | ----- | --------------- | ----------------------- |
 | 1     | @1x (base)      | Non-Retina displays     |
-| 2     | @2x (Retina)    | iPhone 4–8, most iPads  |
+| 2     | @2x (Retina)    | iPhone 4-8, most iPads  |
 | 3     | @3x (Retina HD) | iPhone 6 Plus and later |
 
 **Recommendations:**
@@ -291,21 +287,28 @@ ExFig combines these into a single Image Set with all variants.
 
 ### Separate Files
 
-```yaml
-figma:
-  lightFileId: abc123
-  darkFileId: def456
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
 ```
 
 Create matching components in both files.
 
 ### Single File Mode
 
-```yaml
-common:
-  images:
-    useSingleFile: true
-    darkModeSuffix: '_dark'
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  images = new Common.Images {
+    useSingleFile = true
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 **Figma naming:**

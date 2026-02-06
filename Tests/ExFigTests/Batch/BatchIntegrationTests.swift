@@ -206,7 +206,7 @@ final class BatchIntegrationTests: XCTestCase {
 
     private func createValidConfigFile(name: String) throws {
         let content = """
-        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+        amends ".exfig/schemas/ExFig.pkl"
 
         figma {
           lightFileId = "abc123"
@@ -238,7 +238,7 @@ final class BatchIntegrationTests: XCTestCase {
 
     private func createConfigFileWithXcassets(name: String, path: String) throws {
         let content = """
-        amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+        amends ".exfig/schemas/ExFig.pkl"
 
         figma {
           lightFileId = "abc123"

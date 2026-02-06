@@ -11,28 +11,39 @@ This guide explains how to set up your Figma files for seamless export.
 
 ### Frame Organization
 
-ExFig looks for resources in specific frames. Configure frame names in your `exfig.yaml`:
+ExFig looks for resources in specific frames. Configure frame names in your `exfig.pkl`:
 
-```yaml
-common:
-  colors:
-    figmaFrameName: "Colors"
-  icons:
-    figmaFrameName: "Icons"
-  images:
-    figmaFrameName: "Illustrations"
-  typography:
-    figmaFrameName: "Typography"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    figmaFrameName = "Colors"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Illustrations"
+  }
+  typography = new Common.Typography {
+    figmaFrameName = "Typography"
+  }
+}
 ```
 
 ### Naming Conventions
 
 Use consistent naming patterns for all resources. ExFig supports regex validation:
 
-```yaml
-common:
-  icons:
-    nameValidateRegexp: "^ic/[0-9]+/[a-z_]+$"  # e.g., ic/24/arrow_right
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    nameValidateRegexp = "^ic/[0-9]+/[a-z_]+$"  // e.g., ic/24/arrow_right
+  }
+}
 ```
 
 ## Colors
@@ -56,13 +67,17 @@ Colors frame
 
 For Figma Variables API support:
 
-```yaml
-common:
-  colors:
-    useVariables: true
-    variableCollectionName: "Colors"
-    lightModeName: "Light"
-    darkModeName: "Dark"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  variablesColors = new Common.VariablesColors {
+    tokensFileId = "ABC123xyz"
+    tokensCollectionName = "Colors"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+  }
+}
 ```
 
 Variable structure in Figma:
@@ -127,21 +142,28 @@ Two approaches for dark mode support:
 
 **Separate files:**
 
-```yaml
-figma:
-  lightFileId: "abc123"
-  darkFileId: "def456"
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
 ```
 
 Create matching component names in both files.
 
 **Single file with suffix:**
 
-```yaml
-common:
-  icons:
-    useSingleFile: true
-    darkModeSuffix: "_dark"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    useSingleFile = true
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 ```
@@ -231,48 +253,61 @@ Each text style should define:
 
 Map Figma fonts to platform fonts in your config:
 
-```yaml
-ios:
-  typography:
-    fontMapping:
-      "Inter": "Inter"
-      "SF Pro Text": ".AppleSystemUIFont"
+```pkl
+import ".exfig/schemas/iOS.pkl"
+import ".exfig/schemas/Android.pkl"
 
-android:
-  typography:
-    fontMapping:
-      "Inter": "inter"
-      "Roboto": "roboto"
+ios = new iOS.iOSConfig {
+  typography = new iOS.Typography {
+    // fontMapping configured via custom templates
+  }
+}
+
+android = new Android.AndroidConfig {
+  typography = new Android.Typography {
+    // fontMapping configured via custom templates
+  }
+}
 ```
 
 ## Validation Regex Patterns
 
 ### Common Patterns
 
-```yaml
-common:
-  colors:
-    # Allow: primary, text/primary, background_card
-    nameValidateRegexp: "^[a-z][a-z0-9_/]*$"
+```pkl
+import ".exfig/schemas/Common.pkl"
 
-  icons:
-    # Require: ic/SIZE/name format
-    nameValidateRegexp: "^ic/[0-9]+/[a-z][a-z0-9_-]*$"
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    // Allow: primary, text/primary, background_card
+    nameValidateRegexp = "^[a-z][a-z0-9_/]*$"
+  }
 
-  images:
-    # Require: img- prefix
-    nameValidateRegexp: "^img-[a-z][a-z0-9_-]*$"
+  icons = new Common.Icons {
+    // Require: ic/SIZE/name format
+    nameValidateRegexp = "^ic/[0-9]+/[a-z][a-z0-9_-]*$"
+  }
+
+  images = new Common.Images {
+    // Require: img- prefix
+    nameValidateRegexp = "^img-[a-z][a-z0-9_-]*$"
+  }
+}
 ```
 
 ### Transform Patterns
 
 Transform names during export:
 
-```yaml
-common:
-  icons:
-    nameValidateRegexp: "^ic/([0-9]+)/(.+)$"
-    nameReplaceRegexp: "ic$1_$2"  # ic/24/arrow -> ic24_arrow
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    nameValidateRegexp = "^ic/([0-9]+)/(.+)$"
+    nameReplaceRegexp = "ic$1_$2"  // ic/24/arrow -> ic24_arrow
+  }
+}
 ```
 
 ## File Organization Tips
@@ -281,20 +316,20 @@ common:
 
 ```
 Design System
-├── 📁 Colors
+├── Colors
 │   ├── Primary palette
 │   ├── Secondary palette
 │   ├── Semantic colors
 │   └── Dark mode colors
-├── 📁 Icons
+├── Icons
 │   ├── 16pt icons
 │   ├── 24pt icons
 │   └── 32pt icons
-├── 📁 Illustrations
+├── Illustrations
 │   ├── Empty states
 │   ├── Onboarding
 │   └── Marketing
-└── 📁 Typography
+└── Typography
     ├── Headings
     ├── Body text
     └── Captions

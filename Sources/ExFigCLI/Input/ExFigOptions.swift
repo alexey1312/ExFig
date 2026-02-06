@@ -62,13 +62,18 @@ struct ExFigOptions: ParsableArguments {
             errorString: """
             Config file not found. Create exfig.pkl, or specify path with -i option.
 
-            Example exfig.pkl:
-              amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+            Quick start:
+              exfig init -p ios
+
+            Or create exfig.pkl manually:
+              amends ".exfig/schemas/ExFig.pkl"
 
               ios {
                 xcodeprojPath = "MyApp.xcodeproj"
                 ...
               }
+
+            Run 'exfig schemas' to extract PKL schemas to .exfig/schemas/
             """
         )
     }

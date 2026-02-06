@@ -11,31 +11,35 @@ ExFig exports icons as:
 
 ## Configuration
 
-```yaml
-ios:
-  xcodeprojPath: "./MyApp.xcodeproj"
-  target: "MyApp"
-  xcassetsPath: "./Resources/Assets.xcassets"
+```pkl
+import ".exfig/schemas/iOS.pkl"
 
-  icons:
-    # Folder name in Assets.xcassets
-    assetsFolder: Icons
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "./Resources/Assets.xcassets"
 
-    # Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
-    nameStyle: camelCase
+  icons = new iOS.IconsEntry {
+    // Folder name in Assets.xcassets
+    assetsFolder = "Icons"
 
-    # Icon format: pdf or svg
-    format: pdf
+    // Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
+    nameStyle = "camelCase"
 
-    # Rendering mode: original or template
-    renderingMode: template
+    // Icon format: pdf or svg
+    format = "pdf"
 
-    # Preserve vector data for scaling
-    preservesVectorData: true
+    // Preserve vector data for scaling
+    preservesVectorRepresentation = new Listing {
+      "ic24TabBarMain"
+      "ic24TabBarEvents"
+    }
 
-    # Swift file paths (optional)
-    imageSwift: "./Sources/Generated/UIImage+Icons.swift"
-    swiftUIImageSwift: "./Sources/Generated/Image+Icons.swift"
+    // Swift file paths (optional)
+    imageSwift = "./Sources/Generated/UIImage+Icons.swift"
+    swiftUIImageSwift = "./Sources/Generated/Image+Icons.swift"
+  }
+}
 ```
 
 ## Export Process
@@ -203,10 +207,12 @@ Image.ic24Close
 
 ### PDF (Recommended)
 
-```yaml
-ios:
-  icons:
-    format: pdf
+```pkl
+ios = new iOS.iOSConfig {
+  icons = new iOS.IconsEntry {
+    format = "pdf"
+  }
+}
 ```
 
 **Advantages:**
@@ -217,10 +223,12 @@ ios:
 
 ### SVG
 
-```yaml
-ios:
-  icons:
-    format: svg
+```pkl
+ios = new iOS.iOSConfig {
+  icons = new iOS.IconsEntry {
+    format = "svg"
+  }
+}
 ```
 
 **Advantages:**
@@ -233,20 +241,24 @@ ios:
 
 ### Template
 
-```yaml
-ios:
-  icons:
-    renderingMode: template
+```pkl
+ios = new iOS.iOSConfig {
+  icons = new iOS.IconsEntry {
+    renderMode = "template"
+  }
+}
 ```
 
 Icons are tinted with the current tint color. Best for monochrome UI icons.
 
 ### Original
 
-```yaml
-ios:
-  icons:
-    renderingMode: original
+```pkl
+ios = new iOS.iOSConfig {
+  icons = new iOS.IconsEntry {
+    renderMode = "original"
+  }
+}
 ```
 
 Icons preserve their original colors. Use for colored icons or logos.
@@ -255,21 +267,28 @@ Icons preserve their original colors. Use for colored icons or logos.
 
 ### Separate Files
 
-```yaml
-figma:
-  lightFileId: abc123
-  darkFileId: def456
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
 ```
 
 Create matching icon components in both files.
 
 ### Single File Mode
 
-```yaml
-common:
-  icons:
-    useSingleFile: true
-    darkModeSuffix: "_dark"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    useSingleFile = true
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 Name dark variants with suffix:

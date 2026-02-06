@@ -5,7 +5,7 @@
 ///
 /// Usage:
 /// ```pkl
-/// amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+/// amends "package://github.com/alexey1312/ExFig@2.0.0#/ExFig.pkl"
 ///
 /// figma {
 ///   lightFileId = "xxx"

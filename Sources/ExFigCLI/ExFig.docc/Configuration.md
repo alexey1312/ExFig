@@ -1,39 +1,39 @@
 # Configuration
 
-Complete reference for exfig.yaml configuration options.
+Complete reference for exfig.pkl configuration options.
 
 ## Overview
 
-ExFig uses a YAML configuration file (typically `exfig.yaml`) to define export settings. This document covers all
-available options.
+ExFig uses a PKL configuration file (typically `exfig.pkl`) to define export settings. PKL (Programmable, Scalable, Safe)
+provides type-safe configuration with IDE support. This document covers all available options.
 
 ## Configuration File
 
-By default, ExFig looks for configuration files in this order:
-
-1. `exfig.yaml`
-2. `figma-export.yaml`
+By default, ExFig looks for `exfig.pkl` in the current directory.
 
 Specify a custom path with the `-i` flag:
 
 ```bash
-exfig colors -i path/to/config.yaml
+exfig colors -i path/to/config.pkl
 ```
 
 ## Figma Section
 
-```yaml
-figma:
-  # Figma file ID for light mode assets.
-  # Required for icons, images, and typography export.
-  # Optional when using only variablesColors (or multi-entry colors) for colors export.
-  lightFileId: "ABC123xyz"
+```pkl
+import ".exfig/schemas/Figma.pkl"
 
-  # Optional: Separate file for dark mode assets
-  darkFileId: "DEF456abc"
+figma = new Figma.FigmaConfig {
+  // Figma file ID for light mode assets.
+  // Required for icons, images, and typography export.
+  // Optional when using only variablesColors (or multi-entry colors) for colors export.
+  lightFileId = "ABC123xyz"
 
-  # Optional: API request timeout in seconds (default: 30)
-  timeout: 60
+  // Optional: Separate file for dark mode assets
+  darkFileId = "DEF456abc"
+
+  // Optional: API request timeout in seconds (default: 30)
+  timeout = 60
+}
 ```
 
 ## Common Section
@@ -42,510 +42,458 @@ Shared settings across all platforms.
 
 ### Colors
 
-```yaml
-common:
-  colors:
-    # Frame name containing color styles (default: null, uses all styles)
-    figmaFrameName: "Colors"
+```pkl
+import ".exfig/schemas/Common.pkl"
 
-    # Regex to validate color names
-    nameValidateRegexp: "^[a-z][a-zA-Z0-9]*$"
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    // Frame name containing color styles (default: null, uses all styles)
+    figmaFrameName = "Colors"
 
-    # Regex replacement for color names
-    nameReplaceRegexp: "$1"
+    // Regex to validate color names
+    nameValidateRegexp = "^[a-z][a-zA-Z0-9]*$"
 
-    # Use Figma Variables API instead of styles
-    useVariables: false
+    // Regex replacement for color names
+    nameReplaceRegexp = "$1"
 
-    # Variable collection name (when useVariables: true)
-    variableCollectionName: "Colors"
+    // Extract light and dark mode colors from a single file
+    useSingleFile = false
 
-    # Light mode name in variables
-    lightModeName: "Light"
+    // Suffix for dark mode variants (when useSingleFile is true)
+    darkModeSuffix = "_dark"
+  }
+}
+```
 
-    # Dark mode name in variables
-    darkModeName: "Dark"
+### Variables Colors
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  // Use variablesColors instead of colors to export colors from Figma Variables.
+  // Cannot be used together with colors.
+  variablesColors = new Common.VariablesColors {
+    // Identifier of the file containing variables
+    tokensFileId = "ABC123xyz"
+
+    // Variables collection name
+    tokensCollectionName = "Colors"
+
+    // Name of the column containing light color variables
+    lightModeName = "Light"
+
+    // Name of the column containing dark color variables
+    darkModeName = "Dark"
+  }
+}
 ```
 
 ### Icons
 
-```yaml
-common:
-  icons:
-    # Default frame name for icon components (can be overridden per-entry)
-    figmaFrameName: "Icons"
+```pkl
+import ".exfig/schemas/Common.pkl"
 
-    # Regex to validate icon names
-    nameValidateRegexp: "^ic/.*$"
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    // Default frame name for icon components (can be overridden per-entry)
+    figmaFrameName = "Icons"
 
-    # Regex replacement for icon names
-    nameReplaceRegexp: "ic_$1"
+    // Regex to validate icon names
+    nameValidateRegexp = "^ic/.*$"
 
-    # Use single file for light/dark (default: false)
-    useSingleFile: false
+    // Regex replacement for icon names
+    nameReplaceRegexp = "ic_$1"
 
-    # Suffix for dark mode variants (when useSingleFile: true)
-    darkModeSuffix: "_dark"
+    // Use single file for light/dark (default: false)
+    useSingleFile = false
+
+    // Suffix for dark mode variants (when useSingleFile is true)
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 ### Images
 
-```yaml
-common:
-  images:
-    # Frame name containing image components
-    figmaFrameName: "Illustrations"
+```pkl
+import ".exfig/schemas/Common.pkl"
 
-    # Regex to validate image names
-    nameValidateRegexp: "^img_.*$"
+common = new Common.CommonConfig {
+  images = new Common.Images {
+    // Frame name containing image components
+    figmaFrameName = "Illustrations"
 
-    # Regex replacement for image names
-    nameReplaceRegexp: "$1"
+    // Regex to validate image names
+    nameValidateRegexp = "^img_.*$"
 
-    # Use single file for light/dark (default: false)
-    useSingleFile: false
+    // Regex replacement for image names
+    nameReplaceRegexp = "$1"
 
-    # Suffix for dark mode variants (when useSingleFile: true)
-    darkModeSuffix: "_dark"
+    // Use single file for light/dark (default: false)
+    useSingleFile = false
+
+    // Suffix for dark mode variants (when useSingleFile is true)
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 ### Typography
 
-```yaml
-common:
-  typography:
-    # Frame name containing text styles
-    figmaFrameName: "Typography"
+```pkl
+import ".exfig/schemas/Common.pkl"
 
-    # Regex to validate style names
-    nameValidateRegexp: "^[a-z].*$"
-```
-
-## Cache Section
-
-Version tracking for incremental exports.
-
-```yaml
-common:
-  cache:
-    # Enable version tracking
-    enabled: true
-
-    # Cache file path (default: .exfig-cache.json)
-    path: ".exfig-cache.json"
+common = new Common.CommonConfig {
+  typography = new Common.Typography {
+    // Regex to validate style names
+    nameValidateRegexp = "^[a-z].*$"
+  }
+}
 ```
 
 ## iOS Section
 
-```yaml
-ios:
-  # Path to Xcode project
-  xcodeprojPath: "./MyApp.xcodeproj"
+```pkl
+import ".exfig/schemas/iOS.pkl"
 
-  # Target name for adding generated files
-  target: "MyApp"
+ios = new iOS.iOSConfig {
+  // Path to Xcode project
+  xcodeprojPath = "./MyApp.xcodeproj"
 
-  # Path to Assets.xcassets
-  xcassetsPath: "./Resources/Assets.xcassets"
+  // Target name for adding generated files
+  target = "MyApp"
 
-  # Colors - single object (legacy) or array format
-  colors:
-    # Use color assets in xcassets
-    useColorAssets: true
+  // Path to Assets.xcassets
+  xcassetsPath = "./Resources/Assets.xcassets"
 
-    # Folder in xcassets for colors
-    assetsFolder: "Colors"
+  // Colors
+  colors = new iOS.ColorsEntry {
+    // Use color assets in xcassets
+    useColorAssets = true
 
-    # Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
-    nameStyle: camelCase
+    // Folder in xcassets for colors
+    assetsFolder = "Colors"
 
-    # Group colors in subfolders by prefix
-    groupUsingNamespace: true
+    // Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
+    nameStyle = "camelCase"
 
-    # UIKit extension output path
-    colorSwift: "./Sources/Generated/UIColor+Colors.swift"
+    // Group colors in subfolders by prefix
+    groupUsingNamespace = true
 
-    # SwiftUI extension output path
-    swiftuiColorSwift: "./Sources/Generated/Color+Colors.swift"
+    // UIKit extension output path
+    colorSwift = "./Sources/Generated/UIColor+Colors.swift"
 
-  # Colors - array format for multiple color collections
-  # colors:
-  #   - tokensFileId: "ABC123"
-  #     tokensCollectionName: "Base Palette"
-  #     lightModeName: "Light"
-  #     darkModeName: "Dark"
-  #     useColorAssets: true
-  #     assetsFolder: "BaseColors"
-  #     nameStyle: camelCase
-  #     colorSwift: "./Sources/Generated/BaseColors.swift"
-  #   - tokensFileId: "DEF456"
-  #     tokensCollectionName: "Theme Colors"
-  #     lightModeName: "Light"
-  #     darkModeName: "Dark"
-  #     useColorAssets: true
-  #     assetsFolder: "ThemeColors"
-  #     nameStyle: camelCase
-  #     colorSwift: "./Sources/Generated/ThemeColors.swift"
+    // SwiftUI extension output path
+    swiftuiColorSwift = "./Sources/Generated/Color+Colors.swift"
+  }
 
-  # Icons - single object (legacy) or array format
-  icons:
-    # Folder in xcassets for icons
-    assetsFolder: "Icons"
+  // Icons
+  icons = new iOS.IconsEntry {
+    // Folder in xcassets for icons
+    assetsFolder = "Icons"
 
-    # Naming style
-    nameStyle: camelCase
+    // Naming style
+    nameStyle = "camelCase"
 
-    # Icon format: pdf or svg
-    format: pdf
+    // Icon format: pdf or svg
+    format = "pdf"
 
-    # Rendering mode: original or template
-    renderingMode: template
+    // Preserve vector data
+    preservesVectorRepresentation = new Listing {
+      "ic24TabBarMain"
+      "ic24TabBarEvents"
+    }
 
-    # Preserve vector data
-    preservesVectorData: true
+    // UIKit extension output path
+    imageSwift = "./Sources/Generated/UIImage+Icons.swift"
 
-    # UIKit extension output path
-    imageSwift: "./Sources/Generated/UIImage+Icons.swift"
+    // SwiftUI extension output path
+    swiftUIImageSwift = "./Sources/Generated/Image+Icons.swift"
+  }
 
-    # SwiftUI extension output path
-    swiftUIImageSwift: "./Sources/Generated/Image+Icons.swift"
+  // Images
+  images = new iOS.ImagesEntry {
+    // Folder in xcassets for images
+    assetsFolder = "Images"
 
-  # Icons - array format for multiple icon sets
-  # icons:
-  #   - figmaFrameName: "Actions"
-  #     format: svg
-  #     assetsFolder: "Actions"
-  #     nameStyle: camelCase
-  #     imageSwift: "./Sources/Generated/ActionsIcons.swift"
-  #   - figmaFrameName: "Navigation"
-  #     format: pdf
-  #     assetsFolder: "Navigation"
-  #     nameStyle: camelCase
-  #     imageSwift: "./Sources/Generated/NavIcons.swift"
+    // Naming style
+    nameStyle = "camelCase"
 
-  # Images - single object (legacy) or array format
-  images:
-    # Folder in xcassets for images
-    assetsFolder: "Images"
+    // Scales to export (default: [1, 2, 3])
+    scales = new Listing { 1; 2; 3 }
 
-    # Naming style
-    nameStyle: camelCase
+    // UIKit extension output path
+    imageSwift = "./Sources/Generated/UIImage+Images.swift"
 
-    # Scales to export (default: [1, 2, 3])
-    scales: [1, 2, 3]
+    // SwiftUI extension output path
+    swiftUIImageSwift = "./Sources/Generated/Image+Images.swift"
+  }
 
-    # UIKit extension output path
-    imageSwift: "./Sources/Generated/UIImage+Images.swift"
+  // Typography
+  typography = new iOS.Typography {
+    // Generate labels with predefined styles
+    generateLabels = true
 
-    # SwiftUI extension output path
-    swiftUIImageSwift: "./Sources/Generated/Image+Images.swift"
+    // Font extension output path
+    fontSwift = "./Sources/Generated/UIFont+Typography.swift"
 
-  # Images - array format for multiple image sets
-  # images:
-  #   - figmaFrameName: "Onboarding"
-  #     assetsFolder: "Onboarding"
-  #     nameStyle: camelCase
-  #     scales: [1, 2, 3]
-  #     imageSwift: "./Sources/Generated/OnboardingImages.swift"
-  #   - figmaFrameName: "Promo"
-  #     assetsFolder: "Promo"
-  #     nameStyle: camelCase
-  #     scales: [2, 3]
-  #     imageSwift: "./Sources/Generated/PromoImages.swift"
+    // SwiftUI font extension output path
+    swiftUIFontSwift = "./Sources/Generated/Font+Typography.swift"
 
-  typography:
-    # Generate labels with predefined styles
-    generateLabels: true
+    // UIKit label extension output path
+    labelStyleSwift = "./Sources/Generated/UILabel+Typography.swift"
 
-    # Font extension output path
-    fontSwift: "./Sources/Generated/UIFont+Typography.swift"
-
-    # SwiftUI font extension output path
-    swiftUIFontSwift: "./Sources/Generated/Font+Typography.swift"
-
-    # UIKit label extension output path
-    labelStyleSwift: "./Sources/Generated/UILabel+Typography.swift"
-
-    # SwiftUI label extension output path
-    swiftUILabelStyleSwift: "./Sources/Generated/LabelStyle+Typography.swift"
+    // Typography name style
+    nameStyle = "camelCase"
+  }
+}
 ```
 
 ## Android Section
 
-```yaml
-android:
-  # Path to main res directory
-  mainRes: "./app/src/main/res"
+```pkl
+import ".exfig/schemas/Android.pkl"
 
-  # Package for R class references
-  resourcePackage: "com.example.app"
+android = new Android.AndroidConfig {
+  // Path to main res directory
+  mainRes = "./app/src/main/res"
 
-  # Path to main source directory (for Compose)
-  mainSrc: "./app/src/main/java"
+  // Package for R class references
+  resourcePackage = "com.example.app"
 
-  # Colors - single object (legacy) or array format
-  colors:
-    # Output filename
-    xmlOutputFileName: "colors.xml"
+  // Path to main source directory (for Compose)
+  mainSrc = "./app/src/main/java"
 
-    # Jetpack Compose package name
-    composePackageName: "com.example.app.ui.theme"
+  // Colors
+  colors = new Android.ColorsEntry {
+    // Output filename
+    xmlOutputFileName = "colors.xml"
 
-  # Colors - array format for multiple color collections
-  # colors:
-  #   - tokensFileId: "ABC123"
-  #     tokensCollectionName: "Base Palette"
-  #     lightModeName: "Light"
-  #     xmlOutputFileName: "base_colors.xml"
-  #   - tokensFileId: "DEF456"
-  #     tokensCollectionName: "Theme Colors"
-  #     lightModeName: "Light"
-  #     darkModeName: "Dark"
-  #     xmlOutputFileName: "theme_colors.xml"
-  #     composePackageName: "com.example.theme"
+    // Jetpack Compose package name
+    composePackageName = "com.example.app.ui.theme"
+  }
 
-  # Icons - single object (legacy) or array format
-  icons:
-    # Output directory (relative to mainRes)
-    output: "exfig-icons"
+  // Icons
+  icons = new Android.IconsEntry {
+    // Output directory (relative to mainRes)
+    output = "exfig-icons"
 
-    # Naming style
-    nameStyle: snake_case
+    // Jetpack Compose package name
+    composePackageName = "com.example.app.ui.icons"
+  }
 
-    # Jetpack Compose package name
-    composePackageName: "com.example.app.ui.icons"
+  // Images
+  images = new Android.ImagesEntry {
+    // Output directory (relative to mainRes)
+    output = "exfig-images"
 
-    # Use native VectorDrawable generator
-    useNativeVectorDrawable: false
+    // Image format: svg, png, or webp
+    format = "webp"
 
-  # Icons - array format for multiple icon sets
-  # icons:
-  #   - figmaFrameName: "Actions"
-  #     output: "drawable-actions"
-  #     composePackageName: "com.example.app.ui.actions"
-  #   - figmaFrameName: "Navigation"
-  #     output: "drawable-nav"
-  #     composePackageName: "com.example.app.ui.nav"
-  #     composeFormat: imageVector
-  #     composeExtensionTarget: "com.example.NavIcons"
+    // WebP encoding options
+    webpOptions = new Android.WebpOptions {
+      encoding = "lossy"
+      quality = 90
+    }
 
-  # Images - single object (legacy) or array format
-  images:
-    # Output directory (relative to mainRes)
-    output: "exfig-images"
+    // Density scales (default: [1, 1.5, 2, 3, 4])
+    scales = new Listing { 1; 1.5; 2; 3; 4 }
+  }
 
-    # Image format: svg, png, or webp
-    format: webp
+  // Typography
+  typography = new Android.Typography {
+    // Naming style
+    nameStyle = "snake_case"
 
-    # WebP encoding options
-    webpOptions:
-      encoding: lossy  # lossy or lossless
-      quality: 90      # 0-100 for lossy
-
-    # Density scales (default: [1, 1.5, 2, 3, 4])
-    scales: [1, 1.5, 2, 3, 4]
-
-  # Images - array format for multiple image sets
-  # images:
-  #   - figmaFrameName: "Illustrations"
-  #     output: "drawable-illustrations"
-  #     format: svg
-  #   - figmaFrameName: "Photos"
-  #     output: "drawable-photos"
-  #     format: webp
-  #     scales: [1, 1.5, 2, 3, 4]
-  #     webpOptions:
-  #       encoding: lossy
-  #       quality: 80
-
-  typography:
-    # Output filename
-    output: "typography.xml"
-
-    # Naming style
-    nameStyle: snake_case
-
-    # Jetpack Compose package name
-    composePackageName: "com.example.app.ui.typography"
+    // Jetpack Compose package name
+    composePackageName = "com.example.app.ui.typography"
+  }
+}
 ```
 
 ## Flutter Section
 
-```yaml
-flutter:
-  # Output directory for generated Dart files
-  output: "lib/generated"
+```pkl
+import ".exfig/schemas/Flutter.pkl"
 
-  # Path to custom Stencil templates
-  templatesPath: "./templates"
+flutter = new Flutter.FlutterConfig {
+  // Output directory for generated Dart files
+  output = "lib/generated"
 
-  # Colors - single object (legacy) or array format
-  colors:
-    # Output filename
-    output: "colors.dart"
+  // Colors
+  colors = new Flutter.ColorsEntry {
+    // Output filename
+    output = "colors.dart"
 
-    # Class name for colors
-    className: "AppColors"
+    // Class name for colors
+    className = "AppColors"
+  }
 
-  # Colors - array format for multiple color collections
-  # colors:
-  #   - tokensFileId: "ABC123"
-  #     tokensCollectionName: "Base Palette"
-  #     lightModeName: "Light"
-  #     output: "base_colors.dart"
-  #     className: "BaseColors"
-  #   - tokensFileId: "DEF456"
-  #     tokensCollectionName: "Theme Colors"
-  #     lightModeName: "Light"
-  #     darkModeName: "Dark"
-  #     output: "theme_colors.dart"
-  #     className: "ThemeColors"
+  // Icons
+  icons = new Flutter.IconsEntry {
+    // Output directory for SVG files
+    output = "assets/icons"
 
-  # Icons - single object (legacy) or array format
-  icons:
-    # Output directory for SVG files
-    output: "assets/icons"
+    // Dart file output
+    dartFile = "icons.dart"
 
-    # Dart file output
-    dartFile: "icons.dart"
+    // Class name for icons
+    className = "AppIcons"
+  }
 
-    # Class name for icons
-    className: "AppIcons"
+  // Images
+  images = new Flutter.ImagesEntry {
+    // Output directory for images
+    output = "assets/images"
 
-  # Icons - array format for multiple icon sets
-  # icons:
-  #   - figmaFrameName: "Actions"
-  #     output: "assets/icons/actions"
-  #     dartFile: "action_icons.dart"
-  #     className: "ActionIcons"
-  #   - figmaFrameName: "Navigation"
-  #     output: "assets/icons/nav"
-  #     dartFile: "nav_icons.dart"
-  #     className: "NavIcons"
+    // Dart file output
+    dartFile = "images.dart"
 
-  # Images - single object (legacy) or array format
-  images:
-    # Output directory for images
-    output: "assets/images"
+    // Class name for images
+    className = "AppImages"
 
-    # Dart file output
-    dartFile: "images.dart"
+    // Image format: svg, png, or webp
+    format = "png"
 
-    # Class name for images
-    className: "AppImages"
-
-    # Image format: svg, png, or webp
-    format: png
-
-    # Scales to export (default: [1, 2, 3])
-    scales: [1, 2, 3]
-
-    # WebP encoding options
-    webpOptions:
-      encoding: lossy
-      quality: 90
-
-  # Images - array format for multiple image sets
-  # images:
-  #   - figmaFrameName: "Illustrations"
-  #     output: "assets/images/illustrations"
-  #     dartFile: "illustrations.dart"
-  #     className: "Illustrations"
-  #   - figmaFrameName: "Promo"
-  #     output: "assets/images/promo"
-  #     dartFile: "promo_images.dart"
-  #     className: "PromoImages"
-  #     format: webp
-  #     scales: [1, 2, 3]
+    // Scales to export (default: [1, 2, 3])
+    scales = new Listing { 1; 2; 3 }
+  }
+}
 ```
 
 ## Example Configurations
 
 ### iOS Project
 
-```yaml
-figma:
-  lightFileId: "ABC123"
-  darkFileId: "DEF456"
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
 
-common:
-  colors:
-    figmaFrameName: "Colors"
-  icons:
-    figmaFrameName: "Icons"
-  images:
-    figmaFrameName: "Illustrations"
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/iOS.pkl"
 
-ios:
-  xcodeprojPath: "./MyApp.xcodeproj"
-  target: "MyApp"
-  xcassetsPath: "./Resources/Assets.xcassets"
+figma = new Figma.FigmaConfig {
+  lightFileId = "ABC123"
+  darkFileId = "DEF456"
+}
 
-  colors:
-    assetsFolder: "Colors"
-    colorSwift: "./Sources/UIColor+Colors.swift"
-    swiftUIColorSwift: "./Sources/Color+Colors.swift"
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    figmaFrameName = "Colors"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Illustrations"
+  }
+}
 
-  icons:
-    assetsFolder: "Icons"
-    format: pdf
-    imageSwift: "./Sources/UIImage+Icons.swift"
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "./Resources/Assets.xcassets"
+
+  colors = new iOS.ColorsEntry {
+    assetsFolder = "Colors"
+    colorSwift = "./Sources/UIColor+Colors.swift"
+    swiftuiColorSwift = "./Sources/Color+Colors.swift"
+  }
+
+  icons = new iOS.IconsEntry {
+    assetsFolder = "Icons"
+    format = "pdf"
+    imageSwift = "./Sources/UIImage+Icons.swift"
+  }
+}
 ```
 
 ### Android Project
 
-```yaml
-figma:
-  lightFileId: "ABC123"
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
 
-common:
-  icons:
-    figmaFrameName: "Icons"
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/Android.pkl"
 
-android:
-  mainRes: "./app/src/main/res"
-  mainSrc: "./app/src/main/java"
-  resourcePackage: "com.example.app"
+figma = new Figma.FigmaConfig {
+  lightFileId = "ABC123"
+}
 
-  colors:
-    output: "colors.xml"
-    composePackageName: "com.example.app.ui"
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+}
 
-  icons:
-    output: "exfig-icons"
-    composePackageName: "com.example.app.ui"
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
+  mainSrc = "./app/src/main/java"
+  resourcePackage = "com.example.app"
+
+  colors = new Android.ColorsEntry {
+    xmlOutputFileName = "colors.xml"
+    composePackageName = "com.example.app.ui"
+  }
+
+  icons = new Android.IconsEntry {
+    output = "exfig-icons"
+    composePackageName = "com.example.app.ui"
+  }
+}
 ```
 
 ### Multi-Platform Project
 
-```yaml
-figma:
-  lightFileId: "ABC123"
-  darkFileId: "DEF456"
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
 
-common:
-  colors:
-    figmaFrameName: "Colors"
-  icons:
-    figmaFrameName: "Icons"
-  images:
-    figmaFrameName: "Images"
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/iOS.pkl"
+import ".exfig/schemas/Android.pkl"
+import ".exfig/schemas/Flutter.pkl"
 
-ios:
-  xcodeprojPath: "./ios/MyApp.xcodeproj"
-  xcassetsPath: "./ios/Resources/Assets.xcassets"
-  colors:
-    assetsFolder: "Colors"
+figma = new Figma.FigmaConfig {
+  lightFileId = "ABC123"
+  darkFileId = "DEF456"
+}
 
-android:
-  mainRes: "./android/app/src/main/res"
-  colors:
-    output: "colors.xml"
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    figmaFrameName = "Colors"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Images"
+  }
+}
 
-flutter:
-  output: "lib/generated"
-  colors:
-    output: "colors.dart"
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./ios/MyApp.xcodeproj"
+  xcassetsPath = "./ios/Resources/Assets.xcassets"
+  colors = new iOS.ColorsEntry {
+    assetsFolder = "Colors"
+  }
+}
+
+android = new Android.AndroidConfig {
+  mainRes = "./android/app/src/main/res"
+  colors = new Android.ColorsEntry {
+    xmlOutputFileName = "colors.xml"
+  }
+}
+
+flutter = new Flutter.FlutterConfig {
+  output = "lib/generated"
+  colors = new Flutter.ColorsEntry {
+    output = "colors.dart"
+  }
+}
 ```
 
 ## See Also

@@ -1,10 +1,10 @@
 let flutterConfigFileContents = #"""
 /// ExFig Flutter configuration.
-amends "package://github.com/niceplaces/exfig@2.0.0#/ExFig.pkl"
+amends ".exfig/schemas/ExFig.pkl"
 
-import "package://github.com/niceplaces/exfig@2.0.0#/Figma.pkl"
-import "package://github.com/niceplaces/exfig@2.0.0#/Common.pkl"
-import "package://github.com/niceplaces/exfig@2.0.0#/Flutter.pkl"
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/Flutter.pkl"
 
 figma = new Figma.FigmaConfig {
   // Identifier of the file containing light color palette, icons and light images.

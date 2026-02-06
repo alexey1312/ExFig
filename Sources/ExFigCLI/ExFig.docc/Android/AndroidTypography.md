@@ -11,21 +11,22 @@ ExFig exports typography as:
 
 ## Configuration
 
-```yaml
-android:
-  mainRes: "./app/src/main/res"
-  mainSrc: "./app/src/main/java"
-  resourcePackage: "com.example.app"
+```pkl
+import ".exfig/schemas/Android.pkl"
 
-  typography:
-    # Output filename
-    output: "typography.xml"
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
+  mainSrc = "./app/src/main/java"
+  resourcePackage = "com.example.app"
 
-    # Naming style
-    nameStyle: snake_case
+  typography = new Android.Typography {
+    // Naming style
+    nameStyle = "snake_case"
 
-    # Jetpack Compose package name (optional)
-    composePackageName: "com.example.app.ui.theme"
+    // Jetpack Compose package name (optional)
+    composePackageName = "com.example.app.ui.theme"
+  }
+}
 ```
 
 ## Export Process
@@ -202,16 +203,7 @@ fun MyScreen() {
 
 ### Font Mapping
 
-Map Figma fonts to Android fonts:
-
-```yaml
-android:
-  typography:
-    fontMapping:
-      "Inter": "inter"
-      "Roboto": "roboto"
-      "SF Pro Text": "sans-serif"
-```
+Map Figma fonts to Android fonts using custom templates. See <doc:CustomTemplates> for details.
 
 ### Using Custom Fonts
 
@@ -242,15 +234,6 @@ res/font/
         android:fontWeight="700"
         android:font="@font/inter_bold"/>
 </font-family>
-```
-
-3. Configure font mapping:
-
-```yaml
-android:
-  typography:
-    fontMapping:
-      "Inter": "inter"
 ```
 
 ### Generated Output with Custom Fonts

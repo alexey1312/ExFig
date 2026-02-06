@@ -47,8 +47,11 @@ extension ExFigCommand {
                 if !result { return }
             }
 
+            // Extract PKL schemas for local validation
+            let extractedSchemas = try SchemaExtractor.extract()
+
             // Write new config file
-            try writeConfigFile(contents: fileContents, to: destination, ui: ui)
+            try writeConfigFile(contents: fileContents, to: destination, ui: ui, extractedSchemas: extractedSchemas)
         }
 
         /// Handles existing file: prompts for confirmation and removes if approved.
@@ -90,7 +93,12 @@ extension ExFigCommand {
             return true
         }
 
-        private func writeConfigFile(contents: String, to destination: String, ui: TerminalUI) throws {
+        private func writeConfigFile(
+            contents: String,
+            to destination: String,
+            ui: TerminalUI,
+            extractedSchemas: [String] = []
+        ) throws {
             guard let fileData = contents.data(using: .utf8) else {
                 throw ExFigError.custom(errorString: "Failed to encode config file contents")
             }
@@ -99,8 +107,15 @@ extension ExFigCommand {
             if success {
                 ui.success("Config file generated: \(destination)")
 
+                if !extractedSchemas.isEmpty {
+                    ui
+                        .success(
+                            "Extracted \(extractedSchemas.count) PKL schemas to \(SchemaExtractor.defaultOutputDir)/"
+                        )
+                }
+
                 ui.info("")
-                ui.info("👉 Next Steps:")
+                ui.info("Next steps:")
                 ui.info("1. Edit \(ExFigOptions.defaultConfigFilename) with your Figma file IDs")
 
                 if ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"] == nil {

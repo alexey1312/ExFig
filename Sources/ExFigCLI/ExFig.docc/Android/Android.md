@@ -21,34 +21,45 @@ exfig init --platform android
 
 ### 2. Configure Your Project
 
-Edit `exfig.yaml`:
+Edit `exfig.pkl`:
 
-```yaml
-figma:
-  lightFileId: "YOUR_FILE_ID"
-  darkFileId: "YOUR_DARK_FILE_ID"  # Optional
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
 
-android:
-  mainRes: "./app/src/main/res"
-  mainSrc: "./app/src/main/java"
-  resourcePackage: "com.example.app"
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Android.pkl"
 
-  colors:
-    output: "colors.xml"
-    composePackageName: "com.example.app.ui.theme"
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID"
+  darkFileId = "YOUR_DARK_FILE_ID"  // Optional
+}
 
-  icons:
-    output: "exfig-icons"
-    composePackageName: "com.example.app.ui.icons"
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
+  mainSrc = "./app/src/main/java"
+  resourcePackage = "com.example.app"
 
-  images:
-    output: "exfig-images"
-    format: webp
-    scales: [1, 1.5, 2, 3, 4]
+  colors = new Android.ColorsEntry {
+    xmlOutputFileName = "colors.xml"
+    composePackageName = "com.example.app.ui.theme"
+  }
 
-  typography:
-    output: "typography.xml"
-    composePackageName: "com.example.app.ui.theme"
+  icons = new Android.IconsEntry {
+    output = "exfig-icons"
+    composePackageName = "com.example.app.ui.icons"
+  }
+
+  images = new Android.ImagesEntry {
+    output = "exfig-images"
+    format = "webp"
+    scales = new Listing { 1; 1.5; 2; 3; 4 }
+  }
+
+  typography = new Android.Typography {
+    nameStyle = "camelCase"
+    composePackageName = "com.example.app.ui.theme"
+  }
+}
 ```
 
 ### 3. Configure build.gradle

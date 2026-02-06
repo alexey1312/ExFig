@@ -11,24 +11,22 @@ ExFig exports icons as:
 
 ## Configuration
 
-```yaml
-android:
-  mainRes: "./app/src/main/res"
-  mainSrc: "./app/src/main/java"
-  resourcePackage: "com.example.app"
+```pkl
+import ".exfig/schemas/Android.pkl"
 
-  icons:
-    # Output directory (relative to mainRes)
-    output: "exfig-icons"
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
+  mainSrc = "./app/src/main/java"
+  resourcePackage = "com.example.app"
 
-    # Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
-    nameStyle: snake_case
+  icons = new Android.IconsEntry {
+    // Output directory (relative to mainRes)
+    output = "exfig-icons"
 
-    # Jetpack Compose package name (optional)
-    composePackageName: "com.example.app.ui.icons"
-
-    # Use native VectorDrawable generator (experimental)
-    useNativeVectorDrawable: false
+    // Jetpack Compose package name (optional)
+    composePackageName = "com.example.app.ui.icons"
+  }
+}
 ```
 
 **Important:** Add to `build.gradle`:
@@ -212,10 +210,12 @@ exfig icons --strict-path-validation
 ```
 
 **Config:**
-```yaml
-android:
-  icons:
-    strictPathValidation: true
+```pkl
+android = new Android.AndroidConfig {
+  icons = new Android.IconsEntry {
+    strictPathValidation = true
+  }
+}
 ```
 
 ### Solutions for Long Paths
@@ -233,10 +233,13 @@ android:
 
 ### Separate Files
 
-```yaml
-figma:
-  lightFileId: abc123
-  darkFileId: def456
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
 ```
 
 Creates:
@@ -246,11 +249,15 @@ Creates:
 
 ### Single File Mode
 
-```yaml
-common:
-  icons:
-    useSingleFile: true
-    darkModeSuffix: "_dark"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    useSingleFile = true
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 Figma naming:

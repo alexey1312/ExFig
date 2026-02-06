@@ -12,27 +12,29 @@ ExFig exports images as:
 
 ## Configuration
 
-```yaml
-android:
-  mainRes: "./app/src/main/res"
+```pkl
+import ".exfig/schemas/Android.pkl"
 
-  images:
-    # Output directory (relative to mainRes)
-    output: "exfig-images"
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
 
-    # Image format: png or webp
-    format: webp
+  images = new Android.ImagesEntry {
+    // Output directory (relative to mainRes)
+    output = "exfig-images"
 
-    # Naming style
-    nameStyle: snake_case
+    // Image format: png or webp
+    format = "webp"
 
-    # Density scales (default: [1, 1.5, 2, 3, 4])
-    scales: [1, 1.5, 2, 3, 4]
+    // Density scales (default: [1, 1.5, 2, 3, 4])
+    scales = new Listing { 1; 1.5; 2; 3; 4 }
 
-    # WebP options (for webp format only)
-    webpOptions:
-      encoding: lossy    # lossy or lossless
-      quality: 90        # 0-100 for lossy encoding
+    // WebP options (for webp format only)
+    webpOptions = new Android.WebpOptions {
+      encoding = "lossy"
+      quality = 90
+    }
+  }
+}
 ```
 
 **Important:** Add to `build.gradle`:
@@ -104,10 +106,12 @@ exfig-images/
 
 Configure scales:
 
-```yaml
-android:
-  images:
-    scales: [2, 3, 4]  # Skip mdpi and hdpi
+```pkl
+android = new Android.AndroidConfig {
+  images = new Android.ImagesEntry {
+    scales = new Listing { 2; 3; 4 }  // Skip mdpi and hdpi
+  }
+}
 ```
 
 ## Usage in Code
@@ -152,13 +156,16 @@ fun MyScreen() {
 
 ### WebP (Recommended)
 
-```yaml
-android:
-  images:
-    format: webp
-    webpOptions:
-      encoding: lossy
-      quality: 90
+```pkl
+android = new Android.AndroidConfig {
+  images = new Android.ImagesEntry {
+    format = "webp"
+    webpOptions = new Android.WebpOptions {
+      encoding = "lossy"
+      quality = 90
+    }
+  }
+}
 ```
 
 **Advantages:**
@@ -174,10 +181,12 @@ android:
 
 ### PNG
 
-```yaml
-android:
-  images:
-    format: png
+```pkl
+android = new Android.AndroidConfig {
+  images = new Android.ImagesEntry {
+    format = "png"
+  }
+}
 ```
 
 **Advantages:**
@@ -189,10 +198,13 @@ android:
 
 ### Separate Files
 
-```yaml
-figma:
-  lightFileId: abc123
-  darkFileId: def456
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
 ```
 
 Generated structure:
@@ -206,11 +218,15 @@ drawable-night-mdpi/
 
 ### Single File Mode
 
-```yaml
-common:
-  images:
-    useSingleFile: true
-    darkModeSuffix: '_dark'
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  images = new Common.Images {
+    useSingleFile = true
+    darkModeSuffix = "_dark"
+  }
+}
 ```
 
 Figma naming:
@@ -223,7 +239,7 @@ img-hero_dark
 ## Tips
 
 1. **Use WebP** for smaller APK size
-2. **Skip low densities**: Use `scales: [2, 3, 4]` for modern devices
+2. **Skip low densities**: Use `scales: new Listing { 2; 3; 4 }` for modern devices
 3. **Use vectors** for simple graphics instead of rasters
 4. **Compress in Figma** before export
 5. **Provide dark mode** variants for better UX
@@ -242,7 +258,7 @@ img-hero_dark
 
 ### Images are low quality
 
-- Increase WebP quality: `quality: 95`
+- Increase WebP quality: `quality = 95`
 - Use lossless encoding
 - Check source resolution in Figma
 

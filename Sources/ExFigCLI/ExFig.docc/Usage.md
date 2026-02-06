@@ -24,11 +24,11 @@ exfig typography
 
 ## Configuration File
 
-By default, ExFig looks for `exfig.yaml` in the current directory. Specify a different location:
+By default, ExFig looks for `exfig.pkl` in the current directory. Specify a different location:
 
 ```bash
-exfig colors -i path/to/exfig.yaml
-exfig colors --input path/to/exfig.yaml
+exfig colors -i path/to/exfig.pkl
+exfig colors --input path/to/exfig.pkl
 ```
 
 ## Filtering Exports
@@ -69,15 +69,6 @@ exfig typography "heading/*"
 ## Version Tracking
 
 Skip unchanged exports with version tracking:
-
-### Enable via Configuration
-
-```yaml
-common:
-  cache:
-    enabled: true
-    path: ".exfig-cache.json"
-```
 
 ### Enable via CLI
 
@@ -157,7 +148,7 @@ Process multiple configuration files in parallel:
 exfig batch ./configs/
 
 # Process specific config files
-exfig batch ios-app.yaml android-app.yaml flutter-app.yaml
+exfig batch ios-app.pkl android-app.pkl flutter-app.pkl
 
 # With custom parallelism (default: 3)
 exfig batch ./configs/ --parallel 5
@@ -181,7 +172,7 @@ exfig batch ./configs/ --resume
 | `--resume`      | Resume from previous checkpoint | false   |
 | `--report`      | Path to write JSON report       | -       |
 
-> Note: Directory scanning is non-recursive. Use shell globbing for nested configs: `./configs/*/*.yaml`
+> Note: Directory scanning is non-recursive. Use shell globbing for nested configs: `./configs/*/*.pkl`
 
 ## JSON Export (Design Tokens)
 
