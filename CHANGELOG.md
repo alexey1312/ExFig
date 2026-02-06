@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-02-06
+
+### Bug Fixes
+
+- **tests**: Eliminate unreachable code warnings on Linux by @alexey1312
+
+- Unify JSON handling across platforms by @alexey1312
+
+
 ## [1.3.0] - 2026-02-05
 
 ### Bug Fixes
