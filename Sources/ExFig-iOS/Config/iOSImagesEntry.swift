@@ -157,6 +157,23 @@ public struct HeicOptions: Decodable, Sendable {
     public init(quality: Double? = nil) {
         self.quality = quality
     }
+
+    /// Converts to protocol-level ``HeicConverterOptions``.
+    public var converterOptions: HeicConverterOptions {
+        HeicConverterOptions(
+            encoding: nil,
+            quality: quality.map { Int($0 * 100) }
+        )
+    }
+}
+
+// MARK: - Converter Options
+
+public extension iOSImagesEntry {
+    /// Converts entry's HEIC options to protocol-level ``HeicConverterOptions``.
+    var heicConverterOptions: HeicConverterOptions? {
+        heicOptions?.converterOptions
+    }
 }
 
 // swiftlint:enable type_name

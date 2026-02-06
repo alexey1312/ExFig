@@ -49,11 +49,15 @@ public protocol ImagesExportContext: ExportContext {
     /// - Parameters:
     ///   - files: Files to convert (must be already downloaded).
     ///   - outputFormat: Target format.
+    ///   - heicOptions: Optional HEIC encoding options (used when outputFormat is .heic).
+    ///   - webpOptions: Optional WebP encoding options (used when outputFormat is .webp).
     ///   - progressTitle: Title for progress bar.
     /// - Returns: Converted files.
     func convertFormat(
         _ files: [FileContents],
         to outputFormat: ImageOutputFormat,
+        heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents]
 
@@ -63,12 +67,14 @@ public protocol ImagesExportContext: ExportContext {
     ///   - files: SVG files to rasterize.
     ///   - scales: Scale factors (e.g., [1.0, 2.0, 3.0] for iOS).
     ///   - outputFormat: Target raster format (png or heic).
+    ///   - heicOptions: Optional HEIC encoding options (used when outputFormat is .heic).
     ///   - progressTitle: Title for progress bar.
     /// - Returns: Rasterized files at all scales.
     func rasterizeSVGs(
         _ files: [FileContents],
         scales: [Double],
         to outputFormat: ImageOutputFormat,
+        heicOptions: HeicConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents]
 
@@ -84,6 +90,37 @@ public protocol ImagesExportContext: ExportContext {
         total: Int,
         operation: @escaping @Sendable (ProgressReporter) async throws -> T
     ) async throws -> T
+}
+
+// MARK: - Default Parameters
+
+public extension ImagesExportContext {
+    /// Convenience overload with nil options for backward compatibility.
+    func convertFormat(
+        _ files: [FileContents],
+        to outputFormat: ImageOutputFormat,
+        progressTitle: String
+    ) async throws -> [FileContents] {
+        try await convertFormat(
+            files, to: outputFormat,
+            heicOptions: nil, webpOptions: nil,
+            progressTitle: progressTitle
+        )
+    }
+
+    /// Convenience overload with nil options for backward compatibility.
+    func rasterizeSVGs(
+        _ files: [FileContents],
+        scales: [Double],
+        to outputFormat: ImageOutputFormat,
+        progressTitle: String
+    ) async throws -> [FileContents] {
+        try await rasterizeSVGs(
+            files, scales: scales, to: outputFormat,
+            heicOptions: nil,
+            progressTitle: progressTitle
+        )
+    }
 }
 
 /// Input for loading images from Figma.

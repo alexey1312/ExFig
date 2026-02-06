@@ -80,7 +80,9 @@ struct ExFigOptions: ParsableArguments {
         // PKLEvaluator is an actor, need to run async
         // Using blocking call since we're in validate() which is synchronous
         let semaphore = DispatchSemaphore(value: 0)
-        var result: Result<PKLConfig, Error>!
+        var result: Result<PKLConfig, Error> = .failure(
+            PKLError.evaluationFailed(message: "PKL evaluation did not complete", exitCode: -1)
+        )
 
         Task {
             do {
@@ -93,7 +95,7 @@ struct ExFigOptions: ParsableArguments {
 
         semaphore.wait()
 
-        switch result! {
+        switch result {
         case let .success(params):
             return params
         case let .failure(error):

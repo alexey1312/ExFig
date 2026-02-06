@@ -20,7 +20,7 @@ enum ExFigWarning: Sendable, Equatable {
     // MARK: - Xcode Project Warnings
 
     /// Failed to add some file references to Xcode project.
-    case xcodeProjectUpdateFailed
+    case xcodeProjectUpdateFailed(detail: String)
 
     // MARK: - Compose Configuration Warnings
 

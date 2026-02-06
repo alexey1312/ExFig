@@ -74,7 +74,7 @@ extension ExFigCommand.ExportTypography {
                 }
                 try xcodeProject.save()
             } catch {
-                input.ui.warning(.xcodeProjectUpdateFailed)
+                input.ui.warning(.xcodeProjectUpdateFailed(detail: error.localizedDescription))
             }
         }
 

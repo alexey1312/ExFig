@@ -103,6 +103,8 @@ struct MockImagesExportContext: ImagesExportContext {
     func convertFormat(
         _ files: [FileContents],
         to outputFormat: ImageOutputFormat,
+        heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         files
@@ -112,6 +114,7 @@ struct MockImagesExportContext: ImagesExportContext {
         _ files: [FileContents],
         scales: [Double],
         to outputFormat: ImageOutputFormat,
+        heicOptions: HeicConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         []

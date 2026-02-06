@@ -28,8 +28,6 @@ extension ExFigCommand.ExportColors {
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
-        // Convert Params to plugin types
-        let pluginEntries = entries
         let platformConfig = ios.platformConfig()
 
         // Create context
@@ -44,7 +42,7 @@ extension ExFigCommand.ExportColors {
         // Export via plugin
         let exporter = iOSColorsExporter()
         let count = try await exporter.exportColors(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -75,7 +73,7 @@ extension ExFigCommand.ExportColors {
                     target: ios.target
                 )
                 // Add Swift file references for each entry
-                for entry in pluginEntries {
+                for entry in entries {
                     if let colorSwift = entry.colorSwift {
                         try xcodeProject.addFileReferenceToXcodeProj(colorSwift)
                     }
@@ -85,7 +83,7 @@ extension ExFigCommand.ExportColors {
                 }
                 try xcodeProject.save()
             } catch {
-                ui.warning(.xcodeProjectUpdateFailed)
+                ui.warning(.xcodeProjectUpdateFailed(detail: error.localizedDescription))
             }
         }
 
@@ -104,7 +102,6 @@ extension ExFigCommand.ExportColors {
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
-        let pluginEntries = entries
         let platformConfig = android.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -117,7 +114,7 @@ extension ExFigCommand.ExportColors {
 
         let exporter = AndroidColorsExporter()
         let count = try await exporter.exportColors(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -136,7 +133,6 @@ extension ExFigCommand.ExportColors {
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
-        let pluginEntries = entries
         let platformConfig = flutter.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -149,7 +145,7 @@ extension ExFigCommand.ExportColors {
 
         let exporter = FlutterColorsExporter()
         let count = try await exporter.exportColors(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -168,7 +164,6 @@ extension ExFigCommand.ExportColors {
         client: Client,
         ui: TerminalUI
     ) async throws -> Int {
-        let pluginEntries = entries
         let platformConfig = web.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -181,7 +176,7 @@ extension ExFigCommand.ExportColors {
 
         let exporter = WebColorsExporter()
         let count = try await exporter.exportColors(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )

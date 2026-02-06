@@ -53,8 +53,8 @@ struct ExFigWarningFormatter {
         case .noValidConfigs:
             "No valid ExFig config files found"
 
-        case .xcodeProjectUpdateFailed:
-            "Xcode project update incomplete: some file references could not be added"
+        case let .xcodeProjectUpdateFailed(detail):
+            "Xcode project update incomplete: \(detail)"
 
         case .checkpointExpired:
             "Checkpoint expired: older than 24h, starting fresh"

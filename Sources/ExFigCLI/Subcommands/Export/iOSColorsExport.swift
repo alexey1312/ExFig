@@ -131,7 +131,7 @@ extension ExFigCommand.ExportColors {
             }
             try xcodeProject.save()
         } catch {
-            ui.warning(.xcodeProjectUpdateFailed)
+            ui.warning(.xcodeProjectUpdateFailed(detail: error.localizedDescription))
         }
     }
 }

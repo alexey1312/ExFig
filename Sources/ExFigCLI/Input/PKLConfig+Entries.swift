@@ -6,6 +6,7 @@ import ExFig_iOS
 import ExFig_Web
 import ExFigCore
 import Foundation
+import Logging
 
 // MARK: - iOS Colors
 
@@ -43,6 +44,7 @@ extension PKLConfig.iOS.ColorsConfiguration {
         switch self {
         case let .legacy(colors):
             guard let variablesColors = common?.variablesColors else {
+                ExFigCommand.logger.warning("No variablesColors configuration found for iOS colors")
                 return []
             }
             return [iOSColorsEntry(
@@ -79,7 +81,7 @@ extension PKLConfig.iOS.IconsConfiguration {
         case let .legacy(icons):
             [iOSIconsEntry(
                 figmaFrameName: nil,
-                format: ExFigCore.VectorFormat(rawValue: icons.format.rawValue) ?? .svg,
+                format: convertEnum(icons.format.rawValue, default: ExFigCore.VectorFormat.svg),
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil,
                 nameStyle: icons.nameStyle,
@@ -104,7 +106,7 @@ extension PKLConfig.iOS.IconsConfiguration {
         case let .legacy(icons):
             [iOSIconsEntry(
                 figmaFrameName: common?.icons?.figmaFrameName,
-                format: ExFigCore.VectorFormat(rawValue: icons.format.rawValue) ?? .svg,
+                format: convertEnum(icons.format.rawValue, default: ExFigCore.VectorFormat.svg),
                 nameValidateRegexp: common?.icons?.nameValidateRegexp,
                 nameReplaceRegexp: common?.icons?.nameReplaceRegexp,
                 nameStyle: icons.nameStyle,
@@ -215,6 +217,7 @@ extension PKLConfig.Android.ColorsConfiguration {
         switch self {
         case let .legacy(colors):
             guard let variablesColors = common?.variablesColors else {
+                ExFigCommand.logger.warning("No variablesColors configuration found for Android colors")
                 return []
             }
             return [AndroidColorsEntry(
@@ -295,13 +298,13 @@ extension PKLConfig.Android.ImagesConfiguration {
             [AndroidImagesEntry(
                 figmaFrameName: nil,
                 sourceFormat: images.sourceFormat
-                    .map { ExFigCore.ImageSourceFormat(rawValue: $0.rawValue) ?? .png },
+                    .map { convertEnum($0.rawValue, default: ExFigCore.ImageSourceFormat.png) },
                 scales: images.scales,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil,
                 nameStyle: nil,
                 output: images.output,
-                format: ExFig_Android.AndroidImageFormat(rawValue: images.format.rawValue) ?? .png,
+                format: convertEnum(images.format.rawValue, default: ExFig_Android.AndroidImageFormat.png),
                 webpOptions: images.webpOptions.map {
                     ExFig_Android.WebpOptions(lossless: $0.encoding == .lossless, quality: $0.quality)
                 }
@@ -318,13 +321,13 @@ extension PKLConfig.Android.ImagesConfiguration {
             [AndroidImagesEntry(
                 figmaFrameName: common?.images?.figmaFrameName,
                 sourceFormat: images.sourceFormat
-                    .map { ExFigCore.ImageSourceFormat(rawValue: $0.rawValue) ?? .png },
+                    .map { convertEnum($0.rawValue, default: ExFigCore.ImageSourceFormat.png) },
                 scales: images.scales,
                 nameValidateRegexp: common?.images?.nameValidateRegexp,
                 nameReplaceRegexp: common?.images?.nameReplaceRegexp,
                 nameStyle: nil,
                 output: images.output,
-                format: ExFig_Android.AndroidImageFormat(rawValue: images.format.rawValue) ?? .png,
+                format: convertEnum(images.format.rawValue, default: ExFig_Android.AndroidImageFormat.png),
                 webpOptions: images.webpOptions.map {
                     ExFig_Android.WebpOptions(lossless: $0.encoding == .lossless, quality: $0.quality)
                 }
@@ -365,6 +368,7 @@ extension PKLConfig.Flutter.ColorsConfiguration {
         switch self {
         case let .legacy(colors):
             guard let variablesColors = common?.variablesColors else {
+                ExFigCommand.logger.warning("No variablesColors configuration found for Flutter colors")
                 return []
             }
             return [FlutterColorsEntry(
@@ -436,7 +440,7 @@ extension PKLConfig.Flutter.ImagesConfiguration {
             [FlutterImagesEntry(
                 figmaFrameName: nil,
                 sourceFormat: images.sourceFormat
-                    .map { ExFigCore.ImageSourceFormat(rawValue: $0.rawValue) ?? .png },
+                    .map { convertEnum($0.rawValue, default: ExFigCore.ImageSourceFormat.png) },
                 scales: images.scales,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil,
@@ -445,7 +449,7 @@ extension PKLConfig.Flutter.ImagesConfiguration {
                 dartFile: images.dartFile,
                 className: images.className,
                 format: images.format
-                    .map { ExFig_Flutter.FlutterImageFormat(rawValue: $0.rawValue) ?? .png },
+                    .map { convertEnum($0.rawValue, default: ExFig_Flutter.FlutterImageFormat.png) },
                 webpOptions: images.webpOptions.map {
                     ExFig_Flutter.WebpOptions(lossless: $0.encoding == .lossless, quality: $0.quality)
                 }
@@ -462,7 +466,7 @@ extension PKLConfig.Flutter.ImagesConfiguration {
             [FlutterImagesEntry(
                 figmaFrameName: common?.images?.figmaFrameName,
                 sourceFormat: images.sourceFormat
-                    .map { ExFigCore.ImageSourceFormat(rawValue: $0.rawValue) ?? .png },
+                    .map { convertEnum($0.rawValue, default: ExFigCore.ImageSourceFormat.png) },
                 scales: images.scales,
                 nameValidateRegexp: common?.images?.nameValidateRegexp,
                 nameReplaceRegexp: common?.images?.nameReplaceRegexp,
@@ -471,7 +475,7 @@ extension PKLConfig.Flutter.ImagesConfiguration {
                 dartFile: images.dartFile,
                 className: images.className,
                 format: images.format
-                    .map { ExFig_Flutter.FlutterImageFormat(rawValue: $0.rawValue) ?? .png },
+                    .map { convertEnum($0.rawValue, default: ExFig_Flutter.FlutterImageFormat.png) },
                 webpOptions: images.webpOptions.map {
                     ExFig_Flutter.WebpOptions(lossless: $0.encoding == .lossless, quality: $0.quality)
                 }
@@ -514,6 +518,7 @@ extension PKLConfig.Web.ColorsConfiguration {
         switch self {
         case let .legacy(colors):
             guard let variablesColors = common?.variablesColors else {
+                ExFigCommand.logger.warning("No variablesColors configuration found for Web colors")
                 return []
             }
             return [WebColorsEntry(
@@ -655,6 +660,18 @@ extension AndroidTypographyEntry {
             composePackageName: entry.composePackageName
         )
     }
+}
+
+// MARK: - Helpers
+
+private func convertEnum<T: RawRepresentable>(
+    _ rawValue: String, default fallback: T
+) -> T where T.RawValue == String {
+    guard let value = T(rawValue: rawValue) else {
+        ExFigCommand.logger.warning("Unknown \(T.self) value '\(rawValue)', defaulting to '\(fallback.rawValue)'")
+        return fallback
+    }
+    return value
 }
 
 // swiftlint:enable file_length

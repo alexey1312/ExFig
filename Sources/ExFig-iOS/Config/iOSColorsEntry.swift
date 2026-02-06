@@ -127,27 +127,6 @@ public struct iOSColorsEntry: Decodable, Sendable {
 // MARK: - Convenience Extensions
 
 public extension iOSColorsEntry {
-    /// Returns a VariablesSourceConfig for this entry.
-    var variablesSource: VariablesSourceConfig {
-        VariablesSourceConfig(
-            tokensFileId: tokensFileId,
-            tokensCollectionName: tokensCollectionName,
-            lightModeName: lightModeName,
-            darkModeName: darkModeName,
-            lightHCModeName: lightHCModeName,
-            darkHCModeName: darkHCModeName,
-            primitivesModeName: primitivesModeName
-        )
-    }
-
-    /// Returns a NameProcessingConfig for this entry.
-    var nameProcessing: NameProcessingConfig {
-        NameProcessingConfig(
-            nameValidateRegexp: nameValidateRegexp,
-            nameReplaceRegexp: nameReplaceRegexp
-        )
-    }
-
     /// Returns a ColorsSourceInput for use with ColorsExportContext.
     var colorsSourceInput: ColorsSourceInput {
         ColorsSourceInput(

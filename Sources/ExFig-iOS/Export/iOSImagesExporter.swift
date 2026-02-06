@@ -222,7 +222,11 @@ public struct iOSImagesExporter: ImagesExporter {
 
         let pngFiles = localFiles.filter { $0.destination.file.pathExtension == "png" }
         if !pngFiles.isEmpty {
-            localFiles = try await context.convertFormat(localFiles, to: .heic, progressTitle: "Converting to HEIC")
+            localFiles = try await context.convertFormat(
+                localFiles, to: .heic,
+                heicOptions: entry.heicConverterOptions, webpOptions: nil,
+                progressTitle: "Converting to HEIC"
+            )
         }
 
         let filesToWrite = localFiles.filter { $0.destination.file.pathExtension != "heic" }
@@ -301,6 +305,7 @@ public struct iOSImagesExporter: ImagesExporter {
         let scales = entry.effectiveScales
         let rasterFiles = try await context.rasterizeSVGs(
             downloadedSVGs, scales: scales, to: outputFormat,
+            heicOptions: outputFormat == .heic ? entry.heicConverterOptions : nil,
             progressTitle: "Rasterizing SVGs to \(outputFormat.rawValue.uppercased())"
         )
 
@@ -516,9 +521,18 @@ private enum iOSImagesExporterHelpers {
                 contentsJson["properties"] = ["template-rendering-intent": renderMode.rawValue]
             }
 
-            guard let jsonData = try? JSONSerialization.data(
-                withJSONObject: contentsJson, options: [.prettyPrinted, .sortedKeys]
-            ) else { return nil }
+            let jsonData: Data
+            do {
+                jsonData = try JSONSerialization.data(
+                    withJSONObject: contentsJson, options: [.prettyPrinted, .sortedKeys]
+                )
+            } catch {
+                fputs(
+                    "Warning: Failed to create Contents.json for \(imagesetDir.lastPathComponent): \(error)\n",
+                    stderr
+                )
+                return nil
+            }
 
             return FileContents(
                 destination: Destination(directory: imagesetDir, file: URL(fileURLWithPath: "Contents.json")),

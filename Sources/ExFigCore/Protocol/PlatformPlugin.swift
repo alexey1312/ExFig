@@ -7,7 +7,7 @@ import Foundation
 ///
 /// ## Plugin Registration
 ///
-/// Plugins are registered with a `PluginRegistry` and are selected based on
+/// Plugins are registered with a registry and are selected based on
 /// configuration keys found in the PKL config file:
 ///
 /// ```swift

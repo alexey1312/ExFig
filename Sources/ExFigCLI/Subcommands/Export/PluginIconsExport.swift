@@ -34,7 +34,6 @@ extension ExFigCommand.ExportIcons {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = ios.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -54,7 +53,7 @@ extension ExFigCommand.ExportIcons {
         // Export via plugin (returns IconsExportResult with hashes)
         let exporter = iOSIconsExporter()
         let result = try await exporter.exportIcons(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -66,7 +65,7 @@ extension ExFigCommand.ExportIcons {
                     xcodeProjPath: ios.xcodeprojPath,
                     target: ios.target
                 )
-                for entry in pluginEntries {
+                for entry in entries {
                     if let imageSwift = entry.imageSwift {
                         try xcodeProject.addFileReferenceToXcodeProj(imageSwift)
                     }
@@ -76,7 +75,7 @@ extension ExFigCommand.ExportIcons {
                 }
                 try xcodeProject.save()
             } catch {
-                ui.warning(.xcodeProjectUpdateFailed)
+                ui.warning(.xcodeProjectUpdateFailed(detail: error.localizedDescription))
             }
         }
 
@@ -98,7 +97,6 @@ extension ExFigCommand.ExportIcons {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = android.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -117,7 +115,7 @@ extension ExFigCommand.ExportIcons {
 
         let exporter = AndroidIconsExporter()
         let result = try await exporter.exportIcons(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -138,7 +136,6 @@ extension ExFigCommand.ExportIcons {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = flutter.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -157,7 +154,7 @@ extension ExFigCommand.ExportIcons {
 
         let exporter = FlutterIconsExporter()
         let result = try await exporter.exportIcons(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -178,7 +175,6 @@ extension ExFigCommand.ExportIcons {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = web.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -197,7 +193,7 @@ extension ExFigCommand.ExportIcons {
 
         let exporter = WebIconsExporter()
         let result = try await exporter.exportIcons(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )

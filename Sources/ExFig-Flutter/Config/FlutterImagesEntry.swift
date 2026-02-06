@@ -99,6 +99,20 @@ public struct WebpOptions: Decodable, Sendable {
         self.lossless = lossless
         self.quality = quality
     }
+
+    /// Converts to protocol-level ``WebpConverterOptions``.
+    public var converterOptions: WebpConverterOptions {
+        WebpConverterOptions(lossless: lossless, quality: quality)
+    }
+}
+
+// MARK: - Converter Options
+
+public extension FlutterImagesEntry {
+    /// Converts entry's WebP options to protocol-level ``WebpConverterOptions``.
+    var webpConverterOptions: WebpConverterOptions? {
+        webpOptions?.converterOptions
+    }
 }
 
 // MARK: - Convenience Extensions

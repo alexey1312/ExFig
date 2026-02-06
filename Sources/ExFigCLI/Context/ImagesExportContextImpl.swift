@@ -2,6 +2,8 @@ import ExFigCore
 import FigmaAPI
 import Foundation
 
+// swiftlint:disable type_body_length
+
 /// Concrete implementation of `ImagesExportContext` for the ExFig CLI.
 ///
 /// Bridges between the plugin system and ExFig's internal services:
@@ -91,7 +93,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         let loader = ImagesLoader(
             client: client,
             params: params,
-            platform: .ios, // Platform is determined by caller, loader just fetches
+            platform: platform,
             logger: ExFigCommand.logger,
             config: config
         )
@@ -157,15 +159,17 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
     func convertFormat(
         _ files: [FileContents],
         to outputFormat: ImageOutputFormat,
+        heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         guard !files.isEmpty else { return files }
 
         switch outputFormat {
         case .heic:
-            return try await convertToHeic(files: files, progressTitle: progressTitle)
+            return try await convertToHeic(files: files, options: heicOptions, progressTitle: progressTitle)
         case .webp:
-            return try await convertToWebP(files: files, progressTitle: progressTitle)
+            return try await convertToWebP(files: files, options: webpOptions, progressTitle: progressTitle)
         case .png:
             return files // Already PNG, no conversion needed
         }
@@ -175,6 +179,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         _ files: [FileContents],
         scales: [Double],
         to outputFormat: ImageOutputFormat,
+        heicOptions: HeicConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         guard !files.isEmpty else { return [] }
@@ -190,6 +195,8 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
                 } else if let dataFile = fileContents.dataFile {
                     svgData = try Data(contentsOf: dataFile)
                 } else {
+                    let filename = fileContents.destination.file.lastPathComponent
+                    ui.warning("Failed to read SVG data for rasterization: \(filename)")
                     continue
                 }
 
@@ -204,7 +211,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
                     let outputData: Data
                     switch outputFormat {
                     case .heic:
-                        let converter = HeicConverterFactory.createSvgToHeicConverter(from: nil)
+                        let converter = HeicConverterFactory.createSvgToHeicConverter(from: heicOptions)
                         outputData = try converter.convert(svgData: svgData, scale: scale, fileName: baseName)
                     case .png, .webp:
                         let converter = SvgToPngConverter()
@@ -242,6 +249,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
 
     private func convertToHeic(
         files: [FileContents],
+        options: HeicConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         // Check if HEIC encoding is available
@@ -256,7 +264,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         // Write PNG files to disk first (HEIC converter reads from disk)
         try ExFigCommand.fileWriter.write(files: pngFiles)
 
-        let converter = HeicConverterFactory.createHeicConverter(from: nil)
+        let converter = HeicConverterFactory.createHeicConverter(from: options)
         let filesToConvert = pngFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
 
         try await ui.withProgress(progressTitle, total: filesToConvert.count) { progress in
@@ -281,6 +289,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
 
     private func convertToWebP(
         files: [FileContents],
+        options: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         let pngFiles = files.filter { $0.destination.file.pathExtension == "png" }
@@ -289,7 +298,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         // Write PNG files to disk first
         try ExFigCommand.fileWriter.write(files: pngFiles)
 
-        let converter = WebpConverterFactory.createWebpConverter(from: nil)
+        let converter = WebpConverterFactory.createWebpConverter(from: options)
         let filesToConvert = pngFiles.map { URL(fileURLWithPath: $0.destination.url.path) }
 
         try await ui.withProgress(progressTitle, total: filesToConvert.count) { progress in

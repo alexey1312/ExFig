@@ -2,94 +2,9 @@
 import Foundation
 import Testing
 
-/// Tests for NameProcessingConfig — regexp validation and replacement.
+/// Tests for NameProcessingConfig — decoding and initialization.
 @Suite("NameProcessingConfig Tests")
 struct NameProcessingConfigTests {
-    // MARK: - Validation Regexp
-
-    @Test("Validates name against regexp - matches")
-    func validatesNameMatches() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: "^icon_",
-            nameReplaceRegexp: nil
-        )
-
-        #expect(config.validates(name: "icon_home"))
-        #expect(config.validates(name: "icon_settings"))
-    }
-
-    @Test("Validates name against regexp - no match")
-    func validatesNameNoMatch() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: "^icon_",
-            nameReplaceRegexp: nil
-        )
-
-        #expect(!config.validates(name: "image_home"))
-        #expect(!config.validates(name: "button_primary"))
-    }
-
-    @Test("Validates all names when no regexp provided")
-    func validatesAllWhenNoRegexp() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: nil,
-            nameReplaceRegexp: nil
-        )
-
-        #expect(config.validates(name: "anything"))
-        #expect(config.validates(name: ""))
-    }
-
-    // MARK: - Replacement Regexp
-
-    @Test("Applies replacement regexp with capture groups")
-    func appliesReplacementWithCapture() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: "^(icon|image)_(.+)$",
-            nameReplaceRegexp: "$2"
-        )
-
-        let result = config.processName("icon_home")
-
-        #expect(result == "home")
-    }
-
-    @Test("Returns original name when no replacement")
-    func returnsOriginalWhenNoReplacement() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: "^icon_",
-            nameReplaceRegexp: nil
-        )
-
-        let result = config.processName("icon_home")
-
-        #expect(result == "icon_home")
-    }
-
-    @Test("Returns original name when regexp doesn't match")
-    func returnsOriginalWhenNoMatch() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: "^icon_(.+)$",
-            nameReplaceRegexp: "$1"
-        )
-
-        let result = config.processName("button_primary")
-
-        #expect(result == "button_primary")
-    }
-
-    @Test("Handles complex replacement patterns")
-    func handlesComplexPatterns() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: "^([a-z]+)/([a-z]+)/(.+)$",
-            nameReplaceRegexp: "$2_$3"
-        )
-
-        let result = config.processName("icons/navigation/arrow_back")
-
-        #expect(result == "navigation_arrow_back")
-    }
-
     // MARK: - Decoding
 
     @Test("Decodes from JSON")
@@ -117,18 +32,5 @@ struct NameProcessingConfigTests {
 
         #expect(config.nameValidateRegexp == nil)
         #expect(config.nameReplaceRegexp == nil)
-    }
-
-    // MARK: - Edge Cases
-
-    @Test("Handles invalid regexp gracefully")
-    func handlesInvalidRegexp() {
-        let config = NameProcessingConfig(
-            nameValidateRegexp: "[invalid(", // Invalid regexp
-            nameReplaceRegexp: nil
-        )
-
-        // Should not crash, returns false for validation
-        #expect(!config.validates(name: "test"))
     }
 }

@@ -33,7 +33,6 @@ extension ExFigCommand.ExportImages {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = ios.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -53,7 +52,7 @@ extension ExFigCommand.ExportImages {
         // Export via plugin (returns ImagesExportResult with hashes)
         let exporter = iOSImagesExporter()
         let result = try await exporter.exportImages(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -65,7 +64,7 @@ extension ExFigCommand.ExportImages {
                     xcodeProjPath: ios.xcodeprojPath,
                     target: ios.target
                 )
-                for entry in pluginEntries {
+                for entry in entries {
                     if let imageSwift = entry.imageSwift {
                         try xcodeProject.addFileReferenceToXcodeProj(imageSwift)
                     }
@@ -75,7 +74,7 @@ extension ExFigCommand.ExportImages {
                 }
                 try xcodeProject.save()
             } catch {
-                ui.warning(.xcodeProjectUpdateFailed)
+                ui.warning(.xcodeProjectUpdateFailed(detail: error.localizedDescription))
             }
         }
 
@@ -96,7 +95,6 @@ extension ExFigCommand.ExportImages {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = android.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -115,7 +113,7 @@ extension ExFigCommand.ExportImages {
 
         let exporter = AndroidImagesExporter()
         let result = try await exporter.exportImages(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -136,7 +134,6 @@ extension ExFigCommand.ExportImages {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = flutter.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -155,7 +152,7 @@ extension ExFigCommand.ExportImages {
 
         let exporter = FlutterImagesExporter()
         let result = try await exporter.exportImages(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )
@@ -176,7 +173,6 @@ extension ExFigCommand.ExportImages {
         ui: TerminalUI,
         granularCacheManager: GranularCacheManager?
     ) async throws -> PlatformExportResult {
-        let pluginEntries = entries
         let platformConfig = web.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
@@ -195,7 +191,7 @@ extension ExFigCommand.ExportImages {
 
         let exporter = WebImagesExporter()
         let result = try await exporter.exportImages(
-            entries: pluginEntries,
+            entries: entries,
             platformConfig: platformConfig,
             context: context
         )

@@ -1,4 +1,5 @@
 import Foundation
+import Logging
 
 /// Extracts unique Figma file IDs from config files.
 ///
@@ -43,15 +44,22 @@ struct FileIdExtractor {
             var result: PKLConfig?
 
             Task {
-                result = try? await evaluator.evaluateToPKLConfig(configPath: url)
-                semaphore.signal()
+                defer { semaphore.signal() }
+                do {
+                    result = try await evaluator.evaluateToPKLConfig(configPath: url)
+                } catch {
+                    ExFigCommand.logger.warning(
+                        "Failed to parse config \(url.lastPathComponent): \(error.localizedDescription)"
+                    )
+                }
             }
 
             semaphore.wait()
             return result
         } catch {
-            // PKL evaluation failed, skip this file
-            // The actual batch processing will report this error later
+            ExFigCommand.logger.warning(
+                "Failed to create PKL evaluator for \(url.lastPathComponent): \(error.localizedDescription)"
+            )
             return nil
         }
     }

@@ -124,6 +124,9 @@ struct ConfigDiscovery {
 
             return false
         } catch {
+            ExFigCommand.logger.warning(
+                "Failed to read config file \(url.lastPathComponent): \(error.localizedDescription)"
+            )
             return false
         }
     }

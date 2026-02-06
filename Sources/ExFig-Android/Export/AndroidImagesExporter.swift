@@ -247,7 +247,11 @@ private extension AndroidImagesExporter {
         try context.writeFiles(localFiles)
 
         // Convert PNG to WebP
-        localFiles = try await context.convertFormat(localFiles, to: .webp, progressTitle: "Converting to WebP")
+        localFiles = try await context.convertFormat(
+            localFiles, to: .webp,
+            heicOptions: nil, webpOptions: entry.webpConverterOptions,
+            progressTitle: "Converting to WebP"
+        )
 
         if context.filter == nil {
             let outputDir = platformConfig.mainRes.appendingPathComponent(entry.output)

@@ -230,7 +230,11 @@ private extension FlutterImagesExporter {
         var localFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading images")
         try context.writeFiles(localFiles)
 
-        localFiles = try await context.convertFormat(localFiles, to: .webp, progressTitle: "Converting to WebP")
+        localFiles = try await context.convertFormat(
+            localFiles, to: .webp,
+            heicOptions: nil, webpOptions: entry.webpConverterOptions,
+            progressTitle: "Converting to WebP"
+        )
 
         let assetsDirectory = URL(fileURLWithPath: entry.output)
         if context.filter == nil {
