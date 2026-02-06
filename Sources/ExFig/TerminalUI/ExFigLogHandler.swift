@@ -1,6 +1,6 @@
 import Foundation
 import Logging
-import Rainbow
+import Noora
 
 /// Custom log handler that routes output through TerminalUI
 struct ExFigLogHandler: LogHandler {
@@ -69,13 +69,13 @@ struct ExFigLogHandler: LogHandler {
 
         switch level {
         case .trace, .debug:
-            return levelText.lightBlack
+            return NooraUI.format(.muted(levelText))
         case .info, .notice:
-            return levelText.cyan
+            return NooraUI.format(.primary(levelText))
         case .warning:
-            return levelText.yellow
+            return NooraUI.format(.accent(levelText))
         case .error, .critical:
-            return levelText.red
+            return NooraUI.format(.danger(levelText))
         }
     }
 
@@ -86,9 +86,9 @@ struct ExFigLogHandler: LogHandler {
 
         switch level {
         case .warning:
-            return "⚠ \(message)".yellow
+            return NooraUI.format(.accent("⚠ \(message)"))
         case .error, .critical:
-            return "✗ \(message)".red
+            return NooraUI.format(.danger("✗ \(message)"))
         default:
             return "\(message)"
         }

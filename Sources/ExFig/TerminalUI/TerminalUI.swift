@@ -1,7 +1,6 @@
 // swiftlint:disable file_length
 import ExFigCore
 import Foundation
-import Rainbow
 
 /// Main facade for terminal UI operations
 final class TerminalUI: Sendable {

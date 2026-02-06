@@ -21,6 +21,13 @@ enum NooraUI {
         shared.format(text)
     }
 
+    /// Format a single TerminalText component to a String with ANSI colors.
+    /// - Parameter component: Semantic component to format (e.g. `.primary("text")`)
+    /// - Returns: String with ANSI escape codes for terminal display
+    static func format(_ component: TerminalText.Component) -> String {
+        shared.format("\(component)")
+    }
+
     // MARK: - Convenience Methods
 
     /// Format a success message with checkmark icon.
@@ -114,6 +121,18 @@ enum NooraUI {
                 return format(text)
             }
         }.joined(separator: "\n")
+    }
+
+    // MARK: - Link Formatting
+
+    /// Format a clickable link with underline and primary color.
+    /// - Parameters:
+    ///   - text: The link text to display
+    ///   - useColors: Whether to apply colors
+    /// - Returns: Formatted string with ANSI underline and primary color
+    static func formatLink(_ text: String, useColors: Bool) -> String {
+        guard useColors else { return text }
+        return "\u{001B}[4m\(format(.primary(text)))\u{001B}[24m"
     }
 
     // MARK: - Progress Components

@@ -1,7 +1,7 @@
 // swiftlint:disable file_length type_body_length
 import FigmaAPI
 import Foundation
-import Rainbow
+import Noora
 
 /// Progress display for batch processing of multiple configs.
 ///
@@ -220,7 +220,7 @@ actor BatchProgressView {
         let completed = configStates.values.filter { isCompleted($0.status) }.count
         let total = configStates.count
         let header = "Batch Export (\(completed)/\(total) configs)"
-        lines.append(useColors ? header.bold : header)
+        lines.append(useColors ? NooraUI.format(.command(header)) : header)
 
         // Config lines
         let sortedConfigs = configOrder.compactMap { configStates[$0] }
@@ -270,13 +270,13 @@ actor BatchProgressView {
     private func statusIcon(_ status: ConfigState.Status) -> String {
         switch status {
         case .pending:
-            useColors ? "○".lightBlack : "○"
+            useColors ? NooraUI.format(.muted("○")) : "○"
         case .running:
-            useColors ? "●".cyan : "●"
+            useColors ? NooraUI.format(.primary("●")) : "●"
         case .succeeded:
-            useColors ? "✓".green : "✓"
+            useColors ? NooraUI.format(.success("✓")) : "✓"
         case .failed:
-            useColors ? "✗".red : "✗"
+            useColors ? NooraUI.format(.danger("✗")) : "✗"
         }
     }
 
@@ -289,7 +289,7 @@ actor BatchProgressView {
         let emptyBar = String(repeating: "░", count: empty)
 
         if useColors {
-            return "[\(filledBar.cyan)\(emptyBar.lightBlack)]"
+            return "[\(NooraUI.format(.primary(filledBar)))\(NooraUI.format(.muted(emptyBar)))]"
         }
         return "[\(filledBar)\(emptyBar)]"
     }
@@ -362,19 +362,20 @@ actor BatchProgressView {
     private func formatStatusText(_ config: ConfigState) -> String {
         switch config.status {
         case .pending:
-            return useColors ? "Waiting...".lightBlack : "Waiting..."
+            return useColors ? NooraUI.format(.muted("Waiting...")) : "Waiting..."
         case .running:
             var text = formatExportProgress(config.exportProgress)
             if let eta = calculateETA(config), eta > 1 {
                 let etaStr = formatDuration(eta)
-                text += useColors ? "  ETA: \(etaStr)".lightBlack : "  ETA: \(etaStr)"
+                text += useColors ? "  " + NooraUI.format(.muted("ETA: \(etaStr)")) : "  ETA: \(etaStr)"
             }
             return text
         case .succeeded:
-            return formatExportProgress(config.exportProgress) + (useColors ? " ✓".green : " ✓")
+            return formatExportProgress(config.exportProgress) +
+                (useColors ? " " + NooraUI.format(.success("✓")) : " ✓")
         case let .failed(error):
             let truncated = String(error.prefix(30))
-            return useColors ? truncated.red : truncated
+            return useColors ? NooraUI.format(.danger(truncated)) : truncated
         }
     }
 
@@ -383,28 +384,28 @@ actor BatchProgressView {
 
         if let colors = progress.colors, colors.total > 0 {
             let status = colors.current >= colors.total
-                ? (useColors ? "✓".green : "✓")
+                ? (useColors ? NooraUI.format(.success("✓")) : "✓")
                 : "\(colors.current)/\(colors.total)"
             parts.append("Colors: \(status)")
         }
 
         if let icons = progress.icons, icons.total > 0 {
             let status = icons.current >= icons.total
-                ? (useColors ? "✓".green : "✓")
+                ? (useColors ? NooraUI.format(.success("✓")) : "✓")
                 : "\(icons.current)/\(icons.total)"
             parts.append("Icons: \(status)")
         }
 
         if let images = progress.images, images.total > 0 {
             let status = images.current >= images.total
-                ? (useColors ? "✓".green : "✓")
+                ? (useColors ? NooraUI.format(.success("✓")) : "✓")
                 : "\(images.current)/\(images.total)"
             parts.append("Images: \(status)")
         }
 
         if let typography = progress.typography, typography.total > 0 {
             let status = typography.current >= typography.total
-                ? (useColors ? "✓".green : "✓")
+                ? (useColors ? NooraUI.format(.success("✓")) : "✓")
                 : "\(typography.current)/\(typography.total)"
             parts.append("Typography: \(status)")
         }
@@ -418,9 +419,10 @@ actor BatchProgressView {
 
         if status.isPaused {
             let retryStr = status.retryAfter.map { String(format: "%.0fs", $0) } ?? "unknown"
+            let pausedMsg = "Rate limit: Paused (retry after \(retryStr))"
             rateText = useColors
-                ? "Rate limit: Paused (retry after \(retryStr))".yellow
-                : "Rate limit: Paused (retry after \(retryStr))"
+                ? NooraUI.format(.accent(pausedMsg))
+                : pausedMsg
         } else {
             let currentRate = String(format: "%.1f", status.currentRate)
             let maxRate = String(format: "%.0f", status.requestsPerMinute / 60.0)

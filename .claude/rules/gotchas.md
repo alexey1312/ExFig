@@ -95,6 +95,23 @@ func withContext<T>(operation: () async -> T) async -> T
 - Add `// swiftlint:disable:next force_try` before `try!` in tests
 - Add `// swiftlint:disable file_length` for files > 400 lines
 
+### void_function_in_ternary False Positive
+
+SwiftLint flags `NooraUI.format()` calls in ternary operators as `void_function_in_ternary` even though they return `String`.
+Fix by extracting into separate `let` variables:
+
+```swift
+// BAD - triggers SwiftLint
+let icon: String = if useColors {
+    success ? NooraUI.format(.success("✓")) : NooraUI.format(.danger("✗"))
+} else { ... }
+
+// GOOD
+let successIcon = useColors ? NooraUI.format(.success("✓")) : "✓"
+let failIcon = useColors ? NooraUI.format(.danger("✗")) : "✗"
+let icon = success ? successIcon : failIcon
+```
+
 ## Test Helpers for Codable Types
 
 ```swift

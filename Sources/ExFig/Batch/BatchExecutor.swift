@@ -1,6 +1,5 @@
 import FigmaAPI
 import Foundation
-import Rainbow
 
 /// Type alias for config processing handler.
 typealias ConfigHandler = @Sendable (ConfigFile) async -> ConfigResult

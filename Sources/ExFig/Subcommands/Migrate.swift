@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import Rainbow
+import Noora
 import Yams
 
 extension ExFigCommand {
@@ -285,7 +285,7 @@ extension ExFigCommand {
                 if !trimmed.isEmpty {
                     let formatted = "  + \(line)"
                     if useColors {
-                        TerminalOutputManager.shared.print(formatted.green)
+                        TerminalOutputManager.shared.print(NooraUI.format(.success(formatted)))
                     } else {
                         TerminalOutputManager.shared.print(formatted)
                     }

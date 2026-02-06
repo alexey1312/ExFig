@@ -20,7 +20,7 @@ let package = Package(
         .package(url: "https://github.com/SwiftGen/StencilSwiftKit", from: "2.10.1"),
         .package(url: "https://github.com/tuist/XcodeProj.git", from: "8.27.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.0"),
-        .package(url: "https://github.com/onevcat/Rainbow", from: "4.2.0"),
+
         .package(url: "https://github.com/the-swift-collective/libwebp.git", from: "1.4.1"),
         .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
         .package(url: "https://github.com/tuist/Noora", from: "0.54.0"),
@@ -45,7 +45,7 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "Logging", package: "swift-log"),
-                .product(name: "Rainbow", package: "Rainbow"),
+
                 .product(name: "WebP", package: "libwebp"),
                 .product(name: "LibPNG", package: "libpng"),
                 .product(name: "Noora", package: "Noora"),

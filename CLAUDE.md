@@ -211,25 +211,38 @@ let jsonData = try JSONCodec.encode(myValue)
 
 **Noora usage:** See `.claude/rules/terminal-ui.md` for full patterns.
 
+**NooraUI quick reference:**
+
+```swift
+// Format a single component (uses format(_ component:) overload)
+NooraUI.format(.primary("text"))    // cyan
+NooraUI.format(.success("✓"))      // green
+NooraUI.format(.danger("✗"))       // red
+NooraUI.format(.accent("⚠"))      // yellow
+NooraUI.format(.muted("dim"))      // gray
+NooraUI.format(.command("bold"))   // bold/secondary
+NooraUI.formatLink("url", useColors: true)  // underlined primary
+```
+
 ## Dependencies
 
-| Package               | Version | Purpose                     |
-| --------------------- | ------- | --------------------------- |
-| swift-argument-parser | 1.5.0+  | CLI framework               |
-| swift-collections     | 1.2.x   | Ordered collections         |
-| Yams                  | 5.3.0+  | YAML parsing                |
-| Stencil               | 0.15.1+ | Template engine             |
-| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions    |
-| XcodeProj             | 8.27.0+ | Xcode project manipulation  |
-| swift-log             | 1.6.0+  | Logging                     |
-| Rainbow               | 4.2.0+  | Terminal colors             |
-| libwebp               | 1.4.1+  | WebP encoding               |
-| libpng                | 1.6.45+ | PNG decoding                |
-| swift-custom-dump     | 1.3.0+  | Test assertions             |
-| Noora                 | 0.54.0+ | Terminal UI design system   |
-| swift-resvg           | 0.45.1  | SVG parsing/rendering       |
-| swift-docc-plugin     | 1.4.5+  | DocC documentation          |
-| swift-yyjson          | 0.4.0+  | High-performance JSON codec |
+| Package               | Version | Purpose                    |
+| --------------------- | ------- | -------------------------- |
+| swift-argument-parser | 1.5.0+  | CLI framework              |
+| swift-collections     | 1.2.x   | Ordered collections        |
+| Yams                  | 5.3.0+  | YAML parsing               |
+| Stencil               | 0.15.1+ | Template engine            |
+| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions   |
+| XcodeProj             | 8.27.0+ | Xcode project manipulation |
+| swift-log             | 1.6.0+  | Logging                    |
+
+| libwebp | 1.4.1+ | WebP encoding |
+| libpng | 1.6.45+ | PNG decoding |
+| swift-custom-dump | 1.3.0+ | Test assertions |
+| Noora | 0.54.0+ | Terminal UI design system |
+| swift-resvg | 0.45.1 | SVG parsing/rendering |
+| swift-docc-plugin | 1.4.5+ | DocC documentation |
+| swift-yyjson | 0.4.0+ | High-performance JSON codec |
 
 ## Troubleshooting
 
@@ -260,3 +273,7 @@ Contextual documentation is in `.claude/rules/`:
 | `testing-workflow.md` | Testing guidelines, commit format                  |
 
 These rules are loaded lazily when working with related files.
+
+## Session Wrap-Up
+
+After completing a task, call `Skill(claude-md-management:revise-claude-md)` to capture learnings and update CLAUDE.md.

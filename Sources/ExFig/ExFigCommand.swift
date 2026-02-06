@@ -1,7 +1,6 @@
 import ArgumentParser
 import Foundation
 import Logging
-import Rainbow
 import SVGKit
 
 enum ExFigError: LocalizedError {

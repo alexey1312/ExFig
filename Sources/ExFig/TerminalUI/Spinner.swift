@@ -1,5 +1,5 @@
 import Foundation
-import Rainbow
+import Noora
 
 /// Animated spinner for terminal progress indication.
 /// Uses a dedicated high-priority DispatchQueue to ensure smooth animation
@@ -52,7 +52,7 @@ final class Spinner: @unchecked Sendable {
 
         let initialMessage = message
         let initialFrame = Self.frames[0]
-        let coloredFrame = useColors ? initialFrame.cyan : initialFrame
+        let coloredFrame = useColors ? NooraUI.format(.primary(initialFrame)) : initialFrame
 
         // Set animation flag and initial frame synchronously BEFORE dispatching
         // This ensures log messages see the animation state immediately
@@ -115,11 +115,9 @@ final class Spinner: @unchecked Sendable {
         }
 
         let finalMessage = message ?? self.message
-        let icon: String = if useColors {
-            success ? "✓".green : "✗".red
-        } else {
-            success ? "✓" : "✗"
-        }
+        let successIcon = useColors ? NooraUI.format(.success("✓")) : "✓"
+        let failIcon = useColors ? NooraUI.format(.danger("✗")) : "✗"
+        let icon = success ? successIcon : failIcon
 
         if useAnimations {
             TerminalOutputManager.shared.writeDirect(
@@ -143,7 +141,7 @@ final class Spinner: @unchecked Sendable {
         guard !currentMessage.isEmpty else { return }
 
         let frame = Self.frames[currentFrameIndex % Self.frames.count]
-        let coloredFrame = useColors ? frame.cyan : frame
+        let coloredFrame = useColors ? NooraUI.format(.primary(frame)) : frame
         TerminalOutputManager.shared.writeAnimationFrame("\(coloredFrame) \(currentMessage)")
     }
 }

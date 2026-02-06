@@ -1,5 +1,5 @@
 import Foundation
-import Rainbow
+import Noora
 
 /// Manages multiple concurrent progress indicators
 actor MultiProgressManager {
@@ -108,11 +108,11 @@ actor MultiProgressManager {
 
             let icon: String = switch item.status {
             case .running:
-                useColors ? "⠸".cyan : "⠸"
+                useColors ? NooraUI.format(.primary("⠸")) : "⠸"
             case .succeeded:
-                useColors ? "✓".green : "✓"
+                useColors ? NooraUI.format(.success("✓")) : "✓"
             case .failed:
-                useColors ? "✗".red : "✗"
+                useColors ? NooraUI.format(.danger("✗")) : "✗"
             }
 
             if let total = item.total, total > 0 {

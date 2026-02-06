@@ -1,5 +1,5 @@
 import Foundation
-import Rainbow
+import Noora
 
 /// Progress bar for terminal progress indication.
 /// Uses a dedicated high-priority DispatchQueue to ensure smooth animation
@@ -152,11 +152,9 @@ final class ProgressBar: @unchecked Sendable {
         }
 
         let finalMessage = message ?? self.message
-        let icon: String = if useColors {
-            success ? "✓".green : "✗".red
-        } else {
-            success ? "✓" : "✗"
-        }
+        let successIcon = useColors ? NooraUI.format(.success("✓")) : "✓"
+        let failIcon = useColors ? NooraUI.format(.danger("✗")) : "✗"
+        let icon = success ? successIcon : failIcon
 
         if useAnimations {
             TerminalOutputManager.shared.writeDirect(
@@ -195,7 +193,7 @@ final class ProgressBar: @unchecked Sendable {
         let emptyBar = String(repeating: "░", count: empty)
 
         let bar = if useColors {
-            "[\(filledBar.cyan)\(emptyBar.lightBlack)]"
+            "[\(NooraUI.format(.primary(filledBar)))\(NooraUI.format(.muted(emptyBar)))]"
         } else {
             "[\(filledBar)\(emptyBar)]"
         }

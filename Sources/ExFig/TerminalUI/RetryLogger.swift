@@ -1,6 +1,6 @@
 import FigmaAPI
 import Foundation
-import Rainbow
+import Noora
 
 /// Context for formatting retry messages.
 struct RetryMessageContext: Sendable {
@@ -57,12 +57,14 @@ enum RetryLogger {
             delay: delayStr
         )
 
-        let icon = context.useColors ? "⚠".yellow : "⚠"
+        let icon = context.useColors ? NooraUI.format(.accent("⚠")) : "⚠"
         var message = "\(icon) \(formatter.format(warning))"
 
         // Add config name prefix if not empty (for batch processing)
         if !context.configName.isEmpty {
-            let prefix = context.useColors ? "[\(context.configName)]".lightBlack : "[\(context.configName)]"
+            let prefix = context.useColors ? NooraUI.format(.muted(
+                "[\(context.configName)]"
+            )) : "[\(context.configName)]"
             message = "\(prefix) \(message)"
         }
 
@@ -80,13 +82,13 @@ enum RetryLogger {
         maxAttempts: Int,
         useColors: Bool
     ) -> String {
-        let icon = useColors ? "✗".red : "✗"
+        let icon = useColors ? NooraUI.format(.danger("✗")) : "✗"
         var message = "\(icon) "
 
         if let apiError = error as? FigmaAPIError {
             message += apiError.errorDescription ?? "Unknown error"
             if let suggestion = apiError.recoverySuggestion {
-                let suggestionText = useColors ? suggestion.lightBlack : suggestion
+                let suggestionText = useColors ? NooraUI.format(.muted(suggestion)) : suggestion
                 message += "\n   \(suggestionText)"
             }
         } else {
