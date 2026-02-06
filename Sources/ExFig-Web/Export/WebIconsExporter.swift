@@ -117,7 +117,7 @@ public struct WebIconsExporter: IconsExporter {
         context: some IconsExportContext
     ) async throws -> ([AssetPair<ImagePack>], URL, URL) {
         let icons = try await context.withSpinner("Fetching icons from Figma (\(entry.outputDirectory))...") {
-            try await context.loadIcons(from: entry.iconsSourceInput(fileId: ""))
+            try await context.loadIcons(from: entry.iconsSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing icons for Web...") {

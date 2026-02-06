@@ -57,9 +57,8 @@ public struct FlutterIconsEntry: Decodable, Sendable {
 
 public extension FlutterIconsEntry {
     /// Returns an IconsSourceInput for use with IconsExportContext.
-    func iconsSourceInput(fileId: String, darkFileId: String? = nil) -> IconsSourceInput {
+    func iconsSourceInput(darkFileId: String? = nil) -> IconsSourceInput {
         IconsSourceInput(
-            fileId: fileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
             useSingleFile: darkFileId == nil,

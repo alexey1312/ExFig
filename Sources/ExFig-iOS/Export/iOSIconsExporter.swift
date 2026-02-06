@@ -86,7 +86,7 @@ public struct iOSIconsExporter: IconsExporter {
                 "Fetching icons from Figma (\(entry.assetsFolder))..."
             ) {
                 try await gcContext.loadIconsWithGranularCache(
-                    from: entry.iconsSourceInput(fileId: ""),
+                    from: entry.iconsSourceInput(),
                     onProgress: nil
                 )
             }
@@ -106,7 +106,7 @@ public struct iOSIconsExporter: IconsExporter {
             let icons = try await context.withSpinner(
                 "Fetching icons from Figma (\(entry.assetsFolder))..."
             ) {
-                try await context.loadIcons(from: entry.iconsSourceInput(fileId: ""))
+                try await context.loadIcons(from: entry.iconsSourceInput())
             }
             loadResult = IconsLoadOutputWithHashes(
                 light: icons.light,

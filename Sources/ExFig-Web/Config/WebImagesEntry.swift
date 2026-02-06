@@ -57,9 +57,8 @@ public struct WebImagesEntry: Decodable, Sendable {
 
 public extension WebImagesEntry {
     /// Returns an ImagesSourceInput for use with ImagesExportContext.
-    func imagesSourceInput(fileId: String, darkFileId: String? = nil) -> ImagesSourceInput {
+    func imagesSourceInput(darkFileId: String? = nil) -> ImagesSourceInput {
         ImagesSourceInput(
-            fileId: fileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
             sourceFormat: .svg,

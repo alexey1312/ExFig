@@ -244,7 +244,7 @@ private extension AndroidIconsExporter {
         context: some IconsExportContext
     ) async throws -> ([AssetPair<ImagePack>], (light: URL, dark: URL)) {
         let icons = try await context.withSpinner("Fetching icons from Figma (\(entry.output))...") {
-            try await context.loadIcons(from: entry.iconsSourceInput(fileId: ""))
+            try await context.loadIcons(from: entry.iconsSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing icons for Android...") {

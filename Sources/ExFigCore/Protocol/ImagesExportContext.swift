@@ -125,9 +125,6 @@ public extension ImagesExportContext {
 
 /// Input for loading images from Figma.
 public struct ImagesSourceInput: Sendable {
-    /// The Figma file ID containing images.
-    public let fileId: String
-
     /// Optional dark mode file ID (if separate files for light/dark).
     public let darkFileId: String?
 
@@ -153,7 +150,6 @@ public struct ImagesSourceInput: Sendable {
     public let nameReplaceRegexp: String?
 
     public init(
-        fileId: String,
         darkFileId: String? = nil,
         frameName: String,
         sourceFormat: ImageSourceFormat = .png,
@@ -163,7 +159,6 @@ public struct ImagesSourceInput: Sendable {
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil
     ) {
-        self.fileId = fileId
         self.darkFileId = darkFileId
         self.frameName = frameName
         self.sourceFormat = sourceFormat

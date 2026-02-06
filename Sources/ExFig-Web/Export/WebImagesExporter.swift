@@ -88,7 +88,7 @@ public struct WebImagesExporter: ImagesExporter {
         context: some ImagesExportContext
     ) async throws -> ([AssetPair<ImagePack>], URL, URL) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.outputDirectory))...") {
-            try await context.loadImages(from: entry.imagesSourceInput(fileId: ""))
+            try await context.loadImages(from: entry.imagesSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing images for Web...") {

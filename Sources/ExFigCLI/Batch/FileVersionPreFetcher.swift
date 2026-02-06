@@ -108,9 +108,7 @@ struct FileVersionPreFetcher: Sendable {
         } catch {
             // Pre-fetch failed, proceed without optimization
             // Individual configs will fetch their own metadata
-            if configuration.verbose {
-                ui.warning("Pre-fetch failed: \(error.bestDescription)")
-            }
+            ui.warning("Pre-fetch failed: \(error.bestDescription)")
             return nil
         }
     }
@@ -160,9 +158,7 @@ struct FileVersionPreFetcher: Sendable {
                 ui: ui
             )
         } catch {
-            if configuration.verbose {
-                ui.warning("Pre-fetch failed: \(error.bestDescription)")
-            }
+            ui.warning("Pre-fetch failed: \(error.bestDescription)")
             return PreFetchResult(versions: nil, components: nil, nodes: nil)
         }
     }

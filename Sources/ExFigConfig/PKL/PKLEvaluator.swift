@@ -45,27 +45,39 @@ public actor PKLEvaluator {
         process.standardOutput = stdout
         process.standardError = stderr
 
-        try process.run()
-        process.waitUntilExit()
+        return try await withCheckedThrowingContinuation { continuation in
+            process.terminationHandler = { _ in
+                let outputData = stdout.fileHandleForReading.readDataToEndOfFile()
+                let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
+                let exitCode = process.terminationStatus
 
-        let outputData = stdout.fileHandleForReading.readDataToEndOfFile()
-        let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
+                if exitCode != 0 {
+                    let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
+                    continuation.resume(
+                        throwing: PKLError.evaluationFailed(message: errorMessage, exitCode: exitCode)
+                    )
+                    return
+                }
 
-        let exitCode = process.terminationStatus
+                guard let output = String(data: outputData, encoding: .utf8) else {
+                    continuation.resume(
+                        throwing: PKLError.evaluationFailed(
+                            message: "Failed to decode PKL output as UTF-8",
+                            exitCode: exitCode
+                        )
+                    )
+                    return
+                }
 
-        if exitCode != 0 {
-            let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-            throw PKLError.evaluationFailed(message: errorMessage, exitCode: exitCode)
+                continuation.resume(returning: output)
+            }
+
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(throwing: error)
+            }
         }
-
-        guard let output = String(data: outputData, encoding: .utf8) else {
-            throw PKLError.evaluationFailed(
-                message: "Failed to decode PKL output as UTF-8",
-                exitCode: exitCode
-            )
-        }
-
-        return output
     }
 
     /// Evaluates a PKL configuration file and decodes to a Decodable type.
@@ -78,6 +90,8 @@ public actor PKLEvaluator {
         let json = try await evaluate(configPath: configPath)
         let data = Data(json.utf8)
 
+        // ExFigConfig has zero dependencies by design — using Foundation's JSONDecoder
+        // instead of JSONCodec (YYJSON) to avoid adding a dependency for a single decode call.
         let decoder = JSONDecoder()
         return try decoder.decode(T.self, from: data)
     }

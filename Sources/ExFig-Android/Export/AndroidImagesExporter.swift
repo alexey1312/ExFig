@@ -334,7 +334,6 @@ private extension AndroidImagesExporter {
     ) async throws -> ([AssetPair<ImagePack>], (light: URL, dark: URL)) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.output))...") {
             let input = ImagesSourceInput(
-                fileId: "",
                 frameName: entry.figmaFrameName ?? "Images",
                 sourceFormat: .svg,
                 scales: [1.0],
@@ -368,7 +367,7 @@ private extension AndroidImagesExporter {
         context: some ImagesExportContext
     ) async throws -> ([AssetPair<ImagePack>], URL) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.output))...") {
-            try await context.loadImages(from: entry.imagesSourceInput(fileId: ""))
+            try await context.loadImages(from: entry.imagesSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing images for Android...") {

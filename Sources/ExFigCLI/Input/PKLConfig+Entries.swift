@@ -81,7 +81,7 @@ extension PKLConfig.iOS.IconsConfiguration {
         case let .legacy(icons):
             [iOSIconsEntry(
                 figmaFrameName: nil,
-                format: convertEnum(icons.format.rawValue, default: ExFigCore.VectorFormat.svg),
+                format: icons.format,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil,
                 nameStyle: icons.nameStyle,
@@ -106,7 +106,7 @@ extension PKLConfig.iOS.IconsConfiguration {
         case let .legacy(icons):
             [iOSIconsEntry(
                 figmaFrameName: common?.icons?.figmaFrameName,
-                format: convertEnum(icons.format.rawValue, default: ExFigCore.VectorFormat.svg),
+                format: icons.format,
                 nameValidateRegexp: common?.icons?.nameValidateRegexp,
                 nameReplaceRegexp: common?.icons?.nameReplaceRegexp,
                 nameStyle: icons.nameStyle,

@@ -320,7 +320,7 @@ private extension FlutterImagesExporter {
         context: some ImagesExportContext
     ) async throws -> ([AssetPair<ImagePack>], URL) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.output))...") {
-            try await context.loadImages(from: entry.svgSourceInput(fileId: ""))
+            try await context.loadImages(from: entry.svgSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing images for Flutter...") {
@@ -344,7 +344,7 @@ private extension FlutterImagesExporter {
         context: some ImagesExportContext
     ) async throws -> ([AssetPair<ImagePack>], URL) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.output))...") {
-            try await context.loadImages(from: entry.svgSourceInput(fileId: ""))
+            try await context.loadImages(from: entry.svgSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing images for Flutter...") {
@@ -368,7 +368,7 @@ private extension FlutterImagesExporter {
         context: some ImagesExportContext
     ) async throws -> ([AssetPair<ImagePack>], URL) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.output))...") {
-            try await context.loadImages(from: entry.imagesSourceInput(fileId: ""))
+            try await context.loadImages(from: entry.imagesSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing images for Flutter...") {
@@ -392,7 +392,7 @@ private extension FlutterImagesExporter {
         context: some ImagesExportContext
     ) async throws -> ([AssetPair<ImagePack>], URL) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.output))...") {
-            try await context.loadImages(from: entry.imagesSourceInput(fileId: ""))
+            try await context.loadImages(from: entry.imagesSourceInput())
         }
 
         let processResult = try await context.withSpinner("Processing images for Flutter...") {

@@ -99,11 +99,6 @@ struct PKLConfig: Decodable {
 
     // MARK: - Shared Enums
 
-    enum VectorFormat: String, Decodable {
-        case pdf
-        case svg
-    }
-
     enum SourceFormat: String, Decodable {
         case png
         case svg

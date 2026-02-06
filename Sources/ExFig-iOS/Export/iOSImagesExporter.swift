@@ -350,13 +350,13 @@ public struct iOSImagesExporter: ImagesExporter {
         if useGranularCache, let gcContext = context as? (any ImagesExportContextWithGranularCache) {
             loadResult = try await gcContext.withSpinner("Fetching images from Figma (\(entry.assetsFolder))...") {
                 try await gcContext.loadImagesWithGranularCache(
-                    from: entry.imagesSourceInput(fileId: ""),
+                    from: entry.imagesSourceInput(),
                     onProgress: nil
                 )
             }
         } else {
             let images = try await context.withSpinner("Fetching images from Figma (\(entry.assetsFolder))...") {
-                try await context.loadImages(from: entry.imagesSourceInput(fileId: ""))
+                try await context.loadImages(from: entry.imagesSourceInput())
             }
             loadResult = ImagesLoadOutputWithHashes(light: images.light, dark: images.dark)
         }
@@ -434,7 +434,6 @@ private extension iOSImagesEntry {
 
     func svgSourceInput() -> ImagesSourceInput {
         ImagesSourceInput(
-            fileId: "",
             darkFileId: nil,
             frameName: figmaFrameName ?? "Images",
             sourceFormat: .svg,

@@ -72,4 +72,14 @@ struct PKLEvaluatorTests {
         #expect(params.ios != nil)
         #expect(params.ios?.xcodeprojPath == "Test.xcodeproj")
     }
+
+    @Test("Throws configNotFound for nonexistent file")
+    func throwsConfigNotFoundForMissingFile() async throws {
+        let evaluator = try PKLEvaluator()
+        let fakePath = URL(fileURLWithPath: "/nonexistent/path/config.pkl")
+
+        await #expect(throws: PKLError.self) {
+            try await evaluator.evaluate(configPath: fakePath)
+        }
+    }
 }

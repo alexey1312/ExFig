@@ -87,9 +87,8 @@ public enum ComposeIconFormat: String, Decodable, Sendable {
 
 public extension AndroidIconsEntry {
     /// Returns an IconsSourceInput for use with IconsExportContext.
-    func iconsSourceInput(fileId: String, darkFileId: String? = nil) -> IconsSourceInput {
+    func iconsSourceInput(darkFileId: String? = nil) -> IconsSourceInput {
         IconsSourceInput(
-            fileId: fileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
             format: .svg,

@@ -822,6 +822,150 @@ final class ToPluginEntriesTests: XCTestCase {
         XCTAssertNil(entries[0].nameValidateRegexp)
         XCTAssertNil(entries[0].nameReplaceRegexp)
     }
+
+    // MARK: - Format conversion tests (Issue 9)
+
+    func testAndroidImagesLegacyConvertsSourceFormatPng() throws {
+        let json = """
+        {
+            "output": "drawable",
+            "format": "png",
+            "sourceFormat": "png"
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Android.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.toPluginEntries(common: nil)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].sourceFormat, .png)
+    }
+
+    func testAndroidImagesLegacyConvertsSourceFormatSvg() throws {
+        let json = """
+        {
+            "output": "drawable",
+            "format": "svg",
+            "sourceFormat": "svg"
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Android.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.toPluginEntries(common: nil)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].sourceFormat, .svg)
+    }
+
+    func testFlutterImagesLegacyConvertsSourceFormatSvg() throws {
+        let json = """
+        {
+            "output": "assets/images",
+            "sourceFormat": "svg"
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Flutter.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.toPluginEntries(common: nil)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].sourceFormat, .svg)
+    }
+
+    // MARK: - WebP options conversion tests (Issue 10)
+
+    func testAndroidImagesLegacyConvertsWebpLossy() throws {
+        let json = """
+        {
+            "output": "drawable",
+            "format": "webp",
+            "webpOptions": {
+                "encoding": "lossy",
+                "quality": 80
+            }
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Android.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.toPluginEntries(common: nil)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].webpOptions?.lossless, false)
+        XCTAssertEqual(entries[0].webpOptions?.quality, 80)
+    }
+
+    func testAndroidImagesLegacyConvertsWebpLossless() throws {
+        let json = """
+        {
+            "output": "drawable",
+            "format": "webp",
+            "webpOptions": {
+                "encoding": "lossless"
+            }
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Android.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.toPluginEntries(common: nil)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].webpOptions?.lossless, true)
+        XCTAssertNil(entries[0].webpOptions?.quality)
+    }
+
+    func testFlutterImagesLegacyConvertsWebpLossy() throws {
+        let json = """
+        {
+            "output": "assets/images",
+            "format": "webp",
+            "webpOptions": {
+                "encoding": "lossy",
+                "quality": 75
+            }
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Flutter.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.toPluginEntries(common: nil)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].webpOptions?.lossless, false)
+        XCTAssertEqual(entries[0].webpOptions?.quality, 75)
+    }
+
+    func testFlutterImagesLegacyConvertsWebpLossless() throws {
+        let json = """
+        {
+            "output": "assets/images",
+            "format": "webp",
+            "webpOptions": {
+                "encoding": "lossless",
+                "quality": 100
+            }
+        }
+        """
+        let config = try JSONDecoder().decode(
+            PKLConfig.Flutter.ImagesConfiguration.self,
+            from: Data(json.utf8)
+        )
+
+        let entries = config.toPluginEntries(common: nil)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].webpOptions?.lossless, true)
+        XCTAssertEqual(entries[0].webpOptions?.quality, 100)
+    }
 }
 
 // swiftlint:enable file_length type_body_length

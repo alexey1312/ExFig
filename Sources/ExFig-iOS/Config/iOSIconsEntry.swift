@@ -110,9 +110,8 @@ public struct iOSIconsEntry: Decodable, Sendable {
 
 public extension iOSIconsEntry {
     /// Returns an IconsSourceInput for use with IconsExportContext.
-    func iconsSourceInput(fileId: String, darkFileId: String? = nil) -> IconsSourceInput {
+    func iconsSourceInput(darkFileId: String? = nil) -> IconsSourceInput {
         IconsSourceInput(
-            fileId: fileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
             format: format,

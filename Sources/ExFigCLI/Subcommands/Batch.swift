@@ -522,7 +522,7 @@ extension ExFigCommand {
                     }
                 }
             } catch {
-                ui.warning("Failed to save cache: \(error.localizedDescription)")
+                ui.error("Failed to save cache: \(error.localizedDescription)")
             }
         }
 
@@ -604,7 +604,7 @@ extension ExFigCommand {
                 do {
                     fileContent = try String(contentsOf: url, encoding: .utf8)
                 } catch {
-                    ui.warning("Failed to read \(url.lastPathComponent): \(error.localizedDescription)")
+                    ui.error("Failed to read \(url.lastPathComponent): \(error.localizedDescription)")
                     return
                 }
             } else {
@@ -645,11 +645,10 @@ extension ExFigCommand {
                         fileName: url.lastPathComponent
                     )
                 } catch {
-                    ui.warning(
-                        .themeAttributesMarkerNotFound(
-                            file: url.lastPathComponent,
-                            marker: updater.fullStartMarker
-                        )
+                    let file = url.lastPathComponent
+                    let marker = updater.fullStartMarker
+                    ui.error(
+                        "Theme attributes skipped: marker not found, file=\(file), marker=\(marker)"
                     )
                 }
             }
@@ -658,7 +657,7 @@ extension ExFigCommand {
             do {
                 try Data(fileContent.utf8).write(to: url, options: .atomic)
             } catch {
-                ui.warning("Failed to write \(url.lastPathComponent): \(error.localizedDescription)")
+                ui.error("Failed to write \(url.lastPathComponent): \(error.localizedDescription)")
             }
         }
 
@@ -678,11 +677,22 @@ extension ExFigCommand {
             }
 
             if let reportPath = report {
-                try? writeReport(result: result, to: reportPath, ui: ui)
+                do {
+                    try writeReport(result: result, to: reportPath, ui: ui)
+                } catch {
+                    ui.error("Failed to write report to \(reportPath): \(error.localizedDescription)")
+                }
             }
 
             if result.failureCount == 0 {
-                try? BatchCheckpoint.delete(from: workingDirectory)
+                do {
+                    try BatchCheckpoint.delete(from: workingDirectory)
+                } catch {
+                    let hint = "\(workingDirectory.path)/.exfig-checkpoint.json"
+                    ui.warning(
+                        "Failed to delete checkpoint: \(error.localizedDescription). Delete manually: \(hint)"
+                    )
+                }
                 if globalOptions.verbose {
                     ui.info("Checkpoint cleared (all configs completed successfully)")
                 }
