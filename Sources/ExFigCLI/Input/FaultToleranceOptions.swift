@@ -251,7 +251,7 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
 ///   - ui: Terminal UI for retry warnings.
 /// - Returns: A configured `Client` instance.
 ///
-/// Timeout precedence: CLI `--timeout` > YAML config > FigmaClient default (30s)
+/// Timeout precedence: CLI `--timeout` > config > FigmaClient default (30s)
 func resolveClient(
     accessToken: String,
     timeout: TimeInterval?,
@@ -291,7 +291,7 @@ func resolveClient(
 ///   - ui: Terminal UI for retry warnings.
 /// - Returns: A configured `Client` instance.
 ///
-/// Timeout precedence: CLI `--timeout` > YAML config > FigmaClient default (30s)
+/// Timeout precedence: CLI `--timeout` > config > FigmaClient default (30s)
 func resolveClient(
     accessToken: String,
     timeout: TimeInterval?,

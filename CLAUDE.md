@@ -91,6 +91,10 @@ and Flutter projects.
 .build/debug/exfig icons -i exfig.pkl
 .build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
 
+# PKL Validation (validate config templates against schemas)
+pkl eval --format json <file.pkl>   # Package URI requires published package
+# For local validation, replace package:// URIs with local Schemas/ paths
+
 # Search (swiftindex) — use for ANY code search
 ./bin/mise exec -- swiftindex search "iOS config struct colors icons" Sources
 ./bin/mise exec -- swiftindex search "how images exported to xcassets" Sources
@@ -157,6 +161,12 @@ Sources/ExFig-{iOS,Android,Flutter,Web}/
 
 Sources/ExFigConfig/
 └── PKL/             # PKL locator, evaluator, error types
+
+Sources/ExFigCLI/Resources/
+├── Schemas/         # PKL schemas (ExFig.pkl, iOS.pkl, Android.pkl, Flutter.pkl, Web.pkl, Common.pkl, Figma.pkl)
+│   └── examples/    # Example PKL configs (exfig-ios.pkl, exfig-multi.pkl, base.pkl)
+├── *Config.swift    # Init templates: PKL content as Swift raw string literals (ios, android, flutter, web)
+└── *.stencil        # Stencil templates for code generation
 
 Sources/*/Resources/ # Stencil templates for code generation
 Tests/               # Test targets mirror source structure

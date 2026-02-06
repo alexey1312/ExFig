@@ -10,7 +10,7 @@ extension ExFigCommand {
             commandName: "init",
             abstract: "Generates config file",
             discussion: """
-            Generates exfig.yaml config file in the current directory.
+            Generates exfig.pkl config file in the current directory.
 
             Examples:
               exfig init -p ios       Generate iOS config

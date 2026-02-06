@@ -8,9 +8,9 @@ import Noora
 /// Displays multi-line progress with per-config status and rate limit information:
 /// ```
 /// Batch Export (3/5 configs)
-/// ├─ [████████░░] ios-app.yaml      Colors: 45/50  Icons: 120/120 ✓
-/// ├─ [██████░░░░] android-app.yaml  Colors: 30/50  Icons: 80/120
-/// ├─ [░░░░░░░░░░] web-app.yaml      Waiting...
+/// ├─ [████████░░] ios-app.pkl       Colors: 45/50  Icons: 120/120 ✓
+/// ├─ [██████░░░░] android-app.pkl   Colors: 30/50  Icons: 80/120
+/// ├─ [░░░░░░░░░░] web-app.pkl       Waiting...
 /// └─ Rate limit: 8.5 req/s (10 max)
 /// ```
 actor BatchProgressView {

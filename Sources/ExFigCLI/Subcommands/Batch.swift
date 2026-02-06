@@ -13,16 +13,16 @@ extension ExFigCommand {
             discussion: """
             Process multiple ExFig configuration files in a single command with shared rate limiting.
 
-            When a directory is specified, only YAML files directly in that directory are processed.
+            When a directory is specified, only config files directly in that directory are processed.
             Subdirectories are not scanned. To process nested configs, specify them explicitly or use
-            shell globbing (e.g., ./configs/*/*.yaml).
+            shell globbing (e.g., ./configs/*/*.pkl).
 
             Examples:
               exfig batch ./configs/                 # Process configs in directory (non-recursive)
-              exfig batch config1.yaml config2.yaml  # Process specific files
+              exfig batch config1.pkl config2.pkl    # Process specific files
               exfig batch ./configs/ --parallel 5    # With custom parallelism
               exfig batch ./configs/ --rate-limit 20 # Custom rate limit
-              exfig batch ./configs/*/*.yaml         # Process nested configs via shell glob
+              exfig batch ./configs/*/*.pkl          # Process nested configs via shell glob
             """
         )
 

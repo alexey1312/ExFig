@@ -166,7 +166,7 @@ struct BatchConfigRunner: Sendable {
     let cachePath: String?
     let experimentalGranularCache: Bool
     let concurrentDownloads: Int
-    /// CLI timeout override (in seconds). When set, overrides per-config YAML timeout.
+    /// CLI timeout override (in seconds). When set, overrides per-config timeout.
     let cliTimeout: Int?
     /// Priority for this config's downloads (lower = higher priority, based on submission order).
     let configPriority: Int
@@ -227,7 +227,7 @@ struct BatchConfigRunner: Sendable {
 
             let retryHandler = RetryLogger.createHandler(ui: ui, maxAttempts: maxRetries)
 
-            // CLI timeout takes precedence over per-config YAML timeout
+            // CLI timeout takes precedence over per-config timeout
             let effectiveTimeout: TimeInterval? = cliTimeout.map { TimeInterval($0) }
                 ?? options.params.figma?.timeout
 
