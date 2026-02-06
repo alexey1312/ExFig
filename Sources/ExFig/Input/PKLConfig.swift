@@ -236,10 +236,10 @@ struct PKLConfig: Decodable {
             }
         }
 
-        let xcodeprojPath: URL?
-        let target: String?
-        let xcassetsPath: String
-        let xcassetsInMainBundle: Bool?
+        let xcodeprojPath: String
+        let target: String
+        let xcassetsPath: URL
+        let xcassetsInMainBundle: Bool
         let xcassetsInSwiftPackage: Bool?
         let resourceBundleNames: [String]?
         let addObjcAttribute: Bool?
@@ -285,9 +285,12 @@ struct PKLConfig: Decodable {
 
         /// Legacy single icons configuration.
         struct IconsLegacy: Decodable {
-            let vectorDrawablesFolder: String
-            let imageVectorKotlin: URL?
-            let vectorDrawablesPackageName: String?
+            let output: String
+            let composePackageName: String?
+            let composeFormat: ExFig_Android.ComposeIconFormat?
+            let composeExtensionTarget: String?
+            let pathPrecision: Int?
+            let strictPathValidation: Bool?
         }
 
         /// Icons configuration supporting both legacy and multi-entry formats.
@@ -355,13 +358,14 @@ struct PKLConfig: Decodable {
             }
         }
 
-        let output: URL
-        let templatesPath: URL?
-
+        let mainRes: URL
+        let resourcePackage: String?
+        let mainSrc: URL?
         let colors: ColorsConfiguration?
         let icons: IconsConfiguration?
         let images: ImagesConfiguration?
         let typography: AndroidTypographyEntry?
+        let templatesPath: URL?
     }
 
     // MARK: - Flutter Platform
@@ -369,8 +373,8 @@ struct PKLConfig: Decodable {
     struct Flutter: Decodable {
         /// Legacy single colors configuration.
         struct ColorsLegacy: Decodable {
+            let output: String?
             let className: String?
-            let colorDart: URL?
         }
 
         /// Colors configuration supporting both legacy and multi-entry formats.
@@ -395,9 +399,9 @@ struct PKLConfig: Decodable {
 
         /// Legacy single icons configuration.
         struct IconsLegacy: Decodable {
-            let assetsFolder: String
+            let output: String
+            let dartFile: String?
             let className: String?
-            let iconDart: URL?
         }
 
         /// Icons configuration supporting both legacy and multi-entry formats.
@@ -438,11 +442,14 @@ struct PKLConfig: Decodable {
 
         /// Legacy single images configuration.
         struct ImagesLegacy: Decodable {
-            let scales: [Double]?
             let output: String
-            let format: ImageFormat
-            let webpOptions: WebpOptions?
+            let dartFile: String?
+            let className: String?
+            let scales: [Double]?
+            let format: ImageFormat?
+            let webpOptions: Android.WebpOptions?
             let sourceFormat: SourceFormat?
+            let nameStyle: NameStyle?
         }
 
         /// Images configuration supporting both legacy and multi-entry formats.
@@ -478,10 +485,10 @@ struct PKLConfig: Decodable {
     struct Web: Decodable {
         /// Legacy single colors configuration.
         struct ColorsLegacy: Decodable {
-            let outputDirectory: String
-            let generateCSSVariables: Bool?
-            let generateTypeScript: Bool?
-            let generateJSON: Bool?
+            let outputDirectory: String?
+            let cssFileName: String?
+            let tsFileName: String?
+            let jsonFileName: String?
         }
 
         /// Colors configuration supporting both legacy and multi-entry formats.
