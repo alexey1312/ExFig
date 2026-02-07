@@ -4,10 +4,10 @@
 
 | Track                       | Description                           | Status  |
 | --------------------------- | ------------------------------------- | ------- |
-| 1. Defaults                 | PKL default values в схемах           | Pending |
-| 2. Entry Overrides — Schema | Новые optional поля в PKL-схемах      | Pending |
+| 1. Defaults                 | PKL default values в схемах           | Done    |
+| 2. Entry Overrides — Schema | Новые optional поля в PKL-схемах      | Done    |
 | 3. Entry Overrides — Swift  | Resolution logic в Swift-коде         | Pending |
-| 4. Constraints              | PKL constraints (!isEmpty, isBetween) | Pending |
+| 4. Constraints              | PKL constraints (!isEmpty, isBetween) | Done    |
 | 5. Verification             | Полная верификация                    | Pending |
 
 ## Dependency Graph
@@ -141,7 +141,7 @@ Track 5 зависит от всех треков.
 
 ### 2.6 Schema Verification
 
-- [ ] 2.6.1 Run `./bin/mise run codegen:pkl` — new optional fields appear in Generated/*.pkl.swift
+- [x] 2.6.1 Run `./bin/mise run codegen:pkl` — new optional fields appear in Generated/*.pkl.swift
 - [x] 2.6.2 Run `./bin/mise run build` — compiles (new fields are optional, nil by default)
 - [ ] 2.6.3 Run `pkl eval --format json` on example configs — verify new fields absent when not set
 - [ ] 2.6.4 Create test PKL config with entry-level overrides — verify JSON output
