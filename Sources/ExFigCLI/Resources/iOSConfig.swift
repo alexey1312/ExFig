@@ -19,7 +19,7 @@ figma = new Figma.FigmaConfig {
   // darkHighContrastFileId = "KfF6DnJTWHGZzC912345"
   // [optional] Figma API request timeout. The default value is 30 (seconds).
   // If you have a lot of resources to export set this value to 60 or more to give Figma API more time to prepare resources for exporting.
-  // timeout = 30
+  // timeout = 30.0
 }
 
 // [optional] Common export parameters
@@ -173,7 +173,7 @@ ios = new iOS.iOSConfig {
     // Image name style: camelCase or snake_case
     nameStyle = "camelCase"
     // [optional] An array of asset scales that should be downloaded. The valid values are 1, 2, 3. The default value is [1, 2, 3].
-    scales = new Listing { 1; 2; 3 }
+    scales = new Listing { 1.0; 2.0; 3.0 }
     // [optional] Absolute or relative path to swift file where to export images (SwiftUI's Image) for accessing from the code (e.g. Image.illZeroNoInternet)
     swiftUIImageSwift = "./Source/Image+extension_illustrations.swift"
     // [optional] Absolute or relative path to swift file where to generate extension for UIImage for accessing illustrations from the code (e.g. UIImage.illZeroNoInternet)

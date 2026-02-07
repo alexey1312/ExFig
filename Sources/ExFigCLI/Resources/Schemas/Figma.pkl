@@ -20,5 +20,5 @@ class FigmaConfig {
   darkHighContrastFileId: String?
 
   /// Request timeout in seconds.
-  timeout: Number(isBetween(1, 600))? = 30
+  timeout: Number(isBetween(1, 600))? = 30.0
 }

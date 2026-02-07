@@ -34,13 +34,25 @@ public extension Android.ImagesEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
-            sourceFormat: sourceFormat.flatMap { ImageSourceFormat(rawValue: $0.rawValue) } ?? .png,
+            sourceFormat: effectiveSourceFormat,
             scales: effectiveScales,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )
+    }
+
+    /// Effective source format, defaulting to PNG.
+    var effectiveSourceFormat: ImageSourceFormat {
+        guard let sourceFormat else { return .png }
+        guard let core = ImageSourceFormat(rawValue: sourceFormat.rawValue) else {
+            preconditionFailure(
+                "Unsupported ImageSourceFormat '\(sourceFormat.rawValue)'. "
+                    + "This may indicate a PKL schema version mismatch."
+            )
+        }
+        return core
     }
 
     /// Effective scales for Android.

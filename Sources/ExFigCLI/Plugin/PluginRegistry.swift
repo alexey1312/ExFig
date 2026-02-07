@@ -52,13 +52,21 @@ public struct PluginRegistry: Sendable {
 
         for plugin in plugins {
             for key in plugin.configKeys {
-                assert(
+                precondition(
                     configKeyIndex[key] == nil,
                     "Duplicate config key '\(key)' registered by '\(plugin.identifier)'"
                 )
                 configKeyIndex[key] = plugin
             }
+            precondition(
+                identifierIndex[plugin.identifier] == nil,
+                "Duplicate identifier '\(plugin.identifier)'"
+            )
             identifierIndex[plugin.identifier] = plugin
+            precondition(
+                platformIndex[plugin.platform] == nil,
+                "Duplicate platform '\(plugin.platform)' registered by '\(plugin.identifier)'"
+            )
             platformIndex[plugin.platform] = plugin
         }
 

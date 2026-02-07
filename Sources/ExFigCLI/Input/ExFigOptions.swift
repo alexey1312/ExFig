@@ -98,7 +98,13 @@ struct ExFigOptions: ParsableArguments {
             semaphore.signal()
         }
 
-        semaphore.wait()
+        let waitResult = semaphore.wait(timeout: .now() + 30)
+        guard waitResult == .success else {
+            throw ExFigError.custom(
+                errorString: "PKL evaluation timed out after 30 seconds for '\(path)'. "
+                    + "Verify your config is valid: pkl eval \(path)"
+            )
+        }
 
         switch box.value {
         case let .success(params):

@@ -148,7 +148,7 @@ class ImagesEntry extends Common.FrameSource {
   templatesPath: String?
 
   /// Scale factors to generate (e.g., [1, 1.5, 2, 3, 4]).
-  scales: Listing<Number>? = new Listing { 1; 1.5; 2; 3; 4 }
+  scales: Listing<Number>? = new Listing { 1.0; 1.5; 2.0; 3.0; 4.0 }
 
   /// Output directory for images.
   output: String(!isEmpty)

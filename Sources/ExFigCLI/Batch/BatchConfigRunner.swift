@@ -131,6 +131,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         let hasColorOutput = params.ios?.colors != nil
             || params.android?.colors != nil
             || params.flutter?.colors != nil
+            || params.web?.colors != nil
         return hasColorSource || hasColorOutput
     }
 
@@ -139,6 +140,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         return params.ios?.icons != nil
             || params.android?.icons != nil
             || params.flutter?.icons != nil
+            || params.web?.icons != nil
     }
 
     private func hasImagesConfig(_ params: ExFig.ModuleImpl?) -> Bool {
@@ -146,6 +148,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         return params.ios?.images != nil
             || params.android?.images != nil
             || params.flutter?.images != nil
+            || params.web?.images != nil
     }
 
     private func hasTypographyConfig(_ params: ExFig.ModuleImpl?) -> Bool {

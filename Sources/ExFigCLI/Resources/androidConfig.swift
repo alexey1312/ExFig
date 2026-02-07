@@ -19,7 +19,7 @@ figma = new Figma.FigmaConfig {
   // darkHighContrastFileId = "KfF6DnJTWHGZzC912345"
   // [optional] Figma API request timeout. The default value is 30 (seconds).
   // If you have a lot of resources to export set this value to 60 or more to give Figma API more time to prepare resources for exporting.
-  // timeout = 30
+  // timeout = 30.0
 }
 
 // [optional] Common export parameters
@@ -131,7 +131,7 @@ android = new Android.AndroidConfig {
     // Where to place images relative to `mainRes`? ExFig clears this directory every time you execute `exfig images` command
     output = "figma-import-images"
     // [optional] An array of asset scales that should be downloaded. The valid values are 1 (mdpi), 1.5 (hdpi), 2 (xhdpi), 3 (xxhdpi), 4 (xxxhdpi). The default value is [1, 1.5, 2, 3, 4].
-    scales = new Listing { 1; 2; 3 }
+    scales = new Listing { 1.0; 2.0; 3.0 }
     // Format options for webp format only
     webpOptions = new Android.WebpOptions {
       // Encoding type: lossy or lossless

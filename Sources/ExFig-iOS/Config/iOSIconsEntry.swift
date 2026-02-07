@@ -16,16 +16,27 @@ public extension iOS.IconsEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
-            format: VectorFormat(rawValue: format.rawValue) ?? .svg,
+            format: coreVectorFormat,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
-            renderMode: renderMode.flatMap { XcodeRenderMode(rawValue: $0.rawValue) },
+            renderMode: coreRenderMode,
             renderModeDefaultSuffix: renderModeDefaultSuffix,
             renderModeOriginalSuffix: renderModeOriginalSuffix,
             renderModeTemplateSuffix: renderModeTemplateSuffix,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )
+    }
+
+    /// Converts PKL VectorFormat to ExFigCore VectorFormat.
+    var coreVectorFormat: VectorFormat {
+        guard let fmt = VectorFormat(rawValue: format.rawValue) else {
+            preconditionFailure(
+                "Unsupported VectorFormat '\(format.rawValue)'. "
+                    + "This may indicate a PKL schema version mismatch."
+            )
+        }
+        return fmt
     }
 
     /// Converts PKL NameStyle to ExFigCore NameStyle.
@@ -50,7 +61,14 @@ public extension iOS.IconsEntry {
 
     /// Converts PKL XcodeRenderMode to ExFigCore XcodeRenderMode.
     var coreRenderMode: XcodeRenderMode? {
-        renderMode.flatMap { XcodeRenderMode(rawValue: $0.rawValue) }
+        guard let renderMode else { return nil }
+        guard let mode = XcodeRenderMode(rawValue: renderMode.rawValue) else {
+            preconditionFailure(
+                "Unsupported XcodeRenderMode '\(renderMode.rawValue)'. "
+                    + "This may indicate a PKL schema version mismatch."
+            )
+        }
+        return mode
     }
 
     // MARK: - Entry-Level Override Resolution

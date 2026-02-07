@@ -16,7 +16,7 @@ public extension iOS.ImagesEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
-            sourceFormat: sourceFormat.flatMap { ImageSourceFormat(rawValue: $0.rawValue) } ?? .png,
+            sourceFormat: effectiveSourceFormat,
             scales: effectiveScales,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
@@ -25,9 +25,28 @@ public extension iOS.ImagesEntry {
         )
     }
 
+    /// Effective source format, defaulting to PNG.
+    var effectiveSourceFormat: ImageSourceFormat {
+        guard let sourceFormat else { return .png }
+        guard let core = ImageSourceFormat(rawValue: sourceFormat.rawValue) else {
+            preconditionFailure(
+                "Unsupported ImageSourceFormat '\(sourceFormat.rawValue)'. "
+                    + "This may indicate a PKL schema version mismatch."
+            )
+        }
+        return core
+    }
+
     /// Effective output format, defaulting to PNG.
     var effectiveOutputFormat: ImageOutputFormat {
-        outputFormat.flatMap { ImageOutputFormat(rawValue: $0.rawValue) } ?? .png
+        guard let outputFormat else { return .png }
+        guard let core = ImageOutputFormat(rawValue: outputFormat.rawValue) else {
+            preconditionFailure(
+                "Unsupported ImageOutputFormat '\(outputFormat.rawValue)'. "
+                    + "This may indicate a PKL schema version mismatch."
+            )
+        }
+        return core
     }
 
     /// Effective scales, defaulting to iOS standard [1.0, 2.0, 3.0].
@@ -57,16 +76,29 @@ public extension iOS.ImagesEntry {
 
     /// Converts PKL XcodeRenderMode to ExFigCore XcodeRenderMode.
     var coreRenderMode: XcodeRenderMode? {
-        renderMode.flatMap { XcodeRenderMode(rawValue: $0.rawValue) }
+        guard let renderMode else { return nil }
+        guard let mode = XcodeRenderMode(rawValue: renderMode.rawValue) else {
+            preconditionFailure(
+                "Unsupported XcodeRenderMode '\(renderMode.rawValue)'. "
+                    + "This may indicate a PKL schema version mismatch."
+            )
+        }
+        return mode
     }
 
     /// Converts entry's HEIC options to protocol-level HeicConverterOptions.
     var heicConverterOptions: HeicConverterOptions? {
         guard let opts = heicOptions else { return nil }
-        return HeicConverterOptions(
-            encoding: opts.encoding.flatMap { HeicConverterOptions.Encoding(rawValue: $0.rawValue) },
-            quality: opts.quality
-        )
+        let encoding: HeicConverterOptions.Encoding? = opts.encoding.map { enc in
+            guard let core = HeicConverterOptions.Encoding(rawValue: enc.rawValue) else {
+                preconditionFailure(
+                    "Unsupported HeicEncoding '\(enc.rawValue)'. "
+                        + "This may indicate a PKL schema version mismatch."
+                )
+            }
+            return core
+        }
+        return HeicConverterOptions(encoding: encoding, quality: opts.quality)
     }
 
     // MARK: - Entry-Level Override Resolution

@@ -58,7 +58,14 @@ struct FileIdExtractor {
             }
         }
 
-        semaphore.wait()
+        let waitResult = semaphore.wait(timeout: .now() + 30)
+        guard waitResult == .success else {
+            let name = url.lastPathComponent
+            ExFigCommand.logger.error(
+                "Pre-fetch optimization: PKL evaluation timed out for \(name)."
+            )
+            return nil
+        }
         return box.value
     }
 }

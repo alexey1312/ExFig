@@ -8,7 +8,7 @@ import "../Figma.pkl"
 figma = new Figma.FigmaConfig {
   lightFileId = "design-system-light"
   darkFileId = "design-system-dark"
-  timeout = 60
+  timeout = 60.0
 }
 
 common = new Common.CommonConfig {

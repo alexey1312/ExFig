@@ -16,7 +16,7 @@ figma = new Figma.FigmaConfig {
   darkFileId = "KfF6DnJTWHGZzC912345"
   // [optional] Figma API request timeout. The default value is 30 (seconds).
   // If you have a lot of resources to export set this value to 60 or more.
-  // timeout = 30
+  // timeout = 30.0
 }
 
 // [optional] Common export parameters

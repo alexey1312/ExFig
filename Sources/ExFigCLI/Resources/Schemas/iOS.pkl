@@ -121,7 +121,7 @@ class ImagesEntry extends Common.FrameSource {
   nameStyle: Common.NameStyle = "camelCase"
 
   /// Scale factors to generate (e.g., [1, 2, 3]).
-  scales: Listing<Number>? = new Listing { 1; 2; 3 }
+  scales: Listing<Number>? = new Listing { 1.0; 2.0; 3.0 }
 
   /// Path to generate UIImage extension Swift file.
   imageSwift: String?

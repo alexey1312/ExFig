@@ -61,7 +61,7 @@ class ImagesEntry extends Common.FrameSource {
   className: String? = "AppImages"
 
   /// Scale factors to generate (e.g., [1, 2, 3]).
-  scales: Listing<Number>? = new Listing { 1; 2; 3 }
+  scales: Listing<Number>? = new Listing { 1.0; 2.0; 3.0 }
 
   /// Output format for images.
   format: ImageFormat? = "png"
