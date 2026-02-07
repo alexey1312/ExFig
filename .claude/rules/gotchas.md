@@ -95,6 +95,26 @@ func withContext<T>(operation: () async -> T) async -> T
 - Add `// swiftlint:disable:next force_try` before `try!` in tests
 - Add `// swiftlint:disable file_length` for files > 400 lines
 
+### swiftlint:disable with Doc Comments
+
+`// swiftlint:disable:next` only suppresses the immediately next line.
+With multiline doc comments, use `disable/enable` block BEFORE the doc comment:
+
+```swift
+// BAD — orphaned_doc_comment or rule not suppressed
+/// Doc comment...
+// swiftlint:disable:next function_parameter_count
+func foo(a:, b:, c:, d:, e:, f:) {}
+
+// GOOD
+// swiftlint:disable function_parameter_count
+
+/// Doc comment...
+func foo(a:, b:, c:, d:, e:, f:) {}
+
+// swiftlint:enable function_parameter_count
+```
+
 ### void_function_in_ternary False Positive
 
 SwiftLint flags `NooraUI.format()` calls in ternary operators as `void_function_in_ternary` even though they return `String`.

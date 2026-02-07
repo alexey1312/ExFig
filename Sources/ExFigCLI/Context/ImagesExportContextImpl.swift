@@ -178,11 +178,13 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         }
     }
 
+    // swiftlint:disable:next function_parameter_count
     func rasterizeSVGs(
         _ files: [FileContents],
         scales: [Double],
         to outputFormat: ImageOutputFormat,
         heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         guard !files.isEmpty else { return [] }
@@ -191,41 +193,27 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
             var results: [FileContents] = []
 
             for fileContents in files {
-                // Read SVG data from memory or temp file
-                let svgData: Data
-                if let data = fileContents.data {
-                    svgData = data
-                } else if let dataFile = fileContents.dataFile {
-                    svgData = try Data(contentsOf: dataFile)
-                } else {
-                    let filename = fileContents.destination.file.lastPathComponent
-                    throw SVGRasterizationError.missingData(filename: filename)
-                }
-
+                let svgData = try readSVGData(from: fileContents)
                 let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
                 let imagesetDir = fileContents.destination.directory
 
                 for scale in scales {
                     let scaleSuffix = scale == 1.0 ? "" : "@\(Int(scale))x"
-                    let outputExtension = outputFormat == .heic ? "heic" : "png"
-                    let outputFileName = "\(baseName)\(scaleSuffix).\(outputExtension)"
+                    let outputFileName = "\(baseName)\(scaleSuffix).\(outputFormat.rawValue)"
 
-                    let outputData: Data
-                    switch outputFormat {
-                    case .heic:
-                        let converter = HeicConverterFactory.createSvgToHeicConverter(from: heicOptions)
-                        outputData = try converter.convert(svgData: svgData, scale: scale, fileName: baseName)
-                    case .png, .webp:
-                        let converter = SvgToPngConverter()
-                        outputData = try converter.convert(svgData: svgData, scale: scale, fileName: baseName)
-                    }
+                    let outputData = try convertSVG(
+                        svgData, to: outputFormat, scale: scale, fileName: baseName,
+                        heicOptions: heicOptions, webpOptions: webpOptions
+                    )
 
                     results.append(FileContents(
                         destination: Destination(
                             directory: imagesetDir,
                             file: URL(fileURLWithPath: outputFileName)
                         ),
-                        data: outputData
+                        data: outputData,
+                        scale: scale,
+                        dark: fileContents.dark
                     ))
 
                     progress.increment()
@@ -248,6 +236,39 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
     }
 
     // MARK: - Private Helpers
+
+    private func readSVGData(from fileContents: FileContents) throws -> Data {
+        if let data = fileContents.data {
+            return data
+        } else if let dataFile = fileContents.dataFile {
+            return try Data(contentsOf: dataFile)
+        } else {
+            let filename = fileContents.destination.file.lastPathComponent
+            throw SVGRasterizationError.missingData(filename: filename)
+        }
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    private func convertSVG(
+        _ svgData: Data,
+        to outputFormat: ImageOutputFormat,
+        scale: Double,
+        fileName: String,
+        heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?
+    ) throws -> Data {
+        switch outputFormat {
+        case .heic:
+            try HeicConverterFactory.createSvgToHeicConverter(from: heicOptions)
+                .convert(svgData: svgData, scale: scale, fileName: fileName)
+        case .png:
+            try SvgToPngConverter()
+                .convert(svgData: svgData, scale: scale, fileName: fileName)
+        case .webp:
+            try WebpConverterFactory.createSvgToWebpConverter(from: webpOptions)
+                .convert(svgData: svgData, scale: scale, fileName: fileName)
+        }
+    }
 
     private func convertToHeic(
         files: [FileContents],

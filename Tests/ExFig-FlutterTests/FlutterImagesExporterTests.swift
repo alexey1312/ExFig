@@ -44,6 +44,80 @@ final class FlutterImagesExporterTests: XCTestCase {
     }
 }
 
+// MARK: - mapToFlutterScaleDirectories
+
+final class FlutterScaleDirectoriesTests: XCTestCase {
+    private let assetsDir = URL(fileURLWithPath: "/project/assets/images")
+
+    func testInMemoryFilesAreMappedToScaleDirectories() {
+        let files = [
+            makeInMemoryFile(name: "icon.webp", scale: 1.0),
+            makeInMemoryFile(name: "icon.webp", scale: 2.0),
+            makeInMemoryFile(name: "icon.webp", scale: 3.0),
+        ]
+
+        let result = FlutterImagesHelpers.mapToFlutterScaleDirectories(files, assetsDirectory: assetsDir)
+
+        XCTAssertEqual(result.count, 3)
+        XCTAssertEqual(result[0].destination.directory, assetsDir)
+        XCTAssertEqual(result[1].destination.directory, assetsDir.appendingPathComponent("2.0x"))
+        XCTAssertEqual(result[2].destination.directory, assetsDir.appendingPathComponent("3.0x"))
+    }
+
+    func testOnDiskFilesAreMappedToScaleDirectories() {
+        let files = [
+            makeOnDiskFile(name: "icon.webp", scale: 1.0),
+            makeOnDiskFile(name: "icon.webp", scale: 2.0),
+        ]
+
+        let result = FlutterImagesHelpers.mapToFlutterScaleDirectories(files, assetsDirectory: assetsDir)
+
+        XCTAssertEqual(result.count, 2)
+        XCTAssertNotNil(result[0].dataFile)
+        XCTAssertNotNil(result[1].dataFile)
+    }
+
+    func testScaleSuffixIsStrippedFromFilenames() {
+        let files = [
+            makeInMemoryFile(name: "icon@2x.png", scale: 2.0),
+            makeInMemoryFile(name: "icon@3x.png", scale: 3.0),
+        ]
+
+        let result = FlutterImagesHelpers.mapToFlutterScaleDirectories(files, assetsDirectory: assetsDir)
+
+        XCTAssertEqual(result[0].destination.file.lastPathComponent, "icon.png")
+        XCTAssertEqual(result[1].destination.file.lastPathComponent, "icon.png")
+    }
+
+    func testMetadataIsPreserved() {
+        let files = [makeInMemoryFile(name: "icon.png", scale: 2.0, dark: true)]
+
+        let result = FlutterImagesHelpers.mapToFlutterScaleDirectories(files, assetsDirectory: assetsDir)
+
+        XCTAssertEqual(result[0].scale, 2.0)
+        XCTAssertTrue(result[0].dark)
+    }
+
+    // MARK: - Helpers
+
+    private func makeInMemoryFile(name: String, scale: Double, dark: Bool = false) -> FileContents {
+        FileContents(
+            destination: Destination(directory: URL(fileURLWithPath: "/tmp"), file: URL(fileURLWithPath: name)),
+            data: Data("test".utf8),
+            scale: scale,
+            dark: dark
+        )
+    }
+
+    private func makeOnDiskFile(name: String, scale: Double) -> FileContents {
+        FileContents(
+            destination: Destination(directory: URL(fileURLWithPath: "/tmp"), file: URL(fileURLWithPath: name)),
+            dataFile: URL(fileURLWithPath: "/tmp/\(name)"),
+            scale: scale
+        )
+    }
+}
+
 // MARK: - Mock Context
 
 /// Mock ImagesExportContext for testing.
@@ -94,11 +168,13 @@ struct MockFlutterImagesExportContext: ImagesExportContext {
         files
     }
 
+    // swiftlint:disable:next function_parameter_count
     func rasterizeSVGs(
         _ files: [FileContents],
         scales: [Double],
         to outputFormat: ImageOutputFormat,
         heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         []

@@ -94,11 +94,13 @@ struct MockAndroidImagesExportContext: ImagesExportContext {
         files
     }
 
+    // swiftlint:disable:next function_parameter_count
     func rasterizeSVGs(
         _ files: [FileContents],
         scales: [Double],
         to outputFormat: ImageOutputFormat,
         heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents] {
         []

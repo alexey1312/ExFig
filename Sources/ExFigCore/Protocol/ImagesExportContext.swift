@@ -61,13 +61,16 @@ public protocol ImagesExportContext: ExportContext {
         progressTitle: String
     ) async throws -> [FileContents]
 
+    // swiftlint:disable function_parameter_count
+
     /// Rasterizes SVG files to raster format at specified scales.
     ///
     /// - Parameters:
     ///   - files: SVG files to rasterize.
     ///   - scales: Scale factors (e.g., [1.0, 2.0, 3.0] for iOS).
-    ///   - outputFormat: Target raster format (png or heic).
+    ///   - outputFormat: Target raster format (png, heic, or webp).
     ///   - heicOptions: Optional HEIC encoding options (used when outputFormat is .heic).
+    ///   - webpOptions: Optional WebP encoding options (used when outputFormat is .webp).
     ///   - progressTitle: Title for progress bar.
     /// - Returns: Rasterized files at all scales.
     func rasterizeSVGs(
@@ -75,8 +78,11 @@ public protocol ImagesExportContext: ExportContext {
         scales: [Double],
         to outputFormat: ImageOutputFormat,
         heicOptions: HeicConverterOptions?,
+        webpOptions: WebpConverterOptions?,
         progressTitle: String
     ) async throws -> [FileContents]
+
+    // swiftlint:enable function_parameter_count
 
     /// Runs an operation with a progress bar.
     ///
@@ -117,7 +123,37 @@ public extension ImagesExportContext {
     ) async throws -> [FileContents] {
         try await rasterizeSVGs(
             files, scales: scales, to: outputFormat,
-            heicOptions: nil,
+            heicOptions: nil, webpOptions: nil,
+            progressTitle: progressTitle
+        )
+    }
+
+    /// Convenience overload with only HEIC options for backward compatibility.
+    func rasterizeSVGs(
+        _ files: [FileContents],
+        scales: [Double],
+        to outputFormat: ImageOutputFormat,
+        heicOptions: HeicConverterOptions?,
+        progressTitle: String
+    ) async throws -> [FileContents] {
+        try await rasterizeSVGs(
+            files, scales: scales, to: outputFormat,
+            heicOptions: heicOptions, webpOptions: nil,
+            progressTitle: progressTitle
+        )
+    }
+
+    /// Convenience overload with only WebP options.
+    func rasterizeSVGs(
+        _ files: [FileContents],
+        scales: [Double],
+        to outputFormat: ImageOutputFormat,
+        webpOptions: WebpConverterOptions?,
+        progressTitle: String
+    ) async throws -> [FileContents] {
+        try await rasterizeSVGs(
+            files, scales: scales, to: outputFormat,
+            heicOptions: nil, webpOptions: webpOptions,
             progressTitle: progressTitle
         )
     }

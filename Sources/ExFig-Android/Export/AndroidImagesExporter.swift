@@ -146,6 +146,7 @@ private extension AndroidImagesExporter {
         let scales = entry.effectiveScales
         let webpFiles = try await context.rasterizeSVGs(
             localSVGFiles, scales: scales, to: .webp,
+            webpOptions: entry.webpConverterOptions,
             progressTitle: "Rasterizing SVGs to WebP"
         )
 
@@ -155,15 +156,17 @@ private extension AndroidImagesExporter {
         }
 
         let isSingleScale = scales.count == 1
-        let finalFiles = webpFiles.compactMap { file -> FileContents? in
-            guard let dataFile = file.dataFile else { return nil }
+        let finalFiles = webpFiles.map { file -> FileContents in
+            let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = platformConfig.mainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
-                destination: Destination(directory: directory, file: file.destination.file),
-                dataFile: dataFile
+                destination: Destination(directory: directory, file: stripped.destination.file),
+                data: file.data!,
+                scale: file.scale,
+                dark: file.dark
             )
         }
 
@@ -206,15 +209,17 @@ private extension AndroidImagesExporter {
         }
 
         let isSingleScale = scales.count == 1
-        let finalFiles = pngFiles.compactMap { file -> FileContents? in
-            guard let dataFile = file.dataFile else { return nil }
+        let finalFiles = pngFiles.map { file -> FileContents in
+            let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = platformConfig.mainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
-                destination: Destination(directory: directory, file: file.destination.file),
-                dataFile: dataFile
+                destination: Destination(directory: directory, file: stripped.destination.file),
+                data: file.data!,
+                scale: file.scale,
+                dark: file.dark
             )
         }
 

@@ -133,6 +133,7 @@ private extension FlutterImagesExporter {
         let scales = entry.effectiveScales
         let webpFiles = try await context.rasterizeSVGs(
             localSVGFiles, scales: scales, to: .webp,
+            webpOptions: entry.webpConverterOptions,
             progressTitle: "Rasterizing SVGs to WebP"
         )
 
@@ -446,7 +447,7 @@ private extension FlutterImagesExporter {
 
 // MARK: - Static Helpers
 
-private enum FlutterImagesHelpers {
+enum FlutterImagesHelpers {
     static func makeSVGRemoteFiles(
         imagePairs: [AssetPair<ImagePack>],
         assetsDirectory: URL
@@ -524,19 +525,23 @@ private enum FlutterImagesHelpers {
         assetsDirectory: URL
     ) -> [FileContents] {
         files.compactMap { file -> FileContents? in
-            guard let dataFile = file.dataFile else { return nil }
-
-            // Flutter scale directories: 1x at root, 2x at 2.0x/, 3x at 3.0x/
             let scaleDirectory = file.scale == 1.0
                 ? assetsDirectory
                 : assetsDirectory.appendingPathComponent("\(file.scale)x")
+            let cleanFile = file.strippingScaleSuffix().destination.file
 
-            return FileContents(
-                destination: Destination(directory: scaleDirectory, file: file.destination.file),
-                dataFile: dataFile,
-                scale: file.scale,
-                dark: file.dark
-            )
+            if let data = file.data {
+                return FileContents(
+                    destination: Destination(directory: scaleDirectory, file: cleanFile),
+                    data: data, scale: file.scale, dark: file.dark
+                )
+            } else if let dataFile = file.dataFile {
+                return FileContents(
+                    destination: Destination(directory: scaleDirectory, file: cleanFile),
+                    dataFile: dataFile, scale: file.scale, dark: file.dark
+                )
+            }
+            return nil
         }
     }
 }

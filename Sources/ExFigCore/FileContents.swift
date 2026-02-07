@@ -74,6 +74,29 @@ public struct FileContents: Equatable, Sendable {
         self.isRTL = isRTL
     }
 
+    /// Make a copy with the @Nx scale suffix stripped from the filename.
+    /// rasterizeSVGs adds iOS-style suffixes (e.g., "icon@2x.png") but Android uses
+    /// directory-based scaling (drawable-xhdpi/) and Flutter uses "{scale}x/" directories.
+    public func strippingScaleSuffix() -> FileContents {
+        let strippedFile = destination.file.strippingScaleSuffix()
+        let newDestination = Destination(directory: destination.directory, file: strippedFile)
+        if let dataFile {
+            return FileContents(destination: newDestination, dataFile: dataFile, scale: scale, dark: dark, isRTL: isRTL)
+        } else if let data {
+            return FileContents(destination: newDestination, data: data, scale: scale, dark: dark, isRTL: isRTL)
+        } else if let sourceURL {
+            return FileContents(
+                destination: newDestination,
+                sourceURL: sourceURL,
+                scale: scale,
+                dark: dark,
+                isRTL: isRTL
+            )
+        } else {
+            fatalError("FileContents has no data source")
+        }
+    }
+
     /// Make a copy of the FileContents with different file extension
     /// - Parameter newExtension: New file extension
     public func changingExtension(newExtension: String) -> FileContents {
@@ -95,5 +118,15 @@ public struct FileContents: Equatable, Sendable {
         } else {
             fatalError("Unable to change file extension.")
         }
+    }
+}
+
+public extension URL {
+    /// Strips iOS-style @Nx scale suffix from filename (e.g., "icon@2x.png" -> "icon.png").
+    func strippingScaleSuffix() -> URL {
+        let ext = pathExtension
+        let baseName = deletingPathExtension().lastPathComponent
+            .replacingOccurrences(of: #"@\d+x$"#, with: "", options: .regularExpression)
+        return URL(fileURLWithPath: "\(baseName).\(ext)")
     }
 }
