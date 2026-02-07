@@ -38,5 +38,15 @@ ios = new iOS.iOSConfig {
       imageSwift = "MyApp/Generated/UIImage+Icons.swift"
       swiftUIImageSwift = "MyApp/Generated/Image+Icons.swift"
     }
+    // Entry-level override: separate Figma file and xcassets for brand icons
+    new iOS.IconsEntry {
+      figmaFileId = "brand-icons-figma-file"
+      figmaFrameName = "BrandIcons"
+      format = "svg"
+      assetsFolder = "BrandIcons"
+      nameStyle = "camelCase"
+      xcassetsPath = "BrandKit/Assets.xcassets"
+      templatesPath = "BrandKit/Templates"
+    }
   }
 }

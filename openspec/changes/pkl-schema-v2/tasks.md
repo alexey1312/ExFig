@@ -2,13 +2,13 @@
 
 ## Summary
 
-| Track                       | Description                           | Status  |
-| --------------------------- | ------------------------------------- | ------- |
-| 1. Defaults                 | PKL default values в схемах           | Done ✓  |
-| 2. Entry Overrides — Schema | Новые optional поля в PKL-схемах      | Done ✓  |
-| 3. Entry Overrides — Swift  | Resolution logic в Swift-коде         | Done ✓  |
-| 4. Constraints              | PKL constraints (!isEmpty, isBetween) | Done ✓  |
-| 5. Verification             | Полная верификация                    | Pending |
+| Track                       | Description                           | Status |
+| --------------------------- | ------------------------------------- | ------ |
+| 1. Defaults                 | PKL default values в схемах           | Done ✓ |
+| 2. Entry Overrides — Schema | Новые optional поля в PKL-схемах      | Done ✓ |
+| 3. Entry Overrides — Swift  | Resolution logic в Swift-коде         | Done ✓ |
+| 4. Constraints              | PKL constraints (!isEmpty, isBetween) | Done ✓ |
+| 5. Verification             | Полная верификация                    | Done ✓ |
 
 ## Dependency Graph
 
@@ -246,17 +246,17 @@ Track 5 зависит от всех треков.
 
 ### 5.1 Full Verification
 
-- [ ] 5.1.1 Run `./bin/mise run codegen:pkl` — all Generated files up to date
-- [ ] 5.1.2 Run `pkl eval --format json` on all example configs — no errors
-- [ ] 5.1.3 Run `./bin/mise run build` — compiles
-- [ ] 5.1.4 Run `./bin/mise run test` — all tests pass
-- [ ] 5.1.5 Run `./bin/mise run format && ./bin/mise run lint` — no issues
-- [ ] 5.1.6 Create unified Oymyakon-style test config (6-in-1) and verify it parses
-- [ ] 5.1.7 Verify backward compatibility: existing example configs work unchanged
+- [x] 5.1.1 Run `./bin/mise run codegen:pkl` — all Generated files up to date
+- [x] 5.1.2 Run `pkl eval --format json` on all example configs — no errors
+- [x] 5.1.3 Run `./bin/mise run build` — compiles
+- [x] 5.1.4 Run `./bin/mise run test` — all tests pass (2151 tests)
+- [x] 5.1.5 Run `./bin/mise run format && ./bin/mise run lint` — no issues
+- [x] 5.1.6 Create unified Oymyakon-style test config (6-in-1) and verify it parses
+- [x] 5.1.7 Verify backward compatibility: existing example configs work unchanged
 
 ### 5.2 Documentation
 
-- [ ] 5.2.1 Update example configs in `Sources/ExFigCLI/Resources/Schemas/examples/`
-- [ ] 5.2.2 Add entry-level override example to `exfig-ios.pkl`
-- [ ] 5.2.3 Update CLAUDE.md if needed (new patterns, gotchas)
-- [ ] 5.2.4 Update `docs/PKL.md` with entry-level overrides section
+- [x] 5.2.1 Update example configs in `Sources/ExFigCLI/Resources/Schemas/examples/`
+- [x] 5.2.2 Add entry-level override example to `exfig-ios.pkl`
+- [x] 5.2.3 Update CLAUDE.md if needed (new patterns, gotchas)
+- [x] 5.2.4 Update `docs/PKL.md` with entry-level overrides section
