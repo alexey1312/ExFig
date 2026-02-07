@@ -19,9 +19,11 @@ ios = new iOS.iOSConfig {
   xcassetsPath = "Test/Assets.xcassets"
   xcassetsInMainBundle = true
 
-  colors = new iOS.ColorsEntry {
-    useColorAssets = true
-    assetsFolder = "Colors"
-    nameStyle = "camelCase"
+  colors = new Listing {
+    new iOS.ColorsEntry {
+      useColorAssets = true
+      assetsFolder = "Colors"
+      nameStyle = "camelCase"
+    }
   }
 }

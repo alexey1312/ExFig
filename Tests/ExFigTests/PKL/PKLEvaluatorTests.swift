@@ -1,4 +1,4 @@
-@testable import ExFigCLI
+import ExFigConfig
 import Foundation
 import Testing
 
@@ -10,76 +10,35 @@ struct PKLEvaluatorTests {
         .deletingLastPathComponent()
         .appendingPathComponent("Fixtures/PKL")
 
-    @Test("Evaluates valid PKL to JSON")
-    func evaluatesValidPklToJson() async throws {
-        let evaluator = try PKLEvaluator()
+    @Test("Evaluates valid PKL to ExFig module")
+    func evaluatesValidPkl() async throws {
         let configPath = Self.fixturesPath.appendingPathComponent("valid-config.pkl")
 
-        let json = try await evaluator.evaluate(configPath: configPath)
+        let module = try await PKLEvaluator.evaluate(configPath: configPath)
 
-        #expect(json.contains("\"ios\""))
-        #expect(json.contains("\"xcodeprojPath\""))
+        #expect(module.ios != nil)
+        #expect(module.ios?.xcodeprojPath == "Test.xcodeproj")
+        #expect(module.ios?.target == "TestTarget")
+        #expect(module.common?.variablesColors?.tokensFileId == "test-file-id")
     }
 
-    @Test("Returns properly formatted JSON")
-    func returnsProperlyFormattedJson() async throws {
-        let evaluator = try PKLEvaluator()
+    @Test("Returns colors as array")
+    func returnsColorsAsArray() async throws {
         let configPath = Self.fixturesPath.appendingPathComponent("valid-config.pkl")
 
-        let json = try await evaluator.evaluate(configPath: configPath)
+        let module = try await PKLEvaluator.evaluate(configPath: configPath)
 
-        // Should be valid JSON
-        let data = Data(json.utf8)
-        let parsed = try JSONSerialization.jsonObject(with: data)
-        #expect(parsed is [String: Any])
-    }
-
-    @Test("Throws EvaluationFailed on syntax error")
-    func throwsOnSyntaxError() async throws {
-        let evaluator = try PKLEvaluator()
-        let configPath = Self.fixturesPath.appendingPathComponent("invalid-syntax.pkl")
-
-        await #expect(throws: PKLError.self) {
-            try await evaluator.evaluate(configPath: configPath)
-        }
-    }
-
-    @Test("Error includes line and column information")
-    func errorIncludesLineInfo() async throws {
-        let evaluator = try PKLEvaluator()
-        let configPath = Self.fixturesPath.appendingPathComponent("invalid-syntax.pkl")
-
-        do {
-            _ = try await evaluator.evaluate(configPath: configPath)
-            Issue.record("Expected error to be thrown")
-        } catch let error as PKLError {
-            if case let .evaluationFailed(message, _) = error {
-                // PKL errors typically include line numbers
-                #expect(message.contains("line") || message.contains("Error"))
-            } else {
-                Issue.record("Unexpected error type: \(error)")
-            }
-        }
-    }
-
-    @Test("Evaluates config to PKLConfig struct")
-    func evaluatesToParams() async throws {
-        let evaluator = try PKLEvaluator()
-        let configPath = Self.fixturesPath.appendingPathComponent("valid-config.pkl")
-
-        let params = try await evaluator.evaluateToPKLConfig(configPath: configPath)
-
-        #expect(params.ios != nil)
-        #expect(params.ios?.xcodeprojPath == "Test.xcodeproj")
+        let colors = module.ios?.colors
+        #expect(colors?.count == 1)
+        #expect(colors?.first?.useColorAssets == true)
     }
 
     @Test("Throws configNotFound for nonexistent file")
     func throwsConfigNotFoundForMissingFile() async throws {
-        let evaluator = try PKLEvaluator()
         let fakePath = URL(fileURLWithPath: "/nonexistent/path/config.pkl")
 
         await #expect(throws: PKLError.self) {
-            try await evaluator.evaluate(configPath: fakePath)
+            try await PKLEvaluator.evaluate(configPath: fakePath)
         }
     }
 }

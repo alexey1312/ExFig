@@ -97,7 +97,7 @@ public struct WebImagesExporter: ImagesExporter {
                 platform: .web,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.effectiveNameStyle
+                nameStyle: .snakeCase
             )
         }
 

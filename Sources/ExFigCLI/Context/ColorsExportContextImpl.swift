@@ -1,3 +1,4 @@
+import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -55,7 +56,7 @@ struct ColorsExportContextImpl: ColorsExportContext {
     // MARK: - ColorsExportContext
 
     func loadColors(from source: ColorsSourceInput) async throws -> ColorsLoadOutput {
-        let variableParams = PKLConfig.Common.VariablesColors(
+        let variableParams = Common.VariablesColors(
             tokensFileId: source.tokensFileId,
             tokensCollectionName: source.tokensCollectionName,
             lightModeName: source.lightModeName,

@@ -166,7 +166,7 @@ final class FileIdProviderTests: XCTestCase {
     }
 
     func testIOSSingleColorsDoesNotAddTokensFileId() throws {
-        // Single (legacy) format uses common.variablesColors for source
+        // Entry without tokensFileId uses common.variablesColors for source
         let params = try parseParams("""
         {
           "figma": {
@@ -177,17 +177,17 @@ final class FileIdProviderTests: XCTestCase {
             "target": "Test",
             "xcassetsPath": "Assets.xcassets",
             "xcassetsInMainBundle": true,
-            "colors": {
+            "colors": [{
               "useColorAssets": true,
               "nameStyle": "camelCase"
-            }
+            }]
           }
         }
         """)
 
         let result = params.getFileIds()
 
-        // Only design-file, no tokens from ios.colors (uses common.variablesColors)
+        // Only design-file, no tokens from ios.colors (entry has no tokensFileId)
         XCTAssertEqual(result, ["design-file"])
     }
 
@@ -394,53 +394,6 @@ final class FileIdProviderTests: XCTestCase {
         XCTAssertTrue(result.contains("design-file"))
         XCTAssertTrue(result.contains("valid-tokens"))
         XCTAssertFalse(result.contains(""))
-    }
-
-    // MARK: - ColorsConfiguration Protocol Tests
-
-    func testIOSColorsConfigurationSingleReturnsEmpty() throws {
-        let params = try parseParams("""
-        {
-          "figma": {
-            "lightFileId": "design-file"
-          },
-          "ios": {
-            "xcodeprojPath": "Test.xcodeproj",
-            "target": "Test",
-            "xcassetsPath": "Assets.xcassets",
-            "xcassetsInMainBundle": true,
-            "colors": {
-              "useColorAssets": true,
-              "nameStyle": "camelCase"
-            }
-          }
-        }
-        """)
-
-        let result = params.ios?.colors?.getFileIds() ?? []
-
-        // Single format returns empty - uses common.variablesColors
-        XCTAssertTrue(result.isEmpty)
-    }
-
-    func testAndroidColorsConfigurationSingleReturnsEmpty() throws {
-        let params = try parseParams("""
-        {
-          "figma": {
-            "lightFileId": "design-file"
-          },
-          "android": {
-            "mainRes": "./res",
-            "colors": {
-              "composePackageName": "com.example"
-            }
-          }
-        }
-        """)
-
-        let result = params.android?.colors?.getFileIds() ?? []
-
-        XCTAssertTrue(result.isEmpty)
     }
 
     // MARK: - Helpers

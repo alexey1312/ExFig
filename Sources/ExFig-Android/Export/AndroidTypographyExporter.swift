@@ -38,7 +38,7 @@ public struct AndroidTypographyExporter: TypographyExporter {
         context: some TypographyExportContext
     ) async throws -> Int {
         // Validate source
-        guard let fileId = entry.fileId ?? platformConfig.figmaFileId else {
+        guard let fileId = platformConfig.figmaFileId else {
             throw AndroidTypographyExportError.figmaFileIdNotSpecified
         }
 
@@ -57,9 +57,9 @@ public struct AndroidTypographyExporter: TypographyExporter {
             try context.processTypography(
                 loadOutput,
                 platform: .android,
-                nameValidateRegexp: entry.nameValidateRegexp,
-                nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameValidateRegexp: nil,
+                nameReplaceRegexp: nil,
+                nameStyle: entry.coreNameStyle
             )
         }
 

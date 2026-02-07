@@ -65,11 +65,11 @@ extension ExFigCommand.ExportImages {
                     target: ios.target
                 )
                 for entry in entries {
-                    if let imageSwift = entry.imageSwift {
-                        try xcodeProject.addFileReferenceToXcodeProj(imageSwift)
+                    if let url = entry.imageSwiftURL {
+                        try xcodeProject.addFileReferenceToXcodeProj(url)
                     }
-                    if let swiftUIImageSwift = entry.swiftUIImageSwift {
-                        try xcodeProject.addFileReferenceToXcodeProj(swiftUIImageSwift)
+                    if let url = entry.swiftUIImageSwiftURL {
+                        try xcodeProject.addFileReferenceToXcodeProj(url)
                     }
                 }
                 try xcodeProject.save()

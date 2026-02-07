@@ -1,3 +1,4 @@
+import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation

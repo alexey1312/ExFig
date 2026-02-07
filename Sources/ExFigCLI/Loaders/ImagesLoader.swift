@@ -4,6 +4,7 @@ import ExFig_iOS
 import ExFig_Web
 
 // swiftlint:disable file_length
+import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -103,7 +104,7 @@ struct ImagesLoaderConfig: Sendable {
         }
     }
 
-    private static func convertSourceFormat(_ sourceFormat: ImageSourceFormat?) -> ImagesSourceFormat {
+    private static func convertSourceFormat(_ sourceFormat: Common.SourceFormat?) -> ImagesSourceFormat {
         switch sourceFormat {
         case .svg: .svg
         case .png, nil: .png

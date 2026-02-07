@@ -1,5 +1,5 @@
 {
-  "originHash" : "526b51a416e8983a4780c1142e859d70a86b1009d4643f3d29106780979b4c87",
+  "originHash" : "07e2422ee8fd5fde4b87b1d22cd3ac813cd11649b592820153ebf7306611e3f8",
   "pins" : [
     {
       "identity" : "aexml",
@@ -74,12 +74,30 @@
       }
     },
     {
+      "identity" : "pkl-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/pkl-swift",
+      "state" : {
+        "revision" : "d40f084bd85d1a2c871ca6542a7c4ebfc9bc6f65",
+        "version" : "0.7.2"
+      }
+    },
+    {
       "identity" : "rainbow",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/onevcat/Rainbow",
       "state" : {
         "revision" : "cdf146ae671b2624917648b61c908d1244b98ca1",
         "version" : "4.2.1"
+      }
+    },
+    {
+      "identity" : "semanticversion",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SwiftPackageIndex/SemanticVersion",
+      "state" : {
+        "revision" : "3b18d75a3cece558fb98e72d7dd5c83394d86d5b",
+        "version" : "0.5.1"
       }
     },
     {
@@ -179,6 +197,15 @@
       "state" : {
         "revision" : "f408b4a39dd59b402f1db3605daff6748c5e81ec",
         "version" : "0.45.1-swift.3"
+      }
+    },
+    {
+      "identity" : "swift-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-system",
+      "state" : {
+        "revision" : "7c6ad0fc39d0763e0b699210e4124afd5041c5df",
+        "version" : "1.6.4"
       }
     },
     {

@@ -5,6 +5,7 @@ included:
 excluded:
   - .build
   - Packages
+  - Sources/ExFigConfig/Generated
   - Sources/ExFigCLI/Resources/iOSConfig.swift
   - Sources/ExFigCLI/Resources/androidConfig.swift
   - Sources/ExFigCLI/Resources/flutterConfig.swift

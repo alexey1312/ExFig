@@ -26,6 +26,7 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
         .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.3"),
         .package(url: "https://github.com/mattt/swift-yyjson", from: "0.5.0"),
+        .package(url: "https://github.com/apple/pkl-swift", from: "0.7.2"),
     ],
     targets: [
         // Main target
@@ -68,7 +69,10 @@ let package = Package(
 
         // PKL configuration and shared config types
         .target(
-            name: "ExFigConfig"
+            name: "ExFigConfig",
+            dependencies: [
+                .product(name: "PklSwift", package: "pkl-swift"),
+            ]
         ),
 
         // Loads data via Figma REST API

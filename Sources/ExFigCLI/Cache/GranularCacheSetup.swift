@@ -1,3 +1,4 @@
+import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -24,7 +25,7 @@ enum GranularCacheHelper {
         trackingManager: ImageTrackingManager,
         cacheOptions: CacheOptions,
         configCacheEnabled: Bool,
-        params: PKLConfig,
+        params: ExFig.ModuleImpl,
         ui: TerminalUI
     ) throws -> GranularCacheSetup {
         // Check for granular cache warning

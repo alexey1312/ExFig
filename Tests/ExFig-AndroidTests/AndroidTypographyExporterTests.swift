@@ -1,4 +1,5 @@
 @testable import ExFig_Android
+import ExFigConfig
 import ExFigCore
 import XCTest
 
@@ -49,27 +50,21 @@ final class AndroidTypographyExporterTests: XCTestCase {
     // MARK: - Entry Configuration
 
     func testTypographyEntryDefaults() {
-        let entry = AndroidTypographyEntry()
+        let entry = AndroidTypographyEntry(
+            nameStyle: .snake_case,
+            composePackageName: nil
+        )
 
-        XCTAssertNil(entry.fileId)
-        XCTAssertNil(entry.nameValidateRegexp)
-        XCTAssertNil(entry.nameReplaceRegexp)
-        XCTAssertEqual(entry.nameStyle, .snakeCase)
+        XCTAssertEqual(entry.nameStyle, .snake_case)
         XCTAssertNil(entry.composePackageName)
     }
 
     func testTypographyEntryWithValues() {
         let entry = AndroidTypographyEntry(
-            fileId: "test-file-id",
-            nameValidateRegexp: "^[a-z]+$",
-            nameReplaceRegexp: "$1",
             nameStyle: .camelCase,
             composePackageName: "com.example.app.ui"
         )
 
-        XCTAssertEqual(entry.fileId, "test-file-id")
-        XCTAssertEqual(entry.nameValidateRegexp, "^[a-z]+$")
-        XCTAssertEqual(entry.nameReplaceRegexp, "$1")
         XCTAssertEqual(entry.nameStyle, .camelCase)
         XCTAssertEqual(entry.composePackageName, "com.example.app.ui")
     }
@@ -77,21 +72,36 @@ final class AndroidTypographyExporterTests: XCTestCase {
     // MARK: - Source Input
 
     func testTypographySourceInput() {
-        let entry = AndroidTypographyEntry(fileId: "entry-file-id")
+        let entry = AndroidTypographyEntry(
+            nameStyle: .snake_case,
+            composePackageName: nil
+        )
         let sourceInput = entry.typographySourceInput(fileId: "default-file-id", timeout: 30.0)
 
-        // Should use entry's fileId over default
-        XCTAssertEqual(sourceInput.fileId, "entry-file-id")
+        XCTAssertEqual(sourceInput.fileId, "default-file-id")
         XCTAssertEqual(sourceInput.timeout, 30.0)
     }
 
-    func testTypographySourceInputFallback() {
-        let entry = AndroidTypographyEntry() // No fileId
+    func testTypographySourceInputNilTimeout() {
+        let entry = AndroidTypographyEntry(
+            nameStyle: .snake_case,
+            composePackageName: nil
+        )
         let sourceInput = entry.typographySourceInput(fileId: "default-file-id", timeout: nil)
 
-        // Should fall back to default fileId
         XCTAssertEqual(sourceInput.fileId, "default-file-id")
         XCTAssertNil(sourceInput.timeout)
+    }
+
+    // MARK: - Core Name Style
+
+    func testCoreNameStyle() {
+        let entry = AndroidTypographyEntry(
+            nameStyle: .camelCase,
+            composePackageName: nil
+        )
+
+        XCTAssertEqual(entry.coreNameStyle, .camelCase)
     }
 }
 

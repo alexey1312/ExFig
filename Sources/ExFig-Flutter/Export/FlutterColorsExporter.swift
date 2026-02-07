@@ -52,7 +52,7 @@ public struct FlutterColorsExporter: ColorsExporter {
     ) async throws -> Int {
         // 1. Load colors from Figma
         let colors = try await context.withSpinner(
-            "Fetching colors from Figma (\(entry.tokensCollectionName))..."
+            "Fetching colors from Figma (\(entry.tokensCollectionName ?? ""))..."
         ) {
             try await context.loadColors(from: entry.colorsSourceInput)
         }

@@ -53,10 +53,10 @@ extension ExFigCommand.ExportColors {
                 let syncCount = try await ui.withSpinner("Syncing codeSyntax to Figma...") {
                     let syncer = CodeSyntaxSyncer(client: client)
                     return try await syncer.sync(
-                        fileId: entry.tokensFileId,
-                        collectionName: entry.tokensCollectionName,
+                        fileId: entry.tokensFileId ?? "",
+                        collectionName: entry.tokensCollectionName ?? "",
                         template: template,
-                        nameStyle: entry.nameStyle,
+                        nameStyle: entry.coreNameStyle,
                         nameValidateRegexp: entry.nameValidateRegexp,
                         nameReplaceRegexp: entry.nameReplaceRegexp
                     )
@@ -74,11 +74,11 @@ extension ExFigCommand.ExportColors {
                 )
                 // Add Swift file references for each entry
                 for entry in entries {
-                    if let colorSwift = entry.colorSwift {
-                        try xcodeProject.addFileReferenceToXcodeProj(colorSwift)
+                    if let url = entry.colorSwiftURL {
+                        try xcodeProject.addFileReferenceToXcodeProj(url)
                     }
-                    if let swiftuiColorSwift = entry.swiftuiColorSwift {
-                        try xcodeProject.addFileReferenceToXcodeProj(swiftuiColorSwift)
+                    if let url = entry.swiftuiColorSwiftURL {
+                        try xcodeProject.addFileReferenceToXcodeProj(url)
                     }
                 }
                 try xcodeProject.save()

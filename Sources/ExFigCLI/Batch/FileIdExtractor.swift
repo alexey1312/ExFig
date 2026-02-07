@@ -1,3 +1,4 @@
+import ExFigConfig
 import Foundation
 import Logging
 
@@ -31,37 +32,28 @@ struct FileIdExtractor {
         return fileIds
     }
 
-    /// Parse PKLConfig from a PKL config file URL.
+    /// Parse ExFig.ModuleImpl from a PKL config file URL.
     ///
     /// - Parameter url: URL to the config file.
-    /// - Returns: Parsed PKLConfig or nil if parsing fails.
-    private func parseParams(from url: URL) -> PKLConfig? {
-        do {
-            let evaluator = try PKLEvaluator()
+    /// - Returns: Parsed ExFig.ModuleImpl or nil if parsing fails.
+    private func parseParams(from url: URL) -> ExFig.ModuleImpl? {
+        // Run async evaluation synchronously
+        // Semaphore ensures sequential access, so @unchecked Sendable is safe
+        let semaphore = DispatchSemaphore(value: 0)
+        let box = SendableBox<ExFig.ModuleImpl?>(nil)
 
-            // Run async evaluation synchronously
-            // Semaphore ensures sequential access, so @unchecked Sendable is safe
-            let semaphore = DispatchSemaphore(value: 0)
-            let box = SendableBox<PKLConfig?>(nil)
-
-            Task {
-                defer { semaphore.signal() }
-                do {
-                    box.value = try await evaluator.evaluateToPKLConfig(configPath: url)
-                } catch {
-                    ExFigCommand.logger.warning(
-                        "Failed to parse config \(url.lastPathComponent): \(error.localizedDescription)"
-                    )
-                }
+        Task {
+            defer { semaphore.signal() }
+            do {
+                box.value = try await PKLEvaluator.evaluate(configPath: url)
+            } catch {
+                ExFigCommand.logger.warning(
+                    "Failed to parse config \(url.lastPathComponent): \(error.localizedDescription)"
+                )
             }
-
-            semaphore.wait()
-            return box.value
-        } catch {
-            ExFigCommand.logger.warning(
-                "Failed to create PKL evaluator for \(url.lastPathComponent): \(error.localizedDescription)"
-            )
-            return nil
         }
+
+        semaphore.wait()
+        return box.value
     }
 }

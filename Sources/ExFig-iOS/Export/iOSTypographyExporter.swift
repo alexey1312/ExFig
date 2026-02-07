@@ -40,7 +40,7 @@ public struct iOSTypographyExporter: TypographyExporter {
         context: some TypographyExportContext
     ) async throws -> Int {
         // Validate source
-        guard let fileId = entry.fileId ?? platformConfig.figmaFileId else {
+        guard let fileId = platformConfig.figmaFileId else {
             throw iOSTypographyExportError.figmaFileIdNotSpecified
         }
 
@@ -59,9 +59,9 @@ public struct iOSTypographyExporter: TypographyExporter {
             try context.processTypography(
                 loadOutput,
                 platform: .ios,
-                nameValidateRegexp: entry.nameValidateRegexp,
-                nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameValidateRegexp: nil,
+                nameReplaceRegexp: nil,
+                nameStyle: entry.coreNameStyle
             )
         }
 
@@ -98,12 +98,12 @@ public struct iOSTypographyExporter: TypographyExporter {
     ) throws {
         // Create output configuration
         let fontUrls = XcodeTypographyOutput.FontURLs(
-            fontExtensionURL: entry.fontSwift,
-            swiftUIFontExtensionURL: entry.swiftUIFontSwift
+            fontExtensionURL: entry.fontSwiftURL,
+            swiftUIFontExtensionURL: entry.swiftUIFontSwiftURL
         )
         let labelUrls = XcodeTypographyOutput.LabelURLs(
-            labelsDirectory: entry.labelsDirectory,
-            labelStyleExtensionsURL: entry.labelStyleSwift
+            labelsDirectory: entry.labelsDirectoryURL,
+            labelStyleExtensionsURL: entry.labelStyleSwiftURL
         )
         let urls = XcodeTypographyOutput.URLs(
             fonts: fontUrls,

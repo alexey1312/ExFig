@@ -1,3 +1,4 @@
+import ExFigConfig
 import FigmaAPI
 import Foundation
 import Logging
@@ -14,7 +15,7 @@ enum VersionTrackingCheckResult: Sendable {
 /// Configuration for version tracking check.
 struct VersionTrackingConfig {
     let client: Client
-    let params: PKLConfig
+    let params: ExFig.ModuleImpl
     let cacheOptions: CacheOptions
     let configCacheEnabled: Bool
     let configCachePath: String?
@@ -26,7 +27,7 @@ struct VersionTrackingConfig {
 
     init(
         client: Client,
-        params: PKLConfig,
+        params: ExFig.ModuleImpl,
         cacheOptions: CacheOptions,
         configCacheEnabled: Bool,
         configCachePath: String?,

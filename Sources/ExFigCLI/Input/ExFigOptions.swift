@@ -1,4 +1,5 @@
 import ArgumentParser
+import ExFigConfig
 import Foundation
 
 /// Command-line options for ExFig commands.
@@ -29,7 +30,7 @@ struct ExFigOptions: ParsableArguments {
 
     /// Parsed configuration from the PKL input file.
     /// Populated during `validate()`.
-    private(set) var params: PKLConfig!
+    private(set) var params: ExFig.ModuleImpl!
 
     // MARK: - Validation
 
@@ -78,21 +79,19 @@ struct ExFigOptions: ParsableArguments {
         )
     }
 
-    private func readParams(at path: String) throws -> PKLConfig {
+    private func readParams(at path: String) throws -> ExFig.ModuleImpl {
         let url = URL(fileURLWithPath: path)
-        let evaluator = try PKLEvaluator()
 
-        // PKLEvaluator is an actor, need to run async
-        // Using blocking call since we're in validate() which is synchronous
-        // Semaphore ensures sequential access, so @unchecked Sendable is safe
+        // PKLEvaluator.evaluate is async, need to bridge from sync validate()
+        // Semaphore ensures sequential access
         let semaphore = DispatchSemaphore(value: 0)
-        let box = SendableBox<Result<PKLConfig, Error>>(
+        let box = SendableBox<Result<ExFig.ModuleImpl, Error>>(
             .failure(PKLError.evaluationFailed(message: "PKL evaluation did not complete", exitCode: -1))
         )
 
         Task {
             do {
-                box.value = try await .success(evaluator.evaluate(configPath: url, as: PKLConfig.self))
+                box.value = try await .success(PKLEvaluator.evaluate(configPath: url))
             } catch {
                 box.value = .failure(error)
             }

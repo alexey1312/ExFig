@@ -1,98 +1,32 @@
 import Foundation
+import PklSwift
 
-/// Evaluates PKL configuration files to JSON.
+/// Evaluates PKL configuration files using pkl-swift's embedded evaluator.
 ///
-/// Uses the PKL CLI via subprocess to evaluate `.pkl` files and output JSON
-/// that can be decoded into Swift types.
+/// Uses PklSwift's MessagePack-based evaluation instead of spawning a subprocess.
+/// This eliminates the need for pkl CLI to be installed (PKLLocator is no longer used).
 ///
 /// Usage:
 /// ```swift
-/// let evaluator = try PKLEvaluator()
-/// let json = try await evaluator.evaluate(configPath: configURL)
-/// let params = try await evaluator.evaluateToParams(configPath: configURL)
+/// let config = try await PKLEvaluator.evaluate(configPath: configURL)
+/// print(config.ios?.colors) // [iOS.ColorsEntry]?
 /// ```
-public actor PKLEvaluator {
-    private let pklPath: URL
-
-    /// Creates a new PKL evaluator.
-    /// - Throws: `PKLError.notFound` if pkl CLI is not installed
-    public init() throws {
-        let locator = PKLLocator()
-        pklPath = try locator.findPKL()
-    }
-
-    /// Creates a PKL evaluator with a specific pkl path.
-    /// - Parameter pklPath: Path to the pkl executable
-    public init(pklPath: URL) {
-        self.pklPath = pklPath
-    }
-
-    /// Evaluates a PKL configuration file to JSON string.
+public enum PKLEvaluator {
+    /// Evaluates a PKL configuration file and returns the typed ExFig module.
     /// - Parameter configPath: Path to the .pkl configuration file
-    /// - Returns: JSON string representation of the configuration
-    /// - Throws: `PKLError.evaluationFailed` on syntax or type errors
-    public func evaluate(configPath: URL) async throws -> String {
+    /// - Returns: Evaluated ExFig module with all platform configurations
+    /// - Throws: `PKLError.configNotFound` if file doesn't exist,
+    ///           or PklSwift evaluation errors on syntax/type issues
+    public static func evaluate(configPath: URL) async throws -> ExFig.ModuleImpl {
         guard FileManager.default.fileExists(atPath: configPath.path) else {
             throw PKLError.configNotFound(path: configPath.path)
         }
 
-        let process = Process()
-        process.executableURL = pklPath
-        process.arguments = ["eval", "--format", "json", configPath.path]
-
-        let stdout = Pipe()
-        let stderr = Pipe()
-        process.standardOutput = stdout
-        process.standardError = stderr
-
-        return try await withCheckedThrowingContinuation { continuation in
-            process.terminationHandler = { _ in
-                let outputData = stdout.fileHandleForReading.readDataToEndOfFile()
-                let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
-                let exitCode = process.terminationStatus
-
-                if exitCode != 0 {
-                    let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-                    continuation.resume(
-                        throwing: PKLError.evaluationFailed(message: errorMessage, exitCode: exitCode)
-                    )
-                    return
-                }
-
-                guard let output = String(data: outputData, encoding: .utf8) else {
-                    continuation.resume(
-                        throwing: PKLError.evaluationFailed(
-                            message: "Failed to decode PKL output as UTF-8",
-                            exitCode: exitCode
-                        )
-                    )
-                    return
-                }
-
-                continuation.resume(returning: output)
-            }
-
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
+        return try await PklSwift.withEvaluator { evaluator in
+            try await evaluator.evaluateModule(
+                source: .path(configPath.path),
+                as: ExFig.ModuleImpl.self
+            )
         }
-    }
-
-    /// Evaluates a PKL configuration file and decodes to a Decodable type.
-    /// - Parameters:
-    ///   - configPath: Path to the .pkl configuration file
-    ///   - type: The type to decode into
-    /// - Returns: Decoded value
-    /// - Throws: `PKLError.evaluationFailed` on syntax/type errors, or decoding errors
-    public func evaluate<T: Decodable>(configPath: URL, as type: T.Type) async throws -> T {
-        let json = try await evaluate(configPath: configPath)
-        let data = Data(json.utf8)
-
-        // ExFigConfig has zero dependencies by design — using Foundation's JSONDecoder
-        // instead of JSONCodec (YYJSON) to avoid adding a dependency for a single decode call.
-        let decoder = JSONDecoder()
-        return try decoder.decode(T.self, from: data)
     }
 }

@@ -96,34 +96,31 @@ extension ExFigCommand {
                 ui.info("Using ExFig \(ExFigCommand.version) to export colors.")
             }
 
-            let legacyConfig = LegacyExportConfig(
-                commonParams: options.params.common, figmaParams: options.params.figma, client: client, ui: ui
-            )
             var totalCount = 0
 
-            // Export colors via plugin architecture (multiple format) or legacy methods (single format)
+            // Export colors via plugin architecture
             if let ios = options.params.ios, let colors = ios.colors {
-                totalCount += try await (colors.isMultiple
-                    ? exportiOSColorsViaPlugin(entries: colors.entries, ios: ios, client: client, ui: ui)
-                    : exportiOSColorsLegacy(colorsConfig: colors, ios: ios, config: legacyConfig))
+                totalCount += try await exportiOSColorsViaPlugin(
+                    entries: colors, ios: ios, client: client, ui: ui
+                )
             }
 
             if let android = options.params.android, let colors = android.colors {
-                totalCount += try await (colors.isMultiple
-                    ? exportAndroidColorsViaPlugin(entries: colors.entries, android: android, client: client, ui: ui)
-                    : exportAndroidColorsLegacy(colorsConfig: colors, android: android, config: legacyConfig))
+                totalCount += try await exportAndroidColorsViaPlugin(
+                    entries: colors, android: android, client: client, ui: ui
+                )
             }
 
             if let flutter = options.params.flutter, let colors = flutter.colors {
-                totalCount += try await (colors.isMultiple
-                    ? exportFlutterColorsViaPlugin(entries: colors.entries, flutter: flutter, client: client, ui: ui)
-                    : exportFlutterColorsLegacy(colorsConfig: colors, flutter: flutter, config: legacyConfig))
+                totalCount += try await exportFlutterColorsViaPlugin(
+                    entries: colors, flutter: flutter, client: client, ui: ui
+                )
             }
 
             if let web = options.params.web, let colors = web.colors {
-                totalCount += try await (colors.isMultiple
-                    ? exportWebColorsViaPlugin(entries: colors.entries, web: web, client: client, ui: ui)
-                    : exportWebColorsLegacy(colorsConfig: colors, web: web, config: legacyConfig))
+                totalCount += try await exportWebColorsViaPlugin(
+                    entries: colors, web: web, client: client, ui: ui
+                )
             }
 
             // Update file version cache after successful export (deferred in batch mode)

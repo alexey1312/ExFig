@@ -1,3 +1,4 @@
+import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -10,18 +11,16 @@ extension ExFigCommand.ExportImages {
     /// For multiple entries, uses ComponentPreFetcher to optimize Figma API calls.
     func exportiOSImages(
         client: Client,
-        params: PKLConfig,
+        params: ExFig.ModuleImpl,
         granularCacheManager: GranularCacheManager?,
         ui: TerminalUI
     ) async throws -> PlatformExportResult {
         guard let ios = params.ios,
-              let imagesConfig = ios.images
+              let entries = ios.images, !entries.isEmpty
         else {
             ui.warning(.configMissing(platform: "ios", assetType: "images"))
             return PlatformExportResult(count: 0, hashes: [:])
         }
-
-        let entries = imagesConfig.toPluginEntries(common: params.common)
 
         // Multiple entries - pre-fetch Components once for all entries
         if entries.count > 1 {

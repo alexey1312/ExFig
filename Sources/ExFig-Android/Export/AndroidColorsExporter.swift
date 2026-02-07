@@ -110,7 +110,7 @@ public struct AndroidColorsExporter: ColorsExporter {
             xmlResourcePackage: platformConfig.resourcePackage,
             srcDirectory: platformConfig.mainSrc,
             packageName: entry.composePackageName,
-            colorKotlinURL: entry.colorKotlin,
+            colorKotlinURL: entry.colorKotlinURL,
             templatesPath: platformConfig.templatesPath,
             xmlDisabled: entry.xmlDisabled ?? false
         )

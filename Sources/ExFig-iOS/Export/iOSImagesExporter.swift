@@ -60,7 +60,7 @@ public struct iOSImagesExporter: ImagesExporter {
         let granularCacheContext = context as? (any ImagesExportContextWithGranularCache)
         let useGranularCache = granularCacheContext?.isGranularCacheEnabled ?? false
 
-        let sourceFormat = entry.sourceFormat ?? .png
+        let sourceFormat = entry.sourceFormat.flatMap { ImageSourceFormat(rawValue: $0.rawValue) } ?? .png
         let outputFormat = entry.effectiveOutputFormat
 
         switch (sourceFormat, outputFormat) {
@@ -111,7 +111,7 @@ public struct iOSImagesExporter: ImagesExporter {
                 loadResult.allAssetMetadata.map(\.name),
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
             allAssetMetadata = loadResult.allAssetMetadata.map { meta in
                 AssetMetadata(
@@ -119,7 +119,7 @@ public struct iOSImagesExporter: ImagesExporter {
                         [meta.name],
                         nameValidateRegexp: entry.nameValidateRegexp,
                         nameReplaceRegexp: entry.nameReplaceRegexp,
-                        nameStyle: entry.nameStyle
+                        nameStyle: entry.coreNameStyle
                     ).first ?? meta.name,
                     nodeId: meta.nodeId,
                     fileId: meta.fileId
@@ -188,7 +188,7 @@ public struct iOSImagesExporter: ImagesExporter {
                 loadResult.allAssetMetadata.map(\.name),
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
             allAssetMetadata = loadResult.allAssetMetadata.map { meta in
                 AssetMetadata(
@@ -196,7 +196,7 @@ public struct iOSImagesExporter: ImagesExporter {
                         [meta.name],
                         nameValidateRegexp: entry.nameValidateRegexp,
                         nameReplaceRegexp: entry.nameReplaceRegexp,
-                        nameStyle: entry.nameStyle
+                        nameStyle: entry.coreNameStyle
                     ).first ?? meta.name,
                     nodeId: meta.nodeId,
                     fileId: meta.fileId
@@ -276,7 +276,7 @@ public struct iOSImagesExporter: ImagesExporter {
                 loadResult.allAssetMetadata.map(\.name),
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
             allAssetMetadata = loadResult.allAssetMetadata.map { meta in
                 AssetMetadata(
@@ -284,7 +284,7 @@ public struct iOSImagesExporter: ImagesExporter {
                         [meta.name],
                         nameValidateRegexp: entry.nameValidateRegexp,
                         nameReplaceRegexp: entry.nameReplaceRegexp,
-                        nameStyle: entry.nameStyle
+                        nameStyle: entry.coreNameStyle
                     ).first ?? meta.name,
                     nodeId: meta.nodeId,
                     fileId: meta.fileId
@@ -318,7 +318,7 @@ public struct iOSImagesExporter: ImagesExporter {
 
         let contentsJsonFiles = iOSImagesExporterHelpers.makeImagesetContentsJson(
             imagePairs: imagePairs, scales: scales, assetsURL: assetsURL,
-            renderMode: entry.renderMode, fileExtension: outputFormat.rawValue
+            renderMode: entry.coreRenderMode, fileExtension: outputFormat.rawValue
         )
 
         let folderContentsFile = iOSImagesExporterHelpers.makeFolderContentsJson(assetsURL: assetsURL)
@@ -366,7 +366,7 @@ public struct iOSImagesExporter: ImagesExporter {
                 loadResult.asLoadOutput, platform: .ios,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
         }
 
@@ -406,7 +406,7 @@ public struct iOSImagesExporter: ImagesExporter {
                 loadResult.asLoadOutput, platform: .ios,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
         }
 
@@ -452,11 +452,11 @@ private extension iOSImagesEntry {
             assetsInSwiftPackage: platformConfig.xcassetsInSwiftPackage,
             resourceBundleNames: platformConfig.resourceBundleNames,
             addObjcAttribute: platformConfig.addObjcAttribute,
-            uiKitImageExtensionURL: imageSwift,
-            swiftUIImageExtensionURL: swiftUIImageSwift,
-            codeConnectSwiftURL: codeConnectSwift,
+            uiKitImageExtensionURL: imageSwiftURL,
+            swiftUIImageExtensionURL: swiftUIImageSwiftURL,
+            codeConnectSwiftURL: codeConnectSwiftURL,
             templatesPath: platformConfig.templatesPath,
-            renderMode: renderMode
+            renderMode: coreRenderMode
         )
     }
 

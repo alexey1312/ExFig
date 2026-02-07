@@ -1,3 +1,4 @@
+import ExFigConfig
 import FigmaAPI
 import Foundation
 
@@ -124,7 +125,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
 
     // MARK: - Config Detection
 
-    private func hasColorsConfig(_ params: PKLConfig?) -> Bool {
+    private func hasColorsConfig(_ params: ExFig.ModuleImpl?) -> Bool {
         guard let params else { return false }
         let hasColorSource = params.common?.colors != nil || params.common?.variablesColors != nil
         let hasColorOutput = params.ios?.colors != nil
@@ -133,21 +134,21 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         return hasColorSource || hasColorOutput
     }
 
-    private func hasIconsConfig(_ params: PKLConfig?) -> Bool {
+    private func hasIconsConfig(_ params: ExFig.ModuleImpl?) -> Bool {
         guard let params else { return false }
         return params.ios?.icons != nil
             || params.android?.icons != nil
             || params.flutter?.icons != nil
     }
 
-    private func hasImagesConfig(_ params: PKLConfig?) -> Bool {
+    private func hasImagesConfig(_ params: ExFig.ModuleImpl?) -> Bool {
         guard let params else { return false }
         return params.ios?.images != nil
             || params.android?.images != nil
             || params.flutter?.images != nil
     }
 
-    private func hasTypographyConfig(_ params: PKLConfig?) -> Bool {
+    private func hasTypographyConfig(_ params: ExFig.ModuleImpl?) -> Bool {
         guard let params else { return false }
         return params.ios?.typography != nil
             || params.android?.typography != nil

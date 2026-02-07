@@ -77,7 +77,7 @@ public struct iOSColorsExporter: ColorsExporter {
                 platform: .ios,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
         }
 
@@ -125,8 +125,8 @@ public struct iOSColorsExporter: ColorsExporter {
             assetsInSwiftPackage: platformConfig.xcassetsInSwiftPackage,
             resourceBundleNames: platformConfig.resourceBundleNames,
             addObjcAttribute: platformConfig.addObjcAttribute,
-            colorSwiftURL: entry.colorSwift,
-            swiftuiColorSwiftURL: entry.swiftuiColorSwift,
+            colorSwiftURL: entry.colorSwiftURL,
+            swiftuiColorSwiftURL: entry.swiftuiColorSwiftURL,
             groupUsingNamespace: entry.groupUsingNamespace,
             templatesPath: platformConfig.templatesPath
         )

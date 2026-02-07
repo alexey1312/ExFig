@@ -1,4 +1,5 @@
 import ExFig_iOS
+import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -9,8 +10,8 @@ import XcodeExport
 extension ExFigCommand.ExportColors {
     /// Exports iOS colors using legacy format (common.variablesColors or common.colors).
     func exportiOSColorsLegacy(
-        colorsConfig: PKLConfig.iOS.ColorsConfiguration,
-        ios: PKLConfig.iOS,
+        entries: [iOSColorsEntry],
+        ios: iOS.iOSConfig,
         config: LegacyExportConfig
     ) async throws -> Int {
         try validateLegacyConfig(config.commonParams)
@@ -22,14 +23,14 @@ extension ExFigCommand.ExportColors {
         )
 
         // Get the first entry for legacy format
-        let entry = colorsConfig.entries[0]
+        let entry = entries[0]
 
         let colorPairs = try await config.ui.withSpinner("Processing colors for iOS...") {
             let processor = ColorsProcessor(
                 platform: .ios,
                 nameValidateRegexp: finalNameValidateRegexp,
                 nameReplaceRegexp: finalNameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
             let result = processor.process(
                 light: colors.light,
@@ -61,7 +62,7 @@ extension ExFigCommand.ExportColors {
                     fileId: variablesColors.tokensFileId,
                     collectionName: variablesColors.tokensCollectionName,
                     template: template,
-                    nameStyle: entry.nameStyle,
+                    nameStyle: entry.coreNameStyle,
                     nameValidateRegexp: finalNameValidateRegexp,
                     nameReplaceRegexp: finalNameReplaceRegexp
                 )
@@ -82,7 +83,7 @@ extension ExFigCommand.ExportColors {
     func exportXcodeColorsEntry(
         colorPairs: [AssetPair<Color>],
         entry: iOSColorsEntry,
-        ios: PKLConfig.iOS,
+        ios: iOS.iOSConfig,
         ui: TerminalUI
     ) throws {
         var colorsURL: URL?
@@ -92,7 +93,7 @@ extension ExFigCommand.ExportColors {
                     throw ExFigError
                         .configurationError("xcassetsPath is required for iOS colors export with useColorAssets")
                 }
-                colorsURL = xcassetsPath.appendingPathComponent(folder)
+                colorsURL = URL(fileURLWithPath: xcassetsPath).appendingPathComponent(folder)
             } else {
                 throw ExFigError.colorsAssetsFolderNotSpecified
             }
@@ -104,10 +105,10 @@ extension ExFigCommand.ExportColors {
             assetsInSwiftPackage: ios.xcassetsInSwiftPackage,
             resourceBundleNames: ios.resourceBundleNames,
             addObjcAttribute: ios.addObjcAttribute,
-            colorSwiftURL: entry.colorSwift,
-            swiftuiColorSwiftURL: entry.swiftuiColorSwift,
+            colorSwiftURL: entry.colorSwiftURL,
+            swiftuiColorSwiftURL: entry.swiftuiColorSwiftURL,
             groupUsingNamespace: entry.groupUsingNamespace,
-            templatesPath: ios.templatesPath
+            templatesPath: ios.templatesPath.map { URL(fileURLWithPath: $0) }
         )
 
         let exporter = XcodeColorExporter(output: output)

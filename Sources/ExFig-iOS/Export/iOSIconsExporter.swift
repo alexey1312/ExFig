@@ -121,7 +121,7 @@ public struct iOSIconsExporter: IconsExporter {
                 platform: .ios,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
         }
 
@@ -144,9 +144,9 @@ public struct iOSIconsExporter: IconsExporter {
             resourceBundleNames: platformConfig.resourceBundleNames,
             addObjcAttribute: platformConfig.addObjcAttribute,
             preservesVectorRepresentation: entry.preservesVectorRepresentation,
-            uiKitImageExtensionURL: entry.imageSwift,
-            swiftUIImageExtensionURL: entry.swiftUIImageSwift,
-            codeConnectSwiftURL: entry.codeConnectSwift,
+            uiKitImageExtensionURL: entry.imageSwiftURL,
+            swiftUIImageExtensionURL: entry.swiftUIImageSwiftURL,
+            codeConnectSwiftURL: entry.codeConnectSwiftURL,
             templatesPath: platformConfig.templatesPath
         )
 
@@ -160,7 +160,7 @@ public struct iOSIconsExporter: IconsExporter {
                 loadResult.allAssetMetadata.map(\.name),
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.nameStyle
+                nameStyle: entry.coreNameStyle
             )
             allAssetMetadata = loadResult.allAssetMetadata.map { meta in
                 AssetMetadata(
@@ -168,7 +168,7 @@ public struct iOSIconsExporter: IconsExporter {
                         [meta.name],
                         nameValidateRegexp: entry.nameValidateRegexp,
                         nameReplaceRegexp: entry.nameReplaceRegexp,
-                        nameStyle: entry.nameStyle
+                        nameStyle: entry.coreNameStyle
                     ).first ?? meta.name,
                     nodeId: meta.nodeId,
                     fileId: meta.fileId

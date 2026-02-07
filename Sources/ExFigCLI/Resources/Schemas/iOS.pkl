@@ -191,14 +191,14 @@ class iOSConfig {
   /// Path to custom Stencil templates.
   templatesPath: String?
 
-  /// Colors configuration (single entry or array).
-  colors: (ColorsEntry|Listing<ColorsEntry>)?
+  /// Colors configuration entries.
+  colors: Listing<ColorsEntry>?
 
-  /// Icons configuration (single entry or array).
-  icons: (IconsEntry|Listing<IconsEntry>)?
+  /// Icons configuration entries.
+  icons: Listing<IconsEntry>?
 
-  /// Images configuration (single entry or array).
-  images: (ImagesEntry|Listing<ImagesEntry>)?
+  /// Images configuration entries.
+  images: Listing<ImagesEntry>?
 
   /// Typography configuration.
   typography: Typography?

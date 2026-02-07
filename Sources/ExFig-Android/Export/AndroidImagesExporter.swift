@@ -351,7 +351,7 @@ private extension AndroidImagesExporter {
                 platform: .android,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.effectiveNameStyle
+                nameStyle: .snakeCase
             )
         }
 
@@ -376,7 +376,7 @@ private extension AndroidImagesExporter {
                 platform: .android,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp,
-                nameStyle: entry.effectiveNameStyle
+                nameStyle: .snakeCase
             )
         }
 

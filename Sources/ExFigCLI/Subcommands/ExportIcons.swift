@@ -129,7 +129,7 @@ extension ExFigCommand {
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Xcode project.")
                 }
-                let entries = iconsConfig.entries
+                let entries = iconsConfig
                 let result = try await withComponentPreFetchIfNeeded(
                     entries: entries,
                     client: client
@@ -153,7 +153,7 @@ extension ExFigCommand {
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Android Studio project.")
                 }
-                let entries = iconsConfig.entries
+                let entries = iconsConfig
                 let result = try await withComponentPreFetchIfNeeded(
                     entries: entries,
                     client: client
@@ -177,7 +177,7 @@ extension ExFigCommand {
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
                 }
-                let entries = iconsConfig.entries
+                let entries = iconsConfig
                 let result = try await withComponentPreFetchIfNeeded(
                     entries: entries,
                     client: client
@@ -201,7 +201,7 @@ extension ExFigCommand {
                 if BatchProgressViewStorage.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Web project.")
                 }
-                let entries = iconsConfig.entries
+                let entries = iconsConfig
                 let result = try await withComponentPreFetchIfNeeded(
                     entries: entries,
                     client: client

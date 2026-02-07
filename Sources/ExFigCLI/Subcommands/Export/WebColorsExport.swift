@@ -57,14 +57,14 @@ extension ExFigCommand.ExportColors {
         web: PKLConfig.Web
     ) throws {
         let outputDir = if let dir = entry.outputDirectory {
-            web.output.appendingPathComponent(dir)
+            web.outputURL.appendingPathComponent(dir)
         } else {
-            web.output
+            web.outputURL
         }
 
         let output = WebOutput(
             outputDirectory: outputDir,
-            templatesPath: web.templatesPath
+            templatesPath: web.templatesPathURL
         )
         let exporter = WebColorExporter(
             output: output,

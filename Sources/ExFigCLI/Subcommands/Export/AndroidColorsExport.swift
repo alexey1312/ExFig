@@ -1,5 +1,6 @@
 import AndroidExport
 import ExFig_Android
+import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -9,8 +10,8 @@ import Foundation
 extension ExFigCommand.ExportColors {
     /// Exports Android colors using legacy format (common.variablesColors or common.colors).
     func exportAndroidColorsLegacy(
-        colorsConfig: PKLConfig.Android.ColorsConfiguration,
-        android: PKLConfig.Android,
+        entries: [AndroidColorsEntry],
+        android: Android.AndroidConfig,
         config: LegacyExportConfig
     ) async throws -> Int {
         try validateLegacyConfig(config.commonParams)
@@ -21,7 +22,7 @@ extension ExFigCommand.ExportColors {
             from: config.commonParams
         )
 
-        let entry = colorsConfig.entries[0]
+        let entry = entries[0]
 
         let colorPairs = try await config.ui.withSpinner("Processing colors for Android...") {
             let processor = ColorsProcessor(
@@ -56,16 +57,17 @@ extension ExFigCommand.ExportColors {
     func exportAndroidColorsEntry(
         colorPairs: [AssetPair<Color>],
         entry: AndroidColorsEntry,
-        android: PKLConfig.Android,
+        android: Android.AndroidConfig,
         ui: TerminalUI
     ) async throws {
+        let mainResURL = URL(fileURLWithPath: android.mainRes)
         let output = AndroidOutput(
-            xmlOutputDirectory: android.mainRes,
+            xmlOutputDirectory: mainResURL,
             xmlResourcePackage: android.resourcePackage,
-            srcDirectory: android.mainSrc,
+            srcDirectory: android.mainSrc.map { URL(fileURLWithPath: $0) },
             packageName: entry.composePackageName,
-            colorKotlinURL: entry.colorKotlin,
-            templatesPath: android.templatesPath,
+            colorKotlinURL: entry.colorKotlinURL,
+            templatesPath: android.templatesPath.map { URL(fileURLWithPath: $0) },
             xmlDisabled: entry.xmlDisabled ?? false
         )
         let exporter = AndroidColorExporter(
@@ -78,10 +80,10 @@ extension ExFigCommand.ExportColors {
         if !(entry.xmlDisabled ?? false) {
             let fileName = entry.xmlOutputFileName ?? "colors.xml"
 
-            let lightColorsFileURL = android.mainRes.appendingPathComponent(
+            let lightColorsFileURL = mainResURL.appendingPathComponent(
                 "values/" + fileName
             )
-            let darkColorsFileURL = android.mainRes.appendingPathComponent(
+            let darkColorsFileURL = mainResURL.appendingPathComponent(
                 "values-night/" + fileName
             )
 
@@ -107,7 +109,7 @@ extension ExFigCommand.ExportColors {
     func exportThemeAttributes(
         colorPairs: [AssetPair<Color>],
         config: ExFig_Android.ThemeAttributes,
-        android: PKLConfig.Android,
+        android: Android.AndroidConfig,
         ui: TerminalUI
     ) async throws {
         let nameTransform = config.nameTransform
@@ -138,7 +140,7 @@ extension ExFigCommand.ExportColors {
         guard !result.attributeMap.isEmpty else { return }
 
         // Resolve file paths relative to mainRes, normalizing .. components
-        let basePath = android.mainRes.path
+        let basePath = URL(fileURLWithPath: android.mainRes).path
         let attrsPath = (basePath as NSString).appendingPathComponent(config.resolvedAttrsFile)
         let stylesPath = (basePath as NSString).appendingPathComponent(config.resolvedStylesFile)
         let stylesNightPath = (basePath as NSString).appendingPathComponent(config.resolvedStylesNightFile)
