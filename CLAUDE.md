@@ -122,7 +122,7 @@ Twelve modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
-| `ExFig`         | CLI commands, loaders, file I/O, terminal UI              |
+| `ExFigCLI`      | CLI commands, loaders, file I/O, terminal UI              |
 | `ExFigCore`     | Domain models (Color, Image, TextStyle), processors       |
 | `ExFigConfig`   | PKL config parsing, evaluation, locator                   |
 | `FigmaAPI`      | Figma REST API client, endpoints, response models         |
@@ -141,7 +141,7 @@ Twelve modules in `Sources/`:
 ## Key Directories
 
 ```
-Sources/ExFig/
+Sources/ExFigCLI/
 ├── Subcommands/     # CLI commands (ExportColors, ExportIcons, DownloadImages, etc.)
 │   └── Export/      # Platform-specific export logic (iOSIconsExport, AndroidImagesExport, etc.)
 ├── Loaders/         # Figma data loaders (ColorsLoader, ImagesLoader, etc.)
@@ -152,7 +152,7 @@ Sources/ExFig/
 ├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
 ├── Batch/           # Batch processing (executor, runner, checkpoint)
 ├── Sync/            # Figma sync functionality (state tracking, diff detection)
-├── Plugin/          # Plugin registry, Params-to-Plugin adapters
+├── Plugin/          # Plugin registry
 ├── Context/         # Export context implementations (ColorsExportContextImpl, etc.)
 └── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger, EntryProcessor)
 
@@ -177,7 +177,7 @@ Tests/               # Test targets mirror source structure
 
 ### Adding a CLI Command
 
-1. Create `Sources/ExFig/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
+1. Create `Sources/ExFigCLI/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
 2. Register in `ExFigCommand.swift` subcommands array
 3. Use `@OptionGroup` for shared options (`GlobalOptions`, `CacheOptions`)
 4. Use `TerminalUI` for progress: `try await ui.withSpinner("Loading...") { ... }`

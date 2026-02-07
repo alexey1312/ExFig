@@ -4,54 +4,51 @@ This guide helps users migrate from [figma-export](https://github.com/RedMadRobo
 
 ## Quick Start
 
-ExFig is fully compatible with figma-export configuration files. You can:
+ExFig v2 uses PKL configuration instead of YAML. To migrate:
 
-1. **Use your existing config** — ExFig automatically detects `figma-export.yaml`
-2. **Run the migration command** — `exfig migrate` adds new features to your config
-
-```bash
-# Option 1: Just use ExFig (works immediately)
-exfig colors
-exfig icons
-exfig images
-
-# Option 2: Migrate config with new features
-exfig migrate figma-export.yaml -o exfig.yaml
-```
+1. **Generate a new PKL config** for your platform:
+   ```bash
+   exfig init -p ios       # or android, flutter, web
+   ```
+2. **Copy your settings** from `figma-export.yaml` into the generated `exfig.pkl`
+3. **Run exports** as before:
+   ```bash
+   exfig colors -i exfig.pkl
+   exfig icons -i exfig.pkl
+   exfig images -i exfig.pkl
+   ```
 
 ## Command Mapping
 
 | figma-export                       | ExFig               | Notes                             |
 | ---------------------------------- | ------------------- | --------------------------------- |
-| `figma-export colors`              | `exfig colors`      | Identical                         |
-| `figma-export icons`               | `exfig icons`       | Identical                         |
-| `figma-export images`              | `exfig images`      | Identical                         |
-| `figma-export typography`          | `exfig typography`  | Identical                         |
-| `figma-export init --platform ios` | `exfig init -p ios` | Identical                         |
+| `figma-export colors`              | `exfig colors`      | Same functionality                |
+| `figma-export icons`               | `exfig icons`       | Same functionality                |
+| `figma-export images`              | `exfig images`      | Same functionality                |
+| `figma-export typography`          | `exfig typography`  | Same functionality                |
+| `figma-export init --platform ios` | `exfig init -p ios` | Generates PKL config              |
 | —                                  | `exfig batch`       | **New**: Process multiple configs |
 | —                                  | `exfig download`    | **New**: JSON export (W3C tokens) |
-| —                                  | `exfig migrate`     | **New**: Config migration         |
 
-## Configuration Compatibility
+## Configuration Migration
 
-ExFig uses the same YAML structure as figma-export. All existing fields are supported.
+ExFig v2 uses [PKL](https://pkl-lang.org/) (Programmable, Scalable, Safe) instead of YAML. YAML configs are no longer supported.
 
-**Auto-detected config files (in order):**
+**Config discovery:** ExFig looks for `exfig.pkl` in the current directory. Use `-i` to specify a custom path.
 
-1. `figma-export.yaml` (for compatibility)
-2. `exfig.yaml`
-
-### New Sections in ExFig
-
-#### Version Tracking Cache
+### Version Tracking Cache
 
 Skip exports when Figma file hasn't changed:
 
-```yaml
-common:
-  cache:
-    enabled: true
-    path: ".exfig-cache.json"
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  cache = new Common.Cache {
+    enabled = true
+    path = ".exfig-cache.json"
+  }
+}
 ```
 
 CLI flags:
@@ -60,100 +57,133 @@ CLI flags:
 - `--force` — Ignore cache, always export
 - `--experimental-granular-cache` — Track per-node changes (even more efficient)
 
-#### Flutter Platform
+### Flutter Platform
 
-```yaml
-flutter:
-  output: "./lib/generated"
+```pkl
+import ".exfig/schemas/Flutter.pkl"
 
-  colors:
-    output: "colors.dart"
-    className: "AppColors"
+flutter = new Flutter.FlutterConfig {
+  output = "./lib/generated"
 
-  icons:
-    output: "assets/icons"
-    dartFile: "icons.dart"
-    className: "AppIcons"
+  colors = new Listing {
+    new Flutter.ColorsEntry {
+      colorDart = "colors.dart"
+      className = "AppColors"
+    }
+  }
 
-  images:
-    output: "assets/images"
-    dartFile: "images.dart"
-    className: "AppImages"
-    format: png
-    scales: [1, 2, 3]
+  icons = new Listing {
+    new Flutter.IconsEntry {
+      output = "assets/icons"
+      dartFile = "icons.dart"
+      className = "AppIcons"
+    }
+  }
+
+  images = new Listing {
+    new Flutter.ImagesEntry {
+      output = "assets/images"
+      dartFile = "images.dart"
+      className = "AppImages"
+      format = "png"
+      scales = new Listing { 1; 2; 3 }
+    }
+  }
+}
 ```
 
-#### Web Platform (React/TypeScript)
+### Web Platform (React/TypeScript)
 
-```yaml
-web:
-  output: "./src/tokens"
+```pkl
+import ".exfig/schemas/Web.pkl"
 
-  colors:
-    cssFileName: "theme.css"
-    tsFileName: "variables.ts"
-    jsonFileName: "tokens.json"
+web = new Web.WebConfig {
+  output = "./src/tokens"
 
-  icons:
-    outputDirectory: "./src/icons"
-    svgDirectory: "assets/icons"
-    generateReactComponents: true
+  colors = new Listing {
+    new Web.ColorsEntry {
+      cssFileName = "theme.css"
+      tsFileName = "variables.ts"
+      jsonFileName = "tokens.json"
+    }
+  }
 
-  images:
-    outputDirectory: "./src/images"
-    assetsDirectory: "assets/images"
-    generateReactComponents: true
+  icons = new Listing {
+    new Web.IconsEntry {
+      outputDirectory = "./src/icons"
+      svgDirectory = "assets/icons"
+      generateReactComponents = true
+    }
+  }
+
+  images = new Listing {
+    new Web.ImagesEntry {
+      outputDirectory = "./src/images"
+      assetsDirectory = "assets/images"
+      generateReactComponents = true
+    }
+  }
+}
 ```
 
 ## New Features
 
 ### Multiple Icons/Images/Colors from Different Frames
 
-Export assets from multiple Figma frames in a single config:
+Export assets from multiple Figma frames in a single config using PKL `Listing`:
 
-```yaml
-# Legacy format (still supported)
-ios:
-  icons:
-    format: svg
-    assetsFolder: Icons
-    nameStyle: camelCase
+```pkl
+import ".exfig/schemas/iOS.pkl"
 
-# New array format
-ios:
-  icons:
-    - figmaFrameName: Actions
-      format: svg
-      assetsFolder: Actions
-      nameStyle: camelCase
-      imageSwift: "./Generated/ActionsIcons.swift"
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "MyApp/Resources/Assets.xcassets"
 
-    - figmaFrameName: Navigation
-      format: svg
-      assetsFolder: Navigation
-      nameStyle: camelCase
-      imageSwift: "./Generated/NavigationIcons.swift"
+  icons = new Listing {
+    new iOS.IconsEntry {
+      figmaFrameName = "Actions"
+      format = "svg"
+      assetsFolder = "Actions"
+      nameStyle = "camelCase"
+      imageSwift = "./Generated/ActionsIcons.swift"
+    }
+    new iOS.IconsEntry {
+      figmaFrameName = "Navigation"
+      format = "svg"
+      assetsFolder = "Navigation"
+      nameStyle = "camelCase"
+      imageSwift = "./Generated/NavigationIcons.swift"
+    }
+  }
+}
 ```
 
-Same pattern works for `images` and `colors`:
+Same pattern works for `colors`:
 
-```yaml
-ios:
-  colors:
-    - tokensFileId: abc123
-      tokensCollectionName: Base Palette
-      lightModeName: Light
-      darkModeName: Dark
-      useColorAssets: true
-      assetsFolder: BaseColors
-      colorSwift: "./Generated/BaseColors.swift"
-
-    - tokensFileId: def456
-      tokensCollectionName: Theme Colors
-      lightModeName: Light
-      useColorAssets: true
-      assetsFolder: ThemeColors
-      colorSwift: "./Generated/ThemeColors.swift"
+```pkl
+ios = new iOS.iOSConfig {
+  // ...
+  colors = new Listing {
+    new iOS.ColorsEntry {
+      tokensFileId = "abc123"
+      tokensCollectionName = "Base Palette"
+      lightModeName = "Light"
+      darkModeName = "Dark"
+      useColorAssets = true
+      assetsFolder = "BaseColors"
+      colorSwift = "./Generated/BaseColors.swift"
+    }
+    new iOS.ColorsEntry {
+      tokensFileId = "def456"
+      tokensCollectionName = "Theme Colors"
+      lightModeName = "Light"
+      useColorAssets = true
+      assetsFolder = "ThemeColors"
+      colorSwift = "./Generated/ThemeColors.swift"
+    }
+  }
+}
 ```
 
 ### Batch Processing
@@ -215,33 +245,21 @@ exfig icons --concurrent-downloads 50  # Increase CDN parallelism
 
 ## Migration Steps
 
-### Automatic Migration
-
-```bash
-# Migrate with new cache feature
-exfig migrate figma-export.yaml -o exfig.yaml
-
-# Or migrate and overwrite
-exfig migrate figma-export.yaml -o exfig.yaml --force
-```
-
-### Manual Migration
-
-1. Rename `figma-export.yaml` to `exfig.yaml` (optional)
-2. Add cache section:
-   ```yaml
-   common:
-     cache:
-       enabled: true
-       path: ".exfig-cache.json"
-   ```
-3. Add platform sections as needed (`flutter:`, `web:`)
+1. Run `exfig init -p <platform>` to generate a fresh `exfig.pkl`
+2. Copy your Figma file IDs, frame names, and other settings from `figma-export.yaml` into `exfig.pkl`
+3. Add new sections as needed (cache, additional platforms)
+4. Verify with `pkl eval --format json exfig.pkl` (requires local schemas via `exfig schemas`)
+5. Run your export commands and compare output
 
 ## Breaking Changes
 
-**None.** ExFig is designed as a drop-in replacement for figma-export.
+- **YAML configs removed** — ExFig v2 uses PKL exclusively. Migrate your `figma-export.yaml` / `exfig.yaml` to `exfig.pkl`.
+- **`exfig migrate` command removed** — use `exfig init` to generate a fresh PKL config and manually transfer your settings.
+- **Config discovery changed** — ExFig no longer searches for `figma-export.yaml` or `exfig.yaml`. Only `exfig.pkl` is auto-detected.
 
 ## Getting Help
 
-- Documentation: [CONFIG.md](CONFIG.md)
+- Configuration reference: [CONFIG.md](CONFIG.md)
+- PKL guide: [docs/PKL.md](docs/PKL.md)
+- Migration guide (YAML to PKL): [MIGRATION.md](MIGRATION.md)
 - Issues: [GitHub Issues](https://github.com/alexey1312/ExFig/issues)

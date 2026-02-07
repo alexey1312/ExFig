@@ -126,9 +126,6 @@ figma {
 ### 5. Export Resources
 
 ```bash
-# Migrate from figma-export (optional)
-exfig migrate figma-export.yaml -o exfig.pkl
-
 # Export colors
 exfig colors
 
