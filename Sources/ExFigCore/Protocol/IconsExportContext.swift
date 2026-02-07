@@ -60,6 +60,9 @@ public protocol IconsExportContext: ExportContext {
 
 /// Input for loading icons from Figma.
 public struct IconsSourceInput: Sendable {
+    /// Optional entry-level Figma file ID override.
+    public let figmaFileId: String?
+
     /// Optional dark mode file ID (if separate files for light/dark).
     public let darkFileId: String?
 
@@ -88,6 +91,7 @@ public struct IconsSourceInput: Sendable {
     public let nameReplaceRegexp: String?
 
     public init(
+        figmaFileId: String? = nil,
         darkFileId: String? = nil,
         frameName: String,
         format: VectorFormat = .svg,
@@ -100,6 +104,7 @@ public struct IconsSourceInput: Sendable {
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil
     ) {
+        self.figmaFileId = figmaFileId
         self.darkFileId = darkFileId
         self.frameName = frameName
         self.format = format

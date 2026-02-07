@@ -79,6 +79,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
     func loadIcons(from source: IconsSourceInput) async throws -> IconsLoadOutput {
         // Create loader config from source input
         let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
             frameName: source.frameName,
             format: source.format,
             renderMode: source.renderMode,
@@ -172,6 +173,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
         onProgress: (@Sendable (Int, Int) -> Void)?
     ) async throws -> IconsLoadOutputWithHashes {
         let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
             frameName: source.frameName,
             format: source.format,
             renderMode: source.renderMode,

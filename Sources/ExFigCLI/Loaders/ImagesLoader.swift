@@ -25,6 +25,9 @@ enum ImagesSourceFormat: Sendable {
 
 /// Configuration for loading images from a specific Figma frame.
 struct ImagesLoaderConfig: Sendable {
+    /// Entry-level Figma file ID override (takes priority over platform-level).
+    let entryFileId: String?
+
     /// Figma frame name to load images from.
     let frameName: String
 
@@ -41,6 +44,7 @@ struct ImagesLoaderConfig: Sendable {
     /// Creates config for a specific iOS images entry.
     static func forIOS(entry: iOSImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
             format: nil, // iOS always uses PNG output
@@ -51,6 +55,7 @@ struct ImagesLoaderConfig: Sendable {
     /// Creates config for a specific Android images entry.
     static func forAndroid(entry: AndroidImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
             format: convertAndroidFormat(entry.format),
@@ -61,6 +66,7 @@ struct ImagesLoaderConfig: Sendable {
     /// Creates config for a specific Flutter images entry.
     static func forFlutter(entry: FlutterImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
             format: entry.format.flatMap { convertFlutterFormat($0) },
@@ -71,6 +77,7 @@ struct ImagesLoaderConfig: Sendable {
     /// Creates config for a specific Web images entry.
     static func forWeb(entry: WebImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
             format: .svg, // Web uses SVG by default
@@ -81,6 +88,7 @@ struct ImagesLoaderConfig: Sendable {
     /// Creates default config from params (for backward compatibility).
     static func defaultConfig(params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
+            entryFileId: nil,
             frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
             format: nil,
@@ -232,7 +240,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderOutput {
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
-        let fileId = try requireLightFileId()
+        let fileId = try requireLightFileId(entryFileId: config.entryFileId)
 
         if isRasterFormat, !useSVGSource {
             // PNG source: fetch PNG at multiple scales from Figma
@@ -267,7 +275,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderOutput {
         // Build list of files to load
-        let lightFileId = try requireLightFileId()
+        let lightFileId = try requireLightFileId(entryFileId: config.entryFileId)
         var filesToLoad: [(key: String, fileId: String)] = [
             ("light", lightFileId),
         ]
@@ -372,7 +380,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         filter: String? = nil,
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderResultWithHashes {
-        let fileId = try requireLightFileId()
+        let fileId = try requireLightFileId(entryFileId: config.entryFileId)
         let darkSuffix = params.common?.images?.darkModeSuffix ?? "_dark"
 
         if isRasterFormat, !useSVGSource {
@@ -457,7 +465,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesLoaderResultWithHashes {
         // Build list of files to load
-        let lightFileId = try requireLightFileId()
+        let lightFileId = try requireLightFileId(entryFileId: config.entryFileId)
         var filesToLoad: [(key: String, fileId: String)] = [
             ("light", lightFileId),
         ]

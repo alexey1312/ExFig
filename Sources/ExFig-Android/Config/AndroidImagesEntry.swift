@@ -31,6 +31,7 @@ public extension Android.ImagesEntry {
     /// Returns an ImagesSourceInput for use with ImagesExportContext.
     func imagesSourceInput(darkFileId: String? = nil) -> ImagesSourceInput {
         ImagesSourceInput(
+            figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
             sourceFormat: sourceFormat.flatMap { ImageSourceFormat(rawValue: $0.rawValue) } ?? .png,

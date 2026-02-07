@@ -163,16 +163,16 @@ Track 5 зависит от всех треков.
 
 ### 3.2 iOS Entry Resolution
 
-- [ ] 3.2.1 Add resolved computed properties to `iOSColorsEntry` extension (resolvedXcassetsPath, resolvedTemplatesPath)
-- [ ] 3.2.2 Add resolved computed properties to `iOSIconsEntry` extension
-- [ ] 3.2.3 Add resolved computed properties to `iOSImagesEntry` extension
-- [ ] 3.2.4 Update `PluginiOSColorsExport.swift` to use resolved properties
-- [ ] 3.2.5 Update `PluginiOSIconsExport.swift` to use resolved properties
-- [ ] 3.2.6 Update `PluginiOSImagesExport.swift` to use resolved properties
+- [x] 3.2.1 Add resolved computed properties to `iOSColorsEntry` extension (resolvedXcassetsPath, resolvedTemplatesPath)
+- [x] 3.2.2 Add resolved computed properties to `iOSIconsEntry` extension
+- [x] 3.2.3 Add resolved computed properties to `iOSImagesEntry` extension
+- [x] 3.2.4 Update iOS exporters to use resolved properties
+- [x] 3.2.5 Update iOS exporters to use resolved properties
+- [x] 3.2.6 Update iOS exporters to use resolved properties
 
 ### 3.3 figmaFileId Resolution
 
-- [ ] 3.3.1 Add `resolvedFigmaFileId(fallback:)` method to FrameSource-based entries
+- [x] 3.3.1 Add `resolvedFigmaFileId(fallback:)` method to FrameSource-based entries
 - [ ] 3.3.2 Update `IconsExportContextImpl` to accept per-entry figmaFileId
 - [ ] 3.3.3 Update `ImagesExportContextImpl` to accept per-entry figmaFileId
 - [ ] 3.3.4 Update icon loaders to use entry-level figmaFileId
@@ -180,24 +180,24 @@ Track 5 зависит от всех треков.
 
 ### 3.4 Android Entry Resolution
 
-- [ ] 3.4.1 Add resolved computed properties to Android entry extensions
-- [ ] 3.4.2 Update `PluginAndroidColorsExport.swift` to use resolved properties
-- [ ] 3.4.3 Update `PluginAndroidIconsExport.swift` to use resolved properties
-- [ ] 3.4.4 Update `PluginAndroidImagesExport.swift` to use resolved properties
+- [x] 3.4.1 Add resolved computed properties to Android entry extensions
+- [x] 3.4.2 Update Android exporters to use resolved properties
+- [x] 3.4.3 Update Android exporters to use resolved properties
+- [x] 3.4.4 Update Android exporters to use resolved properties
 
 ### 3.5 Flutter Entry Resolution
 
-- [ ] 3.5.1 Add resolved computed properties to Flutter entry extensions
-- [ ] 3.5.2 Update `PluginFlutterColorsExport.swift` to use resolved properties
-- [ ] 3.5.3 Update `PluginFlutterIconsExport.swift` to use resolved properties
-- [ ] 3.5.4 Update `PluginFlutterImagesExport.swift` to use resolved properties
+- [x] 3.5.1 Add resolved computed properties to Flutter entry extensions
+- [x] 3.5.2 Update Flutter exporters to use resolved properties
+- [x] 3.5.3 Update Flutter exporters to use resolved properties
+- [x] 3.5.4 Update Flutter exporters to use resolved properties
 
 ### 3.6 Web Entry Resolution
 
-- [ ] 3.6.1 Add resolved computed properties to Web entry extensions
-- [ ] 3.6.2 Update `PluginWebColorsExport.swift` to use resolved properties
-- [ ] 3.6.3 Update `PluginWebIconsExport.swift` to use resolved properties
-- [ ] 3.6.4 Update `PluginWebImagesExport.swift` to use resolved properties
+- [x] 3.6.1 Add resolved computed properties to Web entry extensions
+- [x] 3.6.2 Update Web exporters to use resolved properties
+- [x] 3.6.3 Update Web exporters to use resolved properties
+- [x] 3.6.4 Update Web exporters to use resolved properties
 
 ### 3.7 Tests for Entry Overrides
 
