@@ -3,50 +3,23 @@ import PklSwift
 
 public enum Flutter {}
 
-public extension Flutter {
+extension Flutter {
     /// Flutter image format.
-    enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case svg
-        case png
-        case webp
+    public enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case svg = "svg"
+        case png = "png"
+        case webp = "webp"
     }
 
-    /// Root Flutter platform configuration.
-    struct FlutterConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Flutter#FlutterConfig"
+    /// Flutter platform configuration for ExFig.
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Flutter"
 
-        /// Base output directory for all generated files.
-        public var output: String
-
-        /// Path to custom Stencil templates.
-        public var templatesPath: String?
-
-        /// Colors configuration entries.
-        public var colors: [ColorsEntry]?
-
-        /// Icons configuration entries.
-        public var icons: [IconsEntry]?
-
-        /// Images configuration entries.
-        public var images: [ImagesEntry]?
-
-        public init(
-            output: String,
-            templatesPath: String?,
-            colors: [ColorsEntry]?,
-            icons: [IconsEntry]?,
-            images: [ImagesEntry]?
-        ) {
-            self.output = output
-            self.templatesPath = templatesPath
-            self.colors = colors
-            self.icons = icons
-            self.images = images
-        }
+        public init() {}
     }
 
     /// Flutter colors entry configuration.
-    struct ColorsEntry: Common.VariablesSource {
+    public struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "Flutter#ColorsEntry"
 
         /// Override path to custom Stencil templates for this entry.
@@ -115,15 +88,8 @@ public extension Flutter {
         }
     }
 
-    /// Flutter platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Flutter"
-
-        public init() {}
-    }
-
     /// Flutter icons entry configuration.
-    struct IconsEntry: Common.FrameSource {
+    public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Flutter#IconsEntry"
 
         /// Override path to custom Stencil templates for this entry.
@@ -179,7 +145,7 @@ public extension Flutter {
     }
 
     /// Flutter images entry configuration.
-    struct ImagesEntry: Common.FrameSource {
+    public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Flutter#ImagesEntry"
 
         /// Override path to custom Stencil templates for this entry.
@@ -254,10 +220,44 @@ public extension Flutter {
         }
     }
 
+    /// Root Flutter platform configuration.
+    public struct FlutterConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Flutter#FlutterConfig"
+
+        /// Base output directory for all generated files.
+        public var output: String
+
+        /// Path to custom Stencil templates.
+        public var templatesPath: String?
+
+        /// Colors configuration entries.
+        public var colors: [ColorsEntry]?
+
+        /// Icons configuration entries.
+        public var icons: [IconsEntry]?
+
+        /// Images configuration entries.
+        public var images: [ImagesEntry]?
+
+        public init(
+            output: String,
+            templatesPath: String?,
+            colors: [ColorsEntry]?,
+            icons: [IconsEntry]?,
+            images: [ImagesEntry]?
+        ) {
+            self.output = output
+            self.templatesPath = templatesPath
+            self.colors = colors
+            self.icons = icons
+            self.images = images
+        }
+    }
+
     /// Load the Pkl module at the given source and evaluate it into `Flutter.Module`.
     ///
     /// - Parameter source: The source of the Pkl module.
-    static func loadFrom(source: ModuleSource) async throws -> Flutter.Module {
+    public static func loadFrom(source: ModuleSource) async throws -> Flutter.Module {
         try await PklSwift.withEvaluator { evaluator in
             try await loadFrom(evaluator: evaluator, source: source)
         }
@@ -268,7 +268,7 @@ public extension Flutter {
     ///
     /// - Parameter evaluator: The evaluator to use for evaluation.
     /// - Parameter source: The module to evaluate.
-    static func loadFrom(
+    public static func loadFrom(
         evaluator: PklSwift.Evaluator,
         source: PklSwift.ModuleSource
     ) async throws -> Flutter.Module {

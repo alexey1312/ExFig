@@ -3,79 +3,127 @@ import PklSwift
 
 public enum Android {}
 
-public extension Android {
+extension Android {
     /// WebP encoding mode.
-    enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case lossy
-        case lossless
+    public enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case lossy = "lossy"
+        case lossless = "lossless"
     }
 
     /// Compose icon generation format.
     /// - `resourceReference`: Generates extension functions using painterResource(R.drawable.xxx)
     /// - `imageVector`: Generates ImageVector code directly from SVG data
-    enum ComposeIconFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case resourceReference
-        case imageVector
+    public enum ComposeIconFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case resourceReference = "resourceReference"
+        case imageVector = "imageVector"
     }
 
     /// Android image format.
-    enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case svg
-        case png
-        case webp
+    public enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case svg = "svg"
+        case png = "png"
+        case webp = "webp"
     }
 
-    /// Root Android platform configuration.
-    struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#AndroidConfig"
+    /// WebP encoding options.
+    public struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#WebpOptions"
 
-        /// Path to main res directory.
-        public var mainRes: String
+        /// Encoding mode.
+        public var encoding: WebpEncoding
 
-        /// Resource package name (R class package).
-        public var resourcePackage: String?
+        /// Quality for lossy encoding (0-100).
+        public var quality: Int?
 
-        /// Path to main src directory for Kotlin generation.
-        public var mainSrc: String?
+        public init(encoding: WebpEncoding, quality: Int?) {
+            self.encoding = encoding
+            self.quality = quality
+        }
+    }
 
-        /// Path to custom Stencil templates.
-        public var templatesPath: String?
+    /// Android platform configuration for ExFig.
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android"
 
-        /// Colors configuration entries.
-        public var colors: [ColorsEntry]?
+        public init() {}
+    }
 
-        /// Icons configuration entries.
-        public var icons: [IconsEntry]?
+    /// Name transformation for theme attributes.
+    public struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#NameTransform"
 
-        /// Images configuration entries.
-        public var images: [ImagesEntry]?
+        /// Target case style for attribute names.
+        public var style: Common.NameStyle?
 
-        /// Typography configuration.
-        public var typography: Typography?
+        /// Prefix to add to attribute names.
+        public var prefix: String?
+
+        /// Prefixes to strip from color names before transformation.
+        public var stripPrefixes: [String]?
+
+        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
+            self.style = style
+            self.prefix = prefix
+            self.stripPrefixes = stripPrefixes
+        }
+    }
+
+    /// Theme attributes configuration for generating attrs.xml and styles.xml.
+    public struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#ThemeAttributes"
+
+        /// Whether theme attributes generation is enabled.
+        public var enabled: Bool?
+
+        /// Path to attrs.xml relative to mainRes.
+        public var attrsFile: String?
+
+        /// Path to styles.xml relative to mainRes.
+        public var stylesFile: String?
+
+        /// Path to styles-night.xml relative to mainRes.
+        public var stylesNightFile: String?
+
+        /// Theme name used in markers (e.g., "Theme.MyApp.Main").
+        public var themeName: String
+
+        /// Custom marker start text.
+        public var markerStart: String?
+
+        /// Custom marker end text.
+        public var markerEnd: String?
+
+        /// Name transformation configuration.
+        public var nameTransform: NameTransform?
+
+        /// If true, create file with markers if missing.
+        public var autoCreateMarkers: Bool?
 
         public init(
-            mainRes: String,
-            resourcePackage: String?,
-            mainSrc: String?,
-            templatesPath: String?,
-            colors: [ColorsEntry]?,
-            icons: [IconsEntry]?,
-            images: [ImagesEntry]?,
-            typography: Typography?
+            enabled: Bool?,
+            attrsFile: String?,
+            stylesFile: String?,
+            stylesNightFile: String?,
+            themeName: String,
+            markerStart: String?,
+            markerEnd: String?,
+            nameTransform: NameTransform?,
+            autoCreateMarkers: Bool?
         ) {
-            self.mainRes = mainRes
-            self.resourcePackage = resourcePackage
-            self.mainSrc = mainSrc
-            self.templatesPath = templatesPath
-            self.colors = colors
-            self.icons = icons
-            self.images = images
-            self.typography = typography
+            self.enabled = enabled
+            self.attrsFile = attrsFile
+            self.stylesFile = stylesFile
+            self.stylesNightFile = stylesNightFile
+            self.themeName = themeName
+            self.markerStart = markerStart
+            self.markerEnd = markerEnd
+            self.nameTransform = nameTransform
+            self.autoCreateMarkers = autoCreateMarkers
         }
     }
 
     /// Android colors entry configuration.
-    struct ColorsEntry: Common.VariablesSource {
+    public struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "Android#ColorsEntry"
 
         /// Override path to main res directory for this entry.
@@ -171,105 +219,8 @@ public extension Android {
         }
     }
 
-    /// Theme attributes configuration for generating attrs.xml and styles.xml.
-    struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#ThemeAttributes"
-
-        /// Whether theme attributes generation is enabled.
-        public var enabled: Bool?
-
-        /// Path to attrs.xml relative to mainRes.
-        public var attrsFile: String?
-
-        /// Path to styles.xml relative to mainRes.
-        public var stylesFile: String?
-
-        /// Path to styles-night.xml relative to mainRes.
-        public var stylesNightFile: String?
-
-        /// Theme name used in markers (e.g., "Theme.MyApp.Main").
-        public var themeName: String
-
-        /// Custom marker start text.
-        public var markerStart: String?
-
-        /// Custom marker end text.
-        public var markerEnd: String?
-
-        /// Name transformation configuration.
-        public var nameTransform: NameTransform?
-
-        /// If true, create file with markers if missing.
-        public var autoCreateMarkers: Bool?
-
-        public init(
-            enabled: Bool?,
-            attrsFile: String?,
-            stylesFile: String?,
-            stylesNightFile: String?,
-            themeName: String,
-            markerStart: String?,
-            markerEnd: String?,
-            nameTransform: NameTransform?,
-            autoCreateMarkers: Bool?
-        ) {
-            self.enabled = enabled
-            self.attrsFile = attrsFile
-            self.stylesFile = stylesFile
-            self.stylesNightFile = stylesNightFile
-            self.themeName = themeName
-            self.markerStart = markerStart
-            self.markerEnd = markerEnd
-            self.nameTransform = nameTransform
-            self.autoCreateMarkers = autoCreateMarkers
-        }
-    }
-
-    /// Name transformation for theme attributes.
-    struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#NameTransform"
-
-        /// Target case style for attribute names.
-        public var style: Common.NameStyle?
-
-        /// Prefix to add to attribute names.
-        public var prefix: String?
-
-        /// Prefixes to strip from color names before transformation.
-        public var stripPrefixes: [String]?
-
-        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
-            self.style = style
-            self.prefix = prefix
-            self.stripPrefixes = stripPrefixes
-        }
-    }
-
-    /// Android platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android"
-
-        public init() {}
-    }
-
-    /// WebP encoding options.
-    struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#WebpOptions"
-
-        /// Encoding mode.
-        public var encoding: WebpEncoding
-
-        /// Quality for lossy encoding (0-100).
-        public var quality: Int?
-
-        public init(encoding: WebpEncoding, quality: Int?) {
-            self.encoding = encoding
-            self.quality = quality
-        }
-    }
-
     /// Android icons entry configuration.
-    struct IconsEntry: Common.FrameSource {
+    public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#IconsEntry"
 
         /// Override path to main res directory for this entry.
@@ -346,7 +297,7 @@ public extension Android {
     }
 
     /// Android images entry configuration.
-    struct ImagesEntry: Common.FrameSource {
+    public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#ImagesEntry"
 
         /// Override path to main res directory for this entry.
@@ -418,7 +369,7 @@ public extension Android {
     }
 
     /// Android typography configuration.
-    struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android#Typography"
 
         /// Figma file ID override for typography (optional).
@@ -451,10 +402,59 @@ public extension Android {
         }
     }
 
+    /// Root Android platform configuration.
+    public struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#AndroidConfig"
+
+        /// Path to main res directory.
+        public var mainRes: String
+
+        /// Resource package name (R class package).
+        public var resourcePackage: String?
+
+        /// Path to main src directory for Kotlin generation.
+        public var mainSrc: String?
+
+        /// Path to custom Stencil templates.
+        public var templatesPath: String?
+
+        /// Colors configuration entries.
+        public var colors: [ColorsEntry]?
+
+        /// Icons configuration entries.
+        public var icons: [IconsEntry]?
+
+        /// Images configuration entries.
+        public var images: [ImagesEntry]?
+
+        /// Typography configuration.
+        public var typography: Typography?
+
+        public init(
+            mainRes: String,
+            resourcePackage: String?,
+            mainSrc: String?,
+            templatesPath: String?,
+            colors: [ColorsEntry]?,
+            icons: [IconsEntry]?,
+            images: [ImagesEntry]?,
+            typography: Typography?
+        ) {
+            self.mainRes = mainRes
+            self.resourcePackage = resourcePackage
+            self.mainSrc = mainSrc
+            self.templatesPath = templatesPath
+            self.colors = colors
+            self.icons = icons
+            self.images = images
+            self.typography = typography
+        }
+    }
+
     /// Load the Pkl module at the given source and evaluate it into `Android.Module`.
     ///
     /// - Parameter source: The source of the Pkl module.
-    static func loadFrom(source: ModuleSource) async throws -> Android.Module {
+    public static func loadFrom(source: ModuleSource) async throws -> Android.Module {
         try await PklSwift.withEvaluator { evaluator in
             try await loadFrom(evaluator: evaluator, source: source)
         }
@@ -465,7 +465,7 @@ public extension Android {
     ///
     /// - Parameter evaluator: The evaluator to use for evaluation.
     /// - Parameter source: The module to evaluate.
-    static func loadFrom(
+    public static func loadFrom(
         evaluator: PklSwift.Evaluator,
         source: PklSwift.ModuleSource
     ) async throws -> Android.Module {

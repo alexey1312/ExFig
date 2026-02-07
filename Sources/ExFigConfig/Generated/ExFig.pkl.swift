@@ -17,8 +17,8 @@ public protocol ExFig_Module: PklRegisteredType, DynamicallyEquatable, Hashable,
     var web: Web.WebConfig? { get }
 }
 
-public extension ExFig {
-    typealias Module = ExFig_Module
+extension ExFig {
+    public typealias Module = ExFig_Module
 
     /// ExFig configuration schema.
     ///
@@ -39,7 +39,7 @@ public extension ExFig {
     /// }
     /// ```
     /// Configuration module that users amend to create their config files.
-    struct ModuleImpl: Module {
+    public struct ModuleImpl: Module {
         public static let registeredIdentifier: String = "ExFig"
 
         /// Figma file configuration.

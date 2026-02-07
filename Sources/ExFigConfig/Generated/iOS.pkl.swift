@@ -3,102 +3,54 @@ import PklSwift
 
 public enum iOS {}
 
-public extension iOS {
+extension iOS {
     /// HEIC encoding mode.
-    enum HeicEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case lossy
-        case lossless
+    public enum HeicEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case lossy = "lossy"
+        case lossless = "lossless"
     }
 
     /// Xcode asset catalog render mode.
-    enum XcodeRenderMode: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case `default`
-        case original
-        case template
+    public enum XcodeRenderMode: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case `default` = "default"
+        case original = "original"
+        case template = "template"
     }
 
     /// Output format for iOS images in asset catalogs.
     /// - `png`: Standard PNG format (default, maximum compatibility)
     /// - `heic`: HEIC format (~40-50% smaller, iOS 12+, macOS only for encoding)
-    enum ImageOutputFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case png
-        case heic
+    public enum ImageOutputFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case png = "png"
+        case heic = "heic"
     }
 
-    /// Root iOS platform configuration.
-    struct iOSConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "iOS#iOSConfig"
+    /// iOS platform configuration for ExFig.
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "iOS"
 
-        /// Path to .xcodeproj file.
-        public var xcodeprojPath: String
+        public init() {}
+    }
 
-        /// Xcode target name.
-        public var target: String
+    /// HEIC encoding options for iOS images.
+    public struct HeicOptions: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "iOS#HeicOptions"
 
-        /// Path to main .xcassets folder.
-        /// Required for colors (with useColorAssets), icons, and images export.
-        /// Can be omitted in base configs that don't directly export assets.
-        public var xcassetsPath: String?
+        /// Encoding mode: lossy (default) or lossless.
+        public var encoding: HeicEncoding?
 
-        /// Whether assets are in main bundle.
-        public var xcassetsInMainBundle: Bool
+        /// Quality for lossy encoding (0-100). Default: 90.
+        public var quality: Int?
 
-        /// Whether assets are in Swift Package.
-        public var xcassetsInSwiftPackage: Bool?
-
-        /// Resource bundle names for asset lookup.
-        public var resourceBundleNames: [String]?
-
-        /// Add @objc attribute to generated extensions.
-        public var addObjcAttribute: Bool?
-
-        /// Path to custom Stencil templates.
-        public var templatesPath: String?
-
-        /// Colors configuration entries.
-        public var colors: [ColorsEntry]?
-
-        /// Icons configuration entries.
-        public var icons: [IconsEntry]?
-
-        /// Images configuration entries.
-        public var images: [ImagesEntry]?
-
-        /// Typography configuration.
-        public var typography: Typography?
-
-        public init(
-            xcodeprojPath: String,
-            target: String,
-            xcassetsPath: String?,
-            xcassetsInMainBundle: Bool,
-            xcassetsInSwiftPackage: Bool?,
-            resourceBundleNames: [String]?,
-            addObjcAttribute: Bool?,
-            templatesPath: String?,
-            colors: [ColorsEntry]?,
-            icons: [IconsEntry]?,
-            images: [ImagesEntry]?,
-            typography: Typography?
-        ) {
-            self.xcodeprojPath = xcodeprojPath
-            self.target = target
-            self.xcassetsPath = xcassetsPath
-            self.xcassetsInMainBundle = xcassetsInMainBundle
-            self.xcassetsInSwiftPackage = xcassetsInSwiftPackage
-            self.resourceBundleNames = resourceBundleNames
-            self.addObjcAttribute = addObjcAttribute
-            self.templatesPath = templatesPath
-            self.colors = colors
-            self.icons = icons
-            self.images = images
-            self.typography = typography
+        public init(encoding: HeicEncoding?, quality: Int?) {
+            self.encoding = encoding
+            self.quality = quality
         }
     }
 
     /// iOS colors entry configuration.
     /// Can include inline source or use common.variablesColors.
-    struct ColorsEntry: Common.VariablesSource {
+    public struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "iOS#ColorsEntry"
 
         /// Use Color Assets (.xcassets) instead of code-only colors.
@@ -204,31 +156,8 @@ public extension iOS {
         }
     }
 
-    /// iOS platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "iOS"
-
-        public init() {}
-    }
-
-    /// HEIC encoding options for iOS images.
-    struct HeicOptions: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "iOS#HeicOptions"
-
-        /// Encoding mode: lossy (default) or lossless.
-        public var encoding: HeicEncoding?
-
-        /// Quality for lossy encoding (0-100). Default: 90.
-        public var quality: Int?
-
-        public init(encoding: HeicEncoding?, quality: Int?) {
-            self.encoding = encoding
-            self.quality = quality
-        }
-    }
-
     /// iOS icons entry configuration.
-    struct IconsEntry: Common.FrameSource {
+    public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "iOS#IconsEntry"
 
         /// Vector format for icons.
@@ -325,7 +254,7 @@ public extension iOS {
     }
 
     /// iOS images entry configuration.
-    struct ImagesEntry: Common.FrameSource {
+    public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "iOS#ImagesEntry"
 
         /// Path to .xcassets folder for images.
@@ -432,7 +361,7 @@ public extension iOS {
     }
 
     /// iOS typography configuration.
-    struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "iOS#Typography"
 
         /// Figma file ID override for typography (optional).
@@ -485,10 +414,81 @@ public extension iOS {
         }
     }
 
+    /// Root iOS platform configuration.
+    public struct iOSConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "iOS#iOSConfig"
+
+        /// Path to .xcodeproj file.
+        public var xcodeprojPath: String
+
+        /// Xcode target name.
+        public var target: String
+
+        /// Path to main .xcassets folder.
+        /// Required for colors (with useColorAssets), icons, and images export.
+        /// Can be omitted in base configs that don't directly export assets.
+        public var xcassetsPath: String?
+
+        /// Whether assets are in main bundle.
+        public var xcassetsInMainBundle: Bool
+
+        /// Whether assets are in Swift Package.
+        public var xcassetsInSwiftPackage: Bool?
+
+        /// Resource bundle names for asset lookup.
+        public var resourceBundleNames: [String]?
+
+        /// Add @objc attribute to generated extensions.
+        public var addObjcAttribute: Bool?
+
+        /// Path to custom Stencil templates.
+        public var templatesPath: String?
+
+        /// Colors configuration entries.
+        public var colors: [ColorsEntry]?
+
+        /// Icons configuration entries.
+        public var icons: [IconsEntry]?
+
+        /// Images configuration entries.
+        public var images: [ImagesEntry]?
+
+        /// Typography configuration.
+        public var typography: Typography?
+
+        public init(
+            xcodeprojPath: String,
+            target: String,
+            xcassetsPath: String?,
+            xcassetsInMainBundle: Bool,
+            xcassetsInSwiftPackage: Bool?,
+            resourceBundleNames: [String]?,
+            addObjcAttribute: Bool?,
+            templatesPath: String?,
+            colors: [ColorsEntry]?,
+            icons: [IconsEntry]?,
+            images: [ImagesEntry]?,
+            typography: Typography?
+        ) {
+            self.xcodeprojPath = xcodeprojPath
+            self.target = target
+            self.xcassetsPath = xcassetsPath
+            self.xcassetsInMainBundle = xcassetsInMainBundle
+            self.xcassetsInSwiftPackage = xcassetsInSwiftPackage
+            self.resourceBundleNames = resourceBundleNames
+            self.addObjcAttribute = addObjcAttribute
+            self.templatesPath = templatesPath
+            self.colors = colors
+            self.icons = icons
+            self.images = images
+            self.typography = typography
+        }
+    }
+
     /// Load the Pkl module at the given source and evaluate it into `iOS.Module`.
     ///
     /// - Parameter source: The source of the Pkl module.
-    static func loadFrom(source: ModuleSource) async throws -> iOS.Module {
+    public static func loadFrom(source: ModuleSource) async throws -> iOS.Module {
         try await PklSwift.withEvaluator { evaluator in
             try await loadFrom(evaluator: evaluator, source: source)
         }
@@ -499,7 +499,7 @@ public extension iOS {
     ///
     /// - Parameter evaluator: The evaluator to use for evaluation.
     /// - Parameter source: The module to evaluate.
-    static func loadFrom(
+    public static func loadFrom(
         evaluator: PklSwift.Evaluator,
         source: PklSwift.ModuleSource
     ) async throws -> iOS.Module {

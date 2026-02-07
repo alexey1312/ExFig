@@ -3,11 +3,18 @@ import PklSwift
 
 public enum Figma {}
 
-public extension Figma {
+extension Figma {
+    /// Figma API configuration.
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Figma"
+
+        public init() {}
+    }
+
     /// Figma file configuration for legacy Styles API.
     /// Required for icons, images, typography, or legacy Styles API colors.
     /// Optional when using only Variables API for colors.
-    struct FigmaConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct FigmaConfig: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Figma#FigmaConfig"
 
         /// Figma file ID for light mode colors, icons, images, and typography.
@@ -40,17 +47,10 @@ public extension Figma {
         }
     }
 
-    /// Figma API configuration.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Figma"
-
-        public init() {}
-    }
-
     /// Load the Pkl module at the given source and evaluate it into `Figma.Module`.
     ///
     /// - Parameter source: The source of the Pkl module.
-    static func loadFrom(source: ModuleSource) async throws -> Figma.Module {
+    public static func loadFrom(source: ModuleSource) async throws -> Figma.Module {
         try await PklSwift.withEvaluator { evaluator in
             try await loadFrom(evaluator: evaluator, source: source)
         }
@@ -61,7 +61,7 @@ public extension Figma {
     ///
     /// - Parameter evaluator: The evaluator to use for evaluation.
     /// - Parameter source: The module to evaluate.
-    static func loadFrom(
+    public static func loadFrom(
         evaluator: PklSwift.Evaluator,
         source: PklSwift.ModuleSource
     ) async throws -> Figma.Module {
