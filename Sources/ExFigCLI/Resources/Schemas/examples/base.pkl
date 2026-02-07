@@ -1,0 +1,32 @@
+/// Base configuration with shared Figma tokens.
+/// Teams can amend this to create project-specific configs.
+amends "../ExFig.pkl"
+
+import "../Common.pkl"
+import "../Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "design-system-light"
+  darkFileId = "design-system-dark"
+  timeout = 60
+}
+
+common = new Common.CommonConfig {
+  cache = new Common.Cache {
+    enabled = true
+  }
+  variablesColors = new Common.VariablesColors {
+    tokensFileId = "design-tokens-file"
+    tokensCollectionName = "Design System"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+    lightHCModeName = "Light HC"
+    darkHCModeName = "Dark HC"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons/24"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Illustrations"
+  }
+}

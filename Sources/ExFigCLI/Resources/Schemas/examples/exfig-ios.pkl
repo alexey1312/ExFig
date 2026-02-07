@@ -1,0 +1,52 @@
+/// Example iOS-only ExFig configuration.
+amends "../ExFig.pkl"
+
+import "../Common.pkl"
+import "../iOS.pkl"
+
+common = new Common.CommonConfig {
+  variablesColors = new Common.VariablesColors {
+    tokensFileId = "abc123"
+    tokensCollectionName = "Design Tokens"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+  }
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "MyApp/Resources/Assets.xcassets"
+  xcassetsInMainBundle = true
+
+  colors = new Listing {
+    new iOS.ColorsEntry {
+      useColorAssets = true
+      assetsFolder = "Colors"
+      nameStyle = "camelCase"
+      colorSwift = "MyApp/Generated/UIColor+Generated.swift"
+      swiftuiColorSwift = "MyApp/Generated/Color+Generated.swift"
+    }
+  }
+
+  icons = new Listing {
+    new iOS.IconsEntry {
+      figmaFrameName = "Icons"
+      format = "pdf"
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+      imageSwift = "MyApp/Generated/UIImage+Icons.swift"
+      swiftUIImageSwift = "MyApp/Generated/Image+Icons.swift"
+    }
+    // Entry-level override: separate Figma file and xcassets for brand icons
+    new iOS.IconsEntry {
+      figmaFileId = "brand-icons-figma-file"
+      figmaFrameName = "BrandIcons"
+      format = "svg"
+      assetsFolder = "BrandIcons"
+      nameStyle = "camelCase"
+      xcassetsPath = "BrandKit/Assets.xcassets"
+      templatesPath = "BrandKit/Templates"
+    }
+  }
+}

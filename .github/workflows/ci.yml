@@ -56,6 +56,9 @@ jobs:
           experimental: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify pkl installation
+        run: pkl --version
+
       - name: Show Swift version
         run: swift --version
 
@@ -100,10 +103,14 @@ jobs:
           experimental: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add xcsift to PATH
+      - name: Install tools (xcsift, pkl)
         run: |
-          mise install xcsift
+          mise install xcsift pkl
           mise where xcsift >> "$GITHUB_PATH"
+          mise where pkl >> "$GITHUB_PATH"
+
+      - name: Verify pkl installation
+        run: pkl --version
 
       - name: Show Swift version
         run: swift --version

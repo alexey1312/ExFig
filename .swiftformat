@@ -6,4 +6,4 @@
 --maxwidth 120
 --wraparguments before-first
 --wrapcollections before-first
---exclude .build,Packages
+--exclude .build,Packages,Sources/ExFigConfig/Generated

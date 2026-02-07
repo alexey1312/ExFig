@@ -157,4 +157,17 @@ public extension String {
     func screamingSnakeCased() -> String {
         lowercasedStrings().map { $0.uppercased() }.joined(separator: "_")
     }
+
+    /// Converts the string to flat case (all lowercase, no separator).
+    ///
+    /// Here's an example of transforming a string to flat case.
+    ///
+    ///     let event = "Keynote Event"
+    ///     print(event.flatCased())
+    ///     // Prints "keynoteevent"
+    ///
+    /// - Returns: A flat case copy of the string.
+    func flatCased() -> String {
+        lowercasedStrings().map { $0.lowercased() }.joined()
+    }
 }

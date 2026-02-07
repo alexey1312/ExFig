@@ -6,6 +6,7 @@ import Foundation
 /// - `camelCase`: lowerCamelCase - `myImageName`
 /// - `snakeCase`: snake_case - `my_image_name`
 /// - `pascalCase`: PascalCase/UpperCamelCase - `MyImageName`
+/// - `flatCase`: flatcase - `myimagename`
 /// - `kebabCase`: kebab-case - `my-image-name`
 /// - `screamingSnakeCase`: SCREAMING_SNAKE_CASE - `MY_IMAGE_NAME`
 public enum NameStyle: String, Decodable, Sendable, CaseIterable {
@@ -17,6 +18,9 @@ public enum NameStyle: String, Decodable, Sendable, CaseIterable {
 
     /// PascalCase/UpperCamelCase: `MyImageName`
     case pascalCase = "PascalCase"
+
+    /// flatcase: `myimagename`
+    case flatCase
 
     /// kebab-case: `my-image-name`
     case kebabCase = "kebab-case"
@@ -36,6 +40,8 @@ public enum NameStyle: String, Decodable, Sendable, CaseIterable {
             "Dark"
         case .snakeCase:
             "_dark"
+        case .flatCase:
+            "dark"
         case .kebabCase:
             "-dark"
         case .screamingSnakeCase:

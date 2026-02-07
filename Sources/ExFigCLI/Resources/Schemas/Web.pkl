@@ -1,0 +1,94 @@
+/// Web platform configuration for ExFig.
+module Web
+
+import "Common.pkl"
+
+// MARK: - Colors
+
+/// Web colors entry configuration.
+class ColorsEntry extends Common.VariablesSource {
+  /// Override base output directory for this entry.
+  /// When set, overrides `WebConfig.output`.
+  output: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `WebConfig.templatesPath`.
+  templatesPath: String?
+
+  /// Output directory for generated color files.
+  outputDirectory: String?
+
+  /// CSS filename for CSS variables. Default: colors.css
+  cssFileName: String?
+
+  /// TypeScript filename for type definitions. Default: colors.ts
+  tsFileName: String?
+
+  /// JSON filename for color data. Default: colors.json
+  jsonFileName: String?
+}
+
+// MARK: - Icons
+
+/// Web icons entry configuration.
+class IconsEntry extends Common.FrameSource {
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `WebConfig.templatesPath`.
+  templatesPath: String?
+
+  /// Output directory for generated icon components.
+  outputDirectory: String(!isEmpty)
+
+  /// Directory for raw SVG files.
+  svgDirectory: String?
+
+  /// Generate React components for icons.
+  generateReactComponents: Boolean? = true
+
+  /// Icon size in pixels for viewBox.
+  iconSize: Int(isPositive)? = 24
+
+  /// Naming style for icon names.
+  nameStyle: Common.NameStyle? = "snake_case"
+}
+
+// MARK: - Images
+
+/// Web images entry configuration.
+class ImagesEntry extends Common.FrameSource {
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `WebConfig.templatesPath`.
+  templatesPath: String?
+
+  /// Output directory for generated image components.
+  outputDirectory: String(!isEmpty)
+
+  /// Directory for image asset files.
+  assetsDirectory: String?
+
+  /// Generate React components for images.
+  generateReactComponents: Boolean? = true
+
+  /// Naming style for generated image names.
+  nameStyle: Common.NameStyle? = "snake_case"
+}
+
+// MARK: - Web Platform Configuration
+
+/// Root Web platform configuration.
+class WebConfig {
+  /// Base output directory for all generated files.
+  output: String(!isEmpty)
+
+  /// Path to custom Stencil templates.
+  templatesPath: String?
+
+  /// Colors configuration entries.
+  colors: Listing<ColorsEntry>?
+
+  /// Icons configuration entries.
+  icons: Listing<IconsEntry>?
+
+  /// Images configuration entries.
+  images: Listing<ImagesEntry>?
+}

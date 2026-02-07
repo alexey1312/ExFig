@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import Noora
 import XCTest
 
@@ -72,7 +72,7 @@ final class ExFigWarningFormatterTests: XCTestCase {
     // MARK: - Xcode Project Update Failed
 
     func testXcodeProjectUpdateFailedFormatsAsCompact() {
-        let warning = ExFigWarning.xcodeProjectUpdateFailed
+        let warning = ExFigWarning.xcodeProjectUpdateFailed(detail: "some file references could not be added")
 
         let result = formatter.format(warning)
 
@@ -252,7 +252,7 @@ final class ExFigWarningFormatterTests: XCTestCase {
     }
 
     func testFormatAsTerminalTextProducesNonEmptyOutput() {
-        let warning = ExFigWarning.xcodeProjectUpdateFailed
+        let warning = ExFigWarning.xcodeProjectUpdateFailed(detail: "test error")
 
         let text = formatter.formatAsTerminalText(warning)
         let formatted = NooraUI.format(text)

@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import ExFigCore
 @testable import FigmaAPI
 import Logging
@@ -34,7 +34,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
 
-        let params = Params.make(lightFileId: "test-file", iconsFrameName: "Icons")
+        let params = PKLConfig.make(lightFileId: "test-file", iconsFrameName: "Icons")
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
 
         let result = try await loader.load()
@@ -54,7 +54,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
 
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "light-file",
             darkFileId: "dark-file",
             iconsFrameName: "Icons"
@@ -81,7 +81,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
         mockClient.setRequestDelay(0.08) // 80ms per request
 
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "light-file",
             darkFileId: "dark-file",
             iconsFrameName: "Icons"
@@ -115,7 +115,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
 
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "light-file",
             darkFileId: "dark-file",
             iconsFrameName: "Icons"
@@ -149,7 +149,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
 
-        let params = Params.make(lightFileId: "test-file", iconsFrameName: "Icons")
+        let params = PKLConfig.make(lightFileId: "test-file", iconsFrameName: "Icons")
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
 
         let result = try await loader.load(filter: "button/*")
@@ -174,7 +174,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
 
-        let params = Params.make(lightFileId: "test-file", iconsFrameName: "Icons")
+        let params = PKLConfig.make(lightFileId: "test-file", iconsFrameName: "Icons")
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
 
         let result = try await loader.load()
@@ -202,7 +202,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
 
-        let params = Params.make(lightFileId: "test-file", iconsFrameName: "Icons")
+        let params = PKLConfig.make(lightFileId: "test-file", iconsFrameName: "Icons")
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
 
         let result = try await loader.load()
@@ -232,7 +232,7 @@ final class IconsLoaderTests: XCTestCase {
         mockClient.setResponse(components, for: ComponentsEndpoint.self)
         mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
 
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "light-file",
             darkFileId: "dark-file",
             iconsFrameName: "Icons"
@@ -264,7 +264,7 @@ final class IconsLoaderTests: XCTestCase {
     func testThrowsWhenNoComponentsFound() async {
         mockClient.setResponse([Component](), for: ComponentsEndpoint.self)
 
-        let params = Params.make(lightFileId: "test-file", iconsFrameName: "Icons")
+        let params = PKLConfig.make(lightFileId: "test-file", iconsFrameName: "Icons")
         let loader = IconsLoader(client: mockClient, params: params, platform: .ios, logger: logger)
 
         do {

@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import ExFigCore
 import Foundation
 import XCTest
@@ -14,7 +14,7 @@ final class CheckpointTrackerTests: XCTestCase {
         try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
 
         // Create a test config file
-        configFile = tempDirectory.appendingPathComponent("config.yaml")
+        configFile = tempDirectory.appendingPathComponent("config.pkl")
         try "figma:\n  fileKey: test123\n".write(to: configFile, atomically: true, encoding: .utf8)
     }
 
@@ -52,7 +52,7 @@ final class CheckpointTrackerTests: XCTestCase {
         let imagesDir = tempDirectory.appendingPathComponent("images")
         try FileManager.default.createDirectory(at: imagesDir, withIntermediateDirectories: true)
 
-        let imagesConfigFile = imagesDir.appendingPathComponent("config.yaml")
+        let imagesConfigFile = imagesDir.appendingPathComponent("config.pkl")
         try "figma:\n  fileKey: test456\n".write(to: imagesConfigFile, atomically: true, encoding: .utf8)
 
         let imagesTracker = try CheckpointTracker(
@@ -165,7 +165,7 @@ final class CheckpointTrackerTests: XCTestCase {
         // swiftlint:disable:next force_try
         try FileManager.default.createDirectory(at: emptyDir, withIntermediateDirectories: true)
 
-        let configInEmptyDir = emptyDir.appendingPathComponent("config.yaml")
+        let configInEmptyDir = emptyDir.appendingPathComponent("config.pkl")
         // swiftlint:disable:next force_try
         try "figma:\n  fileKey: test\n".write(to: configInEmptyDir, atomically: true, encoding: .utf8)
 

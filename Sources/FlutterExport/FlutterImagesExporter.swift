@@ -35,6 +35,8 @@ public final class FlutterImagesExporter: FlutterExporter {
             name.camelCased()
         case .kebabCase:
             name.kebabCased()
+        case .flatCase:
+            name.flatCased()
         case .screamingSnakeCase:
             name.screamingSnakeCased()
         }

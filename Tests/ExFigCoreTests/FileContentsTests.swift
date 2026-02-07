@@ -170,6 +170,82 @@ final class FileContentsTests: XCTestCase {
         XCTAssertFalse(webpContents.dark)
     }
 
+    // MARK: - Stripping Scale Suffix
+
+    func testStrippingScaleSuffixFromInMemoryFile() {
+        let destination = makeDestination(file: "icon@2x.png")
+        let data = Data("png".utf8)
+        let contents = FileContents(destination: destination, data: data, scale: 2.0, dark: true)
+
+        let stripped = contents.strippingScaleSuffix()
+
+        XCTAssertEqual(stripped.destination.file.lastPathComponent, "icon.png")
+        XCTAssertEqual(stripped.data, data)
+        XCTAssertNil(stripped.dataFile)
+        XCTAssertEqual(stripped.scale, 2.0)
+        XCTAssertTrue(stripped.dark)
+    }
+
+    func testStrippingScaleSuffixFromOnDiskFile() {
+        let destination = makeDestination(file: "icon@3x.png")
+        let dataFile = URL(fileURLWithPath: "/tmp/icon@3x.png")
+        let contents = FileContents(destination: destination, dataFile: dataFile, scale: 3.0, dark: false)
+
+        let stripped = contents.strippingScaleSuffix()
+
+        XCTAssertEqual(stripped.destination.file.lastPathComponent, "icon.png")
+        XCTAssertEqual(stripped.dataFile, dataFile)
+        XCTAssertEqual(stripped.scale, 3.0)
+    }
+
+    func testStrippingScaleSuffixFromRemoteFile() throws {
+        let destination = makeDestination(file: "icon@2x.webp")
+        let sourceURL = try XCTUnwrap(URL(string: "https://figma.com/icon.webp"))
+        let contents = FileContents(destination: destination, sourceURL: sourceURL, scale: 2.0)
+
+        let stripped = contents.strippingScaleSuffix()
+
+        XCTAssertEqual(stripped.destination.file.lastPathComponent, "icon.webp")
+        XCTAssertEqual(stripped.sourceURL, sourceURL)
+    }
+
+    func testStrippingScaleSuffixNoSuffix() {
+        let destination = makeDestination(file: "icon.png")
+        let data = Data("png".utf8)
+        let contents = FileContents(destination: destination, data: data)
+
+        let stripped = contents.strippingScaleSuffix()
+
+        XCTAssertEqual(stripped.destination.file.lastPathComponent, "icon.png")
+    }
+
+    // MARK: - URL.strippingScaleSuffix
+
+    func testURLStrippingScaleSuffix2x() {
+        let url = URL(fileURLWithPath: "icon@2x.png")
+        XCTAssertEqual(url.strippingScaleSuffix().lastPathComponent, "icon.png")
+    }
+
+    func testURLStrippingScaleSuffix3x() {
+        let url = URL(fileURLWithPath: "arrow@3x.webp")
+        XCTAssertEqual(url.strippingScaleSuffix().lastPathComponent, "arrow.webp")
+    }
+
+    func testURLStrippingScaleSuffixNoSuffix() {
+        let url = URL(fileURLWithPath: "logo.svg")
+        XCTAssertEqual(url.strippingScaleSuffix().lastPathComponent, "logo.svg")
+    }
+
+    func testURLStrippingScaleSuffixPreservesExtension() {
+        let url = URL(fileURLWithPath: "photo@2x.heic")
+        XCTAssertEqual(url.strippingScaleSuffix().lastPathComponent, "photo.heic")
+    }
+
+    func testURLStrippingScaleSuffixAtSignInName() {
+        let url = URL(fileURLWithPath: "user@home.png")
+        XCTAssertEqual(url.strippingScaleSuffix().lastPathComponent, "user@home.png")
+    }
+
     // MARK: - Equatable
 
     func testEquality() {

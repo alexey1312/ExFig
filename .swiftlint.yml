@@ -5,9 +5,10 @@ included:
 excluded:
   - .build
   - Packages
-  - Sources/ExFig/Resources/iOSConfig.swift
-  - Sources/ExFig/Resources/androidConfig.swift
-  - Sources/ExFig/Resources/flutterConfig.swift
+  - Sources/ExFigConfig/Generated
+  - Sources/ExFigCLI/Resources/iOSConfig.swift
+  - Sources/ExFigCLI/Resources/androidConfig.swift
+  - Sources/ExFigCLI/Resources/flutterConfig.swift
   - Tests/XcodeExportTests/XcodeIconsExporterTests.swift
 
 disabled_rules:

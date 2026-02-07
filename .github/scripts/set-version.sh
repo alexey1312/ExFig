@@ -29,7 +29,7 @@ fi
 # Find repository root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-FILE="$REPO_ROOT/Sources/ExFig/ExFigCommand.swift"
+FILE="$REPO_ROOT/Sources/ExFigCLI/ExFigCommand.swift"
 
 # Check file exists
 if [[ ! -f "$FILE" ]]; then

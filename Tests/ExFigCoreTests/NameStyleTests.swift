@@ -8,6 +8,7 @@ final class NameStyleTests: XCTestCase {
         XCTAssertEqual(NameStyle.camelCase.rawValue, "camelCase")
         XCTAssertEqual(NameStyle.snakeCase.rawValue, "snake_case")
         XCTAssertEqual(NameStyle.pascalCase.rawValue, "PascalCase")
+        XCTAssertEqual(NameStyle.flatCase.rawValue, "flatCase")
         XCTAssertEqual(NameStyle.kebabCase.rawValue, "kebab-case")
         XCTAssertEqual(NameStyle.screamingSnakeCase.rawValue, "SCREAMING_SNAKE_CASE")
     }
@@ -44,6 +45,12 @@ final class NameStyleTests: XCTestCase {
         XCTAssertEqual(style, .screamingSnakeCase)
     }
 
+    func testInitFromRawValueFlatCase() {
+        let style = NameStyle(rawValue: "flatCase")
+
+        XCTAssertEqual(style, .flatCase)
+    }
+
     func testInitFromInvalidRawValue() {
         let style = NameStyle(rawValue: "invalid")
 
@@ -53,7 +60,7 @@ final class NameStyleTests: XCTestCase {
     // MARK: - CaseIterable Conformance
 
     func testAllCasesCount() {
-        XCTAssertEqual(NameStyle.allCases.count, 5)
+        XCTAssertEqual(NameStyle.allCases.count, 6)
     }
 
     func testAllCasesContainsExpectedValues() {
@@ -62,6 +69,7 @@ final class NameStyleTests: XCTestCase {
         XCTAssertTrue(allCases.contains(.camelCase))
         XCTAssertTrue(allCases.contains(.snakeCase))
         XCTAssertTrue(allCases.contains(.pascalCase))
+        XCTAssertTrue(allCases.contains(.flatCase))
         XCTAssertTrue(allCases.contains(.kebabCase))
         XCTAssertTrue(allCases.contains(.screamingSnakeCase))
     }
@@ -108,6 +116,14 @@ final class NameStyleTests: XCTestCase {
         XCTAssertEqual(decoded, .screamingSnakeCase)
     }
 
+    func testDecodeFlatCase() throws {
+        let json = Data("\"flatCase\"".utf8)
+
+        let decoded = try JSONDecoder().decode(NameStyle.self, from: json)
+
+        XCTAssertEqual(decoded, .flatCase)
+    }
+
     func testDecodeInvalidValueThrows() {
         let json = Data("\"unknown_style\"".utf8)
 
@@ -136,5 +152,27 @@ final class NameStyleTests: XCTestCase {
     func testInequality() {
         XCTAssertNotEqual(NameStyle.camelCase, NameStyle.snakeCase)
         XCTAssertNotEqual(NameStyle.pascalCase, NameStyle.kebabCase)
+    }
+
+    // MARK: - String.flatCased()
+
+    func testFlatCasedFromTitleCase() {
+        XCTAssertEqual("Keynote Event".flatCased(), "keynoteevent")
+    }
+
+    func testFlatCasedFromSnakeCase() {
+        XCTAssertEqual("my_variable_name".flatCased(), "myvariablename")
+    }
+
+    func testFlatCasedFromCamelCase() {
+        XCTAssertEqual("myVariableName".flatCased(), "myvariablename")
+    }
+
+    func testFlatCasedFromPascalCase() {
+        XCTAssertEqual("MyVariableName".flatCased(), "myvariablename")
+    }
+
+    func testFlatCasedFromScreamingSnakeCase() {
+        XCTAssertEqual("MY_VARIABLE_NAME".flatCased(), "myvariablename")
     }
 }

@@ -1,0 +1,47 @@
+/// ExFig configuration schema.
+///
+/// ExFig exports colors, typography, icons, and images from Figma
+/// to iOS, Android, Flutter, and Web projects.
+///
+/// Usage:
+/// ```pkl
+/// amends "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/ExFig.pkl"
+///
+/// figma {
+///   lightFileId = "xxx"
+/// }
+///
+/// ios {
+///   xcodeprojPath = "MyApp.xcodeproj"
+///   // ...
+/// }
+/// ```
+/// Configuration module that users amend to create their config files.
+open module ExFig
+
+import "Figma.pkl"
+import "Common.pkl"
+import "iOS.pkl"
+import "Android.pkl"
+import "Flutter.pkl"
+import "Web.pkl"
+
+/// Figma file configuration.
+/// Required for icons, images, typography, or legacy Styles API colors.
+/// Optional when using only Variables API for colors.
+figma: Figma.FigmaConfig?
+
+/// Common settings shared across all platforms.
+common: Common.CommonConfig?
+
+/// iOS platform configuration.
+ios: iOS.iOSConfig?
+
+/// Android platform configuration.
+android: Android.AndroidConfig?
+
+/// Flutter platform configuration.
+flutter: Flutter.FlutterConfig?
+
+/// Web platform configuration.
+web: Web.WebConfig?

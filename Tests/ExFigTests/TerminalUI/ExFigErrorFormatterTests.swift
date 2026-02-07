@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import Noora
 import XCTest
 
@@ -110,7 +110,7 @@ final class ExFigErrorFormatterTests: XCTestCase {
     // MARK: - Config Discovery Errors
 
     func testConfigDiscoveryErrorFileNotFound() {
-        let url = URL(fileURLWithPath: "/path/to/config.yaml")
+        let url = URL(fileURLWithPath: "/path/to/config.pkl")
         let error = ConfigDiscoveryError.fileNotFound(url)
 
         let result = formatter.format(error)

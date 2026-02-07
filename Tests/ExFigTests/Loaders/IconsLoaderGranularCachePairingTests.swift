@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import ExFigCore
 @testable import FigmaAPI
 import Logging
@@ -46,7 +46,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
         cache.updateFileVersion(fileId: "file123", version: "v1")
 
         let granularManager = GranularCacheManager(client: mockClient, cache: cache)
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "file123", iconsFrameName: "Icons",
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )
@@ -109,7 +109,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
         cache.updateFileVersion(fileId: "file123", version: "v1")
 
         let granularManager = GranularCacheManager(client: mockClient, cache: cache)
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "file123", iconsFrameName: "Icons",
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )
@@ -157,7 +157,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
         cache.updateFileVersion(fileId: "file123", version: "v1")
 
         let granularManager = GranularCacheManager(client: mockClient, cache: cache)
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "file123", iconsFrameName: "Icons",
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )
@@ -205,7 +205,7 @@ final class IconsLoaderGranularCachePairingTests: XCTestCase {
         cache.updateFileVersion(fileId: "file123", version: "v1")
 
         let granularManager = GranularCacheManager(client: mockClient, cache: cache)
-        let params = Params.make(
+        let params = PKLConfig.make(
             lightFileId: "file123", iconsFrameName: "Icons",
             useSingleFileIcons: true, iconsDarkModeSuffix: "-dark"
         )

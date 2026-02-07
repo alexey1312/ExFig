@@ -1,0 +1,118 @@
+/// Example ExFig configuration demonstrating entry-level overrides.
+/// Each entry can override platform-level paths and Figma file IDs.
+amends "../ExFig.pkl"
+
+import "../Common.pkl"
+import "../Figma.pkl"
+import "../iOS.pkl"
+import "../Android.pkl"
+import "../Flutter.pkl"
+import "../Web.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "global-light-file"
+  darkFileId = "global-dark-file"
+}
+
+common = new Common.CommonConfig {
+  cache = new Common.Cache {}
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Images"
+  }
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "MyApp/Resources/Assets.xcassets"
+
+  icons = new Listing {
+    // Default entry — uses platform xcassetsPath
+    new iOS.IconsEntry {
+      format = "svg"
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+    }
+    // Override entry — custom xcassetsPath and figmaFileId
+    new iOS.IconsEntry {
+      format = "pdf"
+      assetsFolder = "BrandIcons"
+      nameStyle = "camelCase"
+      xcassetsPath = "BrandKit/Assets.xcassets"
+      figmaFileId = "brand-icons-file"
+    }
+  }
+
+  images = new Listing {
+    new iOS.ImagesEntry {
+      nameStyle = "camelCase"
+      assetsFolder = "Images"
+      templatesPath = "/custom/ios-templates"
+    }
+  }
+}
+
+android = new Android.AndroidConfig {
+  mainRes = "app/src/main/res"
+  mainSrc = "app/src/main/kotlin"
+  resourcePackage = "com.example.app"
+
+  icons = new Listing {
+    new Android.IconsEntry {
+      output = "drawable"
+      // Override mainRes for this entry
+      mainRes = "brand/src/main/res"
+      figmaFileId = "android-brand-file"
+    }
+  }
+
+  images = new Listing {
+    new Android.ImagesEntry {
+      format = "webp"
+      output = "drawable"
+      mainRes = "media/src/main/res"
+      webpOptions = new Android.WebpOptions {
+        quality = 90
+      }
+    }
+  }
+}
+
+flutter = new Flutter.FlutterConfig {
+  output = "lib/gen"
+
+  icons = new Listing {
+    new Flutter.IconsEntry {
+      output = "assets/icons"
+      templatesPath = "/custom/flutter-templates"
+      figmaFileId = "flutter-icons-file"
+    }
+  }
+
+  images = new Listing {
+    new Flutter.ImagesEntry {
+      output = "assets/images"
+    }
+  }
+}
+
+web = new Web.WebConfig {
+  output = "dist/generated"
+
+  icons = new Listing {
+    new Web.IconsEntry {
+      outputDirectory = "dist/icons"
+      templatesPath = "/custom/web-templates"
+    }
+  }
+
+  images = new Listing {
+    new Web.ImagesEntry {
+      outputDirectory = "dist/images"
+      figmaFileId = "web-images-file"
+    }
+  }
+}

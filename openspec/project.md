@@ -9,7 +9,7 @@ keeping design systems in sync across platforms.
 
 - Swift 6.2 with Swift Package Manager
 - swift-argument-parser for CLI
-- Yams for YAML parsing
+- PKL (Programmable, Scalable, Safe) for configuration
 - Stencil and StencilSwiftKit for code generation
 - Rainbow and swift-log for terminal output
 - Native libwebp and libpng for image conversion
@@ -23,8 +23,10 @@ keeping design systems in sync across platforms.
 
 ### Architecture Patterns
 
-- Modules: ExFig (CLI), ExFigCore (models/processors), FigmaAPI (HTTP client with retry/rate limiting), platform
-  exporters (XcodeExport, AndroidExport, FlutterExport), SVGKit
+- Core modules: ExFig (CLI), ExFigCore (models/processors), ExFigConfig (PKL parsing), FigmaAPI (HTTP client)
+- Platform plugins: ExFig-iOS, ExFig-Android, ExFig-Flutter, ExFig-Web (each implements ColorsExporter, IconsExporter,
+  ImagesExporter)
+- Export modules: XcodeExport, AndroidExport, FlutterExport, WebExport, SVGKit
 - Terminal output coordinated through TerminalOutputManager to avoid race conditions
 - Rate limiting shared via SharedRateLimiter and RateLimitedClient
 

@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import Noora
 import XCTest
 

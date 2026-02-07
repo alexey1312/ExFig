@@ -1,7 +1,7 @@
 // swiftlint:disable file_length type_body_length
 
 import CustomDump
-@testable import ExFig
+@testable import ExFigCLI
 import ExFigCore
 @testable import FigmaAPI
 import XCTest
@@ -39,7 +39,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Colors",
             lightModeName: "Light",
@@ -88,7 +88,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Colors"
         )
@@ -139,7 +139,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Colors"
         )
@@ -183,7 +183,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Tokens",
             lightModeName: "Light",
@@ -243,7 +243,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "NonExistentCollection"
         )
@@ -298,7 +298,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Tokens",
             lightModeName: "Light"
@@ -369,7 +369,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Tokens",
             lightModeName: "Light"
@@ -425,7 +425,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Tokens",
             lightModeName: "Light",
@@ -487,7 +487,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Tokens",
             lightModeName: "Light",
@@ -528,7 +528,7 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
 
-        let variablesParams = Params.Common.VariablesColors.make(
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
             tokensFileId: "test-file",
             tokensCollectionName: "Colors"
         )
