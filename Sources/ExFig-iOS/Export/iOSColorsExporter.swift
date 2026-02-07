@@ -107,19 +107,19 @@ public struct iOSColorsExporter: ColorsExporter {
         platformConfig: iOSPlatformConfig,
         context: some ColorsExportContext
     ) throws {
-        // Build assets URL
+        // Build assets URL (entry-level xcassetsPath overrides platform config)
         var colorsURL: URL?
         if entry.useColorAssets {
             guard let folder = entry.assetsFolder else {
                 throw iOSColorsExportError.assetsFolderNotSpecified
             }
-            guard let xcassetsPath = platformConfig.xcassetsPath else {
+            guard let xcassetsPath = entry.resolvedXcassetsPath(fallback: platformConfig.xcassetsPath) else {
                 throw iOSColorsExportError.xcassetsPathNotSpecified
             }
             colorsURL = xcassetsPath.appendingPathComponent(folder)
         }
 
-        // Create output configuration
+        // Create output configuration (entry-level templatesPath overrides platform config)
         let output = XcodeColorsOutput(
             assetsColorsURL: colorsURL,
             assetsInMainBundle: platformConfig.xcassetsInMainBundle,
@@ -129,7 +129,7 @@ public struct iOSColorsExporter: ColorsExporter {
             colorSwiftURL: entry.colorSwiftURL,
             swiftuiColorSwiftURL: entry.swiftuiColorSwiftURL,
             groupUsingNamespace: entry.groupUsingNamespace,
-            templatesPath: platformConfig.templatesPath
+            templatesPath: entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         )
 
         // Export

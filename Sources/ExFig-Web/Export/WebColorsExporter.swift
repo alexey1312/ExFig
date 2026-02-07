@@ -94,17 +94,19 @@ public struct WebColorsExporter: ColorsExporter {
         platformConfig: WebPlatformConfig,
         context: some ColorsExportContext
     ) throws {
-        // Determine output directory
+        // Determine output directory (entry-level overrides take priority)
+        let resolvedOutput = entry.resolvedOutput(fallback: platformConfig.output)
         let outputDirectory: URL = if let entryOutput = entry.outputDirectory {
-            platformConfig.output.appendingPathComponent(entryOutput)
+            resolvedOutput.appendingPathComponent(entryOutput)
         } else {
-            platformConfig.output
+            resolvedOutput
         }
 
         // Create output configuration
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = WebOutput(
             outputDirectory: outputDirectory,
-            templatesPath: platformConfig.templatesPath
+            templatesPath: resolvedTemplatesPath
         )
 
         // Export

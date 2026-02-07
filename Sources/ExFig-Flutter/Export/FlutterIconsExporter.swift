@@ -42,11 +42,12 @@ public struct FlutterIconsExporter: IconsExporter {
     ) async throws -> Int {
         let (iconPairs, assetsDirectory) = try await loadAndProcess(entry: entry, context: context)
 
-        // Create FlutterOutput for Dart code generation
+        // Create FlutterOutput for Dart code generation (entry-level overrides take priority)
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = FlutterOutput(
             outputDirectory: platformConfig.output,
             iconsAssetsDirectory: assetsDirectory,
-            templatesPath: platformConfig.templatesPath,
+            templatesPath: resolvedTemplatesPath,
             iconsClassName: entry.className
         )
 
