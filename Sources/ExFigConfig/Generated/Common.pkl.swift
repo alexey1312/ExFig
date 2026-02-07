@@ -3,6 +3,12 @@ import PklSwift
 
 public enum Common {}
 
+public protocol Common_NameProcessing: PklRegisteredType, DynamicallyEquatable, Hashable, Sendable {
+    var nameValidateRegexp: String? { get }
+
+    var nameReplaceRegexp: String? { get }
+}
+
 public protocol Common_VariablesSource: Common_NameProcessing {
     var tokensFileId: String? { get }
 
@@ -19,14 +25,10 @@ public protocol Common_VariablesSource: Common_NameProcessing {
     var primitivesModeName: String? { get }
 }
 
-public protocol Common_NameProcessing: PklRegisteredType, DynamicallyEquatable, Hashable, Sendable {
-    var nameValidateRegexp: String? { get }
-
-    var nameReplaceRegexp: String? { get }
-}
-
 public protocol Common_FrameSource: Common_NameProcessing {
     var figmaFrameName: String? { get }
+
+    var figmaFileId: String? { get }
 }
 
 public extension Common {
@@ -36,7 +38,7 @@ public extension Common {
         case snake_case
         case pascalCase = "PascalCase"
         case flatCase
-        case kebab_case = "kebab-case"
+        case kebabCase = "kebab-case"
         case sCREAMING_SNAKE_CASE = "SCREAMING_SNAKE_CASE"
     }
 
@@ -52,6 +54,87 @@ public extension Common {
     enum SourceFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case png
         case svg
+    }
+
+    /// Root common configuration.
+    struct CommonConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common#CommonConfig"
+
+        /// Cache configuration.
+        public var cache: Cache?
+
+        /// Common colors settings.
+        public var colors: Colors?
+
+        /// Shared Figma Variables source for colors.
+        /// Used when all platforms use the same color source.
+        public var variablesColors: VariablesColors?
+
+        /// Common icons settings.
+        public var icons: Icons?
+
+        /// Common images settings.
+        public var images: Images?
+
+        /// Common typography settings.
+        public var typography: Typography?
+
+        public init(
+            cache: Cache?,
+            colors: Colors?,
+            variablesColors: VariablesColors?,
+            icons: Icons?,
+            images: Images?,
+            typography: Typography?
+        ) {
+            self.cache = cache
+            self.colors = colors
+            self.variablesColors = variablesColors
+            self.icons = icons
+            self.images = images
+            self.typography = typography
+        }
+    }
+
+    /// Cache configuration for tracking Figma file versions.
+    struct Cache: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common#Cache"
+
+        /// Enable version tracking cache.
+        public var enabled: Bool?
+
+        /// Custom path to cache file.
+        public var path: String?
+
+        public init(enabled: Bool?, path: String?) {
+            self.enabled = enabled
+            self.path = path
+        }
+    }
+
+    /// Common types and configurations shared across all platforms.
+    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common"
+
+        public init() {}
+    }
+
+    typealias NameProcessing = Common_NameProcessing
+
+    /// Name validation and transformation configuration.
+    struct NameProcessingImpl: NameProcessing {
+        public static let registeredIdentifier: String = "Common#NameProcessing"
+
+        /// Regex pattern for validating/capturing names.
+        public var nameValidateRegexp: String?
+
+        /// Replacement pattern using captured groups.
+        public var nameReplaceRegexp: String?
+
+        public init(nameValidateRegexp: String?, nameReplaceRegexp: String?) {
+            self.nameValidateRegexp = nameValidateRegexp
+            self.nameReplaceRegexp = nameReplaceRegexp
+        }
     }
 
     typealias VariablesSource = Common_VariablesSource
@@ -112,47 +195,6 @@ public extension Common {
         }
     }
 
-    typealias NameProcessing = Common_NameProcessing
-
-    /// Name validation and transformation configuration.
-    struct NameProcessingImpl: NameProcessing {
-        public static let registeredIdentifier: String = "Common#NameProcessing"
-
-        /// Regex pattern for validating/capturing names.
-        public var nameValidateRegexp: String?
-
-        /// Replacement pattern using captured groups.
-        public var nameReplaceRegexp: String?
-
-        public init(nameValidateRegexp: String?, nameReplaceRegexp: String?) {
-            self.nameValidateRegexp = nameValidateRegexp
-            self.nameReplaceRegexp = nameReplaceRegexp
-        }
-    }
-
-    /// Common types and configurations shared across all platforms.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Common"
-
-        public init() {}
-    }
-
-    /// Cache configuration for tracking Figma file versions.
-    struct Cache: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Common#Cache"
-
-        /// Enable version tracking cache. Default: false.
-        public var enabled: Bool?
-
-        /// Custom path to cache file. Default: .exfig-cache.json
-        public var path: String?
-
-        public init(enabled: Bool?, path: String?) {
-            self.enabled = enabled
-            self.path = path
-        }
-    }
-
     typealias FrameSource = Common_FrameSource
 
     /// Figma Frame source configuration.
@@ -163,6 +205,10 @@ public extension Common {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -171,10 +217,12 @@ public extension Common {
 
         public init(
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
@@ -360,46 +408,6 @@ public extension Common {
             self.primitivesModeName = primitivesModeName
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
-        }
-    }
-
-    /// Root common configuration.
-    struct CommonConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Common#CommonConfig"
-
-        /// Cache configuration.
-        public var cache: Cache?
-
-        /// Common colors settings.
-        public var colors: Colors?
-
-        /// Shared Figma Variables source for colors.
-        /// Used when all platforms use the same color source.
-        public var variablesColors: VariablesColors?
-
-        /// Common icons settings.
-        public var icons: Icons?
-
-        /// Common images settings.
-        public var images: Images?
-
-        /// Common typography settings.
-        public var typography: Typography?
-
-        public init(
-            cache: Cache?,
-            colors: Colors?,
-            variablesColors: VariablesColors?,
-            icons: Icons?,
-            images: Images?,
-            typography: Typography?
-        ) {
-            self.cache = cache
-            self.colors = colors
-            self.variablesColors = variablesColors
-            self.icons = icons
-            self.images = images
-            self.typography = typography
         }
     }
 

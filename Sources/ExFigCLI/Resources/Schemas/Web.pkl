@@ -7,6 +7,14 @@ import "Common.pkl"
 
 /// Web colors entry configuration.
 class ColorsEntry extends Common.VariablesSource {
+  /// Override base output directory for this entry.
+  /// When set, overrides `WebConfig.output`.
+  output: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `WebConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output directory for generated color files.
   outputDirectory: String?
 
@@ -24,6 +32,10 @@ class ColorsEntry extends Common.VariablesSource {
 
 /// Web icons entry configuration.
 class IconsEntry extends Common.FrameSource {
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `WebConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output directory for generated icon components.
   outputDirectory: String
 
@@ -31,19 +43,23 @@ class IconsEntry extends Common.FrameSource {
   svgDirectory: String?
 
   /// Generate React components for icons.
-  generateReactComponents: Boolean?
+  generateReactComponents: Boolean? = true
 
-  /// Icon size in pixels for viewBox. Default: 24.
-  iconSize: Int?
+  /// Icon size in pixels for viewBox.
+  iconSize: Int? = 24
 
   /// Naming style for icon names.
-  nameStyle: Common.NameStyle?
+  nameStyle: Common.NameStyle? = "snake_case"
 }
 
 // MARK: - Images
 
 /// Web images entry configuration.
 class ImagesEntry extends Common.FrameSource {
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `WebConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output directory for generated image components.
   outputDirectory: String
 
@@ -51,10 +67,10 @@ class ImagesEntry extends Common.FrameSource {
   assetsDirectory: String?
 
   /// Generate React components for images.
-  generateReactComponents: Boolean?
+  generateReactComponents: Boolean? = true
 
   /// Naming style for generated image names.
-  nameStyle: Common.NameStyle?
+  nameStyle: Common.NameStyle? = "snake_case"
 }
 
 // MARK: - Web Platform Configuration
@@ -62,7 +78,7 @@ class ImagesEntry extends Common.FrameSource {
 /// Root Web platform configuration.
 class WebConfig {
   /// Base output directory for all generated files.
-  output: String
+  output: String(!isEmpty)
 
   /// Path to custom Stencil templates.
   templatesPath: String?

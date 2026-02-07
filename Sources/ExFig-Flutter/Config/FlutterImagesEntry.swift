@@ -47,7 +47,7 @@ public extension Flutter.ImagesEntry {
         case .snake_case: return .snakeCase
         case .pascalCase: return .pascalCase
         case .flatCase: return .flatCase
-        case .kebab_case: return .kebabCase
+        case .kebabCase: return .kebabCase
         case .sCREAMING_SNAKE_CASE: return .screamingSnakeCase
         }
     }

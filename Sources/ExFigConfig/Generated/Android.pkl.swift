@@ -25,46 +25,149 @@ public extension Android {
         case webp
     }
 
-    /// WebP encoding options.
-    struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#WebpOptions"
+    /// Root Android platform configuration.
+    struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#AndroidConfig"
 
-        /// Encoding mode.
-        public var encoding: WebpEncoding
+        /// Path to main res directory.
+        public var mainRes: String
 
-        /// Quality for lossy encoding (0-100).
-        public var quality: Int?
+        /// Resource package name (R class package).
+        public var resourcePackage: String?
 
-        public init(encoding: WebpEncoding, quality: Int?) {
-            self.encoding = encoding
-            self.quality = quality
+        /// Path to main src directory for Kotlin generation.
+        public var mainSrc: String?
+
+        /// Path to custom Stencil templates.
+        public var templatesPath: String?
+
+        /// Colors configuration entries.
+        public var colors: [ColorsEntry]?
+
+        /// Icons configuration entries.
+        public var icons: [IconsEntry]?
+
+        /// Images configuration entries.
+        public var images: [ImagesEntry]?
+
+        /// Typography configuration.
+        public var typography: Typography?
+
+        public init(
+            mainRes: String,
+            resourcePackage: String?,
+            mainSrc: String?,
+            templatesPath: String?,
+            colors: [ColorsEntry]?,
+            icons: [IconsEntry]?,
+            images: [ImagesEntry]?,
+            typography: Typography?
+        ) {
+            self.mainRes = mainRes
+            self.resourcePackage = resourcePackage
+            self.mainSrc = mainSrc
+            self.templatesPath = templatesPath
+            self.colors = colors
+            self.icons = icons
+            self.images = images
+            self.typography = typography
         }
     }
 
-    /// Android platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android"
+    /// Android colors entry configuration.
+    struct ColorsEntry: Common.VariablesSource {
+        public static let registeredIdentifier: String = "Android#ColorsEntry"
 
-        public init() {}
-    }
+        /// Override path to main res directory for this entry.
+        /// When set, overrides `AndroidConfig.mainRes`.
+        public var mainRes: String?
 
-    /// Name transformation for theme attributes.
-    struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#NameTransform"
+        /// Override path to main src directory for this entry.
+        /// When set, overrides `AndroidConfig.mainSrc`.
+        public var mainSrc: String?
 
-        /// Target case style for attribute names. Default: PascalCase.
-        public var style: Common.NameStyle?
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `AndroidConfig.templatesPath`.
+        public var templatesPath: String?
 
-        /// Prefix to add to attribute names. Default: "color".
-        public var prefix: String?
+        /// Output filename for colors XML. Default: figma_colors.xml
+        public var xmlOutputFileName: String?
 
-        /// Prefixes to strip from color names before transformation.
-        public var stripPrefixes: [String]?
+        /// Skip XML generation entirely. Useful for Compose-only projects.
+        public var xmlDisabled: Bool?
 
-        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
-            self.style = style
-            self.prefix = prefix
-            self.stripPrefixes = stripPrefixes
+        /// Package name for generated Compose colors.
+        public var composePackageName: String?
+
+        /// Path to generate Compose Color Kotlin file.
+        public var colorKotlin: String?
+
+        /// Theme attributes configuration.
+        public var themeAttributes: ThemeAttributes?
+
+        /// Figma file ID containing the variables.
+        public var tokensFileId: String?
+
+        /// Name of the variable collection.
+        public var tokensCollectionName: String?
+
+        /// Mode name for light theme.
+        public var lightModeName: String?
+
+        /// Mode name for dark theme.
+        public var darkModeName: String?
+
+        /// Mode name for light high contrast theme.
+        public var lightHCModeName: String?
+
+        /// Mode name for dark high contrast theme.
+        public var darkHCModeName: String?
+
+        /// Mode name for primitives/aliases layer.
+        public var primitivesModeName: String?
+
+        /// Regex pattern for validating/capturing names.
+        public var nameValidateRegexp: String?
+
+        /// Replacement pattern using captured groups.
+        public var nameReplaceRegexp: String?
+
+        public init(
+            mainRes: String?,
+            mainSrc: String?,
+            templatesPath: String?,
+            xmlOutputFileName: String?,
+            xmlDisabled: Bool?,
+            composePackageName: String?,
+            colorKotlin: String?,
+            themeAttributes: ThemeAttributes?,
+            tokensFileId: String?,
+            tokensCollectionName: String?,
+            lightModeName: String?,
+            darkModeName: String?,
+            lightHCModeName: String?,
+            darkHCModeName: String?,
+            primitivesModeName: String?,
+            nameValidateRegexp: String?,
+            nameReplaceRegexp: String?
+        ) {
+            self.mainRes = mainRes
+            self.mainSrc = mainSrc
+            self.templatesPath = templatesPath
+            self.xmlOutputFileName = xmlOutputFileName
+            self.xmlDisabled = xmlDisabled
+            self.composePackageName = composePackageName
+            self.colorKotlin = colorKotlin
+            self.themeAttributes = themeAttributes
+            self.tokensFileId = tokensFileId
+            self.tokensCollectionName = tokensCollectionName
+            self.lightModeName = lightModeName
+            self.darkModeName = darkModeName
+            self.lightHCModeName = lightHCModeName
+            self.darkHCModeName = darkHCModeName
+            self.primitivesModeName = primitivesModeName
+            self.nameValidateRegexp = nameValidateRegexp
+            self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 
@@ -122,88 +225,60 @@ public extension Android {
         }
     }
 
-    /// Android colors entry configuration.
-    struct ColorsEntry: Common.VariablesSource {
-        public static let registeredIdentifier: String = "Android#ColorsEntry"
+    /// Name transformation for theme attributes.
+    struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#NameTransform"
 
-        /// Output filename for colors XML. Default: figma_colors.xml
-        public var xmlOutputFileName: String?
+        /// Target case style for attribute names.
+        public var style: Common.NameStyle?
 
-        /// Skip XML generation entirely. Useful for Compose-only projects.
-        public var xmlDisabled: Bool?
+        /// Prefix to add to attribute names.
+        public var prefix: String?
 
-        /// Package name for generated Compose colors.
-        public var composePackageName: String?
+        /// Prefixes to strip from color names before transformation.
+        public var stripPrefixes: [String]?
 
-        /// Path to generate Compose Color Kotlin file.
-        public var colorKotlin: String?
+        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
+            self.style = style
+            self.prefix = prefix
+            self.stripPrefixes = stripPrefixes
+        }
+    }
 
-        /// Theme attributes configuration.
-        public var themeAttributes: ThemeAttributes?
+    /// Android platform configuration for ExFig.
+    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android"
 
-        /// Figma file ID containing the variables.
-        public var tokensFileId: String?
+        public init() {}
+    }
 
-        /// Name of the variable collection.
-        public var tokensCollectionName: String?
+    /// WebP encoding options.
+    struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#WebpOptions"
 
-        /// Mode name for light theme.
-        public var lightModeName: String?
+        /// Encoding mode.
+        public var encoding: WebpEncoding
 
-        /// Mode name for dark theme.
-        public var darkModeName: String?
+        /// Quality for lossy encoding (0-100).
+        public var quality: Int?
 
-        /// Mode name for light high contrast theme.
-        public var lightHCModeName: String?
-
-        /// Mode name for dark high contrast theme.
-        public var darkHCModeName: String?
-
-        /// Mode name for primitives/aliases layer.
-        public var primitivesModeName: String?
-
-        /// Regex pattern for validating/capturing names.
-        public var nameValidateRegexp: String?
-
-        /// Replacement pattern using captured groups.
-        public var nameReplaceRegexp: String?
-
-        public init(
-            xmlOutputFileName: String?,
-            xmlDisabled: Bool?,
-            composePackageName: String?,
-            colorKotlin: String?,
-            themeAttributes: ThemeAttributes?,
-            tokensFileId: String?,
-            tokensCollectionName: String?,
-            lightModeName: String?,
-            darkModeName: String?,
-            lightHCModeName: String?,
-            darkHCModeName: String?,
-            primitivesModeName: String?,
-            nameValidateRegexp: String?,
-            nameReplaceRegexp: String?
-        ) {
-            self.xmlOutputFileName = xmlOutputFileName
-            self.xmlDisabled = xmlDisabled
-            self.composePackageName = composePackageName
-            self.colorKotlin = colorKotlin
-            self.themeAttributes = themeAttributes
-            self.tokensFileId = tokensFileId
-            self.tokensCollectionName = tokensCollectionName
-            self.lightModeName = lightModeName
-            self.darkModeName = darkModeName
-            self.lightHCModeName = lightHCModeName
-            self.darkHCModeName = darkHCModeName
-            self.primitivesModeName = primitivesModeName
-            self.nameValidateRegexp = nameValidateRegexp
-            self.nameReplaceRegexp = nameReplaceRegexp
+        public init(encoding: WebpEncoding, quality: Int?) {
+            self.encoding = encoding
+            self.quality = quality
         }
     }
 
     /// Android icons entry configuration.
     struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#IconsEntry"
+
+        /// Override path to main res directory for this entry.
+        /// When set, overrides `AndroidConfig.mainRes`.
+        public var mainRes: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `AndroidConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output directory for vector drawables.
         public var output: String
@@ -220,7 +295,7 @@ public extension Android {
         /// Naming style for icon names.
         public var nameStyle: Common.NameStyle?
 
-        /// Coordinate precision for pathData (1-6). Default: 4.
+        /// Coordinate precision for pathData (1-6).
         public var pathPrecision: Int?
 
         /// If true, exit with error when pathData exceeds 32,767 bytes.
@@ -229,6 +304,10 @@ public extension Android {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -236,6 +315,8 @@ public extension Android {
         public var nameReplaceRegexp: String?
 
         public init(
+            mainRes: String?,
+            templatesPath: String?,
             output: String,
             composePackageName: String?,
             composeFormat: ComposeIconFormat?,
@@ -244,9 +325,12 @@ public extension Android {
             pathPrecision: Int?,
             strictPathValidation: Bool?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.mainRes = mainRes
+            self.templatesPath = templatesPath
             self.output = output
             self.composePackageName = composePackageName
             self.composeFormat = composeFormat
@@ -255,6 +339,7 @@ public extension Android {
             self.pathPrecision = pathPrecision
             self.strictPathValidation = strictPathValidation
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
@@ -263,6 +348,14 @@ public extension Android {
     /// Android images entry configuration.
     struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#ImagesEntry"
+
+        /// Override path to main res directory for this entry.
+        /// When set, overrides `AndroidConfig.mainRes`.
+        public var mainRes: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `AndroidConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Scale factors to generate (e.g., [1, 1.5, 2, 3, 4]).
         public var scales: [Float64]?
@@ -285,6 +378,10 @@ public extension Android {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -292,6 +389,8 @@ public extension Android {
         public var nameReplaceRegexp: String?
 
         public init(
+            mainRes: String?,
+            templatesPath: String?,
             scales: [Float64]?,
             output: String,
             format: ImageFormat,
@@ -299,9 +398,12 @@ public extension Android {
             sourceFormat: Common.SourceFormat?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.mainRes = mainRes
+            self.templatesPath = templatesPath
             self.scales = scales
             self.output = output
             self.format = format
@@ -309,6 +411,7 @@ public extension Android {
             self.sourceFormat = sourceFormat
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
@@ -345,55 +448,6 @@ public extension Android {
             self.nameReplaceRegexp = nameReplaceRegexp
             self.nameStyle = nameStyle
             self.composePackageName = composePackageName
-        }
-    }
-
-    /// Root Android platform configuration.
-    struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#AndroidConfig"
-
-        /// Path to main res directory.
-        public var mainRes: String
-
-        /// Resource package name (R class package).
-        public var resourcePackage: String?
-
-        /// Path to main src directory for Kotlin generation.
-        public var mainSrc: String?
-
-        /// Path to custom Stencil templates.
-        public var templatesPath: String?
-
-        /// Colors configuration entries.
-        public var colors: [ColorsEntry]?
-
-        /// Icons configuration entries.
-        public var icons: [IconsEntry]?
-
-        /// Images configuration entries.
-        public var images: [ImagesEntry]?
-
-        /// Typography configuration.
-        public var typography: Typography?
-
-        public init(
-            mainRes: String,
-            resourcePackage: String?,
-            mainSrc: String?,
-            templatesPath: String?,
-            colors: [ColorsEntry]?,
-            icons: [IconsEntry]?,
-            images: [ImagesEntry]?,
-            typography: Typography?
-        ) {
-            self.mainRes = mainRes
-            self.resourcePackage = resourcePackage
-            self.mainSrc = mainSrc
-            self.templatesPath = templatesPath
-            self.colors = colors
-            self.icons = icons
-            self.images = images
-            self.typography = typography
         }
     }
 

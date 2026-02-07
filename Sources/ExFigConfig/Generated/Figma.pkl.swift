@@ -4,13 +4,6 @@ import PklSwift
 public enum Figma {}
 
 public extension Figma {
-    /// Figma API configuration.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Figma"
-
-        public init() {}
-    }
-
     /// Figma file configuration for legacy Styles API.
     /// Required for icons, images, typography, or legacy Styles API colors.
     /// Optional when using only Variables API for colors.
@@ -29,7 +22,7 @@ public extension Figma {
         /// Figma file ID for dark high contrast mode.
         public var darkHighContrastFileId: String?
 
-        /// Request timeout in seconds. Default: 30.
+        /// Request timeout in seconds.
         public var timeout: Float64?
 
         public init(
@@ -45,6 +38,13 @@ public extension Figma {
             self.darkHighContrastFileId = darkHighContrastFileId
             self.timeout = timeout
         }
+    }
+
+    /// Figma API configuration.
+    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Figma"
+
+        public init() {}
     }
 
     /// Load the Pkl module at the given source and evaluate it into `Figma.Module`.

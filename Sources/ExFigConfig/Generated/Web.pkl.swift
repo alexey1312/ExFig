@@ -4,16 +4,51 @@ import PklSwift
 public enum Web {}
 
 public extension Web {
-    /// Web platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Web"
+    /// Root Web platform configuration.
+    struct WebConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Web#WebConfig"
 
-        public init() {}
+        /// Base output directory for all generated files.
+        public var output: String
+
+        /// Path to custom Stencil templates.
+        public var templatesPath: String?
+
+        /// Colors configuration entries.
+        public var colors: [ColorsEntry]?
+
+        /// Icons configuration entries.
+        public var icons: [IconsEntry]?
+
+        /// Images configuration entries.
+        public var images: [ImagesEntry]?
+
+        public init(
+            output: String,
+            templatesPath: String?,
+            colors: [ColorsEntry]?,
+            icons: [IconsEntry]?,
+            images: [ImagesEntry]?
+        ) {
+            self.output = output
+            self.templatesPath = templatesPath
+            self.colors = colors
+            self.icons = icons
+            self.images = images
+        }
     }
 
     /// Web colors entry configuration.
     struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "Web#ColorsEntry"
+
+        /// Override base output directory for this entry.
+        /// When set, overrides `WebConfig.output`.
+        public var output: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `WebConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output directory for generated color files.
         public var outputDirectory: String?
@@ -55,6 +90,8 @@ public extension Web {
         public var nameReplaceRegexp: String?
 
         public init(
+            output: String?,
+            templatesPath: String?,
             outputDirectory: String?,
             cssFileName: String?,
             tsFileName: String?,
@@ -69,6 +106,8 @@ public extension Web {
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.output = output
+            self.templatesPath = templatesPath
             self.outputDirectory = outputDirectory
             self.cssFileName = cssFileName
             self.tsFileName = tsFileName
@@ -85,9 +124,20 @@ public extension Web {
         }
     }
 
+    /// Web platform configuration for ExFig.
+    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Web"
+
+        public init() {}
+    }
+
     /// Web icons entry configuration.
     struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Web#IconsEntry"
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `WebConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output directory for generated icon components.
         public var outputDirectory: String
@@ -98,7 +148,7 @@ public extension Web {
         /// Generate React components for icons.
         public var generateReactComponents: Bool?
 
-        /// Icon size in pixels for viewBox. Default: 24.
+        /// Icon size in pixels for viewBox.
         public var iconSize: Int?
 
         /// Naming style for icon names.
@@ -107,6 +157,10 @@ public extension Web {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -114,21 +168,25 @@ public extension Web {
         public var nameReplaceRegexp: String?
 
         public init(
+            templatesPath: String?,
             outputDirectory: String,
             svgDirectory: String?,
             generateReactComponents: Bool?,
             iconSize: Int?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.templatesPath = templatesPath
             self.outputDirectory = outputDirectory
             self.svgDirectory = svgDirectory
             self.generateReactComponents = generateReactComponents
             self.iconSize = iconSize
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
@@ -137,6 +195,10 @@ public extension Web {
     /// Web images entry configuration.
     struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Web#ImagesEntry"
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `WebConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output directory for generated image components.
         public var outputDirectory: String
@@ -153,6 +215,10 @@ public extension Web {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -160,55 +226,25 @@ public extension Web {
         public var nameReplaceRegexp: String?
 
         public init(
+            templatesPath: String?,
             outputDirectory: String,
             assetsDirectory: String?,
             generateReactComponents: Bool?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.templatesPath = templatesPath
             self.outputDirectory = outputDirectory
             self.assetsDirectory = assetsDirectory
             self.generateReactComponents = generateReactComponents
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
-        }
-    }
-
-    /// Root Web platform configuration.
-    struct WebConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Web#WebConfig"
-
-        /// Base output directory for all generated files.
-        public var output: String
-
-        /// Path to custom Stencil templates.
-        public var templatesPath: String?
-
-        /// Colors configuration entries.
-        public var colors: [ColorsEntry]?
-
-        /// Icons configuration entries.
-        public var icons: [IconsEntry]?
-
-        /// Images configuration entries.
-        public var images: [ImagesEntry]?
-
-        public init(
-            output: String,
-            templatesPath: String?,
-            colors: [ColorsEntry]?,
-            icons: [IconsEntry]?,
-            images: [ImagesEntry]?
-        ) {
-            self.output = output
-            self.templatesPath = templatesPath
-            self.colors = colors
-            self.icons = icons
-            self.images = images
         }
     }
 

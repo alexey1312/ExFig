@@ -35,59 +35,59 @@ Track 5 зависит от всех треков.
 
 ### 1.1 Common.pkl + Figma.pkl Defaults
 
-- [ ] 1.1.1 Add `Cache.enabled` default: `= false`
-- [ ] 1.1.2 Add `Cache.path` default: `= ".exfig-cache.json"`
-- [ ] 1.1.3 Add `FigmaConfig.timeout` default: `= 30`
+- [x] 1.1.1 Add `Cache.enabled` default: `= false`
+- [x] 1.1.2 Add `Cache.path` default: `= ".exfig-cache.json"`
+- [x] 1.1.3 Add `FigmaConfig.timeout` default: `= 30`
 - [ ] 1.1.4 Verify: `pkl eval --format json` on example configs shows resolved defaults
 
 ### 1.2 iOS.pkl Defaults
 
-- [ ] 1.2.1 Add `ColorsEntry.useColorAssets` default: `= true`
-- [ ] 1.2.2 Add `ColorsEntry.nameStyle` default: `= "camelCase"`
-- [ ] 1.2.3 Add `IconsEntry.format` default: `= "pdf"`
-- [ ] 1.2.4 Add `IconsEntry.assetsFolder` default: `= "Icons"`
-- [ ] 1.2.5 Add `IconsEntry.nameStyle` default: `= "camelCase"`
-- [ ] 1.2.6 Add `ImagesEntry.nameStyle` default: `= "camelCase"`
-- [ ] 1.2.7 Add `ImagesEntry.scales` default: `= new Listing { 1; 2; 3 }`
-- [ ] 1.2.8 Add `ImagesEntry.sourceFormat` default: `= "png"`
-- [ ] 1.2.9 Add `ImagesEntry.outputFormat` default: `= "png"`
-- [ ] 1.2.10 Add `iOSConfig.xcassetsInMainBundle` default: `= true`
-- [ ] 1.2.11 Add `Typography.generateLabels` default: `= false`
-- [ ] 1.2.12 Add `Typography.nameStyle` default: `= "camelCase"`
+- [x] 1.2.1 Add `ColorsEntry.useColorAssets` default: `= true`
+- [x] 1.2.2 Add `ColorsEntry.nameStyle` default: `= "camelCase"`
+- [x] 1.2.3 Add `IconsEntry.format` default: `= "pdf"`
+- [x] 1.2.4 Add `IconsEntry.assetsFolder` default: `= "Icons"`
+- [x] 1.2.5 Add `IconsEntry.nameStyle` default: `= "camelCase"`
+- [x] 1.2.6 Add `ImagesEntry.nameStyle` default: `= "camelCase"`
+- [x] 1.2.7 Add `ImagesEntry.scales` default: `= new Listing { 1; 2; 3 }`
+- [x] 1.2.8 Add `ImagesEntry.sourceFormat` default: `= "png"`
+- [x] 1.2.9 Add `ImagesEntry.outputFormat` default: `= "png"`
+- [x] 1.2.10 Add `iOSConfig.xcassetsInMainBundle` default: `= true`
+- [x] 1.2.11 Add `Typography.generateLabels` default: `= false`
+- [x] 1.2.12 Add `Typography.nameStyle` default: `= "camelCase"`
 
 ### 1.3 Android.pkl Defaults
 
-- [ ] 1.3.1 Add `ImagesEntry.format` default: `= "png"`
-- [ ] 1.3.2 Add `Typography.nameStyle` default: `= "camelCase"`
-- [ ] 1.3.3 Add `WebpOptions.encoding` default: `= "lossy"`
-- [ ] 1.3.4 Add `IconsEntry.nameStyle` default: `= "snake_case"`
-- [ ] 1.3.5 Add `IconsEntry.pathPrecision` default: `= 4`
-- [ ] 1.3.6 Add `ImagesEntry.scales` default: `= new Listing { 1; 1.5; 2; 3; 4 }`
-- [ ] 1.3.7 Add `ImagesEntry.nameStyle` default: `= "snake_case"`
-- [ ] 1.3.8 Add `ThemeAttributes.attrsFile` default: `= "values/attrs.xml"`
-- [ ] 1.3.9 Add `ThemeAttributes.stylesFile` default: `= "values/styles.xml"`
-- [ ] 1.3.10 Add `ThemeAttributes.stylesNightFile` default: `= "values-night/styles.xml"`
-- [ ] 1.3.11 Add `ThemeAttributes.autoCreateMarkers` default: `= false`
-- [ ] 1.3.12 Add `NameTransform.style` default: `= "PascalCase"`
-- [ ] 1.3.13 Add `NameTransform.prefix` default: `= "color"`
+- [x] 1.3.1 Add `ImagesEntry.format` default: `= "png"`
+- [x] 1.3.2 Add `Typography.nameStyle` default: `= "camelCase"`
+- [x] 1.3.3 Add `WebpOptions.encoding` default: `= "lossy"`
+- [x] 1.3.4 Add `IconsEntry.nameStyle` default: `= "snake_case"`
+- [x] 1.3.5 Add `IconsEntry.pathPrecision` default: `= 4`
+- [x] 1.3.6 Add `ImagesEntry.scales` default: `= new Listing { 1; 1.5; 2; 3; 4 }`
+- [x] 1.3.7 Add `ImagesEntry.nameStyle` default: `= "snake_case"`
+- [x] 1.3.8 Add `ThemeAttributes.attrsFile` default: `= "values/attrs.xml"`
+- [x] 1.3.9 Add `ThemeAttributes.stylesFile` default: `= "values/styles.xml"`
+- [x] 1.3.10 Add `ThemeAttributes.stylesNightFile` default: `= "values-night/styles.xml"`
+- [x] 1.3.11 Add `ThemeAttributes.autoCreateMarkers` default: `= false`
+- [x] 1.3.12 Add `NameTransform.style` default: `= "PascalCase"`
+- [x] 1.3.13 Add `NameTransform.prefix` default: `= "color"`
 
 ### 1.4 Flutter.pkl Defaults
 
-- [ ] 1.4.1 Add `ColorsEntry.className` default: `= "AppColors"`
-- [ ] 1.4.2 Add `IconsEntry.className` default: `= "AppIcons"`
-- [ ] 1.4.3 Add `IconsEntry.nameStyle` default: `= "snake_case"`
-- [ ] 1.4.4 Add `ImagesEntry.className` default: `= "AppImages"`
-- [ ] 1.4.5 Add `ImagesEntry.nameStyle` default: `= "snake_case"`
-- [ ] 1.4.6 Add `ImagesEntry.format` default: `= "png"`
-- [ ] 1.4.7 Add `ImagesEntry.scales` default: `= new Listing { 1; 2; 3 }`
+- [x] 1.4.1 Add `ColorsEntry.className` default: `= "AppColors"`
+- [x] 1.4.2 Add `IconsEntry.className` default: `= "AppIcons"`
+- [x] 1.4.3 Add `IconsEntry.nameStyle` default: `= "snake_case"`
+- [x] 1.4.4 Add `ImagesEntry.className` default: `= "AppImages"`
+- [x] 1.4.5 Add `ImagesEntry.nameStyle` default: `= "snake_case"`
+- [x] 1.4.6 Add `ImagesEntry.format` default: `= "png"`
+- [x] 1.4.7 Add `ImagesEntry.scales` default: `= new Listing { 1; 2; 3 }`
 
 ### 1.5 Web.pkl Defaults
 
-- [ ] 1.5.1 Add `IconsEntry.iconSize` default: `= 24`
-- [ ] 1.5.2 Add `IconsEntry.generateReactComponents` default: `= true`
-- [ ] 1.5.3 Add `IconsEntry.nameStyle` default: `= "snake_case"`
-- [ ] 1.5.4 Add `ImagesEntry.generateReactComponents` default: `= true`
-- [ ] 1.5.5 Add `ImagesEntry.nameStyle` default: `= "snake_case"`
+- [x] 1.5.1 Add `IconsEntry.iconSize` default: `= 24`
+- [x] 1.5.2 Add `IconsEntry.generateReactComponents` default: `= true`
+- [x] 1.5.3 Add `IconsEntry.nameStyle` default: `= "snake_case"`
+- [x] 1.5.4 Add `ImagesEntry.generateReactComponents` default: `= true`
+- [x] 1.5.5 Add `ImagesEntry.nameStyle` default: `= "snake_case"`
 
 ### 1.6 Defaults Verification
 
@@ -104,45 +104,45 @@ Track 5 зависит от всех треков.
 
 ### 2.1 Common.pkl — figmaFileId
 
-- [ ] 2.1.1 Add `figmaFileId: String?` to `FrameSource` class with doc comment
+- [x] 2.1.1 Add `figmaFileId: String?` to `FrameSource` class with doc comment
 
 ### 2.2 iOS.pkl — xcassetsPath + templatesPath
 
-- [ ] 2.2.1 Add `xcassetsPath: String?` to `ColorsEntry` with doc comment
-- [ ] 2.2.2 Add `templatesPath: String?` to `ColorsEntry` with doc comment
-- [ ] 2.2.3 Add `xcassetsPath: String?` to `IconsEntry` with doc comment
-- [ ] 2.2.4 Add `templatesPath: String?` to `IconsEntry` with doc comment
-- [ ] 2.2.5 Add `xcassetsPath: String?` to `ImagesEntry` with doc comment
-- [ ] 2.2.6 Add `templatesPath: String?` to `ImagesEntry` with doc comment
+- [x] 2.2.1 Add `xcassetsPath: String?` to `ColorsEntry` with doc comment
+- [x] 2.2.2 Add `templatesPath: String?` to `ColorsEntry` with doc comment
+- [x] 2.2.3 Add `xcassetsPath: String?` to `IconsEntry` with doc comment
+- [x] 2.2.4 Add `templatesPath: String?` to `IconsEntry` with doc comment
+- [x] 2.2.5 Add `xcassetsPath: String?` to `ImagesEntry` with doc comment
+- [x] 2.2.6 Add `templatesPath: String?` to `ImagesEntry` with doc comment
 
 ### 2.3 Android.pkl — mainRes + mainSrc + templatesPath
 
-- [ ] 2.3.1 Add `mainRes: String?` to `ColorsEntry` with doc comment
-- [ ] 2.3.2 Add `mainSrc: String?` to `ColorsEntry` with doc comment
-- [ ] 2.3.3 Add `templatesPath: String?` to `ColorsEntry` with doc comment
-- [ ] 2.3.4 Add `mainRes: String?` to `IconsEntry` with doc comment
-- [ ] 2.3.5 Add `templatesPath: String?` to `IconsEntry` with doc comment
-- [ ] 2.3.6 Add `mainRes: String?` to `ImagesEntry` with doc comment
-- [ ] 2.3.7 Add `templatesPath: String?` to `ImagesEntry` with doc comment
+- [x] 2.3.1 Add `mainRes: String?` to `ColorsEntry` with doc comment
+- [x] 2.3.2 Add `mainSrc: String?` to `ColorsEntry` with doc comment
+- [x] 2.3.3 Add `templatesPath: String?` to `ColorsEntry` with doc comment
+- [x] 2.3.4 Add `mainRes: String?` to `IconsEntry` with doc comment
+- [x] 2.3.5 Add `templatesPath: String?` to `IconsEntry` with doc comment
+- [x] 2.3.6 Add `mainRes: String?` to `ImagesEntry` with doc comment
+- [x] 2.3.7 Add `templatesPath: String?` to `ImagesEntry` with doc comment
 
 ### 2.4 Flutter.pkl — output + templatesPath
 
-- [ ] 2.4.1 Add `output: String?` to `ColorsEntry` (already optional, verify)
-- [ ] 2.4.2 Add `templatesPath: String?` to `ColorsEntry` with doc comment
-- [ ] 2.4.3 Add `templatesPath: String?` to `IconsEntry` with doc comment
-- [ ] 2.4.4 Add `templatesPath: String?` to `ImagesEntry` with doc comment
+- [x] 2.4.1 Add `output: String?` to `ColorsEntry` (already optional, verify)
+- [x] 2.4.2 Add `templatesPath: String?` to `ColorsEntry` with doc comment
+- [x] 2.4.3 Add `templatesPath: String?` to `IconsEntry` with doc comment
+- [x] 2.4.4 Add `templatesPath: String?` to `ImagesEntry` with doc comment
 
 ### 2.5 Web.pkl — output + templatesPath
 
-- [ ] 2.5.1 Add `output: String?` to `ColorsEntry` with doc comment
-- [ ] 2.5.2 Add `templatesPath: String?` to `ColorsEntry` with doc comment
-- [ ] 2.5.3 Add `templatesPath: String?` to `IconsEntry` with doc comment
-- [ ] 2.5.4 Add `templatesPath: String?` to `ImagesEntry` with doc comment
+- [x] 2.5.1 Add `output: String?` to `ColorsEntry` with doc comment
+- [x] 2.5.2 Add `templatesPath: String?` to `ColorsEntry` with doc comment
+- [x] 2.5.3 Add `templatesPath: String?` to `IconsEntry` with doc comment
+- [x] 2.5.4 Add `templatesPath: String?` to `ImagesEntry` with doc comment
 
 ### 2.6 Schema Verification
 
 - [ ] 2.6.1 Run `./bin/mise run codegen:pkl` — new optional fields appear in Generated/*.pkl.swift
-- [ ] 2.6.2 Run `./bin/mise run build` — compiles (new fields are optional, nil by default)
+- [x] 2.6.2 Run `./bin/mise run build` — compiles (new fields are optional, nil by default)
 - [ ] 2.6.3 Run `pkl eval --format json` on example configs — verify new fields absent when not set
 - [ ] 2.6.4 Create test PKL config with entry-level overrides — verify JSON output
 
@@ -218,19 +218,19 @@ Track 5 зависит от всех треков.
 
 ### 4.1 String Constraints
 
-- [ ] 4.1.1 Add `(!isEmpty)` to `VariablesColors.tokensFileId`
-- [ ] 4.1.2 Add `(!isEmpty)` to `VariablesColors.tokensCollectionName`
-- [ ] 4.1.3 Add `(!isEmpty)` to `VariablesColors.lightModeName`
-- [ ] 4.1.4 Add `(!isEmpty)` to `iOSConfig.xcodeprojPath`
-- [ ] 4.1.5 Add `(!isEmpty)` to `iOSConfig.target`
-- [ ] 4.1.6 Add `(!isEmpty)` to `AndroidConfig.mainRes`
-- [ ] 4.1.7 Add `(!isEmpty)` to `FlutterConfig.output`
-- [ ] 4.1.8 Add `(!isEmpty)` to `WebConfig.output`
-- [ ] 4.1.9 Add `(!isEmpty)` to `ThemeAttributes.themeName`
+- [x] 4.1.1 Add `(!isEmpty)` to `VariablesColors.tokensFileId`
+- [x] 4.1.2 Add `(!isEmpty)` to `VariablesColors.tokensCollectionName`
+- [x] 4.1.3 Add `(!isEmpty)` to `VariablesColors.lightModeName`
+- [x] 4.1.4 Add `(!isEmpty)` to `iOSConfig.xcodeprojPath`
+- [x] 4.1.5 Add `(!isEmpty)` to `iOSConfig.target`
+- [x] 4.1.6 Add `(!isEmpty)` to `AndroidConfig.mainRes`
+- [x] 4.1.7 Add `(!isEmpty)` to `FlutterConfig.output`
+- [x] 4.1.8 Add `(!isEmpty)` to `WebConfig.output`
+- [x] 4.1.9 Add `(!isEmpty)` to `ThemeAttributes.themeName`
 
 ### 4.2 Numeric Constraints
 
-- [ ] 4.2.1 Add `(isBetween(1, 600))` to `FigmaConfig.timeout`
+- [x] 4.2.1 Add `(isBetween(1, 600))` to `FigmaConfig.timeout`
 
 ### 4.3 Constraints Verification
 
