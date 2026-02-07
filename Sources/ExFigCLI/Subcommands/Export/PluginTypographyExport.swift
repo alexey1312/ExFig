@@ -63,14 +63,14 @@ extension ExFigCommand.ExportTypography {
                     target: ios.target
                 )
                 // Add Swift file references
-                if let fontSwift = pluginEntry.fontSwift {
-                    try xcodeProject.addFileReferenceToXcodeProj(URL(fileURLWithPath: fontSwift))
+                if let url = pluginEntry.fontSwiftURL {
+                    try xcodeProject.addFileReferenceToXcodeProj(url)
                 }
-                if let swiftUIFontSwift = pluginEntry.swiftUIFontSwift {
-                    try xcodeProject.addFileReferenceToXcodeProj(URL(fileURLWithPath: swiftUIFontSwift))
+                if let url = pluginEntry.swiftUIFontSwiftURL {
+                    try xcodeProject.addFileReferenceToXcodeProj(url)
                 }
-                if let labelStyleSwift = pluginEntry.labelStyleSwift {
-                    try xcodeProject.addFileReferenceToXcodeProj(URL(fileURLWithPath: labelStyleSwift))
+                if let url = pluginEntry.labelStyleSwiftURL {
+                    try xcodeProject.addFileReferenceToXcodeProj(url)
                 }
                 try xcodeProject.save()
             } catch {

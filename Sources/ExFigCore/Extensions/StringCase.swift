@@ -168,6 +168,6 @@ public extension String {
     ///
     /// - Returns: A flat case copy of the string.
     func flatCased() -> String {
-        lowercasedStrings().joined()
+        lowercasedStrings().map { $0.lowercased() }.joined()
     }
 }

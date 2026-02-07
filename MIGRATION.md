@@ -778,6 +778,37 @@ typography = new iOS.Typography {
 }
 ```
 
+## Breaking Changes in PKL v2
+
+### HEIC Quality Format
+
+The `heicOptions.quality` field is now `Int (0-100)` instead of `Double (0.0-1.0)`.
+
+**Before (YAML):**
+
+```yaml
+ios:
+  images:
+    heicOptions:
+      quality: 0.8
+```
+
+**After (PKL):**
+
+```pkl
+images = new iOS.ImagesEntry {
+  outputFormat = "heic"
+  heicOptions = new iOS.HeicOptions {
+    encoding = "lossy"
+    quality = 80
+  }
+}
+```
+
+### HEIC Encoding Field
+
+The `heicOptions.encoding` field is now supported and bridged to the converter. Previously it was ignored. Valid values: `"lossy"` (default) and `"lossless"`.
+
 ## Cleanup
 
 After successful migration:

@@ -1,54 +1,11 @@
 import ExFig_Web
 import ExFigCore
-import FigmaAPI
 import Foundation
 import WebExport
 
 // MARK: - Web Colors Export
 
 extension ExFigCommand.ExportColors {
-    /// Exports Web colors using legacy format (common.variablesColors or common.colors).
-    func exportWebColorsLegacy(
-        colorsConfig: PKLConfig.Web.ColorsConfiguration,
-        web: PKLConfig.Web,
-        config: LegacyExportConfig
-    ) async throws -> Int {
-        try validateLegacyConfig(config.commonParams)
-
-        let colors = try await loadLegacyColors(config: config)
-
-        let (finalNameValidateRegexp, finalNameReplaceRegexp) = extractNameRegexps(
-            from: config.commonParams
-        )
-
-        let entry = colorsConfig.entries[0]
-
-        let colorPairs = try await config.ui.withSpinner("Processing colors for Web...") {
-            let processor = ColorsProcessor(
-                platform: .web,
-                nameValidateRegexp: finalNameValidateRegexp,
-                nameReplaceRegexp: finalNameReplaceRegexp,
-                nameStyle: .kebabCase
-            )
-            let result = processor.process(light: colors.light, dark: colors.dark)
-            if let warning = result.warning {
-                config.ui.warning(warning)
-            }
-            return try result.get()
-        }
-
-        try await config.ui.withSpinner("Exporting colors to Web project...") {
-            try exportWebColorsEntry(colorPairs: colorPairs, entry: entry, web: web)
-        }
-
-        if BatchProgressViewStorage.progressView == nil {
-            await checkForUpdate(logger: ExFigCommand.logger)
-        }
-
-        config.ui.success("Done! Exported \(colorPairs.count) colors to Web project.")
-        return colorPairs.count
-    }
-
     // MARK: - Web Entry Export
 
     func exportWebColorsEntry(

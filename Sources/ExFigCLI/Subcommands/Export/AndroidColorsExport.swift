@@ -1,57 +1,11 @@
 import AndroidExport
 import ExFig_Android
-import ExFigConfig
 import ExFigCore
-import FigmaAPI
 import Foundation
 
 // MARK: - Android Colors Export
 
 extension ExFigCommand.ExportColors {
-    /// Exports Android colors using legacy format (common.variablesColors or common.colors).
-    func exportAndroidColorsLegacy(
-        entries: [AndroidColorsEntry],
-        android: Android.AndroidConfig,
-        config: LegacyExportConfig
-    ) async throws -> Int {
-        try validateLegacyConfig(config.commonParams)
-
-        let colors = try await loadLegacyColors(config: config)
-
-        let (finalNameValidateRegexp, finalNameReplaceRegexp) = extractNameRegexps(
-            from: config.commonParams
-        )
-
-        let entry = entries[0]
-
-        let colorPairs = try await config.ui.withSpinner("Processing colors for Android...") {
-            let processor = ColorsProcessor(
-                platform: .android,
-                nameValidateRegexp: finalNameValidateRegexp,
-                nameReplaceRegexp: finalNameReplaceRegexp,
-                nameStyle: .snakeCase
-            )
-            let result = processor.process(light: colors.light, dark: colors.dark)
-            if let warning = result.warning {
-                config.ui.warning(warning)
-            }
-            return try result.get()
-        }
-
-        try await config.ui.withSpinner("Exporting colors to Android Studio project...") {
-            try await exportAndroidColorsEntry(
-                colorPairs: colorPairs, entry: entry, android: android, ui: config.ui
-            )
-        }
-
-        if BatchProgressViewStorage.progressView == nil {
-            await checkForUpdate(logger: ExFigCommand.logger)
-        }
-
-        config.ui.success("Done! Exported \(colorPairs.count) colors to Android project.")
-        return colorPairs.count
-    }
-
     // MARK: - Android Entry Export
 
     func exportAndroidColorsEntry(

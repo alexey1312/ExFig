@@ -86,7 +86,7 @@ struct ExFigOptions: ParsableArguments {
         // Semaphore ensures sequential access
         let semaphore = DispatchSemaphore(value: 0)
         let box = SendableBox<Result<ExFig.ModuleImpl, Error>>(
-            .failure(PKLError.evaluationFailed(message: "PKL evaluation did not complete", exitCode: -1))
+            .failure(PKLError.evaluationDidNotComplete)
         )
 
         Task {

@@ -41,7 +41,7 @@ struct IconsLoaderConfig: Sendable {
     static func forIOS(entry: iOSIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
-            format: VectorFormat(rawValue: entry.format.rawValue),
+            format: VectorFormat(rawValue: entry.format.rawValue) ?? .svg,
             renderMode: entry.coreRenderMode,
             renderModeDefaultSuffix: entry.renderModeDefaultSuffix,
             renderModeOriginalSuffix: entry.renderModeOriginalSuffix,

@@ -66,11 +66,20 @@ public extension Android.ImagesEntry {
     }
 
     /// Converts generated ImageFormat to ExFigCore ImageOutputFormat.
+    ///
+    /// - Note: Android images don't support SVG as output format.
+    ///   When SVG is specified, falls back to PNG. A warning is logged at the export call site
+    ///   in `AndroidImagesExport` when this fallback is triggered.
     var coreOutputFormat: ImageOutputFormat {
         switch format {
         case .png: .png
         case .webp: .webp
-        case .svg: .png // SVG doesn't map to output format, default to png
+        case .svg: .png
         }
+    }
+
+    /// Whether the format is SVG (which falls back to PNG for images).
+    var isSvgFallback: Bool {
+        format == .svg
     }
 }

@@ -70,7 +70,7 @@ public extension iOS.ImagesEntry {
     var heicConverterOptions: HeicConverterOptions? {
         guard let opts = heicOptions else { return nil }
         return HeicConverterOptions(
-            encoding: nil,
+            encoding: opts.encoding.flatMap { HeicConverterOptions.Encoding(rawValue: $0.rawValue) },
             quality: opts.quality
         )
     }

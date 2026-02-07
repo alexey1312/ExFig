@@ -1,83 +1,11 @@
 import ExFig_iOS
-import ExFigConfig
 import ExFigCore
-import FigmaAPI
 import Foundation
 import XcodeExport
 
 // MARK: - iOS Colors Export
 
 extension ExFigCommand.ExportColors {
-    /// Exports iOS colors using legacy format (common.variablesColors or common.colors).
-    func exportiOSColorsLegacy(
-        entries: [iOSColorsEntry],
-        ios: iOS.iOSConfig,
-        config: LegacyExportConfig
-    ) async throws -> Int {
-        try validateLegacyConfig(config.commonParams)
-
-        let colors = try await loadLegacyColors(config: config)
-
-        let (finalNameValidateRegexp, finalNameReplaceRegexp) = extractNameRegexps(
-            from: config.commonParams
-        )
-
-        // Get the first entry for legacy format
-        let entry = entries[0]
-
-        let colorPairs = try await config.ui.withSpinner("Processing colors for iOS...") {
-            let processor = ColorsProcessor(
-                platform: .ios,
-                nameValidateRegexp: finalNameValidateRegexp,
-                nameReplaceRegexp: finalNameReplaceRegexp,
-                nameStyle: entry.coreNameStyle
-            )
-            let result = processor.process(
-                light: colors.light,
-                dark: colors.dark,
-                lightHC: colors.lightHC,
-                darkHC: colors.darkHC
-            )
-            if let warning = result.warning {
-                config.ui.warning(warning)
-            }
-            return try result.get()
-        }
-
-        try await config.ui.withSpinner("Exporting colors to Xcode project...") {
-            try exportXcodeColorsEntry(
-                colorPairs: colorPairs, entry: entry, ios: ios, ui: config.ui
-            )
-        }
-
-        // Sync codeSyntax back to Figma if configured (legacy format uses entry.syncCodeSyntax +
-        // common.variablesColors)
-        if entry.syncCodeSyntax == true,
-           let template = entry.codeSyntaxTemplate,
-           let variablesColors = config.commonParams?.variablesColors
-        {
-            let syncCount = try await config.ui.withSpinner("Syncing codeSyntax to Figma...") {
-                let syncer = CodeSyntaxSyncer(client: config.client)
-                return try await syncer.sync(
-                    fileId: variablesColors.tokensFileId,
-                    collectionName: variablesColors.tokensCollectionName,
-                    template: template,
-                    nameStyle: entry.coreNameStyle,
-                    nameValidateRegexp: finalNameValidateRegexp,
-                    nameReplaceRegexp: finalNameReplaceRegexp
-                )
-            }
-            config.ui.info("Synced codeSyntax for \(syncCount) variables")
-        }
-
-        if BatchProgressViewStorage.progressView == nil {
-            await checkForUpdate(logger: ExFigCommand.logger)
-        }
-
-        config.ui.success("Done! Exported \(colorPairs.count) colors to Xcode project.")
-        return colorPairs.count
-    }
-
     // MARK: - Xcode Entry Export
 
     func exportXcodeColorsEntry(
