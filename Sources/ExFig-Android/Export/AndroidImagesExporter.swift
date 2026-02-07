@@ -150,8 +150,10 @@ private extension AndroidImagesExporter {
             progressTitle: "Rasterizing SVGs to WebP"
         )
 
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+
         if context.filter == nil {
-            let outputDir = platformConfig.mainRes.appendingPathComponent(entry.output)
+            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
             try? FileManager.default.removeItem(atPath: outputDir.path)
         }
 
@@ -159,7 +161,7 @@ private extension AndroidImagesExporter {
         let finalFiles = webpFiles.map { file -> FileContents in
             let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
-            let directory = platformConfig.mainRes
+            let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
@@ -203,8 +205,10 @@ private extension AndroidImagesExporter {
             progressTitle: "Rasterizing SVGs to PNG"
         )
 
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+
         if context.filter == nil {
-            let outputDir = platformConfig.mainRes.appendingPathComponent(entry.output)
+            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
             try? FileManager.default.removeItem(atPath: outputDir.path)
         }
 
@@ -212,7 +216,7 @@ private extension AndroidImagesExporter {
         let finalFiles = pngFiles.map { file -> FileContents in
             let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
-            let directory = platformConfig.mainRes
+            let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
@@ -257,8 +261,10 @@ private extension AndroidImagesExporter {
             progressTitle: "Converting to WebP"
         )
 
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+
         if context.filter == nil {
-            let outputDir = platformConfig.mainRes.appendingPathComponent(entry.output)
+            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
             try? FileManager.default.removeItem(atPath: outputDir.path)
         }
 
@@ -266,7 +272,7 @@ private extension AndroidImagesExporter {
         let isSingleScale = scales.count == 1
         let finalFiles = localFiles.map { file -> FileContents in
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
-            let directory = platformConfig.mainRes
+            let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
@@ -301,8 +307,10 @@ private extension AndroidImagesExporter {
         let localFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading images")
         try context.writeFiles(localFiles)
 
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+
         if context.filter == nil {
-            let outputDir = platformConfig.mainRes.appendingPathComponent(entry.output)
+            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
             try? FileManager.default.removeItem(atPath: outputDir.path)
         }
 
@@ -310,7 +318,7 @@ private extension AndroidImagesExporter {
         let isSingleScale = scales.count == 1
         let finalFiles = localFiles.map { file -> FileContents in
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
-            let directory = platformConfig.mainRes
+            let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
@@ -394,10 +402,11 @@ private extension AndroidImagesExporter {
         entry: AndroidImagesEntry,
         platformConfig: AndroidPlatformConfig
     ) -> (light: URL, dark: URL) {
-        let lightDir = platformConfig.mainRes
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+        let lightDir = resolvedMainRes
             .appendingPathComponent(entry.output)
             .appendingPathComponent("drawable", isDirectory: true)
-        let darkDir = platformConfig.mainRes
+        let darkDir = resolvedMainRes
             .appendingPathComponent(entry.output)
             .appendingPathComponent("drawable-night", isDirectory: true)
         return (lightDir, darkDir)

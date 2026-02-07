@@ -31,6 +31,7 @@ public extension Android.ImagesEntry {
     /// Returns an ImagesSourceInput for use with ImagesExportContext.
     func imagesSourceInput(darkFileId: String? = nil) -> ImagesSourceInput {
         ImagesSourceInput(
+            figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
             sourceFormat: sourceFormat.flatMap { ImageSourceFormat(rawValue: $0.rawValue) } ?? .png,
@@ -74,5 +75,22 @@ public extension Android.ImagesEntry {
     /// Whether the format is SVG (which falls back to PNG for images).
     var isSvgFallback: Bool {
         format == .svg
+    }
+
+    // MARK: - Entry-Level Override Resolution
+
+    /// Resolved mainRes path: entry override or platform config fallback.
+    func resolvedMainRes(fallback: URL) -> URL {
+        mainRes.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved templates path: entry override or platform config fallback.
+    func resolvedTemplatesPath(fallback: URL?) -> URL? {
+        templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved Figma file ID: entry override or global fallback.
+    func resolvedFigmaFileId(fallback: String?) -> String? {
+        figmaFileId ?? fallback
     }
 }

@@ -131,8 +131,8 @@ public struct iOSIconsExporter: IconsExporter {
 
         let iconPairs = processResult.iconPairs
 
-        // 3. Generate files
-        guard let xcassetsPath = platformConfig.xcassetsPath else {
+        // 3. Generate files (entry-level overrides for xcassetsPath and templatesPath)
+        guard let xcassetsPath = entry.resolvedXcassetsPath(fallback: platformConfig.xcassetsPath) else {
             throw iOSIconsExportError.xcassetsPathNotSpecified
         }
         let assetsURL = xcassetsPath.appendingPathComponent(entry.assetsFolder)
@@ -147,7 +147,7 @@ public struct iOSIconsExporter: IconsExporter {
             uiKitImageExtensionURL: entry.imageSwiftURL,
             swiftUIImageExtensionURL: entry.swiftUIImageSwiftURL,
             codeConnectSwiftURL: entry.codeConnectSwiftURL,
-            templatesPath: platformConfig.templatesPath
+            templatesPath: entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         )
 
         let exporter = XcodeIconsExporter(output: output)

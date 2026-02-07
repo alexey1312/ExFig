@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import ExFig_Android
 import ExFig_Flutter
 import ExFig_iOS
@@ -25,6 +26,9 @@ struct IconsLoaderResultWithHashes {
 
 /// Configuration for loading icons, supporting both single-entry and multi-entry modes.
 struct IconsLoaderConfig: Sendable {
+    /// Entry-level Figma file ID override (takes priority over platform-level).
+    let entryFileId: String?
+
     /// Figma frame name to load icons from.
     let frameName: String
 
@@ -40,6 +44,7 @@ struct IconsLoaderConfig: Sendable {
     /// Creates config for a specific iOS icons entry.
     static func forIOS(entry: iOSIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: VectorFormat(rawValue: entry.format.rawValue) ?? .svg,
             renderMode: entry.coreRenderMode,
@@ -52,6 +57,7 @@ struct IconsLoaderConfig: Sendable {
     /// Creates config for Android (no iOS-specific fields needed).
     static func forAndroid(entry: AndroidIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
             renderMode: nil,
@@ -64,6 +70,7 @@ struct IconsLoaderConfig: Sendable {
     /// Creates config for Flutter (no iOS-specific fields needed).
     static func forFlutter(entry: FlutterIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
             renderMode: nil,
@@ -76,6 +83,7 @@ struct IconsLoaderConfig: Sendable {
     /// Creates config for Web (no iOS-specific fields needed).
     static func forWeb(entry: WebIconsEntry, params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
+            entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
             renderMode: nil,
@@ -88,6 +96,7 @@ struct IconsLoaderConfig: Sendable {
     /// Creates default config using common.icons.figmaFrameName or "Icons".
     static func defaultConfig(params: PKLConfig) -> IconsLoaderConfig {
         IconsLoaderConfig(
+            entryFileId: nil,
             frameName: params.common?.icons?.figmaFrameName ?? "Icons",
             format: nil,
             renderMode: nil,
@@ -156,7 +165,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderOutput {
         let formatParams = makeFormatParams()
-        let fileId = try requireLightFileId()
+        let fileId = try requireLightFileId(entryFileId: config.entryFileId)
 
         let icons = try await loadVectorImages(
             fileId: fileId,
@@ -180,7 +189,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderOutput {
         // Build list of files to load
-        let lightFileId = try requireLightFileId()
+        let lightFileId = try requireLightFileId(entryFileId: config.entryFileId)
         var filesToLoad: [(key: String, fileId: String)] = [
             ("light", lightFileId),
         ]
@@ -264,7 +273,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderResultWithHashes {
         let formatParams = makeFormatParams()
-        let fileId = try requireLightFileId()
+        let fileId = try requireLightFileId(entryFileId: config.entryFileId)
         let darkSuffix = params.common?.icons?.darkModeSuffix ?? "_dark"
 
         // Use pairing-aware method to ensure light/dark pairs are exported together
@@ -317,7 +326,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> IconsLoaderResultWithHashes {
         // Build list of files to load
-        let lightFileId = try requireLightFileId()
+        let lightFileId = try requireLightFileId(entryFileId: config.entryFileId)
         var filesToLoad: [(key: String, fileId: String)] = [
             ("light", lightFileId),
         ]

@@ -13,6 +13,7 @@ public extension iOS.IconsEntry {
     /// Returns an IconsSourceInput for use with IconsExportContext.
     func iconsSourceInput(darkFileId: String? = nil) -> IconsSourceInput {
         IconsSourceInput(
+            figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
             format: VectorFormat(rawValue: format.rawValue) ?? .svg,
@@ -50,6 +51,23 @@ public extension iOS.IconsEntry {
     /// Converts PKL XcodeRenderMode to ExFigCore XcodeRenderMode.
     var coreRenderMode: XcodeRenderMode? {
         renderMode.flatMap { XcodeRenderMode(rawValue: $0.rawValue) }
+    }
+
+    // MARK: - Entry-Level Override Resolution
+
+    /// Resolved xcassets path: entry override or platform config fallback.
+    func resolvedXcassetsPath(fallback: URL?) -> URL? {
+        xcassetsPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved templates path: entry override or platform config fallback.
+    func resolvedTemplatesPath(fallback: URL?) -> URL? {
+        templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved Figma file ID: entry override or global fallback.
+    func resolvedFigmaFileId(fallback: String?) -> String? {
+        figmaFileId ?? fallback
     }
 }
 

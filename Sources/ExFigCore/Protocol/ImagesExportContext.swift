@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 // MARK: - Images Export Context
@@ -161,6 +162,9 @@ public extension ImagesExportContext {
 
 /// Input for loading images from Figma.
 public struct ImagesSourceInput: Sendable {
+    /// Optional entry-level Figma file ID override.
+    public let figmaFileId: String?
+
     /// Optional dark mode file ID (if separate files for light/dark).
     public let darkFileId: String?
 
@@ -186,6 +190,7 @@ public struct ImagesSourceInput: Sendable {
     public let nameReplaceRegexp: String?
 
     public init(
+        figmaFileId: String? = nil,
         darkFileId: String? = nil,
         frameName: String,
         sourceFormat: ImageSourceFormat = .png,
@@ -195,6 +200,7 @@ public struct ImagesSourceInput: Sendable {
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil
     ) {
+        self.figmaFileId = figmaFileId
         self.darkFileId = darkFileId
         self.frameName = frameName
         self.sourceFormat = sourceFormat

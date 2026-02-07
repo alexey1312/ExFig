@@ -94,10 +94,11 @@ public struct FlutterColorsExporter: ColorsExporter {
         platformConfig: FlutterPlatformConfig,
         context: some ColorsExportContext
     ) throws {
-        // Create output configuration
+        // Create output configuration (entry-level overrides take priority)
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = FlutterOutput(
             outputDirectory: platformConfig.output,
-            templatesPath: platformConfig.templatesPath,
+            templatesPath: resolvedTemplatesPath,
             colorsClassName: entry.className
         )
 

@@ -275,10 +275,11 @@ private extension FlutterImagesExporter {
     ) async throws -> Int {
         let (imagePairs, assetsDirectory) = try await loadAndProcessPNGDirect(entry: entry, context: context)
 
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = FlutterOutput(
             outputDirectory: platformConfig.output,
             imagesAssetsDirectory: assetsDirectory,
-            templatesPath: platformConfig.templatesPath,
+            templatesPath: resolvedTemplatesPath,
             imagesClassName: entry.className
         )
 
@@ -420,10 +421,11 @@ private extension FlutterImagesExporter {
         scales: [Double]
     ) throws -> FileContents {
         let assetsDirectory = URL(fileURLWithPath: entry.output)
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = FlutterOutput(
             outputDirectory: platformConfig.output,
             imagesAssetsDirectory: assetsDirectory,
-            templatesPath: platformConfig.templatesPath,
+            templatesPath: resolvedTemplatesPath,
             imagesClassName: entry.className
         )
 

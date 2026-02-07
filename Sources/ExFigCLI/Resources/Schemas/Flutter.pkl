@@ -11,48 +11,60 @@ typealias ImageFormat = "svg"|"png"|"webp"
 
 /// Flutter colors entry configuration.
 class ColorsEntry extends Common.VariablesSource {
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `FlutterConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output path for generated Dart colors file.
   output: String?
 
-  /// Class name for generated colors. Default: AppColors.
-  className: String?
+  /// Class name for generated colors.
+  className: String? = "AppColors"
 }
 
 // MARK: - Icons
 
 /// Flutter icons entry configuration.
 class IconsEntry extends Common.FrameSource {
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `FlutterConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output directory for icon SVG files.
   output: String
 
   /// Dart file path for icon class generation.
   dartFile: String?
 
-  /// Class name for generated icons. Default: AppIcons.
-  className: String?
+  /// Class name for generated icons.
+  className: String? = "AppIcons"
 
   /// Naming style for icon names.
-  nameStyle: Common.NameStyle?
+  nameStyle: Common.NameStyle? = "snake_case"
 }
 
 // MARK: - Images
 
 /// Flutter images entry configuration.
 class ImagesEntry extends Common.FrameSource {
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `FlutterConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output directory for image files.
   output: String
 
   /// Dart file path for image class generation.
   dartFile: String?
 
-  /// Class name for generated images. Default: AppImages.
-  className: String?
+  /// Class name for generated images.
+  className: String? = "AppImages"
 
   /// Scale factors to generate (e.g., [1, 2, 3]).
-  scales: Listing<Number>?
+  scales: Listing<Number>? = new Listing { 1; 2; 3 }
 
   /// Output format for images.
-  format: ImageFormat?
+  format: ImageFormat? = "png"
 
   /// WebP encoding options.
   webpOptions: Android.WebpOptions?
@@ -61,7 +73,7 @@ class ImagesEntry extends Common.FrameSource {
   sourceFormat: Common.SourceFormat?
 
   /// Naming style for generated assets.
-  nameStyle: Common.NameStyle?
+  nameStyle: Common.NameStyle? = "snake_case"
 }
 
 // MARK: - Flutter Platform Configuration
@@ -69,7 +81,7 @@ class ImagesEntry extends Common.FrameSource {
 /// Root Flutter platform configuration.
 class FlutterConfig {
   /// Base output directory for all generated files.
-  output: String
+  output: String(!isEmpty)
 
   /// Path to custom Stencil templates.
   templatesPath: String?

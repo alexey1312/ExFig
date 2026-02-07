@@ -19,6 +19,6 @@ class FigmaConfig {
   /// Figma file ID for dark high contrast mode.
   darkHighContrastFileId: String?
 
-  /// Request timeout in seconds. Default: 30.
-  timeout: Number?
+  /// Request timeout in seconds.
+  timeout: Number(isBetween(1, 600))? = 30
 }

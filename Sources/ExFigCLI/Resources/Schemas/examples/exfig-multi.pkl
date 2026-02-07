@@ -44,10 +44,12 @@ ios = new iOS.iOSConfig {
     }
   }
 
-  icons = new iOS.IconsEntry {
-    format = "pdf"
-    assetsFolder = "Icons"
-    nameStyle = "camelCase"
+  icons = new Listing {
+    new iOS.IconsEntry {
+      format = "pdf"
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+    }
   }
 }
 
@@ -56,19 +58,23 @@ android = new Android.AndroidConfig {
   mainSrc = "app/src/main/kotlin"
   resourcePackage = "com.example.app"
 
-  colors = new Android.ColorsEntry {
-    tokensFileId = "file1"
-    tokensCollectionName = "Semantic Colors"
-    lightModeName = "Light"
-    darkModeName = "Dark"
-    composePackageName = "com.example.app.ui.theme"
-    colorKotlin = "app/src/main/kotlin/com/example/app/ui/theme/Colors.kt"
+  colors = new Listing {
+    new Android.ColorsEntry {
+      tokensFileId = "file1"
+      tokensCollectionName = "Semantic Colors"
+      lightModeName = "Light"
+      darkModeName = "Dark"
+      composePackageName = "com.example.app.ui.theme"
+      colorKotlin = "app/src/main/kotlin/com/example/app/ui/theme/Colors.kt"
+    }
   }
 
-  icons = new Android.IconsEntry {
-    output = "drawable"
-    composePackageName = "com.example.app.ui.icons"
-    composeFormat = "imageVector"
-    composeExtensionTarget = "com.example.app.ui.AppIcons"
+  icons = new Listing {
+    new Android.IconsEntry {
+      output = "drawable"
+      composePackageName = "com.example.app.ui.icons"
+      composeFormat = "imageVector"
+      composeExtensionTarget = "com.example.app.ui.AppIcons"
+    }
   }
 }

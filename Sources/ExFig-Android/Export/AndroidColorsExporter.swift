@@ -105,14 +105,19 @@ public struct AndroidColorsExporter: ColorsExporter {
         platformConfig: AndroidPlatformConfig,
         context: some ColorsExportContext
     ) throws {
+        // Resolve entry-level overrides
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+        let resolvedMainSrc = entry.resolvedMainSrc(fallback: platformConfig.mainSrc)
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
+
         // Create output configuration
         let output = AndroidOutput(
-            xmlOutputDirectory: platformConfig.mainRes,
+            xmlOutputDirectory: resolvedMainRes,
             xmlResourcePackage: platformConfig.resourcePackage,
-            srcDirectory: platformConfig.mainSrc,
+            srcDirectory: resolvedMainSrc,
             packageName: entry.composePackageName,
             colorKotlinURL: entry.colorKotlinURL,
-            templatesPath: platformConfig.templatesPath,
+            templatesPath: resolvedTemplatesPath,
             xmlDisabled: entry.xmlDisabled ?? false
         )
 
@@ -126,9 +131,9 @@ public struct AndroidColorsExporter: ColorsExporter {
         // Clean up old XML files (unless XML generation is disabled)
         if !(entry.xmlDisabled ?? false) {
             let fileName = entry.xmlOutputFileName ?? "colors.xml"
-            let lightColorsFileURL = platformConfig.mainRes
+            let lightColorsFileURL = resolvedMainRes
                 .appendingPathComponent("values/\(fileName)")
-            let darkColorsFileURL = platformConfig.mainRes
+            let darkColorsFileURL = resolvedMainRes
                 .appendingPathComponent("values-night/\(fileName)")
 
             try? FileManager.default.removeItem(atPath: lightColorsFileURL.path)

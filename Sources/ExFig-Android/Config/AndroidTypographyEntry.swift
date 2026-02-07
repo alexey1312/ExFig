@@ -24,7 +24,7 @@ public extension Android.Typography {
         case .snake_case: .snakeCase
         case .pascalCase: .pascalCase
         case .flatCase: .flatCase
-        case .kebab_case: .kebabCase
+        case .kebabCase: .kebabCase
         case .sCREAMING_SNAKE_CASE: .screamingSnakeCase
         }
     }

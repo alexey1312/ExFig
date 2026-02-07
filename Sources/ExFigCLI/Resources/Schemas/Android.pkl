@@ -19,7 +19,7 @@ typealias WebpEncoding = "lossy"|"lossless"
 /// WebP encoding options.
 class WebpOptions {
   /// Encoding mode.
-  encoding: WebpEncoding
+  encoding: WebpEncoding = "lossy"
 
   /// Quality for lossy encoding (0-100).
   quality: Int(isBetween(0, 100))?
@@ -29,11 +29,11 @@ class WebpOptions {
 
 /// Name transformation for theme attributes.
 class NameTransform {
-  /// Target case style for attribute names. Default: PascalCase.
-  style: Common.NameStyle?
+  /// Target case style for attribute names.
+  style: Common.NameStyle? = "PascalCase"
 
-  /// Prefix to add to attribute names. Default: "color".
-  prefix: String?
+  /// Prefix to add to attribute names.
+  prefix: String? = "color"
 
   /// Prefixes to strip from color names before transformation.
   stripPrefixes: Listing<String>?
@@ -45,16 +45,16 @@ class ThemeAttributes {
   enabled: Boolean?
 
   /// Path to attrs.xml relative to mainRes.
-  attrsFile: String?
+  attrsFile: String? = "values/attrs.xml"
 
   /// Path to styles.xml relative to mainRes.
-  stylesFile: String?
+  stylesFile: String? = "values/styles.xml"
 
   /// Path to styles-night.xml relative to mainRes.
-  stylesNightFile: String?
+  stylesNightFile: String? = "values-night/styles.xml"
 
   /// Theme name used in markers (e.g., "Theme.MyApp.Main").
-  themeName: String
+  themeName: String(!isEmpty)
 
   /// Custom marker start text.
   markerStart: String?
@@ -66,13 +66,25 @@ class ThemeAttributes {
   nameTransform: NameTransform?
 
   /// If true, create file with markers if missing.
-  autoCreateMarkers: Boolean?
+  autoCreateMarkers: Boolean? = false
 }
 
 // MARK: - Colors
 
 /// Android colors entry configuration.
 class ColorsEntry extends Common.VariablesSource {
+  /// Override path to main res directory for this entry.
+  /// When set, overrides `AndroidConfig.mainRes`.
+  mainRes: String?
+
+  /// Override path to main src directory for this entry.
+  /// When set, overrides `AndroidConfig.mainSrc`.
+  mainSrc: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `AndroidConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output filename for colors XML. Default: figma_colors.xml
   xmlOutputFileName: String?
 
@@ -93,6 +105,14 @@ class ColorsEntry extends Common.VariablesSource {
 
 /// Android icons entry configuration.
 class IconsEntry extends Common.FrameSource {
+  /// Override path to main res directory for this entry.
+  /// When set, overrides `AndroidConfig.mainRes`.
+  mainRes: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `AndroidConfig.templatesPath`.
+  templatesPath: String?
+
   /// Output directory for vector drawables.
   output: String
 
@@ -106,10 +126,10 @@ class IconsEntry extends Common.FrameSource {
   composeExtensionTarget: String?
 
   /// Naming style for icon names.
-  nameStyle: Common.NameStyle?
+  nameStyle: Common.NameStyle? = "snake_case"
 
-  /// Coordinate precision for pathData (1-6). Default: 4.
-  pathPrecision: Int(isBetween(1, 6))?
+  /// Coordinate precision for pathData (1-6).
+  pathPrecision: Int(isBetween(1, 6))? = 4
 
   /// If true, exit with error when pathData exceeds 32,767 bytes.
   strictPathValidation: Boolean?
@@ -119,14 +139,22 @@ class IconsEntry extends Common.FrameSource {
 
 /// Android images entry configuration.
 class ImagesEntry extends Common.FrameSource {
+  /// Override path to main res directory for this entry.
+  /// When set, overrides `AndroidConfig.mainRes`.
+  mainRes: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `AndroidConfig.templatesPath`.
+  templatesPath: String?
+
   /// Scale factors to generate (e.g., [1, 1.5, 2, 3, 4]).
-  scales: Listing<Number>?
+  scales: Listing<Number>? = new Listing { 1; 1.5; 2; 3; 4 }
 
   /// Output directory for images.
   output: String
 
   /// Output format for images.
-  format: ImageFormat
+  format: ImageFormat = "png"
 
   /// WebP encoding options.
   webpOptions: WebpOptions?
@@ -135,7 +163,7 @@ class ImagesEntry extends Common.FrameSource {
   sourceFormat: Common.SourceFormat?
 
   /// Naming style for generated image names.
-  nameStyle: Common.NameStyle?
+  nameStyle: Common.NameStyle? = "snake_case"
 }
 
 // MARK: - Typography
@@ -152,7 +180,7 @@ class Typography {
   nameReplaceRegexp: String?
 
   /// Naming style for generated type names.
-  nameStyle: Common.NameStyle
+  nameStyle: Common.NameStyle = "camelCase"
 
   /// Package name for generated Compose typography.
   composePackageName: String?
@@ -163,7 +191,7 @@ class Typography {
 /// Root Android platform configuration.
 class AndroidConfig {
   /// Path to main res directory.
-  mainRes: String
+  mainRes: String(!isEmpty)
 
   /// Resource package name (R class package).
   resourcePackage: String?

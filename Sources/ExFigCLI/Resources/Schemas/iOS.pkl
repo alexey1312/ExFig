@@ -31,13 +31,13 @@ class HeicOptions {
 /// Can include inline source or use common.variablesColors.
 class ColorsEntry extends Common.VariablesSource {
   /// Use Color Assets (.xcassets) instead of code-only colors.
-  useColorAssets: Boolean
+  useColorAssets: Boolean = true
 
   /// Path to .xcassets folder for color assets.
   assetsFolder: String?
 
   /// Naming style for generated color names.
-  nameStyle: Common.NameStyle
+  nameStyle: Common.NameStyle = "camelCase"
 
   /// Group colors using namespace in asset catalog.
   groupUsingNamespace: Boolean?
@@ -47,6 +47,14 @@ class ColorsEntry extends Common.VariablesSource {
 
   /// Path to generate SwiftUI Color extension Swift file.
   swiftuiColorSwift: String?
+
+  /// Override path to .xcassets folder for this entry.
+  /// When set, overrides `iOSConfig.xcassetsPath`.
+  xcassetsPath: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `iOSConfig.templatesPath`.
+  templatesPath: String?
 
   /// Sync generated code names back to Figma Variables codeSyntax.iOS field.
   syncCodeSyntax: Boolean?
@@ -61,16 +69,16 @@ class ColorsEntry extends Common.VariablesSource {
 /// iOS icons entry configuration.
 class IconsEntry extends Common.FrameSource {
   /// Vector format for icons.
-  format: Common.VectorFormat
+  format: Common.VectorFormat = "pdf"
 
   /// Path to .xcassets folder for icons.
-  assetsFolder: String
+  assetsFolder: String = "Icons"
 
   /// Asset names that preserve vector representation.
   preservesVectorRepresentation: Listing<String>?
 
   /// Naming style for generated icon names.
-  nameStyle: Common.NameStyle
+  nameStyle: Common.NameStyle = "camelCase"
 
   /// Path to generate UIImage extension Swift file.
   imageSwift: String?
@@ -80,6 +88,14 @@ class IconsEntry extends Common.FrameSource {
 
   /// Path to generate Figma Code Connect Swift file.
   codeConnectSwift: String?
+
+  /// Override path to .xcassets folder for this entry.
+  /// When set, overrides `iOSConfig.xcassetsPath`.
+  xcassetsPath: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `iOSConfig.templatesPath`.
+  templatesPath: String?
 
   /// Default render mode for assets.
   renderMode: XcodeRenderMode?
@@ -102,10 +118,10 @@ class ImagesEntry extends Common.FrameSource {
   assetsFolder: String
 
   /// Naming style for generated image names.
-  nameStyle: Common.NameStyle
+  nameStyle: Common.NameStyle = "camelCase"
 
   /// Scale factors to generate (e.g., [1, 2, 3]).
-  scales: Listing<Number>?
+  scales: Listing<Number>? = new Listing { 1; 2; 3 }
 
   /// Path to generate UIImage extension Swift file.
   imageSwift: String?
@@ -117,13 +133,21 @@ class ImagesEntry extends Common.FrameSource {
   codeConnectSwift: String?
 
   /// Source format for fetching from Figma API.
-  sourceFormat: Common.SourceFormat?
+  sourceFormat: Common.SourceFormat? = "png"
 
   /// Output format for asset catalog.
-  outputFormat: ImageOutputFormat?
+  outputFormat: ImageOutputFormat? = "png"
 
   /// HEIC encoding options. Only used when outputFormat is heic.
   heicOptions: HeicOptions?
+
+  /// Override path to .xcassets folder for this entry.
+  /// When set, overrides `iOSConfig.xcassetsPath`.
+  xcassetsPath: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `iOSConfig.templatesPath`.
+  templatesPath: String?
 
   /// Default render mode for assets.
   renderMode: XcodeRenderMode?
@@ -161,13 +185,13 @@ class Typography {
   swiftUIFontSwift: String?
 
   /// Generate UILabel subclasses for each style.
-  generateLabels: Boolean
+  generateLabels: Boolean = false
 
   /// Directory to generate label subclasses.
   labelsDirectory: String?
 
   /// Naming style for generated font names.
-  nameStyle: Common.NameStyle
+  nameStyle: Common.NameStyle = "camelCase"
 }
 
 // MARK: - iOS Platform Configuration
@@ -175,10 +199,10 @@ class Typography {
 /// Root iOS platform configuration.
 class iOSConfig {
   /// Path to .xcodeproj file.
-  xcodeprojPath: String
+  xcodeprojPath: String(!isEmpty)
 
   /// Xcode target name.
-  target: String
+  target: String(!isEmpty)
 
   /// Path to main .xcassets folder.
   /// Required for colors (with useColorAssets), icons, and images export.
@@ -186,7 +210,7 @@ class iOSConfig {
   xcassetsPath: String?
 
   /// Whether assets are in main bundle.
-  xcassetsInMainBundle: Boolean
+  xcassetsInMainBundle: Boolean = true
 
   /// Whether assets are in Swift Package.
   xcassetsInSwiftPackage: Boolean?

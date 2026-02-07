@@ -142,12 +142,12 @@ private extension AndroidIconsExporter {
         platformConfig: AndroidPlatformConfig
     ) throws -> FileContents? {
         let output = AndroidOutput(
-            xmlOutputDirectory: platformConfig.mainRes,
+            xmlOutputDirectory: entry.resolvedMainRes(fallback: platformConfig.mainRes),
             xmlResourcePackage: platformConfig.resourcePackage,
             srcDirectory: platformConfig.mainSrc,
             packageName: entry.composePackageName,
             colorKotlinURL: nil,
-            templatesPath: platformConfig.templatesPath
+            templatesPath: entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         )
         let composeExporter = AndroidComposeIconExporter(output: output)
         let iconNames = Set(localFiles.filter { !$0.dark }.map {
@@ -309,10 +309,11 @@ private enum AndroidIconsHelpers {
         entry: AndroidIconsEntry,
         platformConfig: AndroidPlatformConfig
     ) -> (light: URL, dark: URL) {
-        let lightDir = platformConfig.mainRes
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+        let lightDir = resolvedMainRes
             .appendingPathComponent(entry.output)
             .appendingPathComponent("drawable", isDirectory: true)
-        let darkDir = platformConfig.mainRes
+        let darkDir = resolvedMainRes
             .appendingPathComponent(entry.output)
             .appendingPathComponent("drawable-night", isDirectory: true)
         return (lightDir, darkDir)

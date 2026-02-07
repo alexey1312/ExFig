@@ -3,30 +3,30 @@ import PklSwift
 
 public enum Android {}
 
-public extension Android {
+extension Android {
     /// WebP encoding mode.
-    enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case lossy
-        case lossless
+    public enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case lossy = "lossy"
+        case lossless = "lossless"
     }
 
     /// Compose icon generation format.
     /// - `resourceReference`: Generates extension functions using painterResource(R.drawable.xxx)
     /// - `imageVector`: Generates ImageVector code directly from SVG data
-    enum ComposeIconFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case resourceReference
-        case imageVector
+    public enum ComposeIconFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case resourceReference = "resourceReference"
+        case imageVector = "imageVector"
     }
 
     /// Android image format.
-    enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case svg
-        case png
-        case webp
+    public enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case svg = "svg"
+        case png = "png"
+        case webp = "webp"
     }
 
     /// WebP encoding options.
-    struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android#WebpOptions"
 
         /// Encoding mode.
@@ -42,20 +42,20 @@ public extension Android {
     }
 
     /// Android platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android"
 
         public init() {}
     }
 
     /// Name transformation for theme attributes.
-    struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android#NameTransform"
 
-        /// Target case style for attribute names. Default: PascalCase.
+        /// Target case style for attribute names.
         public var style: Common.NameStyle?
 
-        /// Prefix to add to attribute names. Default: "color".
+        /// Prefix to add to attribute names.
         public var prefix: String?
 
         /// Prefixes to strip from color names before transformation.
@@ -69,7 +69,7 @@ public extension Android {
     }
 
     /// Theme attributes configuration for generating attrs.xml and styles.xml.
-    struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android#ThemeAttributes"
 
         /// Whether theme attributes generation is enabled.
@@ -123,8 +123,20 @@ public extension Android {
     }
 
     /// Android colors entry configuration.
-    struct ColorsEntry: Common.VariablesSource {
+    public struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "Android#ColorsEntry"
+
+        /// Override path to main res directory for this entry.
+        /// When set, overrides `AndroidConfig.mainRes`.
+        public var mainRes: String?
+
+        /// Override path to main src directory for this entry.
+        /// When set, overrides `AndroidConfig.mainSrc`.
+        public var mainSrc: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `AndroidConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output filename for colors XML. Default: figma_colors.xml
         public var xmlOutputFileName: String?
@@ -169,6 +181,9 @@ public extension Android {
         public var nameReplaceRegexp: String?
 
         public init(
+            mainRes: String?,
+            mainSrc: String?,
+            templatesPath: String?,
             xmlOutputFileName: String?,
             xmlDisabled: Bool?,
             composePackageName: String?,
@@ -184,6 +199,9 @@ public extension Android {
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.mainRes = mainRes
+            self.mainSrc = mainSrc
+            self.templatesPath = templatesPath
             self.xmlOutputFileName = xmlOutputFileName
             self.xmlDisabled = xmlDisabled
             self.composePackageName = composePackageName
@@ -202,8 +220,16 @@ public extension Android {
     }
 
     /// Android icons entry configuration.
-    struct IconsEntry: Common.FrameSource {
+    public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#IconsEntry"
+
+        /// Override path to main res directory for this entry.
+        /// When set, overrides `AndroidConfig.mainRes`.
+        public var mainRes: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `AndroidConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output directory for vector drawables.
         public var output: String
@@ -220,7 +246,7 @@ public extension Android {
         /// Naming style for icon names.
         public var nameStyle: Common.NameStyle?
 
-        /// Coordinate precision for pathData (1-6). Default: 4.
+        /// Coordinate precision for pathData (1-6).
         public var pathPrecision: Int?
 
         /// If true, exit with error when pathData exceeds 32,767 bytes.
@@ -229,6 +255,10 @@ public extension Android {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -236,6 +266,8 @@ public extension Android {
         public var nameReplaceRegexp: String?
 
         public init(
+            mainRes: String?,
+            templatesPath: String?,
             output: String,
             composePackageName: String?,
             composeFormat: ComposeIconFormat?,
@@ -244,9 +276,12 @@ public extension Android {
             pathPrecision: Int?,
             strictPathValidation: Bool?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.mainRes = mainRes
+            self.templatesPath = templatesPath
             self.output = output
             self.composePackageName = composePackageName
             self.composeFormat = composeFormat
@@ -255,14 +290,23 @@ public extension Android {
             self.pathPrecision = pathPrecision
             self.strictPathValidation = strictPathValidation
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 
     /// Android images entry configuration.
-    struct ImagesEntry: Common.FrameSource {
+    public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#ImagesEntry"
+
+        /// Override path to main res directory for this entry.
+        /// When set, overrides `AndroidConfig.mainRes`.
+        public var mainRes: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `AndroidConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Scale factors to generate (e.g., [1, 1.5, 2, 3, 4]).
         public var scales: [Float64]?
@@ -285,6 +329,10 @@ public extension Android {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -292,6 +340,8 @@ public extension Android {
         public var nameReplaceRegexp: String?
 
         public init(
+            mainRes: String?,
+            templatesPath: String?,
             scales: [Float64]?,
             output: String,
             format: ImageFormat,
@@ -299,9 +349,12 @@ public extension Android {
             sourceFormat: Common.SourceFormat?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.mainRes = mainRes
+            self.templatesPath = templatesPath
             self.scales = scales
             self.output = output
             self.format = format
@@ -309,13 +362,14 @@ public extension Android {
             self.sourceFormat = sourceFormat
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 
     /// Android typography configuration.
-    struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android#Typography"
 
         /// Figma file ID override for typography (optional).
@@ -349,7 +403,7 @@ public extension Android {
     }
 
     /// Root Android platform configuration.
-    struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android#AndroidConfig"
 
         /// Path to main res directory.
@@ -400,7 +454,7 @@ public extension Android {
     /// Load the Pkl module at the given source and evaluate it into `Android.Module`.
     ///
     /// - Parameter source: The source of the Pkl module.
-    static func loadFrom(source: ModuleSource) async throws -> Android.Module {
+    public static func loadFrom(source: ModuleSource) async throws -> Android.Module {
         try await PklSwift.withEvaluator { evaluator in
             try await loadFrom(evaluator: evaluator, source: source)
         }
@@ -411,7 +465,7 @@ public extension Android {
     ///
     /// - Parameter evaluator: The evaluator to use for evaluation.
     /// - Parameter source: The module to evaluate.
-    static func loadFrom(
+    public static func loadFrom(
         evaluator: PklSwift.Evaluator,
         source: PklSwift.ModuleSource
     ) async throws -> Android.Module {

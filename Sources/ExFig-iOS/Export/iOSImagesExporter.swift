@@ -372,7 +372,7 @@ public struct iOSImagesExporter: ImagesExporter {
 
         if let warning = processResult.warning { context.warning(warning) }
 
-        guard let xcassetsPath = platformConfig.xcassetsPath else {
+        guard let xcassetsPath = entry.resolvedXcassetsPath(fallback: platformConfig.xcassetsPath) else {
             throw iOSImagesExportError.xcassetsPathNotSpecified
         }
         let assetsURL = xcassetsPath.appendingPathComponent(entry.assetsFolder)
@@ -412,7 +412,7 @@ public struct iOSImagesExporter: ImagesExporter {
 
         if let warning = processResult.warning { context.warning(warning) }
 
-        guard let xcassetsPath = platformConfig.xcassetsPath else {
+        guard let xcassetsPath = entry.resolvedXcassetsPath(fallback: platformConfig.xcassetsPath) else {
             throw iOSImagesExportError.xcassetsPathNotSpecified
         }
         let assetsURL = xcassetsPath.appendingPathComponent(entry.assetsFolder)
@@ -462,7 +462,7 @@ private extension iOSImagesEntry {
             uiKitImageExtensionURL: imageSwiftURL,
             swiftUIImageExtensionURL: swiftUIImageSwiftURL,
             codeConnectSwiftURL: codeConnectSwiftURL,
-            templatesPath: platformConfig.templatesPath,
+            templatesPath: resolvedTemplatesPath(fallback: platformConfig.templatesPath),
             renderMode: coreRenderMode
         )
     }

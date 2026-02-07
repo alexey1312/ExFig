@@ -46,11 +46,12 @@ public struct WebIconsExporter: IconsExporter {
             entry: entry, platformConfig: platformConfig, context: context
         )
 
-        // Create WebOutput for component generation
+        // Create WebOutput for component generation (entry-level overrides take priority)
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = WebOutput(
             outputDirectory: outputDir,
             iconsAssetsDirectory: svgDir,
-            templatesPath: platformConfig.templatesPath
+            templatesPath: resolvedTemplatesPath
         )
 
         let exporter = WebExport.WebIconsExporter(

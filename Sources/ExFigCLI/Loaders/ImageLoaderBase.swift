@@ -48,8 +48,11 @@ class ImageLoaderBase: @unchecked Sendable {
     }
 
     /// Returns the light file ID, throwing an error if not configured.
-    /// Use this for operations that require lightFileId.
-    func requireLightFileId() throws -> String {
+    /// Entry-level `entryFileId` takes priority over platform-level `figma.lightFileId`.
+    func requireLightFileId(entryFileId: String? = nil) throws -> String {
+        if let entryFileId {
+            return entryFileId
+        }
         guard let figmaParams = params.figma else {
             throw ExFigError.custom(errorString:
                 "figma section is required for icons/images export."

@@ -14,6 +14,7 @@ public extension Flutter.ImagesEntry {
     /// Returns an ImagesSourceInput for use with ImagesExportContext.
     func imagesSourceInput(darkFileId: String? = nil) -> ImagesSourceInput {
         ImagesSourceInput(
+            figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
             sourceFormat: sourceFormat.flatMap { ImageSourceFormat(rawValue: $0.rawValue) } ?? .png,
@@ -28,6 +29,7 @@ public extension Flutter.ImagesEntry {
     /// Returns an ImagesSourceInput configured for SVG source.
     func svgSourceInput(darkFileId: String? = nil) -> ImagesSourceInput {
         ImagesSourceInput(
+            figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
             sourceFormat: .svg,
@@ -47,7 +49,7 @@ public extension Flutter.ImagesEntry {
         case .snake_case: return .snakeCase
         case .pascalCase: return .pascalCase
         case .flatCase: return .flatCase
-        case .kebab_case: return .kebabCase
+        case .kebabCase: return .kebabCase
         case .sCREAMING_SNAKE_CASE: return .screamingSnakeCase
         }
     }
@@ -71,5 +73,17 @@ public extension Flutter.ImagesEntry {
     var webpConverterOptions: WebpConverterOptions? {
         guard let opts = webpOptions else { return nil }
         return WebpConverterOptions(lossless: opts.encoding == .lossless, quality: opts.quality)
+    }
+
+    // MARK: - Entry-Level Override Resolution
+
+    /// Resolved templates path: entry override or platform config fallback.
+    func resolvedTemplatesPath(fallback: URL?) -> URL? {
+        templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved Figma file ID: entry override or global fallback.
+    func resolvedFigmaFileId(fallback: String?) -> String? {
+        figmaFileId ?? fallback
     }
 }

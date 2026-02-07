@@ -87,6 +87,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
 
         // Create loader config from source input
         let config = ImagesLoaderConfig(
+            entryFileId: source.figmaFileId,
             frameName: source.frameName,
             scales: source.scales,
             format: nil, // Format is determined by platform exporter
@@ -356,6 +357,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         let loaderSourceFormat: ImagesSourceFormat = source.sourceFormat == .svg ? .svg : .png
 
         let config = ImagesLoaderConfig(
+            entryFileId: source.figmaFileId,
             frameName: source.frameName,
             scales: source.scales,
             format: nil,

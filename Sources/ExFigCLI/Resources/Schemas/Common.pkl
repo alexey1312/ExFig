@@ -20,11 +20,11 @@ typealias SourceFormat = "png"|"svg"
 
 /// Cache configuration for tracking Figma file versions.
 class Cache {
-  /// Enable version tracking cache. Default: false.
-  enabled: Boolean?
+  /// Enable version tracking cache.
+  enabled: Boolean? = false
 
-  /// Custom path to cache file. Default: .exfig-cache.json
-  path: String?
+  /// Custom path to cache file.
+  path: String? = ".exfig-cache.json"
 }
 
 // MARK: - Name Processing
@@ -71,6 +71,10 @@ open class VariablesSource extends NameProcessing {
 open class FrameSource extends NameProcessing {
   /// Figma frame name to export from.
   figmaFrameName: String?
+
+  /// Override Figma file ID for this specific entry.
+  /// When set, overrides the global `figma.lightFileId` for loading data.
+  figmaFileId: String?
 }
 
 // MARK: - Common Settings
@@ -125,13 +129,13 @@ class Typography extends NameProcessing {
 /// Used when all platforms share the same color source via common.variablesColors.
 class VariablesColors extends NameProcessing {
   /// Figma file ID containing the variables (required).
-  tokensFileId: String
+  tokensFileId: String(!isEmpty)
 
   /// Name of the variable collection (required).
-  tokensCollectionName: String
+  tokensCollectionName: String(!isEmpty)
 
   /// Mode name for light theme (required).
-  lightModeName: String
+  lightModeName: String(!isEmpty)
 
   /// Mode name for dark theme.
   darkModeName: String?

@@ -44,11 +44,12 @@ public struct WebImagesExporter: ImagesExporter {
             entry: entry, platformConfig: platformConfig, context: context
         )
 
-        // Create WebOutput for component generation
+        // Create WebOutput for component generation (entry-level overrides take priority)
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = WebOutput(
             outputDirectory: outputDir,
             imagesAssetsDirectory: assetsDir,
-            templatesPath: platformConfig.templatesPath
+            templatesPath: resolvedTemplatesPath
         )
 
         let exporter = WebExport.WebImagesExporter(

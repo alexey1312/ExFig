@@ -3,29 +3,33 @@ import PklSwift
 
 public enum Flutter {}
 
-public extension Flutter {
+extension Flutter {
     /// Flutter image format.
-    enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case svg
-        case png
-        case webp
+    public enum ImageFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case svg = "svg"
+        case png = "png"
+        case webp = "webp"
     }
 
     /// Flutter platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Flutter"
 
         public init() {}
     }
 
     /// Flutter colors entry configuration.
-    struct ColorsEntry: Common.VariablesSource {
+    public struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "Flutter#ColorsEntry"
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `FlutterConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output path for generated Dart colors file.
         public var output: String?
 
-        /// Class name for generated colors. Default: AppColors.
+        /// Class name for generated colors.
         public var className: String?
 
         /// Figma file ID containing the variables.
@@ -56,6 +60,7 @@ public extension Flutter {
         public var nameReplaceRegexp: String?
 
         public init(
+            templatesPath: String?,
             output: String?,
             className: String?,
             tokensFileId: String?,
@@ -68,6 +73,7 @@ public extension Flutter {
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.templatesPath = templatesPath
             self.output = output
             self.className = className
             self.tokensFileId = tokensFileId
@@ -83,8 +89,12 @@ public extension Flutter {
     }
 
     /// Flutter icons entry configuration.
-    struct IconsEntry: Common.FrameSource {
+    public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Flutter#IconsEntry"
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `FlutterConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output directory for icon SVG files.
         public var output: String
@@ -92,7 +102,7 @@ public extension Flutter {
         /// Dart file path for icon class generation.
         public var dartFile: String?
 
-        /// Class name for generated icons. Default: AppIcons.
+        /// Class name for generated icons.
         public var className: String?
 
         /// Naming style for icon names.
@@ -101,6 +111,10 @@ public extension Flutter {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -108,27 +122,35 @@ public extension Flutter {
         public var nameReplaceRegexp: String?
 
         public init(
+            templatesPath: String?,
             output: String,
             dartFile: String?,
             className: String?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.templatesPath = templatesPath
             self.output = output
             self.dartFile = dartFile
             self.className = className
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 
     /// Flutter images entry configuration.
-    struct ImagesEntry: Common.FrameSource {
+    public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Flutter#ImagesEntry"
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `FlutterConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Output directory for image files.
         public var output: String
@@ -136,7 +158,7 @@ public extension Flutter {
         /// Dart file path for image class generation.
         public var dartFile: String?
 
-        /// Class name for generated images. Default: AppImages.
+        /// Class name for generated images.
         public var className: String?
 
         /// Scale factors to generate (e.g., [1, 2, 3]).
@@ -157,6 +179,10 @@ public extension Flutter {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -164,6 +190,7 @@ public extension Flutter {
         public var nameReplaceRegexp: String?
 
         public init(
+            templatesPath: String?,
             output: String,
             dartFile: String?,
             className: String?,
@@ -173,9 +200,11 @@ public extension Flutter {
             sourceFormat: Common.SourceFormat?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.templatesPath = templatesPath
             self.output = output
             self.dartFile = dartFile
             self.className = className
@@ -185,13 +214,14 @@ public extension Flutter {
             self.sourceFormat = sourceFormat
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 
     /// Root Flutter platform configuration.
-    struct FlutterConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct FlutterConfig: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Flutter#FlutterConfig"
 
         /// Base output directory for all generated files.
@@ -227,7 +257,7 @@ public extension Flutter {
     /// Load the Pkl module at the given source and evaluate it into `Flutter.Module`.
     ///
     /// - Parameter source: The source of the Pkl module.
-    static func loadFrom(source: ModuleSource) async throws -> Flutter.Module {
+    public static func loadFrom(source: ModuleSource) async throws -> Flutter.Module {
         try await PklSwift.withEvaluator { evaluator in
             try await loadFrom(evaluator: evaluator, source: source)
         }
@@ -238,7 +268,7 @@ public extension Flutter {
     ///
     /// - Parameter evaluator: The evaluator to use for evaluation.
     /// - Parameter source: The module to evaluate.
-    static func loadFrom(
+    public static func loadFrom(
         evaluator: PklSwift.Evaluator,
         source: PklSwift.ModuleSource
     ) async throws -> Flutter.Module {

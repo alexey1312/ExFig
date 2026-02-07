@@ -3,37 +3,37 @@ import PklSwift
 
 public enum iOS {}
 
-public extension iOS {
+extension iOS {
     /// HEIC encoding mode.
-    enum HeicEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case lossy
-        case lossless
+    public enum HeicEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case lossy = "lossy"
+        case lossless = "lossless"
     }
 
     /// Xcode asset catalog render mode.
-    enum XcodeRenderMode: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case `default`
-        case original
-        case template
+    public enum XcodeRenderMode: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case `default` = "default"
+        case original = "original"
+        case template = "template"
     }
 
     /// Output format for iOS images in asset catalogs.
     /// - `png`: Standard PNG format (default, maximum compatibility)
     /// - `heic`: HEIC format (~40-50% smaller, iOS 12+, macOS only for encoding)
-    enum ImageOutputFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case png
-        case heic
+    public enum ImageOutputFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case png = "png"
+        case heic = "heic"
     }
 
     /// iOS platform configuration for ExFig.
-    struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "iOS"
 
         public init() {}
     }
 
     /// HEIC encoding options for iOS images.
-    struct HeicOptions: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct HeicOptions: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "iOS#HeicOptions"
 
         /// Encoding mode: lossy (default) or lossless.
@@ -50,7 +50,7 @@ public extension iOS {
 
     /// iOS colors entry configuration.
     /// Can include inline source or use common.variablesColors.
-    struct ColorsEntry: Common.VariablesSource {
+    public struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "iOS#ColorsEntry"
 
         /// Use Color Assets (.xcassets) instead of code-only colors.
@@ -70,6 +70,14 @@ public extension iOS {
 
         /// Path to generate SwiftUI Color extension Swift file.
         public var swiftuiColorSwift: String?
+
+        /// Override path to .xcassets folder for this entry.
+        /// When set, overrides `iOSConfig.xcassetsPath`.
+        public var xcassetsPath: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `iOSConfig.templatesPath`.
+        public var templatesPath: String?
 
         /// Sync generated code names back to Figma Variables codeSyntax.iOS field.
         public var syncCodeSyntax: Bool?
@@ -112,6 +120,8 @@ public extension iOS {
             groupUsingNamespace: Bool?,
             colorSwift: String?,
             swiftuiColorSwift: String?,
+            xcassetsPath: String?,
+            templatesPath: String?,
             syncCodeSyntax: Bool?,
             codeSyntaxTemplate: String?,
             tokensFileId: String?,
@@ -130,6 +140,8 @@ public extension iOS {
             self.groupUsingNamespace = groupUsingNamespace
             self.colorSwift = colorSwift
             self.swiftuiColorSwift = swiftuiColorSwift
+            self.xcassetsPath = xcassetsPath
+            self.templatesPath = templatesPath
             self.syncCodeSyntax = syncCodeSyntax
             self.codeSyntaxTemplate = codeSyntaxTemplate
             self.tokensFileId = tokensFileId
@@ -145,7 +157,7 @@ public extension iOS {
     }
 
     /// iOS icons entry configuration.
-    struct IconsEntry: Common.FrameSource {
+    public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "iOS#IconsEntry"
 
         /// Vector format for icons.
@@ -169,6 +181,14 @@ public extension iOS {
         /// Path to generate Figma Code Connect Swift file.
         public var codeConnectSwift: String?
 
+        /// Override path to .xcassets folder for this entry.
+        /// When set, overrides `iOSConfig.xcassetsPath`.
+        public var xcassetsPath: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `iOSConfig.templatesPath`.
+        public var templatesPath: String?
+
         /// Default render mode for assets.
         public var renderMode: XcodeRenderMode?
 
@@ -184,6 +204,10 @@ public extension iOS {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -198,11 +222,14 @@ public extension iOS {
             imageSwift: String?,
             swiftUIImageSwift: String?,
             codeConnectSwift: String?,
+            xcassetsPath: String?,
+            templatesPath: String?,
             renderMode: XcodeRenderMode?,
             renderModeDefaultSuffix: String?,
             renderModeOriginalSuffix: String?,
             renderModeTemplateSuffix: String?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
@@ -213,18 +240,21 @@ public extension iOS {
             self.imageSwift = imageSwift
             self.swiftUIImageSwift = swiftUIImageSwift
             self.codeConnectSwift = codeConnectSwift
+            self.xcassetsPath = xcassetsPath
+            self.templatesPath = templatesPath
             self.renderMode = renderMode
             self.renderModeDefaultSuffix = renderModeDefaultSuffix
             self.renderModeOriginalSuffix = renderModeOriginalSuffix
             self.renderModeTemplateSuffix = renderModeTemplateSuffix
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 
     /// iOS images entry configuration.
-    struct ImagesEntry: Common.FrameSource {
+    public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "iOS#ImagesEntry"
 
         /// Path to .xcassets folder for images.
@@ -254,6 +284,14 @@ public extension iOS {
         /// HEIC encoding options. Only used when outputFormat is heic.
         public var heicOptions: HeicOptions?
 
+        /// Override path to .xcassets folder for this entry.
+        /// When set, overrides `iOSConfig.xcassetsPath`.
+        public var xcassetsPath: String?
+
+        /// Override path to custom Stencil templates for this entry.
+        /// When set, overrides `iOSConfig.templatesPath`.
+        public var templatesPath: String?
+
         /// Default render mode for assets.
         public var renderMode: XcodeRenderMode?
 
@@ -268,6 +306,10 @@ public extension iOS {
 
         /// Figma frame name to export from.
         public var figmaFrameName: String?
+
+        /// Override Figma file ID for this specific entry.
+        /// When set, overrides the global `figma.lightFileId` for loading data.
+        public var figmaFileId: String?
 
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
@@ -285,11 +327,14 @@ public extension iOS {
             sourceFormat: Common.SourceFormat?,
             outputFormat: ImageOutputFormat?,
             heicOptions: HeicOptions?,
+            xcassetsPath: String?,
+            templatesPath: String?,
             renderMode: XcodeRenderMode?,
             renderModeDefaultSuffix: String?,
             renderModeOriginalSuffix: String?,
             renderModeTemplateSuffix: String?,
             figmaFrameName: String?,
+            figmaFileId: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
@@ -302,18 +347,21 @@ public extension iOS {
             self.sourceFormat = sourceFormat
             self.outputFormat = outputFormat
             self.heicOptions = heicOptions
+            self.xcassetsPath = xcassetsPath
+            self.templatesPath = templatesPath
             self.renderMode = renderMode
             self.renderModeDefaultSuffix = renderModeDefaultSuffix
             self.renderModeOriginalSuffix = renderModeOriginalSuffix
             self.renderModeTemplateSuffix = renderModeTemplateSuffix
             self.figmaFrameName = figmaFrameName
+            self.figmaFileId = figmaFileId
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 
     /// iOS typography configuration.
-    struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "iOS#Typography"
 
         /// Figma file ID override for typography (optional).
@@ -367,7 +415,7 @@ public extension iOS {
     }
 
     /// Root iOS platform configuration.
-    struct iOSConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+    public struct iOSConfig: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "iOS#iOSConfig"
 
         /// Path to .xcodeproj file.
@@ -440,7 +488,7 @@ public extension iOS {
     /// Load the Pkl module at the given source and evaluate it into `iOS.Module`.
     ///
     /// - Parameter source: The source of the Pkl module.
-    static func loadFrom(source: ModuleSource) async throws -> iOS.Module {
+    public static func loadFrom(source: ModuleSource) async throws -> iOS.Module {
         try await PklSwift.withEvaluator { evaluator in
             try await loadFrom(evaluator: evaluator, source: source)
         }
@@ -451,7 +499,7 @@ public extension iOS {
     ///
     /// - Parameter evaluator: The evaluator to use for evaluation.
     /// - Parameter source: The module to evaluate.
-    static func loadFrom(
+    public static func loadFrom(
         evaluator: PklSwift.Evaluator,
         source: PklSwift.ModuleSource
     ) async throws -> iOS.Module {

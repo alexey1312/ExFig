@@ -204,6 +204,7 @@ final class IconsLoaderConfigTests: XCTestCase {
     /// which turned .svg into nil, causing iOS to always export PDF instead of SVG.
     func testSVGFormatPreservedInDirectConstruction() {
         let config = IconsLoaderConfig(
+            entryFileId: nil,
             frameName: "Icons",
             format: .svg,
             renderMode: nil,
@@ -217,6 +218,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testPDFFormatPreservedInDirectConstruction() {
         let config = IconsLoaderConfig(
+            entryFileId: nil,
             frameName: "Icons",
             format: .pdf,
             renderMode: nil,
@@ -239,6 +241,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
         // Step 2: source → IconsLoaderConfig (simulates IconsExportContextImpl.loadIcons)
         let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
             frameName: source.frameName,
             format: source.format,
             renderMode: source.renderMode,
@@ -256,6 +259,7 @@ final class IconsLoaderConfigTests: XCTestCase {
         XCTAssertEqual(source.format, .pdf)
 
         let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
             frameName: source.frameName,
             format: source.format,
             renderMode: source.renderMode,
