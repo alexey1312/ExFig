@@ -216,12 +216,3 @@ extension Web.WebConfig {
         templatesPath.map { URL(fileURLWithPath: $0) }
     }
 }
-
-// MARK: - ThemeAttributes Compatibility
-
-extension Android.ThemeAttributes {
-    /// Backward-compatible property. The generated type uses `enabled`.
-    var isEnabled: Bool {
-        enabled ?? false
-    }
-}

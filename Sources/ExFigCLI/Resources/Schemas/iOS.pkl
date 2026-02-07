@@ -142,6 +142,15 @@ class ImagesEntry extends Common.FrameSource {
 
 /// iOS typography configuration.
 class Typography {
+  /// Figma file ID override for typography (optional).
+  fileId: String?
+
+  /// Regex pattern for validating/capturing text style names.
+  nameValidateRegexp: String?
+
+  /// Replacement pattern for text style names.
+  nameReplaceRegexp: String?
+
   /// Path to generate UIFont extension Swift file.
   fontSwift: String?
 

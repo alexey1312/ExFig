@@ -132,6 +132,8 @@ public struct CodeSyntaxSyncer: Sendable {
             name.snakeCased()
         case .pascalCase:
             name.camelCased()
+        case .flatCase:
+            name.flatCased()
         case .kebabCase:
             name.kebabCased()
         case .screamingSnakeCase:

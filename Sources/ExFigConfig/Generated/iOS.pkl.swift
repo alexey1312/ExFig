@@ -316,6 +316,15 @@ public extension iOS {
     struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "iOS#Typography"
 
+        /// Figma file ID override for typography (optional).
+        public var fileId: String?
+
+        /// Regex pattern for validating/capturing text style names.
+        public var nameValidateRegexp: String?
+
+        /// Replacement pattern for text style names.
+        public var nameReplaceRegexp: String?
+
         /// Path to generate UIFont extension Swift file.
         public var fontSwift: String?
 
@@ -335,6 +344,9 @@ public extension iOS {
         public var nameStyle: Common.NameStyle
 
         public init(
+            fileId: String?,
+            nameValidateRegexp: String?,
+            nameReplaceRegexp: String?,
             fontSwift: String?,
             labelStyleSwift: String?,
             swiftUIFontSwift: String?,
@@ -342,6 +354,9 @@ public extension iOS {
             labelsDirectory: String?,
             nameStyle: Common.NameStyle
         ) {
+            self.fileId = fileId
+            self.nameValidateRegexp = nameValidateRegexp
+            self.nameReplaceRegexp = nameReplaceRegexp
             self.fontSwift = fontSwift
             self.labelStyleSwift = labelStyleSwift
             self.swiftUIFontSwift = swiftUIFontSwift

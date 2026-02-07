@@ -51,21 +51,27 @@ final class AndroidTypographyExporterTests: XCTestCase {
 
     func testTypographyEntryDefaults() {
         let entry = AndroidTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             nameStyle: .snake_case,
             composePackageName: nil
         )
 
-        XCTAssertEqual(entry.nameStyle, .snake_case)
+        XCTAssertEqual(entry.nameStyle, Common.NameStyle.snake_case)
         XCTAssertNil(entry.composePackageName)
     }
 
     func testTypographyEntryWithValues() {
         let entry = AndroidTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             nameStyle: .camelCase,
             composePackageName: "com.example.app.ui"
         )
 
-        XCTAssertEqual(entry.nameStyle, .camelCase)
+        XCTAssertEqual(entry.nameStyle, Common.NameStyle.camelCase)
         XCTAssertEqual(entry.composePackageName, "com.example.app.ui")
     }
 
@@ -73,6 +79,9 @@ final class AndroidTypographyExporterTests: XCTestCase {
 
     func testTypographySourceInput() {
         let entry = AndroidTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             nameStyle: .snake_case,
             composePackageName: nil
         )
@@ -84,6 +93,9 @@ final class AndroidTypographyExporterTests: XCTestCase {
 
     func testTypographySourceInputNilTimeout() {
         let entry = AndroidTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             nameStyle: .snake_case,
             composePackageName: nil
         )
@@ -93,15 +105,31 @@ final class AndroidTypographyExporterTests: XCTestCase {
         XCTAssertNil(sourceInput.timeout)
     }
 
+    func testTypographySourceInputUsesEntryFileId() {
+        let entry = AndroidTypographyEntry(
+            fileId: "entry-specific-file",
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
+            nameStyle: .snake_case,
+            composePackageName: nil
+        )
+        let sourceInput = entry.typographySourceInput(fileId: "default-file-id", timeout: nil)
+
+        XCTAssertEqual(sourceInput.fileId, "entry-specific-file")
+    }
+
     // MARK: - Core Name Style
 
     func testCoreNameStyle() {
         let entry = AndroidTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             nameStyle: .camelCase,
             composePackageName: nil
         )
 
-        XCTAssertEqual(entry.coreNameStyle, .camelCase)
+        XCTAssertEqual(entry.coreNameStyle, NameStyle.camelCase)
     }
 }
 

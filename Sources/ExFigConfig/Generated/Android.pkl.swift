@@ -279,6 +279,9 @@ public extension Android {
         /// Source format for fetching from Figma API.
         public var sourceFormat: Common.SourceFormat?
 
+        /// Naming style for generated image names.
+        public var nameStyle: Common.NameStyle?
+
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
@@ -294,6 +297,7 @@ public extension Android {
             format: ImageFormat,
             webpOptions: WebpOptions?,
             sourceFormat: Common.SourceFormat?,
+            nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
@@ -303,6 +307,7 @@ public extension Android {
             self.format = format
             self.webpOptions = webpOptions
             self.sourceFormat = sourceFormat
+            self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
@@ -313,13 +318,31 @@ public extension Android {
     struct Typography: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Android#Typography"
 
+        /// Figma file ID override for typography (optional).
+        public var fileId: String?
+
+        /// Regex pattern for validating/capturing text style names.
+        public var nameValidateRegexp: String?
+
+        /// Replacement pattern for text style names.
+        public var nameReplaceRegexp: String?
+
         /// Naming style for generated type names.
         public var nameStyle: Common.NameStyle
 
         /// Package name for generated Compose typography.
         public var composePackageName: String?
 
-        public init(nameStyle: Common.NameStyle, composePackageName: String?) {
+        public init(
+            fileId: String?,
+            nameValidateRegexp: String?,
+            nameReplaceRegexp: String?,
+            nameStyle: Common.NameStyle,
+            composePackageName: String?
+        ) {
+            self.fileId = fileId
+            self.nameValidateRegexp = nameValidateRegexp
+            self.nameReplaceRegexp = nameReplaceRegexp
             self.nameStyle = nameStyle
             self.composePackageName = composePackageName
         }

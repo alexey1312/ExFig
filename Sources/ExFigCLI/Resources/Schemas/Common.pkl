@@ -6,7 +6,7 @@ import "Figma.pkl"
 // MARK: - Enums
 
 /// Naming style for generated code identifiers.
-typealias NameStyle = "camelCase"|"snake_case"|"PascalCase"|"flatCase"|"SCREAMING_SNAKE_CASE"
+typealias NameStyle = "camelCase"|"snake_case"|"PascalCase"|"flatCase"|"kebab-case"|"SCREAMING_SNAKE_CASE"
 
 /// Vector format for icons.
 typealias VectorFormat = "pdf"|"svg"

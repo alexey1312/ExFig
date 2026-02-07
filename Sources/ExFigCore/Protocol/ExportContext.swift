@@ -126,6 +126,35 @@ public struct ColorsSourceInput: Sendable {
     }
 }
 
+/// Error thrown when required colors configuration fields are missing.
+public enum ColorsConfigError: LocalizedError {
+    case missingTokensFileId
+    case missingTokensCollectionName
+    case missingLightModeName
+
+    public var errorDescription: String? {
+        switch self {
+        case .missingTokensFileId:
+            "tokensFileId is required for colors export"
+        case .missingTokensCollectionName:
+            "tokensCollectionName is required for colors export"
+        case .missingLightModeName:
+            "lightModeName is required for colors export"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .missingTokensFileId:
+            "Add 'tokensFileId' to your colors entry, or set common.variablesColors"
+        case .missingTokensCollectionName:
+            "Add 'tokensCollectionName' to your colors entry, or set common.variablesColors"
+        case .missingLightModeName:
+            "Add 'lightModeName' to your colors entry, or set common.variablesColors"
+        }
+    }
+}
+
 /// Output from colors loading.
 public struct ColorsLoadOutput: Sendable {
     public let light: [Color]

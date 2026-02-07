@@ -36,6 +36,7 @@ public extension Common {
         case snake_case
         case pascalCase = "PascalCase"
         case flatCase
+        case kebab_case = "kebab-case"
         case sCREAMING_SNAKE_CASE = "SCREAMING_SNAKE_CASE"
     }
 

@@ -22,7 +22,15 @@ public extension Web.IconsEntry {
 
     /// Effective name style, defaulting to snake_case.
     var effectiveNameStyle: NameStyle {
-        nameStyle.flatMap { NameStyle(rawValue: $0.rawValue) } ?? .snakeCase
+        guard let nameStyle else { return .snakeCase }
+        switch nameStyle {
+        case .camelCase: return .camelCase
+        case .snake_case: return .snakeCase
+        case .pascalCase: return .pascalCase
+        case .flatCase: return .flatCase
+        case .kebab_case: return .kebabCase
+        case .sCREAMING_SNAKE_CASE: return .screamingSnakeCase
+        }
     }
 
     /// Whether to generate React components, defaulting to true.

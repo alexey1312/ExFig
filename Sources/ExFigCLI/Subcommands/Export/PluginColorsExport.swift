@@ -47,23 +47,7 @@ extension ExFigCommand.ExportColors {
             context: context
         )
 
-        // Post-export: syncCodeSyntax
-        for entry in entries where entry.syncCodeSyntax == true {
-            if let template = entry.codeSyntaxTemplate {
-                let syncCount = try await ui.withSpinner("Syncing codeSyntax to Figma...") {
-                    let syncer = CodeSyntaxSyncer(client: client)
-                    return try await syncer.sync(
-                        fileId: entry.tokensFileId ?? "",
-                        collectionName: entry.tokensCollectionName ?? "",
-                        template: template,
-                        nameStyle: entry.coreNameStyle,
-                        nameValidateRegexp: entry.nameValidateRegexp,
-                        nameReplaceRegexp: entry.nameReplaceRegexp
-                    )
-                }
-                ui.info("Synced codeSyntax for \(syncCount) variables")
-            }
-        }
+        try await syncCodeSyntaxIfNeeded(entries: entries, client: client, ui: ui)
 
         // Post-export: update Xcode project (only if not in Swift Package)
         if ios.xcassetsInSwiftPackage != true {
@@ -93,6 +77,37 @@ extension ExFigCommand.ExportColors {
         }
 
         return count
+    }
+
+    private func syncCodeSyntaxIfNeeded(
+        entries: [iOSColorsEntry],
+        client: Client,
+        ui: TerminalUI
+    ) async throws {
+        for entry in entries where entry.syncCodeSyntax == true {
+            guard let fileId = entry.tokensFileId, !fileId.isEmpty else {
+                ui.warning("Cannot sync codeSyntax: tokensFileId is required")
+                continue
+            }
+            guard let collectionName = entry.tokensCollectionName, !collectionName.isEmpty else {
+                ui.warning("Cannot sync codeSyntax: tokensCollectionName is required")
+                continue
+            }
+            if let template = entry.codeSyntaxTemplate {
+                let syncCount = try await ui.withSpinner("Syncing codeSyntax to Figma...") {
+                    let syncer = CodeSyntaxSyncer(client: client)
+                    return try await syncer.sync(
+                        fileId: fileId,
+                        collectionName: collectionName,
+                        template: template,
+                        nameStyle: entry.coreNameStyle,
+                        nameValidateRegexp: entry.nameValidateRegexp,
+                        nameReplaceRegexp: entry.nameReplaceRegexp
+                    )
+                }
+                ui.info("Synced codeSyntax for \(syncCount) variables")
+            }
+        }
     }
 
     /// Exports Android colors using plugin architecture.

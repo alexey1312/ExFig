@@ -39,8 +39,8 @@ public struct iOSTypographyExporter: TypographyExporter {
         platformConfig: iOSPlatformConfig,
         context: some TypographyExportContext
     ) async throws -> Int {
-        // Validate source
-        guard let fileId = platformConfig.figmaFileId else {
+        // Validate source — per-entry fileId takes priority over platform-level
+        guard let fileId = entry.fileId ?? platformConfig.figmaFileId else {
             throw iOSTypographyExportError.figmaFileIdNotSpecified
         }
 
@@ -59,8 +59,8 @@ public struct iOSTypographyExporter: TypographyExporter {
             try context.processTypography(
                 loadOutput,
                 platform: .ios,
-                nameValidateRegexp: nil,
-                nameReplaceRegexp: nil,
+                nameValidateRegexp: entry.nameValidateRegexp,
+                nameReplaceRegexp: entry.nameReplaceRegexp,
                 nameStyle: entry.coreNameStyle
             )
         }

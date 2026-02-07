@@ -147,6 +147,9 @@ public extension Web {
         /// Generate React components for images.
         public var generateReactComponents: Bool?
 
+        /// Naming style for generated image names.
+        public var nameStyle: Common.NameStyle?
+
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
@@ -160,6 +163,7 @@ public extension Web {
             outputDirectory: String,
             assetsDirectory: String?,
             generateReactComponents: Bool?,
+            nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
@@ -167,6 +171,7 @@ public extension Web {
             self.outputDirectory = outputDirectory
             self.assetsDirectory = assetsDirectory
             self.generateReactComponents = generateReactComponents
+            self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp

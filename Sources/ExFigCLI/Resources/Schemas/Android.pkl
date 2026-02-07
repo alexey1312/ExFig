@@ -133,12 +133,24 @@ class ImagesEntry extends Common.FrameSource {
 
   /// Source format for fetching from Figma API.
   sourceFormat: Common.SourceFormat?
+
+  /// Naming style for generated image names.
+  nameStyle: Common.NameStyle?
 }
 
 // MARK: - Typography
 
 /// Android typography configuration.
 class Typography {
+  /// Figma file ID override for typography (optional).
+  fileId: String?
+
+  /// Regex pattern for validating/capturing text style names.
+  nameValidateRegexp: String?
+
+  /// Replacement pattern for text style names.
+  nameReplaceRegexp: String?
+
   /// Naming style for generated type names.
   nameStyle: Common.NameStyle
 

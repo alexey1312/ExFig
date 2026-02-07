@@ -52,6 +52,9 @@ class ImagesEntry extends Common.FrameSource {
 
   /// Generate React components for images.
   generateReactComponents: Boolean?
+
+  /// Naming style for generated image names.
+  nameStyle: Common.NameStyle?
 }
 
 // MARK: - Web Platform Configuration

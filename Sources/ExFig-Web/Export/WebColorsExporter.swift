@@ -51,10 +51,11 @@ public struct WebColorsExporter: ColorsExporter {
         context: some ColorsExportContext
     ) async throws -> Int {
         // 1. Load colors from Figma
+        let sourceInput = try entry.validatedColorsSourceInput()
         let colors = try await context.withSpinner(
-            "Fetching colors from Figma (\(entry.tokensCollectionName ?? ""))..."
+            "Fetching colors from Figma (\(sourceInput.tokensCollectionName))..."
         ) {
-            try await context.loadColors(from: entry.colorsSourceInput)
+            try await context.loadColors(from: sourceInput)
         }
 
         // 2. Process colors (Web uses kebab-case for CSS variables)

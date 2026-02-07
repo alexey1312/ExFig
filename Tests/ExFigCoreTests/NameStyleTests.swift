@@ -53,7 +53,7 @@ final class NameStyleTests: XCTestCase {
     // MARK: - CaseIterable Conformance
 
     func testAllCasesCount() {
-        XCTAssertEqual(NameStyle.allCases.count, 5)
+        XCTAssertEqual(NameStyle.allCases.count, 6)
     }
 
     func testAllCasesContainsExpectedValues() {
@@ -62,6 +62,7 @@ final class NameStyleTests: XCTestCase {
         XCTAssertTrue(allCases.contains(.camelCase))
         XCTAssertTrue(allCases.contains(.snakeCase))
         XCTAssertTrue(allCases.contains(.pascalCase))
+        XCTAssertTrue(allCases.contains(.flatCase))
         XCTAssertTrue(allCases.contains(.kebabCase))
         XCTAssertTrue(allCases.contains(.screamingSnakeCase))
     }

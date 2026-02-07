@@ -22,6 +22,19 @@ public extension Web.ImagesEntry {
         )
     }
 
+    /// Effective name style, defaulting to snake_case.
+    var effectiveNameStyle: NameStyle {
+        guard let nameStyle else { return .snakeCase }
+        switch nameStyle {
+        case .camelCase: return .camelCase
+        case .snake_case: return .snakeCase
+        case .pascalCase: return .pascalCase
+        case .flatCase: return .flatCase
+        case .kebab_case: return .kebabCase
+        case .sCREAMING_SNAKE_CASE: return .screamingSnakeCase
+        }
+    }
+
     /// Whether to generate React components, defaulting to true.
     var effectiveGenerateReactComponents: Bool {
         generateReactComponents ?? true

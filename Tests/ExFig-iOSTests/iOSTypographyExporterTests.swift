@@ -53,6 +53,9 @@ final class iOSTypographyExporterTests: XCTestCase {
 
     func testTypographyEntryDefaults() {
         let entry = iOSTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             fontSwift: nil,
             labelStyleSwift: nil,
             swiftUIFontSwift: nil,
@@ -66,11 +69,14 @@ final class iOSTypographyExporterTests: XCTestCase {
         XCTAssertFalse(entry.generateLabels)
         XCTAssertNil(entry.labelsDirectory)
         XCTAssertNil(entry.labelStyleSwift)
-        XCTAssertEqual(entry.nameStyle, .camelCase)
+        XCTAssertEqual(entry.nameStyle, Common.NameStyle.camelCase)
     }
 
     func testTypographyEntryWithValues() {
         let entry = iOSTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             fontSwift: "/path/to/UIFont+Extension.swift",
             labelStyleSwift: nil,
             swiftUIFontSwift: nil,
@@ -80,7 +86,7 @@ final class iOSTypographyExporterTests: XCTestCase {
         )
 
         XCTAssertEqual(entry.fontSwift, "/path/to/UIFont+Extension.swift")
-        XCTAssertEqual(entry.nameStyle, .snake_case)
+        XCTAssertEqual(entry.nameStyle, Common.NameStyle.snake_case)
         XCTAssertTrue(entry.generateLabels)
         XCTAssertEqual(entry.labelsDirectory, "/path/to/Labels")
     }
@@ -89,6 +95,9 @@ final class iOSTypographyExporterTests: XCTestCase {
 
     func testTypographySourceInput() {
         let entry = iOSTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             fontSwift: nil,
             labelStyleSwift: nil,
             swiftUIFontSwift: nil,
@@ -104,6 +113,9 @@ final class iOSTypographyExporterTests: XCTestCase {
 
     func testTypographySourceInputNilTimeout() {
         let entry = iOSTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             fontSwift: nil,
             labelStyleSwift: nil,
             swiftUIFontSwift: nil,
@@ -117,10 +129,30 @@ final class iOSTypographyExporterTests: XCTestCase {
         XCTAssertNil(sourceInput.timeout)
     }
 
+    func testTypographySourceInputUsesEntryFileId() {
+        let entry = iOSTypographyEntry(
+            fileId: "entry-specific-file",
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
+            fontSwift: nil,
+            labelStyleSwift: nil,
+            swiftUIFontSwift: nil,
+            generateLabels: false,
+            labelsDirectory: nil,
+            nameStyle: .camelCase
+        )
+        let sourceInput = entry.typographySourceInput(fileId: "default-file-id", timeout: nil)
+
+        XCTAssertEqual(sourceInput.fileId, "entry-specific-file")
+    }
+
     // MARK: - URL Convenience
 
     func testFontSwiftURL() {
         let entry = iOSTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             fontSwift: "/path/to/Font.swift",
             labelStyleSwift: nil,
             swiftUIFontSwift: nil,
@@ -134,6 +166,9 @@ final class iOSTypographyExporterTests: XCTestCase {
 
     func testCoreNameStyle() {
         let entry = iOSTypographyEntry(
+            fileId: nil,
+            nameValidateRegexp: nil,
+            nameReplaceRegexp: nil,
             fontSwift: nil,
             labelStyleSwift: nil,
             swiftUIFontSwift: nil,
@@ -142,7 +177,7 @@ final class iOSTypographyExporterTests: XCTestCase {
             nameStyle: .snake_case
         )
 
-        XCTAssertEqual(entry.coreNameStyle, .snakeCase) // ExFigCore.NameStyle.snakeCase
+        XCTAssertEqual(entry.coreNameStyle, NameStyle.snakeCase)
     }
 }
 

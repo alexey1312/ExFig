@@ -710,6 +710,74 @@ A few properties were renamed between YAML and PKL for consistency:
 
 All other property names remain the same.
 
+## Breaking Changes in PKL-Native Config (v2)
+
+The following changes apply after the internal migration to pkl-swift generated types:
+
+### 1. Entry fields are always arrays
+
+All platform entries (`colors`, `icons`, `images`) use `Listing` (array) format. Single-entry configs must still wrap the entry in a `Listing`:
+
+```pkl
+// Correct — even for a single entry
+colors = new Listing {
+  new iOS.ColorsEntry { ... }
+}
+
+// Also correct — PKL shorthand for single element
+colors = new iOS.ColorsEntry { ... }
+```
+
+### 2. Colors validation at export time
+
+`tokensFileId`, `tokensCollectionName`, and `lightModeName` are now validated at export time. If these fields are missing and `common.variablesColors` is not set, export will fail with a clear error message instead of silently sending empty strings to the Figma API.
+
+### 3. New naming styles
+
+Two new naming styles are now supported:
+
+- `"flatCase"` — all lowercase with no separator: `myimagename`
+- `"kebab-case"` — lowercase with hyphens: `my-image-name`
+
+```pkl
+nameStyle = "flatCase"
+nameStyle = "kebab-case"
+```
+
+### 4. Android/Web Images nameStyle
+
+`nameStyle` is now configurable for Android and Web images entries (previously hardcoded to `snake_case`):
+
+```pkl
+// Android
+images = new Android.ImagesEntry {
+  output = "figma-import-images"
+  format = "webp"
+  nameStyle = "camelCase"  // optional, defaults to snake_case
+}
+
+// Web
+images = new Web.ImagesEntry {
+  outputDirectory = "./src/images"
+  nameStyle = "kebab-case"  // optional, defaults to snake_case
+}
+```
+
+### 5. Typography per-entry fileId and regex
+
+iOS and Android typography now support per-entry `fileId`, `nameValidateRegexp`, and `nameReplaceRegexp`. This allows using a different Figma file for typography than the main file:
+
+```pkl
+typography = new iOS.Typography {
+  fileId = "typography-specific-file-id"  // overrides figma.lightFileId
+  nameValidateRegexp = "^[a-zA-Z0-9/]+$"
+  nameReplaceRegexp = "$1"
+  nameStyle = "camelCase"
+  fontSwift = "./Generated/UIFont+Typography.swift"
+  generateLabels = false
+}
+```
+
 ## Cleanup
 
 After successful migration:
