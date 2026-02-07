@@ -809,6 +809,70 @@ images = new iOS.ImagesEntry {
 
 The `heicOptions.encoding` field is now supported and bridged to the converter. Previously it was ignored. Valid values: `"lossy"` (default) and `"lossless"`.
 
+### Entry-Level Path and File Overrides
+
+Each entry can now override platform-level paths (`xcassetsPath`, `mainRes`, `templatesPath`) and use a separate Figma file (`figmaFileId`). When set, the entry value takes priority; when omitted, the platform config value is used.
+
+| Platform | Available Entry Overrides                            |
+| -------- | ---------------------------------------------------- |
+| iOS      | `figmaFileId`, `xcassetsPath`, `templatesPath`       |
+| Android  | `figmaFileId`, `mainRes`, `mainSrc`, `templatesPath` |
+| Flutter  | `figmaFileId`, `templatesPath`                       |
+| Web      | `figmaFileId`, `templatesPath`                       |
+
+```pkl
+ios = new iOS.iOSConfig {
+  xcassetsPath = "MyApp/Assets.xcassets"  // platform default
+
+  icons = new Listing {
+    // Uses platform xcassetsPath
+    new iOS.IconsEntry {
+      format = "pdf"
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+    }
+    // Overrides xcassetsPath + uses separate Figma file
+    new iOS.IconsEntry {
+      figmaFileId = "brand-icons-file"
+      format = "svg"
+      assetsFolder = "BrandIcons"
+      nameStyle = "camelCase"
+      xcassetsPath = "BrandKit/Assets.xcassets"
+    }
+  }
+}
+```
+
+### PKL Schema Constraints
+
+PKL schemas now include validation constraints that catch errors during `pkl eval`:
+
+- **String constraints**: Required fields like `xcodeprojPath`, `target`, `mainRes`, `output`, `themeName` reject empty strings
+- **Numeric constraints**: `timeout` must be between 1 and 600
+
+```bash
+# This will fail with a clear error
+pkl eval --format json exfig-with-empty-target.pkl
+# Error: expected value to not be empty
+```
+
+### Default Values in Schemas
+
+Many fields now have PKL-level defaults. You can omit them from your config:
+
+| Field                    | Default               |
+| ------------------------ | --------------------- |
+| `Cache.enabled`          | `false`               |
+| `Cache.path`             | `".exfig-cache.json"` |
+| `FigmaConfig.timeout`    | `30`                  |
+| iOS `nameStyle`          | `"camelCase"`         |
+| iOS `IconsEntry.format`  | `"pdf"`               |
+| iOS `ImagesEntry.scales` | `[1, 2, 3]`           |
+| Android `scales`         | `[1, 1.5, 2, 3, 4]`   |
+| Flutter `scales`         | `[1, 2, 3]`           |
+
+See the PKL schema files for the complete list of defaults.
+
 ## Cleanup
 
 After successful migration:
