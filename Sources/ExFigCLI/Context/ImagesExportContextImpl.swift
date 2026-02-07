@@ -37,7 +37,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         fileDownloader: FileDownloader = FileDownloader(),
         configExecutionContext: ConfigExecutionContext? = nil,
         granularCacheManager: GranularCacheManager? = nil,
-        platform: Platform = .ios
+        platform: Platform
     ) {
         self.client = client
         self.ui = ui
@@ -302,7 +302,12 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
 
         // Delete source PNG files after successful conversion
         for pngFile in filesToConvert {
-            try? FileManager.default.removeItem(at: pngFile)
+            do {
+                try FileManager.default.removeItem(at: pngFile)
+            } catch {
+                ExFigCommand.logger
+                    .debug("Failed to clean up \(pngFile.lastPathComponent): \(error.localizedDescription)")
+            }
         }
 
         // Update file references to use .heic extension
@@ -336,7 +341,12 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
 
         // Delete source PNG files after successful conversion
         for pngFile in filesToConvert {
-            try? FileManager.default.removeItem(at: pngFile)
+            do {
+                try FileManager.default.removeItem(at: pngFile)
+            } catch {
+                ExFigCommand.logger
+                    .debug("Failed to clean up \(pngFile.lastPathComponent): \(error.localizedDescription)")
+            }
         }
 
         // Update file references to use .webp extension

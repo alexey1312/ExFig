@@ -5,7 +5,13 @@ public extension Common.NameStyle {
     ///
     /// Raw values match between the two enums (verified by `EnumBridgingTests`).
     var coreNameStyle: NameStyle {
-        // swiftlint:disable:next force_unwrapping
-        NameStyle(rawValue: rawValue)!
+        guard let style = NameStyle(rawValue: rawValue) else {
+            preconditionFailure(
+                "Unsupported NameStyle '\(rawValue)'. "
+                    + "Valid: \(NameStyle.allCases.map(\.rawValue)). "
+                    + "This may indicate a PKL schema version mismatch."
+            )
+        }
+        return style
     }
 }

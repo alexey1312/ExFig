@@ -32,7 +32,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
         fileDownloader: FileDownloader = FileDownloader(),
         configExecutionContext: ConfigExecutionContext? = nil,
         granularCacheManager: GranularCacheManager? = nil,
-        platform: Platform = .ios
+        platform: Platform
     ) {
         self.client = client
         self.ui = ui

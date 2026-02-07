@@ -157,6 +157,7 @@ let package = Package(
                 "ExFigCore",
                 "ExFigConfig",
                 "AndroidExport",
+                "SVGKit",
             ]
         ),
 

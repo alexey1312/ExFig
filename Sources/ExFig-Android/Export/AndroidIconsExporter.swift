@@ -180,8 +180,8 @@ private extension AndroidIconsExporter {
 
         // Download SVG files (light only for ImageVector)
         let remoteFiles = iconPairs.flatMap { pair -> [FileContents] in
-            pair.light.images.compactMap { image -> FileContents? in
-                guard let fileURL = URL(string: "\(image.name).svg") else { return nil }
+            pair.light.images.map { image -> FileContents in
+                let fileURL = URL(fileURLWithPath: "\(image.name).svg")
                 let dest = Destination(directory: tempDirs.light, file: fileURL)
                 return FileContents(destination: dest, sourceURL: image.url, isRTL: image.isRTL)
             }
@@ -281,7 +281,7 @@ private enum AndroidIconsHelpers {
 
         for pair in iconPairs {
             for image in pair.light.images {
-                guard let fileURL = URL(string: "\(image.name).svg") else { continue }
+                let fileURL = URL(fileURLWithPath: "\(image.name).svg")
                 files.append(FileContents(
                     destination: Destination(directory: lightDir, file: fileURL),
                     sourceURL: image.url,
@@ -291,7 +291,7 @@ private enum AndroidIconsHelpers {
 
             if let dark = pair.dark {
                 for image in dark.images {
-                    guard let fileURL = URL(string: "\(image.name).svg") else { continue }
+                    let fileURL = URL(fileURLWithPath: "\(image.name).svg")
                     files.append(FileContents(
                         destination: Destination(directory: darkDir, file: fileURL),
                         sourceURL: image.url,

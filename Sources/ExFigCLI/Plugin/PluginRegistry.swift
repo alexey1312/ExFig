@@ -52,6 +52,10 @@ public struct PluginRegistry: Sendable {
 
         for plugin in plugins {
             for key in plugin.configKeys {
+                assert(
+                    configKeyIndex[key] == nil,
+                    "Duplicate config key '\(key)' registered by '\(plugin.identifier)'"
+                )
                 configKeyIndex[key] = plugin
             }
             identifierIndex[plugin.identifier] = plugin

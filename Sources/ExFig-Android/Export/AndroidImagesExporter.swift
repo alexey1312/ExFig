@@ -155,7 +155,8 @@ private extension AndroidImagesExporter {
         )
 
         let isSingleScale = scales.count == 1
-        let finalFiles = webpFiles.map { file -> FileContents in
+        let finalFiles = webpFiles.compactMap { file -> FileContents? in
+            guard let data = file.data else { return nil }
             let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = resolvedMainRes
@@ -163,7 +164,7 @@ private extension AndroidImagesExporter {
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
                 destination: Destination(directory: directory, file: stripped.destination.file),
-                data: file.data!,
+                data: data,
                 scale: file.scale,
                 dark: file.dark
             )
@@ -207,7 +208,8 @@ private extension AndroidImagesExporter {
         )
 
         let isSingleScale = scales.count == 1
-        let finalFiles = pngFiles.map { file -> FileContents in
+        let finalFiles = pngFiles.compactMap { file -> FileContents? in
+            guard let data = file.data else { return nil }
             let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = resolvedMainRes
@@ -215,7 +217,7 @@ private extension AndroidImagesExporter {
                 .appendingPathComponent(dirName, isDirectory: true)
             return FileContents(
                 destination: Destination(directory: directory, file: stripped.destination.file),
-                data: file.data!,
+                data: data,
                 scale: file.scale,
                 dark: file.dark
             )
@@ -501,11 +503,11 @@ private enum AndroidImagesHelpers {
 
 // MARK: - Error
 
-enum AndroidImagesExporterError: LocalizedError {
+public enum AndroidImagesExporterError: LocalizedError {
     case invalidFileName(String)
     case incompatibleFormat(source: String, output: String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case let .invalidFileName(name):
             "Invalid file name: \(name)"
@@ -514,7 +516,7 @@ enum AndroidImagesExporterError: LocalizedError {
         }
     }
 
-    var recoverySuggestion: String? {
+    public var recoverySuggestion: String? {
         switch self {
         case .invalidFileName:
             nil

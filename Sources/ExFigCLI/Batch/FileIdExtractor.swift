@@ -49,7 +49,7 @@ struct FileIdExtractor {
             } catch {
                 let name = url.lastPathComponent
                 let reason = error.localizedDescription
-                ExFigCommand.logger.warning(
+                ExFigCommand.logger.error(
                     """
                     Pre-fetch optimization: Failed to parse config \(name): \(reason). \
                     File IDs from this config will not be pre-fetched.

@@ -502,7 +502,7 @@ enum FlutterImagesHelpers {
                 let scale = image.scale.value
                 guard scales.contains(scale) else { continue }
 
-                guard let fileURL = URL(string: "\(image.name).png") else { continue }
+                let fileURL = URL(fileURLWithPath: "\(image.name).png")
                 let scaleDir = tempDirectory.appendingPathComponent(String(scale))
                 files.append(FileContents(
                     destination: Destination(directory: scaleDir, file: fileURL),
@@ -516,7 +516,7 @@ enum FlutterImagesHelpers {
                     let scale = image.scale.value
                     guard scales.contains(scale) else { continue }
 
-                    guard let fileURL = URL(string: "\(image.name).png") else { continue }
+                    let fileURL = URL(fileURLWithPath: "\(image.name).png")
                     let scaleDir = tempDirectory.appendingPathComponent("dark").appendingPathComponent(String(scale))
                     files.append(FileContents(
                         destination: Destination(directory: scaleDir, file: fileURL),
