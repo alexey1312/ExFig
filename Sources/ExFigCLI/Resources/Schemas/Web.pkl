@@ -37,7 +37,7 @@ class IconsEntry extends Common.FrameSource {
   templatesPath: String?
 
   /// Output directory for generated icon components.
-  outputDirectory: String
+  outputDirectory: String(!isEmpty)
 
   /// Directory for raw SVG files.
   svgDirectory: String?
@@ -46,7 +46,7 @@ class IconsEntry extends Common.FrameSource {
   generateReactComponents: Boolean? = true
 
   /// Icon size in pixels for viewBox.
-  iconSize: Int? = 24
+  iconSize: Int(isPositive)? = 24
 
   /// Naming style for icon names.
   nameStyle: Common.NameStyle? = "snake_case"
@@ -61,7 +61,7 @@ class ImagesEntry extends Common.FrameSource {
   templatesPath: String?
 
   /// Output directory for generated image components.
-  outputDirectory: String
+  outputDirectory: String(!isEmpty)
 
   /// Directory for image asset files.
   assetsDirectory: String?

@@ -24,14 +24,7 @@ public extension Flutter.IconsEntry {
     /// Effective name style, defaulting to snake_case.
     var effectiveNameStyle: NameStyle {
         guard let nameStyle else { return .snakeCase }
-        switch nameStyle {
-        case .camelCase: return .camelCase
-        case .snake_case: return .snakeCase
-        case .pascalCase: return .pascalCase
-        case .flatCase: return .flatCase
-        case .kebabCase: return .kebabCase
-        case .sCREAMING_SNAKE_CASE: return .screamingSnakeCase
-        }
+        return nameStyle.coreNameStyle
     }
 
     // MARK: - Entry-Level Override Resolution
@@ -39,10 +32,5 @@ public extension Flutter.IconsEntry {
     /// Resolved templates path: entry override or platform config fallback.
     func resolvedTemplatesPath(fallback: URL?) -> URL? {
         templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
-    }
-
-    /// Resolved Figma file ID: entry override or global fallback.
-    func resolvedFigmaFileId(fallback: String?) -> String? {
-        figmaFileId ?? fallback
     }
 }

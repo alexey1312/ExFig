@@ -1,4 +1,4 @@
-// swiftlint:disable type_name
+// swiftlint:disable type_name file_length
 
 import ExFig_Android
 import ExFig_Flutter
@@ -69,38 +69,11 @@ final class iOSEntryOverrideResolutionTests: XCTestCase {
         XCTAssertEqual(resolved, fallback)
     }
 
-    // MARK: - figmaFileId
-
-    func testIconsEntry_figmaFileIdOverride_resolvesEntryValue() throws {
-        let entry = try makeIOSIconsEntry(figmaFileId: "entry-file-id")
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-file-id")
-
-        XCTAssertEqual(resolved, "entry-file-id")
-    }
-
-    func testIconsEntry_figmaFileIdNil_fallsBackToGlobal() throws {
-        let entry = try makeIOSIconsEntry()
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-file-id")
-
-        XCTAssertEqual(resolved, "global-file-id")
-    }
-
-    func testImagesEntry_figmaFileIdOverride_resolvesEntryValue() throws {
-        let entry = try makeIOSImagesEntry(figmaFileId: "entry-images-id")
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-id")
-
-        XCTAssertEqual(resolved, "entry-images-id")
-    }
-
     // MARK: - Helpers
 
     private func makeIOSIconsEntry(
         xcassetsPath: String? = nil,
-        templatesPath: String? = nil,
-        figmaFileId: String? = nil
+        templatesPath: String? = nil
     ) throws -> iOSIconsEntry {
         var fields = [String]()
         fields.append("\"format\": \"svg\"")
@@ -108,20 +81,17 @@ final class iOSEntryOverrideResolutionTests: XCTestCase {
         fields.append("\"nameStyle\": \"camelCase\"")
         if let xcassetsPath { fields.append("\"xcassetsPath\": \"\(xcassetsPath)\"") }
         if let templatesPath { fields.append("\"templatesPath\": \"\(templatesPath)\"") }
-        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
         let json = "{ \(fields.joined(separator: ", ")) }"
         return try JSONDecoder().decode(iOSIconsEntry.self, from: Data(json.utf8))
     }
 
     private func makeIOSImagesEntry(
-        xcassetsPath: String? = nil,
-        figmaFileId: String? = nil
+        xcassetsPath: String? = nil
     ) throws -> iOSImagesEntry {
         var fields = [String]()
         fields.append("\"nameStyle\": \"camelCase\"")
         fields.append("\"assetsFolder\": \"Images\"")
         if let xcassetsPath { fields.append("\"xcassetsPath\": \"\(xcassetsPath)\"") }
-        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
         let json = "{ \(fields.joined(separator: ", ")) }"
         return try JSONDecoder().decode(iOSImagesEntry.self, from: Data(json.utf8))
     }
@@ -157,22 +127,6 @@ final class AndroidEntryOverrideResolutionTests: XCTestCase {
         XCTAssertEqual(resolved.path, "/images/res")
     }
 
-    func testImagesEntry_figmaFileIdOverride_resolvesEntryValue() throws {
-        let entry = try makeAndroidImagesEntry(figmaFileId: "android-entry-id")
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-id")
-
-        XCTAssertEqual(resolved, "android-entry-id")
-    }
-
-    func testImagesEntry_figmaFileIdNil_fallsBackToGlobal() throws {
-        let entry = try makeAndroidImagesEntry()
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-id")
-
-        XCTAssertEqual(resolved, "global-id")
-    }
-
     // MARK: - Helpers
 
     private func makeAndroidIconsEntry(mainRes: String? = nil) throws -> AndroidIconsEntry {
@@ -184,14 +138,12 @@ final class AndroidEntryOverrideResolutionTests: XCTestCase {
     }
 
     private func makeAndroidImagesEntry(
-        mainRes: String? = nil,
-        figmaFileId: String? = nil
+        mainRes: String? = nil
     ) throws -> AndroidImagesEntry {
         var fields = [String]()
         fields.append("\"format\": \"png\"")
         fields.append("\"output\": \"drawable\"")
         if let mainRes { fields.append("\"mainRes\": \"\(mainRes)\"") }
-        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
         let json = "{ \(fields.joined(separator: ", ")) }"
         return try JSONDecoder().decode(AndroidImagesEntry.self, from: Data(json.utf8))
     }
@@ -218,24 +170,14 @@ final class FlutterEntryOverrideResolutionTests: XCTestCase {
         XCTAssertEqual(resolved, fallback)
     }
 
-    func testIconsEntry_figmaFileIdOverride_resolvesEntryValue() throws {
-        let entry = try makeFlutterIconsEntry(figmaFileId: "flutter-entry-id")
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-id")
-
-        XCTAssertEqual(resolved, "flutter-entry-id")
-    }
-
     // MARK: - Helpers
 
     private func makeFlutterIconsEntry(
-        templatesPath: String? = nil,
-        figmaFileId: String? = nil
+        templatesPath: String? = nil
     ) throws -> FlutterIconsEntry {
         var fields = [String]()
         fields.append("\"output\": \"assets/icons\"")
         if let templatesPath { fields.append("\"templatesPath\": \"\(templatesPath)\"") }
-        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
         let json = "{ \(fields.joined(separator: ", ")) }"
         return try JSONDecoder().decode(FlutterIconsEntry.self, from: Data(json.utf8))
     }
@@ -262,28 +204,415 @@ final class WebEntryOverrideResolutionTests: XCTestCase {
         XCTAssertEqual(resolved, fallback)
     }
 
-    func testImagesEntry_figmaFileIdOverride_resolvesEntryValue() throws {
-        let entry = try makeWebImagesEntry(figmaFileId: "web-entry-id")
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-id")
-
-        XCTAssertEqual(resolved, "web-entry-id")
-    }
-
-    func testImagesEntry_figmaFileIdNil_fallsBackToGlobal() throws {
-        let entry = try makeWebImagesEntry()
-
-        let resolved = entry.resolvedFigmaFileId(fallback: "global-id")
-
-        XCTAssertEqual(resolved, "global-id")
-    }
-
     // MARK: - Helpers
 
     private func makeWebIconsEntry(templatesPath: String? = nil) throws -> WebIconsEntry {
         var fields = [String]()
         fields.append("\"outputDirectory\": \"dist/icons\"")
         if let templatesPath { fields.append("\"templatesPath\": \"\(templatesPath)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(WebIconsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeWebImagesEntry() throws -> WebImagesEntry {
+        let json = "{ \"outputDirectory\": \"dist/images\" }"
+        return try JSONDecoder().decode(WebImagesEntry.self, from: Data(json.utf8))
+    }
+}
+
+// MARK: - Empty String Edge Cases
+
+final class EmptyStringOverrideTests: XCTestCase {
+    func testIconsEntry_xcassetsPathEmpty_treatedAsOverride() throws {
+        let entry = try makeIOSIconsEntry(xcassetsPath: "")
+        let fallback = URL(fileURLWithPath: "/default/path.xcassets")
+
+        let resolved = entry.resolvedXcassetsPath(fallback: fallback)
+
+        // Empty string is a non-nil override — does NOT fall back
+        XCTAssertNotEqual(resolved, fallback)
+        XCTAssertNotNil(resolved)
+    }
+
+    func testIconsEntry_figmaFileIdEmpty_treatedAsOverride() throws {
+        let entry = try makeIOSIconsEntry(figmaFileId: "")
+
+        let input = entry.iconsSourceInput()
+
+        // Empty string is a non-nil override — does NOT fall back to global
+        XCTAssertEqual(input.figmaFileId, "")
+    }
+
+    func testImagesEntry_figmaFileIdEmpty_passedToSourceInput() throws {
+        let entry = try makeIOSImagesEntry(figmaFileId: "")
+
+        let input = entry.imagesSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "")
+    }
+
+    // MARK: - Helpers
+
+    private func makeIOSIconsEntry(
+        xcassetsPath: String? = nil,
+        figmaFileId: String? = nil
+    ) throws -> iOSIconsEntry {
+        var fields = [String]()
+        fields.append("\"format\": \"svg\"")
+        fields.append("\"assetsFolder\": \"Icons\"")
+        fields.append("\"nameStyle\": \"camelCase\"")
+        if let xcassetsPath { fields.append("\"xcassetsPath\": \"\(xcassetsPath)\"") }
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(iOSIconsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeIOSImagesEntry(figmaFileId: String? = nil) throws -> iOSImagesEntry {
+        var fields = [String]()
+        fields.append("\"nameStyle\": \"camelCase\"")
+        fields.append("\"assetsFolder\": \"Images\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(iOSImagesEntry.self, from: Data(json.utf8))
+    }
+}
+
+// MARK: - ColorsEntry Override Resolution
+
+final class ColorsEntryOverrideResolutionTests: XCTestCase {
+    // MARK: - iOS Colors
+
+    func testIOSColorsEntry_xcassetsPathOverride_resolvesEntryValue() throws {
+        let entry = try makeIOSColorsEntry(xcassetsPath: "/custom/Colors.xcassets")
+        let fallback = URL(fileURLWithPath: "/default/Colors.xcassets")
+
+        let resolved = entry.resolvedXcassetsPath(fallback: fallback)
+
+        XCTAssertEqual(resolved?.path, "/custom/Colors.xcassets")
+    }
+
+    func testIOSColorsEntry_xcassetsPathNil_fallsBackToConfig() throws {
+        let entry = try makeIOSColorsEntry()
+        let fallback = URL(fileURLWithPath: "/default/Colors.xcassets")
+
+        let resolved = entry.resolvedXcassetsPath(fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    func testIOSColorsEntry_templatesPathOverride_resolvesEntryValue() throws {
+        let entry = try makeIOSColorsEntry(templatesPath: "/custom/templates")
+        let fallback = URL(fileURLWithPath: "/default/templates")
+
+        let resolved = entry.resolvedTemplatesPath(fallback: fallback)
+
+        XCTAssertEqual(resolved?.path, "/custom/templates")
+    }
+
+    func testIOSColorsEntry_templatesPathNil_fallsBackToConfig() throws {
+        let entry = try makeIOSColorsEntry()
+        let fallback = URL(fileURLWithPath: "/default/templates")
+
+        let resolved = entry.resolvedTemplatesPath(fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    // MARK: - Android Colors
+
+    func testAndroidColorsEntry_mainResOverride_resolvesEntryValue() throws {
+        let entry = try makeAndroidColorsEntry(mainRes: "/custom/res")
+        let fallback = URL(fileURLWithPath: "/default/res")
+
+        let resolved = entry.resolvedMainRes(fallback: fallback)
+
+        XCTAssertEqual(resolved.path, "/custom/res")
+    }
+
+    func testAndroidColorsEntry_mainResNil_fallsBackToConfig() throws {
+        let entry = try makeAndroidColorsEntry()
+        let fallback = URL(fileURLWithPath: "/default/res")
+
+        let resolved = entry.resolvedMainRes(fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    func testAndroidColorsEntry_mainSrcOverride_resolvesEntryValue() throws {
+        let entry = try makeAndroidColorsEntry(mainSrc: "/custom/src")
+        let fallback = URL(fileURLWithPath: "/default/src")
+
+        let resolved = entry.resolvedMainSrc(fallback: fallback)
+
+        XCTAssertEqual(resolved?.path, "/custom/src")
+    }
+
+    func testAndroidColorsEntry_mainSrcNil_fallsBackToConfig() throws {
+        let entry = try makeAndroidColorsEntry()
+        let fallback = URL(fileURLWithPath: "/default/src")
+
+        let resolved = entry.resolvedMainSrc(fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    func testAndroidColorsEntry_templatesPathOverride_resolvesEntryValue() throws {
+        let entry = try makeAndroidColorsEntry(templatesPath: "/custom/templates")
+        let fallback = URL(fileURLWithPath: "/default/templates")
+
+        let resolved = entry.resolvedTemplatesPath(fallback: fallback)
+
+        XCTAssertEqual(resolved?.path, "/custom/templates")
+    }
+
+    // MARK: - Flutter Colors
+
+    func testFlutterColorsEntry_templatesPathOverride_resolvesEntryValue() throws {
+        let entry = try makeFlutterColorsEntry(templatesPath: "/custom/templates")
+        let fallback = URL(fileURLWithPath: "/default/templates")
+
+        let resolved = entry.resolvedTemplatesPath(fallback: fallback)
+
+        XCTAssertEqual(resolved?.path, "/custom/templates")
+    }
+
+    func testFlutterColorsEntry_templatesPathNil_fallsBackToConfig() throws {
+        let entry = try makeFlutterColorsEntry()
+        let fallback = URL(fileURLWithPath: "/default/templates")
+
+        let resolved = entry.resolvedTemplatesPath(fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    // MARK: - Web Colors
+
+    func testWebColorsEntry_outputOverride_resolvesEntryValue() throws {
+        let entry = try makeWebColorsEntry(output: "/custom/output")
+        let fallback = URL(fileURLWithPath: "/default/output")
+
+        let resolved = entry.resolvedOutput(fallback: fallback)
+
+        XCTAssertEqual(resolved.path, "/custom/output")
+    }
+
+    func testWebColorsEntry_outputNil_fallsBackToConfig() throws {
+        let entry = try makeWebColorsEntry()
+        let fallback = URL(fileURLWithPath: "/default/output")
+
+        let resolved = entry.resolvedOutput(fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    func testWebColorsEntry_templatesPathOverride_resolvesEntryValue() throws {
+        let entry = try makeWebColorsEntry(templatesPath: "/custom/templates")
+        let fallback = URL(fileURLWithPath: "/default/templates")
+
+        let resolved = entry.resolvedTemplatesPath(fallback: fallback)
+
+        XCTAssertEqual(resolved?.path, "/custom/templates")
+    }
+
+    func testWebColorsEntry_templatesPathNil_fallsBackToConfig() throws {
+        let entry = try makeWebColorsEntry()
+        let fallback = URL(fileURLWithPath: "/default/templates")
+
+        let resolved = entry.resolvedTemplatesPath(fallback: fallback)
+
+        XCTAssertEqual(resolved, fallback)
+    }
+
+    // MARK: - Helpers
+
+    private func makeIOSColorsEntry(
+        xcassetsPath: String? = nil,
+        templatesPath: String? = nil
+    ) throws -> iOSColorsEntry {
+        var fields = [String]()
+        fields.append("\"nameStyle\": \"camelCase\"")
+        fields.append("\"useColorAssets\": true")
+        if let xcassetsPath { fields.append("\"xcassetsPath\": \"\(xcassetsPath)\"") }
+        if let templatesPath { fields.append("\"templatesPath\": \"\(templatesPath)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(iOSColorsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeAndroidColorsEntry(
+        mainRes: String? = nil,
+        mainSrc: String? = nil,
+        templatesPath: String? = nil
+    ) throws -> AndroidColorsEntry {
+        var fields = [String]()
+        if let mainRes { fields.append("\"mainRes\": \"\(mainRes)\"") }
+        if let mainSrc { fields.append("\"mainSrc\": \"\(mainSrc)\"") }
+        if let templatesPath { fields.append("\"templatesPath\": \"\(templatesPath)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(AndroidColorsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeFlutterColorsEntry(
+        templatesPath: String? = nil
+    ) throws -> FlutterColorsEntry {
+        var fields = [String]()
+        if let templatesPath { fields.append("\"templatesPath\": \"\(templatesPath)\"") }
+        let json = fields.isEmpty ? "{}" : "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(FlutterColorsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeWebColorsEntry(
+        output: String? = nil,
+        templatesPath: String? = nil
+    ) throws -> WebColorsEntry {
+        var fields = [String]()
+        if let output { fields.append("\"output\": \"\(output)\"") }
+        if let templatesPath { fields.append("\"templatesPath\": \"\(templatesPath)\"") }
+        let json = fields.isEmpty ? "{}" : "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(WebColorsEntry.self, from: Data(json.utf8))
+    }
+}
+
+// MARK: - Source Input figmaFileId Propagation
+
+final class SourceInputFigmaFileIdTests: XCTestCase {
+    func testIOSIconsEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeIOSIconsEntry(figmaFileId: "ios-icons-file")
+
+        let input = entry.iconsSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "ios-icons-file")
+    }
+
+    func testIOSIconsEntry_figmaFileIdNil_sourceInputHasNil() throws {
+        let entry = try makeIOSIconsEntry()
+
+        let input = entry.iconsSourceInput()
+
+        XCTAssertNil(input.figmaFileId)
+    }
+
+    func testIOSImagesEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeIOSImagesEntry(figmaFileId: "ios-images-file")
+
+        let input = entry.imagesSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "ios-images-file")
+    }
+
+    func testAndroidIconsEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeAndroidIconsEntry(figmaFileId: "android-icons-file")
+
+        let input = entry.iconsSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "android-icons-file")
+    }
+
+    func testAndroidImagesEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeAndroidImagesEntry(figmaFileId: "android-images-file")
+
+        let input = entry.imagesSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "android-images-file")
+    }
+
+    func testFlutterIconsEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeFlutterIconsEntry(figmaFileId: "flutter-icons-file")
+
+        let input = entry.iconsSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "flutter-icons-file")
+    }
+
+    func testFlutterImagesEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeFlutterImagesEntry(figmaFileId: "flutter-images-file")
+
+        let input = entry.imagesSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "flutter-images-file")
+    }
+
+    func testFlutterImagesEntry_figmaFileId_passedToSvgSourceInput() throws {
+        let entry = try makeFlutterImagesEntry(figmaFileId: "flutter-svg-file")
+
+        let input = entry.svgSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "flutter-svg-file")
+    }
+
+    func testWebIconsEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeWebIconsEntry(figmaFileId: "web-icons-file")
+
+        let input = entry.iconsSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "web-icons-file")
+    }
+
+    func testWebImagesEntry_figmaFileId_passedToSourceInput() throws {
+        let entry = try makeWebImagesEntry(figmaFileId: "web-images-file")
+
+        let input = entry.imagesSourceInput()
+
+        XCTAssertEqual(input.figmaFileId, "web-images-file")
+    }
+
+    // MARK: - Helpers
+
+    private func makeIOSIconsEntry(figmaFileId: String? = nil) throws -> iOSIconsEntry {
+        var fields = [String]()
+        fields.append("\"format\": \"svg\"")
+        fields.append("\"assetsFolder\": \"Icons\"")
+        fields.append("\"nameStyle\": \"camelCase\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(iOSIconsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeIOSImagesEntry(figmaFileId: String? = nil) throws -> iOSImagesEntry {
+        var fields = [String]()
+        fields.append("\"nameStyle\": \"camelCase\"")
+        fields.append("\"assetsFolder\": \"Images\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(iOSImagesEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeAndroidIconsEntry(figmaFileId: String? = nil) throws -> AndroidIconsEntry {
+        var fields = [String]()
+        fields.append("\"output\": \"drawable\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(AndroidIconsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeAndroidImagesEntry(figmaFileId: String? = nil) throws -> AndroidImagesEntry {
+        var fields = [String]()
+        fields.append("\"format\": \"png\"")
+        fields.append("\"output\": \"drawable\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(AndroidImagesEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeFlutterIconsEntry(figmaFileId: String? = nil) throws -> FlutterIconsEntry {
+        var fields = [String]()
+        fields.append("\"output\": \"assets/icons\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(FlutterIconsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeFlutterImagesEntry(figmaFileId: String? = nil) throws -> FlutterImagesEntry {
+        var fields = [String]()
+        fields.append("\"output\": \"assets/images\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
+        let json = "{ \(fields.joined(separator: ", ")) }"
+        return try JSONDecoder().decode(FlutterImagesEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeWebIconsEntry(figmaFileId: String? = nil) throws -> WebIconsEntry {
+        var fields = [String]()
+        fields.append("\"outputDirectory\": \"dist/icons\"")
+        if let figmaFileId { fields.append("\"figmaFileId\": \"\(figmaFileId)\"") }
         let json = "{ \(fields.joined(separator: ", ")) }"
         return try JSONDecoder().decode(WebIconsEntry.self, from: Data(json.utf8))
     }
@@ -297,4 +626,4 @@ final class WebEntryOverrideResolutionTests: XCTestCase {
     }
 }
 
-// swiftlint:enable type_name
+// swiftlint:enable type_name file_length

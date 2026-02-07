@@ -150,12 +150,9 @@ private extension AndroidImagesExporter {
             progressTitle: "Rasterizing SVGs to WebP"
         )
 
-        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
-
-        if context.filter == nil {
-            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
-            try? FileManager.default.removeItem(atPath: outputDir.path)
-        }
+        let resolvedMainRes = resolveAndCleanOutput(
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let isSingleScale = scales.count == 1
         let finalFiles = webpFiles.map { file -> FileContents in
@@ -205,12 +202,9 @@ private extension AndroidImagesExporter {
             progressTitle: "Rasterizing SVGs to PNG"
         )
 
-        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
-
-        if context.filter == nil {
-            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
-            try? FileManager.default.removeItem(atPath: outputDir.path)
-        }
+        let resolvedMainRes = resolveAndCleanOutput(
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let isSingleScale = scales.count == 1
         let finalFiles = pngFiles.map { file -> FileContents in
@@ -261,12 +255,9 @@ private extension AndroidImagesExporter {
             progressTitle: "Converting to WebP"
         )
 
-        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
-
-        if context.filter == nil {
-            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
-            try? FileManager.default.removeItem(atPath: outputDir.path)
-        }
+        let resolvedMainRes = resolveAndCleanOutput(
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let scales = entry.effectiveScales
         let isSingleScale = scales.count == 1
@@ -307,12 +298,9 @@ private extension AndroidImagesExporter {
         let localFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading images")
         try context.writeFiles(localFiles)
 
-        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
-
-        if context.filter == nil {
-            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
-            try? FileManager.default.removeItem(atPath: outputDir.path)
-        }
+        let resolvedMainRes = resolveAndCleanOutput(
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let scales = entry.effectiveScales
         let isSingleScale = scales.count == 1
@@ -337,6 +325,25 @@ private extension AndroidImagesExporter {
     }
 }
 
+// MARK: - Output Directory
+
+private extension AndroidImagesExporter {
+    /// Resolves the main res path from entry override or platform config fallback,
+    /// and cleans the output directory when no filter is active.
+    func resolveAndCleanOutput(
+        entry: AndroidImagesEntry,
+        platformConfig: AndroidPlatformConfig,
+        context: some ImagesExportContext
+    ) -> URL {
+        let resolvedMainRes = entry.resolvedMainRes(fallback: platformConfig.mainRes)
+        if context.filter == nil {
+            let outputDir = resolvedMainRes.appendingPathComponent(entry.output)
+            try? FileManager.default.removeItem(atPath: outputDir.path)
+        }
+        return resolvedMainRes
+    }
+}
+
 // MARK: - Load & Process
 
 private extension AndroidImagesExporter {
@@ -346,6 +353,7 @@ private extension AndroidImagesExporter {
     ) async throws -> ([AssetPair<ImagePack>], (light: URL, dark: URL)) {
         let images = try await context.withSpinner("Fetching images from Figma (\(entry.output))...") {
             let input = ImagesSourceInput(
+                figmaFileId: entry.figmaFileId,
                 frameName: entry.figmaFrameName ?? "Images",
                 sourceFormat: .svg,
                 scales: [1.0],

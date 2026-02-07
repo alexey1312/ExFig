@@ -114,7 +114,7 @@ class IconsEntry extends Common.FrameSource {
   templatesPath: String?
 
   /// Output directory for vector drawables.
-  output: String
+  output: String(!isEmpty)
 
   /// Package name for generated Compose icons.
   composePackageName: String?
@@ -151,7 +151,7 @@ class ImagesEntry extends Common.FrameSource {
   scales: Listing<Number>? = new Listing { 1; 1.5; 2; 3; 4 }
 
   /// Output directory for images.
-  output: String
+  output: String(!isEmpty)
 
   /// Output format for images.
   format: ImageFormat = "png"

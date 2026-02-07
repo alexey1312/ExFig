@@ -80,11 +80,6 @@ public extension iOS.ImagesEntry {
     func resolvedTemplatesPath(fallback: URL?) -> URL? {
         templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
     }
-
-    /// Resolved Figma file ID: entry override or global fallback.
-    func resolvedFigmaFileId(fallback: String?) -> String? {
-        figmaFileId ?? fallback
-    }
 }
 
 // swiftlint:enable type_name

@@ -31,7 +31,7 @@ class IconsEntry extends Common.FrameSource {
   templatesPath: String?
 
   /// Output directory for icon SVG files.
-  output: String
+  output: String(!isEmpty)
 
   /// Dart file path for icon class generation.
   dartFile: String?
@@ -52,7 +52,7 @@ class ImagesEntry extends Common.FrameSource {
   templatesPath: String?
 
   /// Output directory for image files.
-  output: String
+  output: String(!isEmpty)
 
   /// Dart file path for image class generation.
   dartFile: String?

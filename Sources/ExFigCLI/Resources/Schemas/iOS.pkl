@@ -115,7 +115,7 @@ class IconsEntry extends Common.FrameSource {
 /// iOS images entry configuration.
 class ImagesEntry extends Common.FrameSource {
   /// Path to .xcassets folder for images.
-  assetsFolder: String
+  assetsFolder: String(!isEmpty)
 
   /// Naming style for generated image names.
   nameStyle: Common.NameStyle = "camelCase"

@@ -92,10 +92,12 @@ private extension FlutterImagesExporter {
         let localFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading SVGs")
 
         // Generate Dart file
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let dartFile = try generateDartFile(
             imagePairs: imagePairs,
             entry: entry,
             platformConfig: platformConfig,
+            resolvedTemplatesPath: resolvedTemplatesPath,
             format: "svg",
             scales: [1.0]
         )
@@ -146,10 +148,12 @@ private extension FlutterImagesExporter {
             webpFiles, assetsDirectory: assetsDirectory
         )
 
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let dartFile = try generateDartFile(
             imagePairs: imagePairs,
             entry: entry,
             platformConfig: platformConfig,
+            resolvedTemplatesPath: resolvedTemplatesPath,
             format: "webp",
             scales: scales
         )
@@ -196,10 +200,12 @@ private extension FlutterImagesExporter {
             pngFiles, assetsDirectory: assetsDirectory
         )
 
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let dartFile = try generateDartFile(
             imagePairs: imagePairs,
             entry: entry,
             platformConfig: platformConfig,
+            resolvedTemplatesPath: resolvedTemplatesPath,
             format: "png",
             scales: scales
         )
@@ -246,10 +252,12 @@ private extension FlutterImagesExporter {
             localFiles, assetsDirectory: assetsDirectory
         )
 
+        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let dartFile = try generateDartFile(
             imagePairs: imagePairs,
             entry: entry,
             platformConfig: platformConfig,
+            resolvedTemplatesPath: resolvedTemplatesPath,
             format: "webp",
             scales: entry.effectiveScales
         )
@@ -413,15 +421,16 @@ private extension FlutterImagesExporter {
         return (processResult.imagePairs, assetsDirectory)
     }
 
+    // swiftlint:disable:next function_parameter_count
     func generateDartFile(
         imagePairs: [AssetPair<ImagePack>],
         entry: FlutterImagesEntry,
         platformConfig: FlutterPlatformConfig,
+        resolvedTemplatesPath: URL?,
         format: String,
         scales: [Double]
     ) throws -> FileContents {
         let assetsDirectory = URL(fileURLWithPath: entry.output)
-        let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         let output = FlutterOutput(
             outputDirectory: platformConfig.output,
             imagesAssetsDirectory: assetsDirectory,

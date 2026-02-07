@@ -469,6 +469,7 @@ private extension iOSImagesEntry {
 
     func svgSourceInput() -> ImagesSourceInput {
         ImagesSourceInput(
+            figmaFileId: figmaFileId,
             darkFileId: nil,
             frameName: figmaFrameName ?? "Images",
             sourceFormat: .svg,
