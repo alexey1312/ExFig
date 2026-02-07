@@ -19,20 +19,24 @@ ios = new iOS.iOSConfig {
   xcassetsPath = "MyApp/Resources/Assets.xcassets"
   xcassetsInMainBundle = true
 
-  colors = new iOS.ColorsEntry {
-    useColorAssets = true
-    assetsFolder = "Colors"
-    nameStyle = "camelCase"
-    colorSwift = "MyApp/Generated/UIColor+Generated.swift"
-    swiftuiColorSwift = "MyApp/Generated/Color+Generated.swift"
+  colors = new Listing {
+    new iOS.ColorsEntry {
+      useColorAssets = true
+      assetsFolder = "Colors"
+      nameStyle = "camelCase"
+      colorSwift = "MyApp/Generated/UIColor+Generated.swift"
+      swiftuiColorSwift = "MyApp/Generated/Color+Generated.swift"
+    }
   }
 
-  icons = new iOS.IconsEntry {
-    figmaFrameName = "Icons"
-    format = "pdf"
-    assetsFolder = "Icons"
-    nameStyle = "camelCase"
-    imageSwift = "MyApp/Generated/UIImage+Icons.swift"
-    swiftUIImageSwift = "MyApp/Generated/Image+Icons.swift"
+  icons = new Listing {
+    new iOS.IconsEntry {
+      figmaFrameName = "Icons"
+      format = "pdf"
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+      imageSwift = "MyApp/Generated/UIImage+Icons.swift"
+      swiftUIImageSwift = "MyApp/Generated/Image+Icons.swift"
+    }
   }
 }

@@ -4,10 +4,10 @@
 
 | Track                       | Description                           | Status  |
 | --------------------------- | ------------------------------------- | ------- |
-| 1. Defaults                 | PKL default values в схемах           | Done    |
-| 2. Entry Overrides — Schema | Новые optional поля в PKL-схемах      | Done    |
+| 1. Defaults                 | PKL default values в схемах           | Done ✓  |
+| 2. Entry Overrides — Schema | Новые optional поля в PKL-схемах      | Done ✓  |
 | 3. Entry Overrides — Swift  | Resolution logic в Swift-коде         | Pending |
-| 4. Constraints              | PKL constraints (!isEmpty, isBetween) | Done    |
+| 4. Constraints              | PKL constraints (!isEmpty, isBetween) | Done ✓  |
 | 5. Verification             | Полная верификация                    | Pending |
 
 ## Dependency Graph
@@ -38,7 +38,7 @@ Track 5 зависит от всех треков.
 - [x] 1.1.1 Add `Cache.enabled` default: `= false`
 - [x] 1.1.2 Add `Cache.path` default: `= ".exfig-cache.json"`
 - [x] 1.1.3 Add `FigmaConfig.timeout` default: `= 30`
-- [ ] 1.1.4 Verify: `pkl eval --format json` on example configs shows resolved defaults
+- [x] 1.1.4 Verify: `pkl eval --format json` on example configs shows resolved defaults
 
 ### 1.2 iOS.pkl Defaults
 
@@ -91,10 +91,10 @@ Track 5 зависит от всех треков.
 
 ### 1.6 Defaults Verification
 
-- [ ] 1.6.1 Run `./bin/mise run codegen:pkl` — verify zero diff in Generated/*.pkl.swift
-- [ ] 1.6.2 Run `pkl eval --format json` on all example configs — verify resolved defaults
-- [ ] 1.6.3 Run `./bin/mise run test` — all tests pass
-- [ ] 1.6.4 Update example configs to omit fields that now have defaults
+- [x] 1.6.1 Run `./bin/mise run codegen:pkl` — verify zero diff in Generated/*.pkl.swift
+- [x] 1.6.2 Run `pkl eval --format json` on all example configs — verify resolved defaults
+- [x] 1.6.3 Run `./bin/mise run test` — all tests pass
+- [x] 1.6.4 Update example configs to omit fields that now have defaults
 
 ---
 
@@ -143,8 +143,8 @@ Track 5 зависит от всех треков.
 
 - [x] 2.6.1 Run `./bin/mise run codegen:pkl` — new optional fields appear in Generated/*.pkl.swift
 - [x] 2.6.2 Run `./bin/mise run build` — compiles (new fields are optional, nil by default)
-- [ ] 2.6.3 Run `pkl eval --format json` on example configs — verify new fields absent when not set
-- [ ] 2.6.4 Create test PKL config with entry-level overrides — verify JSON output
+- [x] 2.6.3 Run `pkl eval --format json` on example configs — verify new fields absent when not set
+- [x] 2.6.4 Create test PKL config with entry-level overrides — verify JSON output
 
 ---
 
@@ -154,12 +154,12 @@ Track 5 зависит от всех треков.
 
 ### 3.1 Research: Find All Resolution Points
 
-- [ ] 3.1.1 Find all usages of `iOSConfig.xcassetsPath` in Swift code
-- [ ] 3.1.2 Find all usages of `iOSConfig.templatesPath` in Swift code
-- [ ] 3.1.3 Find all usages of `figma.lightFileId` for icons/images loading
-- [ ] 3.1.4 Find all usages of `AndroidConfig.mainRes`, `AndroidConfig.templatesPath`
-- [ ] 3.1.5 Find all usages of `FlutterConfig.output`, `FlutterConfig.templatesPath`
-- [ ] 3.1.6 Find all usages of `WebConfig.output`, `WebConfig.templatesPath`
+- [x] 3.1.1 Find all usages of `iOSConfig.xcassetsPath` in Swift code
+- [x] 3.1.2 Find all usages of `iOSConfig.templatesPath` in Swift code
+- [x] 3.1.3 Find all usages of `figma.lightFileId` for icons/images loading
+- [x] 3.1.4 Find all usages of `AndroidConfig.mainRes`, `AndroidConfig.templatesPath`
+- [x] 3.1.5 Find all usages of `FlutterConfig.output`, `FlutterConfig.templatesPath`
+- [x] 3.1.6 Find all usages of `WebConfig.output`, `WebConfig.templatesPath`
 
 ### 3.2 iOS Entry Resolution
 
@@ -234,11 +234,11 @@ Track 5 зависит от всех треков.
 
 ### 4.3 Constraints Verification
 
-- [ ] 4.3.1 Run `./bin/mise run codegen:pkl` — verify zero diff
-- [ ] 4.3.2 Create test PKL with empty `xcodeprojPath` — verify `pkl eval` fails
-- [ ] 4.3.3 Create test PKL with `timeout = 0` — verify `pkl eval` fails
-- [ ] 4.3.4 Create test PKL with valid values — verify `pkl eval` succeeds
-- [ ] 4.3.5 Run `./bin/mise run test` — all tests pass
+- [x] 4.3.1 Run `./bin/mise run codegen:pkl` — verify zero diff
+- [x] 4.3.2 Create test PKL with empty `xcodeprojPath` — verify `pkl eval` fails
+- [x] 4.3.3 Create test PKL with `timeout = 0` — verify `pkl eval` fails
+- [x] 4.3.4 Create test PKL with valid values — verify `pkl eval` succeeds
+- [x] 4.3.5 Run `./bin/mise run test` — all tests pass
 
 ---
 

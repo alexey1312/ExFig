@@ -72,4 +72,16 @@ public extension Flutter.ImagesEntry {
         guard let opts = webpOptions else { return nil }
         return WebpConverterOptions(lossless: opts.encoding == .lossless, quality: opts.quality)
     }
+
+    // MARK: - Entry-Level Override Resolution
+
+    /// Resolved templates path: entry override or platform config fallback.
+    func resolvedTemplatesPath(fallback: URL?) -> URL? {
+        templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved Figma file ID: entry override or global fallback.
+    func resolvedFigmaFileId(fallback: String?) -> String? {
+        figmaFileId ?? fallback
+    }
 }

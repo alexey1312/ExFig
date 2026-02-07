@@ -32,4 +32,16 @@ public extension Flutter.IconsEntry {
         case .sCREAMING_SNAKE_CASE: return .screamingSnakeCase
         }
     }
+
+    // MARK: - Entry-Level Override Resolution
+
+    /// Resolved templates path: entry override or platform config fallback.
+    func resolvedTemplatesPath(fallback: URL?) -> URL? {
+        templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved Figma file ID: entry override or global fallback.
+    func resolvedFigmaFileId(fallback: String?) -> String? {
+        figmaFileId ?? fallback
+    }
 }

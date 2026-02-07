@@ -24,6 +24,18 @@ public extension iOS.ColorsEntry {
     var swiftuiColorSwiftURL: URL? {
         swiftuiColorSwift.map { URL(fileURLWithPath: $0) }
     }
+
+    // MARK: - Entry-Level Override Resolution
+
+    /// Resolved xcassets path: entry override or platform config fallback.
+    func resolvedXcassetsPath(fallback: URL?) -> URL? {
+        xcassetsPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved templates path: entry override or platform config fallback.
+    func resolvedTemplatesPath(fallback: URL?) -> URL? {
+        templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
 }
 
 // swiftlint:enable type_name

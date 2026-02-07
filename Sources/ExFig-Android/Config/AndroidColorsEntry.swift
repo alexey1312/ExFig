@@ -67,4 +67,21 @@ public extension Android.ColorsEntry {
     var colorKotlinURL: URL? {
         colorKotlin.map { URL(fileURLWithPath: $0) }
     }
+
+    // MARK: - Entry-Level Override Resolution
+
+    /// Resolved mainRes path: entry override or platform config fallback.
+    func resolvedMainRes(fallback: URL) -> URL {
+        mainRes.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved mainSrc path: entry override or platform config fallback.
+    func resolvedMainSrc(fallback: URL?) -> URL? {
+        mainSrc.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
+
+    /// Resolved templates path: entry override or platform config fallback.
+    func resolvedTemplatesPath(fallback: URL?) -> URL? {
+        templatesPath.map { URL(fileURLWithPath: $0) } ?? fallback
+    }
 }
