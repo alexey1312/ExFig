@@ -47,8 +47,13 @@ struct FileIdExtractor {
             do {
                 box.value = try await PKLEvaluator.evaluate(configPath: url)
             } catch {
+                let name = url.lastPathComponent
+                let reason = error.localizedDescription
                 ExFigCommand.logger.warning(
-                    "Failed to parse config \(url.lastPathComponent): \(error.localizedDescription)"
+                    """
+                    Pre-fetch optimization: Failed to parse config \(name): \(reason). \
+                    File IDs from this config will not be pre-fetched.
+                    """
                 )
             }
         }

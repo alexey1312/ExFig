@@ -169,13 +169,11 @@ private extension AndroidIconsExporter {
         context: some IconsExportContext
     ) async throws -> Int {
         guard let packageName = entry.composePackageName else {
-            context.warning("composePackageName is required for ImageVector output")
-            return 0
+            throw AndroidIconsExportError.missingComposePackageName
         }
 
         guard let srcDirectory = platformConfig.mainSrc else {
-            context.warning("mainSrc is required for ImageVector output")
-            return 0
+            throw AndroidIconsExportError.missingMainSrc
         }
 
         let (iconPairs, tempDirs) = try await loadAndProcess(entry: entry, context: context)
@@ -212,8 +210,11 @@ private extension AndroidIconsExporter {
             var svgFiles: [String: Data] = [:]
             for file in localFiles {
                 let iconName = file.destination.file.deletingPathExtension().lastPathComponent
-                if let data = try? Data(contentsOf: file.destination.url) {
+                do {
+                    let data = try Data(contentsOf: file.destination.url)
                     svgFiles[iconName] = data
+                } catch {
+                    context.warning("Failed to read SVG file '\(iconName)': \(error.localizedDescription)")
                 }
             }
 
@@ -334,6 +335,35 @@ private enum AndroidIconsHelpers {
                 destination: Destination(directory: directory, file: fileURL),
                 dataFile: source
             )
+        }
+    }
+}
+
+// MARK: - Errors
+
+/// Errors that can occur during Android icons export.
+public enum AndroidIconsExportError: LocalizedError {
+    /// composePackageName is required for ImageVector output.
+    case missingComposePackageName
+
+    /// mainSrc directory is required for ImageVector output.
+    case missingMainSrc
+
+    public var errorDescription: String? {
+        switch self {
+        case .missingComposePackageName:
+            "composePackageName is required for ImageVector output"
+        case .missingMainSrc:
+            "mainSrc is required for ImageVector output"
+        }
+    }
+
+    public var recoverySuggestion: String? {
+        switch self {
+        case .missingComposePackageName:
+            "Add 'composePackageName' to your Android icons entry"
+        case .missingMainSrc:
+            "Add 'mainSrc' to your Android platform configuration"
         }
     }
 }

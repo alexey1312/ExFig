@@ -71,8 +71,7 @@ public struct AndroidImagesExporter: ImagesExporter {
                 entry: entry, platformConfig: platformConfig, context: context
             )
         case (.png, .svg):
-            context.warning("Cannot convert PNG source to VectorDrawable. Use SVG source for vector output.")
-            return 0
+            throw AndroidImagesExporterError.incompatibleFormat(source: "PNG", output: "VectorDrawable")
         }
     }
 }
@@ -482,11 +481,23 @@ private enum AndroidImagesHelpers {
 
 enum AndroidImagesExporterError: LocalizedError {
     case invalidFileName(String)
+    case incompatibleFormat(source: String, output: String)
 
     var errorDescription: String? {
         switch self {
         case let .invalidFileName(name):
             "Invalid file name: \(name)"
+        case let .incompatibleFormat(source, output):
+            "Cannot convert \(source) source to \(output) output"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .invalidFileName:
+            nil
+        case .incompatibleFormat:
+            "Use SVG source format for vector output, or change the output format to PNG or WebP"
         }
     }
 }

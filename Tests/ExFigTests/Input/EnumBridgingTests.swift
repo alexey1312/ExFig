@@ -1,7 +1,9 @@
 // swiftlint:disable file_length type_body_length
 
 import ExFig_Android
+import ExFig_Flutter
 import ExFig_iOS
+import ExFig_Web
 import ExFigConfig
 import ExFigCore
 import XCTest
@@ -512,6 +514,294 @@ final class EnumBridgingTests: XCTestCase {
         )
         let sourceInput = try entry.validatedColorsSourceInput()
         XCTAssertEqual(sourceInput.tokensFileId, "file456")
+        XCTAssertEqual(sourceInput.tokensCollectionName, "Colors")
+        XCTAssertEqual(sourceInput.lightModeName, "Light")
+        XCTAssertEqual(sourceInput.darkModeName, "Dark")
+    }
+
+    // MARK: - iOS Missing tokensCollectionName / lightModeName
+
+    func testiOSColorsEntryThrowsOnMissingTokensCollectionName() {
+        let entry = iOS.ColorsEntry(
+            useColorAssets: false, assetsFolder: nil, nameStyle: .camelCase,
+            groupUsingNamespace: nil, colorSwift: nil, swiftuiColorSwift: nil,
+            syncCodeSyntax: nil, codeSyntaxTemplate: nil,
+            tokensFileId: "file123", tokensCollectionName: nil, lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testiOSColorsEntryThrowsOnEmptyTokensCollectionName() {
+        let entry = iOS.ColorsEntry(
+            useColorAssets: false, assetsFolder: nil, nameStyle: .camelCase,
+            groupUsingNamespace: nil, colorSwift: nil, swiftuiColorSwift: nil,
+            syncCodeSyntax: nil, codeSyntaxTemplate: nil,
+            tokensFileId: "file123", tokensCollectionName: "", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testiOSColorsEntryThrowsOnMissingLightModeName() {
+        let entry = iOS.ColorsEntry(
+            useColorAssets: false, assetsFolder: nil, nameStyle: .camelCase,
+            groupUsingNamespace: nil, colorSwift: nil, swiftuiColorSwift: nil,
+            syncCodeSyntax: nil, codeSyntaxTemplate: nil,
+            tokensFileId: "file123", tokensCollectionName: "Collection", lightModeName: nil,
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testiOSColorsEntryThrowsOnEmptyLightModeName() {
+        let entry = iOS.ColorsEntry(
+            useColorAssets: false, assetsFolder: nil, nameStyle: .camelCase,
+            groupUsingNamespace: nil, colorSwift: nil, swiftuiColorSwift: nil,
+            syncCodeSyntax: nil, codeSyntaxTemplate: nil,
+            tokensFileId: "file123", tokensCollectionName: "Collection", lightModeName: "",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    // MARK: - Android Missing tokensCollectionName / lightModeName
+
+    func testAndroidColorsEntryThrowsOnMissingTokensCollectionName() {
+        let entry = Android.ColorsEntry(
+            xmlOutputFileName: nil, xmlDisabled: nil, composePackageName: nil,
+            colorKotlin: nil, themeAttributes: nil,
+            tokensFileId: "file456", tokensCollectionName: nil, lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testAndroidColorsEntryThrowsOnEmptyTokensCollectionName() {
+        let entry = Android.ColorsEntry(
+            xmlOutputFileName: nil, xmlDisabled: nil, composePackageName: nil,
+            colorKotlin: nil, themeAttributes: nil,
+            tokensFileId: "file456", tokensCollectionName: "", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testAndroidColorsEntryThrowsOnMissingLightModeName() {
+        let entry = Android.ColorsEntry(
+            xmlOutputFileName: nil, xmlDisabled: nil, composePackageName: nil,
+            colorKotlin: nil, themeAttributes: nil,
+            tokensFileId: "file456", tokensCollectionName: "Colors", lightModeName: nil,
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testAndroidColorsEntryThrowsOnEmptyLightModeName() {
+        let entry = Android.ColorsEntry(
+            xmlOutputFileName: nil, xmlDisabled: nil, composePackageName: nil,
+            colorKotlin: nil, themeAttributes: nil,
+            tokensFileId: "file456", tokensCollectionName: "Colors", lightModeName: "",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    // MARK: - Flutter ColorsSourceInput Validation
+
+    func testFlutterColorsEntryThrowsOnMissingTokensFileId() {
+        let entry = Flutter.ColorsEntry(
+            output: nil, className: nil,
+            tokensFileId: nil, tokensCollectionName: "Collection", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testFlutterColorsEntryThrowsOnEmptyTokensFileId() {
+        let entry = Flutter.ColorsEntry(
+            output: nil, className: nil,
+            tokensFileId: "", tokensCollectionName: "Collection", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testFlutterColorsEntryThrowsOnMissingTokensCollectionName() {
+        let entry = Flutter.ColorsEntry(
+            output: nil, className: nil,
+            tokensFileId: "file789", tokensCollectionName: nil, lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testFlutterColorsEntryThrowsOnEmptyTokensCollectionName() {
+        let entry = Flutter.ColorsEntry(
+            output: nil, className: nil,
+            tokensFileId: "file789", tokensCollectionName: "", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testFlutterColorsEntryThrowsOnMissingLightModeName() {
+        let entry = Flutter.ColorsEntry(
+            output: nil, className: nil,
+            tokensFileId: "file789", tokensCollectionName: "Collection", lightModeName: nil,
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testFlutterColorsEntryThrowsOnEmptyLightModeName() {
+        let entry = Flutter.ColorsEntry(
+            output: nil, className: nil,
+            tokensFileId: "file789", tokensCollectionName: "Collection", lightModeName: "",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testFlutterColorsEntryValidatesSuccessfully() throws {
+        let entry = Flutter.ColorsEntry(
+            output: nil, className: nil,
+            tokensFileId: "file789", tokensCollectionName: "Colors", lightModeName: "Light",
+            darkModeName: "Dark", lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        let sourceInput = try entry.validatedColorsSourceInput()
+        XCTAssertEqual(sourceInput.tokensFileId, "file789")
+        XCTAssertEqual(sourceInput.tokensCollectionName, "Colors")
+        XCTAssertEqual(sourceInput.lightModeName, "Light")
+        XCTAssertEqual(sourceInput.darkModeName, "Dark")
+    }
+
+    // MARK: - Web ColorsSourceInput Validation
+
+    func testWebColorsEntryThrowsOnMissingTokensFileId() {
+        let entry = Web.ColorsEntry(
+            outputDirectory: nil, cssFileName: nil, tsFileName: nil, jsonFileName: nil,
+            tokensFileId: nil, tokensCollectionName: "Collection", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testWebColorsEntryThrowsOnEmptyTokensFileId() {
+        let entry = Web.ColorsEntry(
+            outputDirectory: nil, cssFileName: nil, tsFileName: nil, jsonFileName: nil,
+            tokensFileId: "", tokensCollectionName: "Collection", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testWebColorsEntryThrowsOnMissingTokensCollectionName() {
+        let entry = Web.ColorsEntry(
+            outputDirectory: nil, cssFileName: nil, tsFileName: nil, jsonFileName: nil,
+            tokensFileId: "fileABC", tokensCollectionName: nil, lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testWebColorsEntryThrowsOnEmptyTokensCollectionName() {
+        let entry = Web.ColorsEntry(
+            outputDirectory: nil, cssFileName: nil, tsFileName: nil, jsonFileName: nil,
+            tokensFileId: "fileABC", tokensCollectionName: "", lightModeName: "Light",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testWebColorsEntryThrowsOnMissingLightModeName() {
+        let entry = Web.ColorsEntry(
+            outputDirectory: nil, cssFileName: nil, tsFileName: nil, jsonFileName: nil,
+            tokensFileId: "fileABC", tokensCollectionName: "Collection", lightModeName: nil,
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testWebColorsEntryThrowsOnEmptyLightModeName() {
+        let entry = Web.ColorsEntry(
+            outputDirectory: nil, cssFileName: nil, tsFileName: nil, jsonFileName: nil,
+            tokensFileId: "fileABC", tokensCollectionName: "Collection", lightModeName: "",
+            darkModeName: nil, lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        XCTAssertThrowsError(try entry.validatedColorsSourceInput()) { error in
+            XCTAssert(error is ColorsConfigError)
+        }
+    }
+
+    func testWebColorsEntryValidatesSuccessfully() throws {
+        let entry = Web.ColorsEntry(
+            outputDirectory: nil, cssFileName: nil, tsFileName: nil, jsonFileName: nil,
+            tokensFileId: "fileABC", tokensCollectionName: "Colors", lightModeName: "Light",
+            darkModeName: "Dark", lightHCModeName: nil, darkHCModeName: nil,
+            primitivesModeName: nil, nameValidateRegexp: nil, nameReplaceRegexp: nil
+        )
+        let sourceInput = try entry.validatedColorsSourceInput()
+        XCTAssertEqual(sourceInput.tokensFileId, "fileABC")
         XCTAssertEqual(sourceInput.tokensCollectionName, "Colors")
         XCTAssertEqual(sourceInput.lightModeName, "Light")
         XCTAssertEqual(sourceInput.darkModeName, "Dark")

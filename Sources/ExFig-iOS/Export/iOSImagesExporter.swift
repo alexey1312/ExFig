@@ -316,7 +316,7 @@ public struct iOSImagesExporter: ImagesExporter {
             append: context.filter != nil
         )
 
-        let contentsJsonFiles = iOSImagesExporterHelpers.makeImagesetContentsJson(
+        let contentsJsonFiles = try iOSImagesExporterHelpers.makeImagesetContentsJson(
             imagePairs: imagePairs, scales: scales, assetsURL: assetsURL,
             renderMode: entry.coreRenderMode, fileExtension: outputFormat.rawValue
         )
@@ -427,10 +427,15 @@ public enum iOSImagesExportError: LocalizedError {
     /// xcassetsPath not specified when exporting images.
     case xcassetsPathNotSpecified
 
+    /// Failed to serialize Contents.json for an imageset.
+    case contentsJsonSerializationFailed(imageset: String, underlyingError: Error)
+
     public var errorDescription: String? {
         switch self {
         case .xcassetsPathNotSpecified:
             "xcassetsPath is required for iOS images export"
+        case let .contentsJsonSerializationFailed(imageset, error):
+            "Failed to create Contents.json for \(imageset): \(error.localizedDescription)"
         }
     }
 
@@ -438,6 +443,8 @@ public enum iOSImagesExportError: LocalizedError {
         switch self {
         case .xcassetsPathNotSpecified:
             "Add 'xcassetsPath' to your iOS configuration"
+        case .contentsJsonSerializationFailed:
+            "Check that the image data is valid and try again"
         }
     }
 }
@@ -513,8 +520,8 @@ private enum iOSImagesExporterHelpers {
         assetsURL: URL,
         renderMode: XcodeRenderMode?,
         fileExtension: String
-    ) -> [FileContents] {
-        imagePairs.compactMap { pair -> FileContents? in
+    ) throws -> [FileContents] {
+        try imagePairs.map { pair -> FileContents in
             let imagesetDir = assetsURL.appendingPathComponent("\(pair.light.name).imageset")
             var imagesArray: [[String: Any]] = []
 
@@ -554,11 +561,9 @@ private enum iOSImagesExporterHelpers {
                     withJSONObject: contentsJson, options: [.prettyPrinted, .sortedKeys]
                 )
             } catch {
-                FileHandle.standardError.write(
-                    Data("Warning: Failed to create Contents.json for \(imagesetDir.lastPathComponent): \(error)\n"
-                        .utf8)
+                throw iOSImagesExportError.contentsJsonSerializationFailed(
+                    imageset: imagesetDir.lastPathComponent, underlyingError: error
                 )
-                return nil
             }
 
             return FileContents(

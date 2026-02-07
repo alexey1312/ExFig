@@ -71,6 +71,7 @@ let package = Package(
         .target(
             name: "ExFigConfig",
             dependencies: [
+                "ExFigCore",
                 .product(name: "PklSwift", package: "pkl-swift"),
             ]
         ),
@@ -196,6 +197,8 @@ let package = Package(
             dependencies: [
                 "ExFigCLI",
                 "FigmaAPI",
+                "ExFig-Flutter",
+                "ExFig-Web",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "LibPNG", package: "libpng"),
             ],

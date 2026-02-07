@@ -41,4 +41,13 @@ struct PKLEvaluatorTests {
             try await PKLEvaluator.evaluate(configPath: fakePath)
         }
     }
+
+    @Test("Throws error for invalid PKL syntax")
+    func throwsErrorForInvalidSyntax() async throws {
+        let configPath = Self.fixturesPath.appendingPathComponent("invalid-syntax.pkl")
+
+        await #expect(throws: (any Error).self) {
+            try await PKLEvaluator.evaluate(configPath: configPath)
+        }
+    }
 }

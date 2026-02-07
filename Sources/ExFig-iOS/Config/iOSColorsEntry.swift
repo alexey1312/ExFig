@@ -10,41 +10,9 @@ public typealias iOSColorsEntry = iOS.ColorsEntry
 // MARK: - Convenience Extensions
 
 public extension iOS.ColorsEntry {
-    /// Returns a validated ColorsSourceInput for use with ColorsExportContext.
-    /// Throws if required fields (tokensFileId, tokensCollectionName, lightModeName) are nil or empty.
-    func validatedColorsSourceInput() throws -> ColorsSourceInput {
-        guard let tokensFileId, !tokensFileId.isEmpty else {
-            throw ColorsConfigError.missingTokensFileId
-        }
-        guard let tokensCollectionName, !tokensCollectionName.isEmpty else {
-            throw ColorsConfigError.missingTokensCollectionName
-        }
-        guard let lightModeName, !lightModeName.isEmpty else {
-            throw ColorsConfigError.missingLightModeName
-        }
-        return ColorsSourceInput(
-            tokensFileId: tokensFileId,
-            tokensCollectionName: tokensCollectionName,
-            lightModeName: lightModeName,
-            darkModeName: darkModeName,
-            lightHCModeName: lightHCModeName,
-            darkHCModeName: darkHCModeName,
-            primitivesModeName: primitivesModeName,
-            nameValidateRegexp: nameValidateRegexp,
-            nameReplaceRegexp: nameReplaceRegexp
-        )
-    }
-
     /// Converts PKL NameStyle to ExFigCore NameStyle.
     var coreNameStyle: NameStyle {
-        switch nameStyle {
-        case .camelCase: .camelCase
-        case .snake_case: .snakeCase
-        case .pascalCase: .pascalCase
-        case .flatCase: .flatCase
-        case .kebab_case: .kebabCase
-        case .sCREAMING_SNAKE_CASE: .screamingSnakeCase
-        }
+        nameStyle.coreNameStyle
     }
 
     /// Path to generate UIColor extension as URL.

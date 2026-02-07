@@ -36,14 +36,7 @@ public extension iOS.ImagesEntry {
 
     /// Converts PKL NameStyle to ExFigCore NameStyle.
     var coreNameStyle: NameStyle {
-        switch nameStyle {
-        case .camelCase: .camelCase
-        case .snake_case: .snakeCase
-        case .pascalCase: .pascalCase
-        case .flatCase: .flatCase
-        case .kebab_case: .kebabCase
-        case .sCREAMING_SNAKE_CASE: .screamingSnakeCase
-        }
+        nameStyle.coreNameStyle
     }
 
     /// Path to generate UIImage extension as URL.

@@ -48,14 +48,7 @@ public extension Android.ThemeAttributes {
 public extension Android.NameTransform {
     var resolvedStyle: NameStyle {
         guard let style else { return .pascalCase }
-        switch style {
-        case .camelCase: return .camelCase
-        case .snake_case: return .snakeCase
-        case .pascalCase: return .pascalCase
-        case .flatCase: return .flatCase
-        case .kebab_case: return .kebabCase
-        case .sCREAMING_SNAKE_CASE: return .screamingSnakeCase
-        }
+        return style.coreNameStyle
     }
 
     var resolvedPrefix: String {
@@ -70,31 +63,6 @@ public extension Android.NameTransform {
 // MARK: - ColorsEntry Convenience
 
 public extension Android.ColorsEntry {
-    /// Returns a validated ColorsSourceInput for use with ColorsExportContext.
-    /// Throws if required fields (tokensFileId, tokensCollectionName, lightModeName) are nil or empty.
-    func validatedColorsSourceInput() throws -> ColorsSourceInput {
-        guard let tokensFileId, !tokensFileId.isEmpty else {
-            throw ColorsConfigError.missingTokensFileId
-        }
-        guard let tokensCollectionName, !tokensCollectionName.isEmpty else {
-            throw ColorsConfigError.missingTokensCollectionName
-        }
-        guard let lightModeName, !lightModeName.isEmpty else {
-            throw ColorsConfigError.missingLightModeName
-        }
-        return ColorsSourceInput(
-            tokensFileId: tokensFileId,
-            tokensCollectionName: tokensCollectionName,
-            lightModeName: lightModeName,
-            darkModeName: darkModeName,
-            lightHCModeName: lightHCModeName,
-            darkHCModeName: darkHCModeName,
-            primitivesModeName: primitivesModeName,
-            nameValidateRegexp: nameValidateRegexp,
-            nameReplaceRegexp: nameReplaceRegexp
-        )
-    }
-
     /// Path to generate Compose Color Kotlin file as URL.
     var colorKotlinURL: URL? {
         colorKotlin.map { URL(fileURLWithPath: $0) }

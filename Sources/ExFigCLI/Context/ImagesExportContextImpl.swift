@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import ExFigConfig
 import ExFigCore
 import FigmaAPI
@@ -197,8 +199,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
                     svgData = try Data(contentsOf: dataFile)
                 } else {
                     let filename = fileContents.destination.file.lastPathComponent
-                    ui.warning("Failed to read SVG data for rasterization: \(filename)")
-                    continue
+                    throw SVGRasterizationError.missingData(filename: filename)
                 }
 
                 let baseName = fileContents.destination.file.deletingPathExtension().lastPathComponent
@@ -255,7 +256,10 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
     ) async throws -> [FileContents] {
         // Check if HEIC encoding is available
         guard NativeHeicEncoder.isAvailable() else {
-            ui.warning("HEIC encoding not available on this platform, returning PNG")
+            ui.warning(
+                "HEIC encoding not available on this platform. Output will be PNG instead of HEIC. "
+                    + "To suppress this warning, set outputFormat = \"png\" in your config."
+            )
             return files
         }
 
@@ -385,3 +389,27 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         return processor.processNames(names)
     }
 }
+
+// MARK: - Errors
+
+/// Errors that can occur during SVG rasterization.
+enum SVGRasterizationError: LocalizedError {
+    /// SVG data is missing for rasterization.
+    case missingData(filename: String)
+
+    var errorDescription: String? {
+        switch self {
+        case let .missingData(filename):
+            "Failed to read SVG data for rasterization: \(filename)"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        switch self {
+        case .missingData:
+            "Ensure the SVG file was downloaded successfully before rasterization"
+        }
+    }
+}
+
+// swiftlint:enable file_length
