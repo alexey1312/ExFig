@@ -6,7 +6,7 @@
 | --------------------------- | ------------------------------------- | ------- |
 | 1. Defaults                 | PKL default values в схемах           | Done ✓  |
 | 2. Entry Overrides — Schema | Новые optional поля в PKL-схемах      | Done ✓  |
-| 3. Entry Overrides — Swift  | Resolution logic в Swift-коде         | Pending |
+| 3. Entry Overrides — Swift  | Resolution logic в Swift-коде         | Done ✓  |
 | 4. Constraints              | PKL constraints (!isEmpty, isBetween) | Done ✓  |
 | 5. Verification             | Полная верификация                    | Pending |
 
@@ -173,10 +173,10 @@ Track 5 зависит от всех треков.
 ### 3.3 figmaFileId Resolution
 
 - [x] 3.3.1 Add `resolvedFigmaFileId(fallback:)` method to FrameSource-based entries
-- [ ] 3.3.2 Update `IconsExportContextImpl` to accept per-entry figmaFileId
-- [ ] 3.3.3 Update `ImagesExportContextImpl` to accept per-entry figmaFileId
-- [ ] 3.3.4 Update icon loaders to use entry-level figmaFileId
-- [ ] 3.3.5 Update image loaders to use entry-level figmaFileId
+- [x] 3.3.2 Update `IconsExportContextImpl` to accept per-entry figmaFileId
+- [x] 3.3.3 Update `ImagesExportContextImpl` to accept per-entry figmaFileId
+- [x] 3.3.4 Update icon loaders to use entry-level figmaFileId
+- [x] 3.3.5 Update image loaders to use entry-level figmaFileId
 
 ### 3.4 Android Entry Resolution
 
@@ -201,14 +201,14 @@ Track 5 зависит от всех треков.
 
 ### 3.7 Tests for Entry Overrides
 
-- [ ] 3.7.1 Add tests: iOS entry with xcassetsPath override resolves correctly
-- [ ] 3.7.2 Add tests: iOS entry without override falls back to config value
-- [ ] 3.7.3 Add tests: figmaFileId override resolves correctly for icons
-- [ ] 3.7.4 Add tests: figmaFileId override resolves correctly for images
-- [ ] 3.7.5 Add tests: Android entry with mainRes override resolves correctly
-- [ ] 3.7.6 Add tests: Flutter entry with output override resolves correctly
-- [ ] 3.7.7 Add tests: Web entry with output override resolves correctly
-- [ ] 3.7.8 Run `./bin/mise run test` — all tests pass
+- [x] 3.7.1 Add tests: iOS entry with xcassetsPath override resolves correctly
+- [x] 3.7.2 Add tests: iOS entry without override falls back to config value
+- [x] 3.7.3 Add tests: figmaFileId override resolves correctly for icons
+- [x] 3.7.4 Add tests: figmaFileId override resolves correctly for images
+- [x] 3.7.5 Add tests: Android entry with mainRes override resolves correctly
+- [x] 3.7.6 Add tests: Flutter entry with output override resolves correctly
+- [x] 3.7.7 Add tests: Web entry with output override resolves correctly
+- [x] 3.7.8 Run `./bin/mise run test` — all tests pass
 
 ---
 
