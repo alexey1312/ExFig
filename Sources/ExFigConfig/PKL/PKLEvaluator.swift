@@ -1,6 +1,12 @@
 import Foundation
 import PklSwift
 
+extension PklError: @retroactive LocalizedError {
+    public var errorDescription: String? {
+        message
+    }
+}
+
 /// Evaluates PKL configuration files using pkl-swift's embedded evaluator.
 ///
 /// Uses PklSwift's MessagePack-based evaluation instead of spawning a subprocess.

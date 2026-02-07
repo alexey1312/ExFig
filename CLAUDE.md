@@ -256,14 +256,15 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Troubleshooting
 
-| Problem               | Solution                                            |
-| --------------------- | --------------------------------------------------- |
-| Build fails           | `swift package clean && swift build`                |
-| Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                 |
-| Formatting fails      | Run `./bin/mise run setup` to install tools         |
-| Template errors       | Check Stencil syntax and context variables          |
-| Linux test crashes    | Use `--num-workers 1` for test parallelization      |
-| Android pathData long | Simplify in Figma or use `--strict-path-validation` |
+| Problem               | Solution                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| Build fails           | `swift package clean && swift build`                                                  |
+| Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                                                   |
+| Formatting fails      | Run `./bin/mise run setup` to install tools                                           |
+| Template errors       | Check Stencil syntax and context variables                                            |
+| Linux test crashes    | Use `--num-workers 1` for test parallelization                                        |
+| Android pathData long | Simplify in Figma or use `--strict-path-validation`                                   |
+| PKL parse error 1     | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription` |
 
 ## Additional Rules
 

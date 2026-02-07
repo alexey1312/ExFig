@@ -144,6 +144,13 @@ extension SomeType {
 }
 ```
 
+## PklSwift Error Messages
+
+`PklSwift.PklError` has a `message` field but doesn't conform to `LocalizedError`.
+Without the extension in `PKLEvaluator.swift`, `.localizedDescription` returns useless
+`"The operation couldn't be completed. (PklSwift.PklError error 1.)"` instead of the actual PKL error.
+Fix: `extension PklError: @retroactive LocalizedError` in `Sources/ExFigConfig/PKL/PKLEvaluator.swift`.
+
 ## Figma API Rate Limits
 
 **Official docs:** https://developers.figma.com/docs/rest-api/rate-limits/
