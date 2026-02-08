@@ -79,7 +79,7 @@ struct TypographyExportContextImpl: TypographyExportContext {
 
         return try TypographyProcessResult(
             textStyles: result.get(),
-            warning: result.warning?.errorDescription
+            warning: result.warning.map { WarningFormatter().format($0, compact: isBatchMode) }
         )
     }
 }

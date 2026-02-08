@@ -3,6 +3,7 @@ import ArgumentParser
 import ExFigCore
 import FigmaAPI
 import Foundation
+import Noora
 
 extension ExFigCommand {
     // swiftlint:disable:next type_body_length
@@ -150,7 +151,7 @@ extension ExFigCommand {
             let conflicts = try discovery.detectOutputPathConflicts(validConfigs)
             if !conflicts.isEmpty {
                 let formatter = ConflictFormatter()
-                ui.warning(formatter.format(conflicts))
+                formatter.display(conflicts)
             }
 
             return validConfigs
@@ -742,6 +743,14 @@ extension ExFigCommand {
 
             ui.info("")
 
+            let headers: [TableCellStyle] = [
+                .plain(" "),
+                .plain("Config"),
+                .plain("Result"),
+            ]
+
+            var rows: [StyledTableRow] = []
+
             for success in result.successes {
                 let stats = success.stats
                 var parts: [String] = []
@@ -751,12 +760,15 @@ extension ExFigCommand {
                 if stats.typography > 0 { parts.append("\(stats.typography) typography") }
 
                 let statsString = parts.isEmpty ? "validated" : parts.joined(separator: ", ")
-                ui.success("\(success.config.name) - \(statsString)")
+                rows.append([.success("✓"), .plain(success.config.name), .plain(statsString)])
             }
 
             for failure in result.failures {
-                ui.error("\(failure.config.name): \(failure.error.localizedDescription)")
+                let errorMessage = failure.error.localizedDescription
+                rows.append([.danger("✗"), .plain(failure.config.name), .danger(errorMessage)])
             }
+
+            NooraUI.shared.table(headers: headers, rows: rows)
         }
 
         private func displayRateLimitStatus(status: RateLimiterStatus, ui: TerminalUI) {

@@ -125,7 +125,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
 
         return try IconsProcessResult(
             iconPairs: result.get(),
-            warning: result.warning?.errorDescription
+            warning: result.warning.map { WarningFormatter().format($0, compact: isBatchMode) }
         )
     }
 

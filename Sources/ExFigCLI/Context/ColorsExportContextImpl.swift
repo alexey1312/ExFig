@@ -107,7 +107,7 @@ struct ColorsExportContextImpl: ColorsExportContext {
 
         return try ColorsProcessResult(
             colorPairs: result.get(),
-            warning: result.warning?.errorDescription
+            warning: result.warning.map { WarningFormatter().format($0, compact: isBatchMode) }
         )
     }
 }

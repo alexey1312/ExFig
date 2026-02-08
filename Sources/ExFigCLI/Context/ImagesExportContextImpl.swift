@@ -131,7 +131,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
 
         return try ImagesProcessResult(
             imagePairs: result.get(),
-            warning: result.warning?.errorDescription
+            warning: result.warning.map { WarningFormatter().format($0, compact: isBatchMode) }
         )
     }
 

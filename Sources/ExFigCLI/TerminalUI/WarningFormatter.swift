@@ -3,9 +3,11 @@ import ExFigCore
 /// Formats `AssetsValidatorWarning` for readable terminal display using TOON format
 struct WarningFormatter {
     /// Format an AssetsValidatorWarning for terminal display
-    /// - Parameter warning: The warning to format
+    /// - Parameters:
+    ///   - warning: The warning to format
+    ///   - compact: When true, truncates long asset lists to `maxItems` + "... +N more"
     /// - Returns: A formatted multi-line string suitable for terminal output
-    func format(_ warning: AssetsValidatorWarning) -> String {
+    func format(_ warning: AssetsValidatorWarning, compact: Bool = false) -> String {
         let assets = extractAssets(from: warning)
 
         guard !assets.isEmpty else {
@@ -13,8 +15,13 @@ struct WarningFormatter {
         }
 
         let header = buildHeader(for: warning, count: assets.count)
-        let assetsSection = formatAssets(assets)
 
+        if compact {
+            let assetsSection = formatAssetsCompact(assets, maxItems: 10)
+            return "\(header)\n\(assetsSection)"
+        }
+
+        let assetsSection = formatAssets(assets)
         return "\(header)\n\(assetsSection)"
     }
 
@@ -51,6 +58,25 @@ struct WarningFormatter {
         for asset in assets {
             result += "\n    \(asset)"
         }
+
+        return result
+    }
+
+    private func formatAssetsCompact(_ assets: [String], maxItems: Int) -> String {
+        if assets.count <= maxItems {
+            return formatAssets(assets)
+        }
+
+        let shown = assets.prefix(maxItems)
+        let remaining = assets.count - maxItems
+
+        var result = "  assets[\(assets.count)]:"
+
+        for asset in shown {
+            result += "\n    \(asset)"
+        }
+
+        result += "\n    ... +\(remaining) more"
 
         return result
     }

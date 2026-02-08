@@ -2,6 +2,7 @@
 import FigmaAPI
 import Foundation
 import Logging
+import Noora
 
 /// Configuration for pre-fetch operation.
 struct PreFetchConfiguration {
@@ -278,7 +279,31 @@ struct FileVersionPreFetcher: Sendable {
             ui.warning(.preFetchPartialFailure(failed: failedCount, total: fileIdArray.count))
         }
 
+        // Display results table
+        displayPreFetchResults(result: result, requestedFileIds: fileIdArray)
+
         return result
+    }
+
+    /// Display pre-fetch results as a Noora table.
+    private func displayPreFetchResults(result: PreFetchedFileVersions, requestedFileIds: [String]) {
+        guard !result.isEmpty else { return }
+
+        let headers: [TableCellStyle] = [
+            .plain("Name"),
+            .plain("Status"),
+        ]
+
+        let rows: [StyledTableRow] = requestedFileIds.map { fileId in
+            if let metadata = result.metadata(for: fileId) {
+                return [.plain(metadata.name), .success("✓")]
+            } else {
+                let truncatedId = String(fileId.prefix(12))
+                return [.plain(truncatedId), .danger("✗")]
+            }
+        }
+
+        NooraUI.shared.table(headers: headers, rows: rows)
     }
 
     /// Pre-fetch components ONLY for specified file IDs (without metadata).

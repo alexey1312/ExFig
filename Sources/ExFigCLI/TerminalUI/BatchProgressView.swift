@@ -197,7 +197,8 @@ actor BatchProgressView {
             TerminalOutputManager.shared.writeDirect(message + "\n")
         }
 
-        // Redraw progress display
+        // Progress was cleared, cursor is at new position — reset lineCount before redraw
+        lineCount = 0
         render()
 
         isProcessingLogs = false
