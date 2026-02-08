@@ -65,6 +65,7 @@ and Flutter projects.
 ./bin/mise run build                # Debug build
 ./bin/mise run build:release        # Release build
 ./bin/mise run test                 # All tests
+# Linux: swift build --build-tests && swift test --skip-build --parallel
 ./bin/mise run test:filter NAME     # Filter by target/class/method
 ./bin/mise run test:file FILE       # Run tests for specific file
 
@@ -262,7 +263,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                                                   |
 | Formatting fails      | Run `./bin/mise run setup` to install tools                                           |
 | Template errors       | Check Stencil syntax and context variables                                            |
-| Linux test crashes    | Use `--num-workers 1` for test parallelization                                        |
+| Linux test hangs      | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`   |
 | Android pathData long | Simplify in Figma or use `--strict-path-validation`                                   |
 | PKL parse error 1     | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription` |
 

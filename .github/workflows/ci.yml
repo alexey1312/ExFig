@@ -115,9 +115,9 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
-      - name: Build
-        run: swift build 2>&1 | xcsift
+      - name: Build (including tests)
+        run: swift build --build-tests 2>&1 | xcsift
 
       - name: Run tests
-        # Use --num-workers 1 to avoid memory corruption with libpng on Linux
-        run: swift test --parallel --num-workers 1 2>&1 | xcsift
+        # Build tests separately to avoid hangs from concurrent build + test execution
+        run: swift test --skip-build --parallel 2>&1 | xcsift
