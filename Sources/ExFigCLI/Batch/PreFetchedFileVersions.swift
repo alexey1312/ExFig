@@ -34,6 +34,11 @@ struct PreFetchedFileVersions: Sendable {
         versions.count
     }
 
+    /// Whether the storage is empty.
+    var isEmpty: Bool {
+        versions.isEmpty
+    }
+
     /// All file IDs that have been pre-fetched.
     var allFileIds: [String] {
         Array(versions.keys)
