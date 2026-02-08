@@ -217,26 +217,27 @@ actor BatchProgressView {
 
         var lines: [String] = []
 
-        // Header
-        let completed = configStates.values.filter { isCompleted($0.status) }.count
-        let total = configStates.count
-        let header = "Batch Export (\(completed)/\(total) configs)"
+        // Header (static text, no changing counter)
+        let header = "Batch Export"
         lines.append(useColors ? NooraUI.format(.secondary(header)) : header)
 
         // Config lines
         let sortedConfigs = configOrder.compactMap { configStates[$0] }
-        for (index, config) in sortedConfigs.enumerated() {
-            let isLast = index == sortedConfigs.count - 1 && rateLimiterStatus == nil
-            let prefix = isLast ? "└─" : "├─"
-            let line = formatConfigLine(config, prefix: prefix)
+        for config in sortedConfigs {
+            let line = formatConfigLine(config, prefix: "├─")
             lines.append(line)
         }
 
         // Rate limit status line
         if let status = rateLimiterStatus {
-            let line = formatRateLimitLine(status)
-            lines.append(line)
+            lines.append("├─ \(formatRateLimitText(status))")
         }
+
+        // Footer: progress counter (always last line)
+        let completed = configStates.values.filter { isCompleted($0.status) }.count
+        let total = configStates.count
+        let counterText = "\(completed)/\(total) configs"
+        lines.append("└─ \(useColors ? NooraUI.format(.muted(counterText)) : counterText)")
 
         // Build output
         for line in lines {
@@ -413,23 +414,18 @@ actor BatchProgressView {
         return parts.joined(separator: "  ")
     }
 
-    private func formatRateLimitLine(_ status: RateLimiterStatus) -> String {
-        let prefix = "└─"
-        let rateText: String
-
+    private func formatRateLimitText(_ status: RateLimiterStatus) -> String {
         if status.isPaused {
             let retryStr = status.retryAfter.map { String(format: "%.0fs", $0) } ?? "unknown"
             let pausedMsg = "Rate limit: Paused (retry after \(retryStr))"
-            rateText = useColors
+            return useColors
                 ? NooraUI.format(.accent(pausedMsg))
                 : pausedMsg
         } else {
             let rpm = String(format: "%.0f", status.requestsPerMinute)
             let pending = status.pendingRequestCount
             let pendingInfo = pending > 0 ? ", \(pending) queued" : ""
-            rateText = "Rate limit: \(rpm) req/min\(pendingInfo)"
+            return "Rate limit: \(rpm) req/min\(pendingInfo)"
         }
-
-        return "\(prefix) \(rateText)"
     }
 }
