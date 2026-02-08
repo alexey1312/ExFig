@@ -873,6 +873,90 @@ Many fields now have PKL-level defaults. You can omit them from your config:
 
 See the PKL schema files for the complete list of defaults.
 
+## Consolidating Multiple Configs
+
+If you have separate config files for different resource types (e.g., `colors.pkl`, `icons.pkl`, `images.pkl`), you can
+consolidate them into a single unified `exfig.pkl`. This simplifies maintenance and allows using `exfig batch` for
+one-command exports.
+
+### Before: Multiple Files
+
+```
+configs/
+├── colors.pkl           # Colors only
+├── icons.pkl            # Icons only
+└── images.pkl           # Images only
+```
+
+```bash
+# Required 3 separate commands
+exfig colors -i configs/colors.pkl
+exfig icons -i configs/icons.pkl
+exfig images -i configs/images.pkl
+```
+
+### After: Single Unified Config
+
+```
+exfig.pkl                # All resource types in one file
+```
+
+```bash
+# One command exports everything
+exfig batch exfig.pkl
+```
+
+### Migration Steps
+
+1. Create a new unified `exfig.pkl` with all sections (`figma`, `common`, `ios`/`android`/`flutter`/`web`)
+2. Copy each entry from separate configs into the appropriate `Listing` in the unified config
+3. Use per-entry overrides (`xcassetsPath`, `templatesPath`, `figmaFileId`) to preserve unique paths
+4. Validate with `pkl eval --format json exfig.pkl`
+5. Test with `exfig batch exfig.pkl --dry-run` (if supported) or run actual export
+6. Delete old config files
+
+### Per-Entry Overrides
+
+Each entry can override platform-level settings. This is essential when consolidating configs that had different paths:
+
+```pkl
+ios = new iOS.iOSConfig {
+  xcassetsPath = "./Resources/Assets.xcassets"  // default
+
+  icons = new Listing {
+    // Entry 1: Uses default xcassetsPath
+    new iOS.IconsEntry {
+      figmaFrameName = "Actions"
+      assetsFolder = "Icons/Actions"
+      // ...
+    }
+    // Entry 2: Overrides xcassetsPath
+    new iOS.IconsEntry {
+      figmaFrameName = "Brand Icons"
+      xcassetsPath = "./BrandKit/Assets.xcassets"  // override!
+      assetsFolder = "BrandIcons"
+      // ...
+    }
+    // Entry 3: Uses different Figma file
+    new iOS.IconsEntry {
+      figmaFileId = "separate-icons-file-id"       // override!
+      figmaFrameName = "Special Icons"
+      assetsFolder = "SpecialIcons"
+      // ...
+    }
+  }
+}
+```
+
+Available per-entry overrides:
+
+| Platform | Entry Overrides                                      |
+| -------- | ---------------------------------------------------- |
+| iOS      | `figmaFileId`, `xcassetsPath`, `templatesPath`       |
+| Android  | `figmaFileId`, `mainRes`, `mainSrc`, `templatesPath` |
+| Flutter  | `figmaFileId`, `templatesPath`                       |
+| Web      | `figmaFileId`, `templatesPath`                       |
+
 ## Cleanup
 
 After successful migration:

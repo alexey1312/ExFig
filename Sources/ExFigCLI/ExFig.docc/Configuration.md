@@ -17,6 +17,20 @@ Specify a custom path with the `-i` flag:
 exfig colors -i path/to/config.pkl
 ```
 
+## Unified Config with Batch
+
+A single `exfig.pkl` can contain all resource types. Use `batch` to export everything at once:
+
+```bash
+# Export all resource types from a single config
+exfig batch exfig.pkl
+
+# With version tracking
+exfig batch exfig.pkl --cache
+```
+
+> Note: The `batch` command takes config paths as **positional arguments** (not via `-i` flag).
+
 ## Figma Section
 
 ```pkl

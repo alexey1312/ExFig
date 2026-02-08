@@ -91,7 +91,7 @@ extension ExFigCommand {
             let ui = ExFigCommand.terminalUI!
 
             // Discover and validate configs
-            let validConfigs = try discoverAndValidateConfigs(ui: ui)
+            let (validConfigs, conflicts) = try discoverAndValidateConfigs(ui: ui)
             guard !validConfigs.isEmpty else { return }
 
             // Prepare configs with checkpoint handling
@@ -111,6 +111,7 @@ extension ExFigCommand {
             // Execute batch
             let (result, rateLimiter) = await executeBatch(
                 configs: configs,
+                conflicts: conflicts,
                 checkpoint: checkpoint,
                 workingDirectory: workingDirectory,
                 ui: ui
@@ -127,11 +128,13 @@ extension ExFigCommand {
 
         // MARK: - Run Helpers
 
-        private func discoverAndValidateConfigs(ui: TerminalUI) throws -> [URL] {
+        private func discoverAndValidateConfigs(
+            ui: TerminalUI
+        ) throws -> (configs: [URL], conflicts: [OutputPathConflict]) {
             let configURLs = try discoverConfigs(ui: ui)
             guard !configURLs.isEmpty else {
                 ui.warning(.noConfigsFound)
-                return []
+                return ([], [])
             }
 
             let discovery = ConfigDiscovery()
@@ -144,17 +147,11 @@ extension ExFigCommand {
 
             guard !validConfigs.isEmpty else {
                 ui.warning(.noValidConfigs)
-                return []
+                return ([], [])
             }
 
-            // Check for conflicts
             let conflicts = try discovery.detectOutputPathConflicts(validConfigs)
-            if !conflicts.isEmpty {
-                let formatter = ConflictFormatter()
-                formatter.display(conflicts)
-            }
-
-            return validConfigs
+            return (validConfigs, conflicts)
         }
 
         private func prepareConfigsWithCheckpoint(
@@ -199,6 +196,7 @@ extension ExFigCommand {
         // swiftlint:disable:next function_body_length
         private func executeBatch(
             configs: [ConfigFile],
+            conflicts: [OutputPathConflict],
             checkpoint: BatchCheckpoint,
             workingDirectory: URL,
             ui: TerminalUI
@@ -254,6 +252,7 @@ extension ExFigCommand {
 
             displayBatchStartInfo(
                 configs: configs,
+                conflicts: conflicts,
                 sharedGranularCache: sharedGranularCache,
                 ui: ui
             )
@@ -403,14 +402,33 @@ extension ExFigCommand {
         /// Displays batch start information.
         private func displayBatchStartInfo(
             configs: [ConfigFile],
+            conflicts: [OutputPathConflict],
             sharedGranularCache: SharedGranularCache?,
             ui: TerminalUI
         ) {
             ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers:")
 
-            let headers: [TableCellStyle] = [.plain("#"), .plain("Config")]
+            // Build conflict lookup: config name → shared path
+            var conflictMap: [String: String] = [:]
+            for conflict in conflicts {
+                for configURL in conflict.configs {
+                    conflictMap[configURL.lastPathComponent] = conflict.path
+                }
+            }
+
+            let hasConflicts = !conflicts.isEmpty
+            let headers: [TableCellStyle] = hasConflicts
+                ? [.plain("#"), .plain("Config"), .plain("Conflict")]
+                : [.plain("#"), .plain("Config")]
+
             let rows: [StyledTableRow] = configs.enumerated().map { index, config in
-                [.plain("\(index + 1)"), .plain(config.name)]
+                if hasConflicts {
+                    let conflictPath = conflictMap[config.name]
+                    let conflictCell: TableCellStyle = conflictPath.map { .warning($0) } ?? .plain("")
+                    return [.plain("\(index + 1)"), .plain(config.name), conflictCell]
+                } else {
+                    return [.plain("\(index + 1)"), .plain(config.name)]
+                }
             }
             NooraUI.shared.table(headers: headers, rows: rows)
 

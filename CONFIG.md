@@ -69,6 +69,27 @@ Use the `-i` or `--input` flag to specify a custom path:
 exfig colors -i ./configs/my-config.pkl
 ```
 
+## Unified Config with Batch
+
+A single `exfig.pkl` can contain all resource types (colors, icons, images, typography). Use the `batch` command to
+export everything at once:
+
+```bash
+# Export all resource types from a single unified config
+exfig batch exfig.pkl
+
+# With version tracking
+exfig batch exfig.pkl --cache
+
+# With rate limiting and retries
+exfig batch exfig.pkl --cache --rate-limit 25 --max-retries 5
+```
+
+**Note:** The `batch` command takes config paths as **positional arguments** (not via `-i` flag), unlike individual
+commands (`colors`, `icons`, `images`) which use `-i`.
+
+This is the recommended approach for projects with multiple resource types — one config file, one command.
+
 ## Config File Structure
 
 Every `exfig.pkl` file starts with an `amends` declaration pointing to the root schema, followed by imports for the

@@ -2,7 +2,7 @@ import ExFigConfig
 import Foundation
 import Testing
 
-@Suite("PKLEvaluator Tests")
+@Suite("PKLEvaluator Tests", .serialized, .timeLimit(.minutes(2)))
 struct PKLEvaluatorTests {
     /// Path to test fixtures
     static let fixturesPath = URL(fileURLWithPath: #filePath)

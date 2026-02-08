@@ -125,18 +125,18 @@ ios = new iOS.iOSConfig {
 ### 4. Export Resources
 
 ```bash
-# Export all colors
+# Export individual resource types
 exfig colors
-
-# Export all icons
 exfig icons
-
-# Export all images
 exfig images
-
-# Export typography
 exfig typography
+
+# Or export everything at once with batch
+exfig batch exfig.pkl
 ```
+
+> Note: Individual commands use the `-i` flag for custom config paths (`exfig colors -i path.pkl`),
+> while `batch` takes paths as positional arguments (`exfig batch path.pkl`).
 
 ## What's Next
 

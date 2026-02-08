@@ -91,6 +91,7 @@ and Flutter projects.
 .build/debug/exfig --help
 .build/debug/exfig colors -i exfig.pkl
 .build/debug/exfig icons -i exfig.pkl
+.build/debug/exfig batch exfig.pkl            # All resources from unified config (positional arg!)
 .build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
 
 # PKL Validation (validate config templates against schemas)

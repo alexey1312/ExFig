@@ -114,10 +114,14 @@ figma {
 ### 5. Export Resources
 
 ```bash
+# Export individual resource types
 exfig colors             # Export colors
 exfig icons              # Export icons
 exfig images             # Export images
 exfig typography         # Export typography
+
+# Export everything at once with batch
+exfig batch exfig.pkl    # All resource types from single config
 ```
 
 See [Configuration Reference](CONFIG.md) for all available options.
@@ -180,6 +184,13 @@ flutter_project/
 ## Advanced Features
 
 ### Batch Processing
+
+Export all resource types (colors, icons, images, typography) from a single unified config:
+
+```bash
+exfig batch exfig.pkl                         # All resources from one config
+exfig batch exfig.pkl --cache                 # With version tracking
+```
 
 Process multiple configuration files in parallel with shared rate limiting:
 

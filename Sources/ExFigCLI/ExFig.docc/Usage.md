@@ -141,6 +141,19 @@ exfig icons --resume
 
 ## Batch Processing
 
+Export all resource types from a single unified config:
+
+```bash
+# Export colors, icons, images, typography from one config
+exfig batch exfig.pkl
+
+# With version tracking
+exfig batch exfig.pkl --cache
+
+# With rate limiting
+exfig batch exfig.pkl --cache --rate-limit 25
+```
+
 Process multiple configuration files in parallel:
 
 ```bash
@@ -162,6 +175,8 @@ exfig batch ./configs/ --report batch-results.json
 # Resume from checkpoint
 exfig batch ./configs/ --resume
 ```
+
+> Note: The `batch` command takes config paths as **positional arguments**, not via `-i` flag.
 
 | Option          | Description                     | Default |
 | --------------- | ------------------------------- | ------- |
