@@ -116,8 +116,8 @@ extension ExFigCommand {
         case .noVersionFile:
             // Schemas exist but no version file — extracted by an older version
             ui.warning(
-                "Schema version unknown (extracted by an older ExFig version). "
-                    + "Run `exfig schemas --force` to update."
+                "Local schemas in .exfig/schemas/ have no version info. "
+                    + "Run `exfig schemas --force` to update, or remove the directory if using package:// imports."
             )
         }
     }

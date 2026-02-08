@@ -220,7 +220,7 @@ actor BatchProgressView {
         let completed = configStates.values.filter { isCompleted($0.status) }.count
         let total = configStates.count
         let header = "Batch Export (\(completed)/\(total) configs)"
-        lines.append(useColors ? NooraUI.format(.command(header)) : header)
+        lines.append(useColors ? NooraUI.format(.secondary(header)) : header)
 
         // Config lines
         let sortedConfigs = configOrder.compactMap { configStates[$0] }
@@ -371,8 +371,7 @@ actor BatchProgressView {
             }
             return text
         case .succeeded:
-            return formatExportProgress(config.exportProgress) +
-                (useColors ? " " + NooraUI.format(.success("✓")) : " ✓")
+            return formatExportProgress(config.exportProgress)
         case let .failed(error):
             let truncated = String(error.prefix(30))
             return useColors ? NooraUI.format(.danger(truncated)) : truncated
@@ -424,9 +423,10 @@ actor BatchProgressView {
                 ? NooraUI.format(.accent(pausedMsg))
                 : pausedMsg
         } else {
-            let currentRate = String(format: "%.1f", status.currentRate)
-            let maxRate = String(format: "%.0f", status.requestsPerMinute / 60.0)
-            rateText = "Rate limit: \(currentRate) req/s (\(maxRate) max)"
+            let rpm = String(format: "%.0f", status.requestsPerMinute)
+            let pending = status.pendingRequestCount
+            let pendingInfo = pending > 0 ? ", \(pending) queued" : ""
+            rateText = "Rate limit: \(rpm) req/min\(pendingInfo)"
         }
 
         return "\(prefix) \(rateText)"
