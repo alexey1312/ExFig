@@ -202,11 +202,12 @@ Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after 
 
 ## Code Conventions
 
-| Area            | Use                               | Instead of                  |
-| --------------- | --------------------------------- | --------------------------- |
-| JSON parsing    | `JSONCodec` (swift-yyjson)        | `JSONDecoder`/`JSONEncoder` |
-| Terminal UI     | Noora (`NooraUI`, `TerminalText`) | Rainbow color methods       |
-| Terminal output | `TerminalUI` facade               | Direct `print()` calls      |
+| Area            | Use                               | Instead of                           |
+| --------------- | --------------------------------- | ------------------------------------ |
+| JSON parsing    | `JSONCodec` (swift-yyjson)        | `JSONDecoder`/`JSONEncoder`          |
+| Terminal UI     | Noora (`NooraUI`, `TerminalText`) | Rainbow color methods                |
+| Terminal output | `TerminalUI` facade               | Direct `print()` calls               |
+| README.md       | Keep compact (~300 lines)         | Detailed docs (use CONFIG.md / DocC) |
 
 **JSONCodec usage:**
 
