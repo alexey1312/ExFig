@@ -253,7 +253,7 @@ extension ExFigCommand {
             )
 
             displayBatchStartInfo(
-                configCount: configs.count,
+                configs: configs,
                 sharedGranularCache: sharedGranularCache,
                 ui: ui
             )
@@ -263,6 +263,10 @@ extension ExFigCommand {
                 useColors: !globalOptions.quiet,
                 useAnimations: !globalOptions.quiet && TTYDetector.isTTY
             )
+
+            // Print static header once (outside animated render area to prevent duplication)
+            let header = globalOptions.quiet ? "Batch Export" : NooraUI.format(.secondary("Batch Export"))
+            TerminalOutputManager.shared.writeDirect(header + "\n")
 
             // Register all configs upfront
             for config in configs {
@@ -398,11 +402,18 @@ extension ExFigCommand {
 
         /// Displays batch start information.
         private func displayBatchStartInfo(
-            configCount: Int,
+            configs: [ConfigFile],
             sharedGranularCache: SharedGranularCache?,
             ui: TerminalUI
         ) {
-            ui.info("Processing \(configCount) config(s) with up to \(parallel) parallel workers...")
+            ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers:")
+
+            let headers: [TableCellStyle] = [.plain("#"), .plain("Config")]
+            let rows: [StyledTableRow] = configs.enumerated().map { index, config in
+                [.plain("\(index + 1)"), .plain(config.name)]
+            }
+            NooraUI.shared.table(headers: headers, rows: rows)
+
             if globalOptions.verbose {
                 ui.info("Rate limit: \(rateLimit) req/min, max retries: \(maxRetries)")
                 if sharedGranularCache != nil {

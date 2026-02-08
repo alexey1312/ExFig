@@ -217,11 +217,7 @@ actor BatchProgressView {
 
         var lines: [String] = []
 
-        // Header (static text, no changing counter)
-        let header = "Batch Export"
-        lines.append(useColors ? NooraUI.format(.secondary(header)) : header)
-
-        // Config lines
+        // Config lines (header "Batch Export" is printed once from Batch.swift, outside animated area)
         let sortedConfigs = configOrder.compactMap { configStates[$0] }
         for config in sortedConfigs {
             let line = formatConfigLine(config, prefix: "├─")
