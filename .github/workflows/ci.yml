@@ -62,11 +62,15 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
-      - name: Build
-        run: swift build 2>&1 | xcsift
+      - name: Build (including tests)
+        run: swift build --build-tests 2>&1 | xcsift
 
       - name: Test
-        run: swift test --enable-code-coverage 2>&1 | xcsift
+        run: swift test --skip-build --parallel 2>&1 | xcsift
+
+      - name: Test with coverage
+        if: github.ref == 'refs/heads/main'
+        run: swift test --skip-build --parallel --enable-code-coverage 2>&1 | xcsift
 
       - name: Generate coverage report
         if: github.ref == 'refs/heads/main'

@@ -71,19 +71,19 @@ description = "Build the Swift package (release)"
 run = "swift build --configuration release 2>&1 | xcsift"
 
 [tasks.test]
-description = "Run all tests"
-run = "swift test 2>&1 | xcsift"
+description = "Run all tests (parallel)"
+run = "swift build --build-tests 2>&1 | xcsift && swift test --skip-build --parallel 2>&1 | xcsift"
 
 [tasks."test:filter"]
 description = "Run tests with filter (usage: mise run test:filter ExFigTests)"
-run = "swift test --filter {{arg(name='filter')}} 2>&1 | xcsift"
+run = "swift test --parallel --filter {{arg(name='filter')}} 2>&1 | xcsift"
 
 [tasks."test:file"]
 description = "Run tests for a specific file (usage: mise run test:file Tests/SVGKitTests/SVGParserTests.swift)"
 run = """
 #!/bin/bash
 TEST_CLASS=$(basename "{{arg(name='file')}}" .swift)
-swift test --filter "$TEST_CLASS" 2>&1 | xcsift
+swift test --parallel --filter "$TEST_CLASS" 2>&1 | xcsift
 """
 
 [tasks.lint]
