@@ -17,15 +17,8 @@ public extension Android.Typography {
         )
     }
 
-    /// Converts PKL NameStyle to ExFigCore NameStyle.
+    /// Converts PKL NameStyle to ExFigCore NameStyle via centralized bridging.
     var coreNameStyle: NameStyle {
-        switch nameStyle {
-        case .camelCase: .camelCase
-        case .snake_case: .snakeCase
-        case .pascalCase: .pascalCase
-        case .flatCase: .flatCase
-        case .kebabCase: .kebabCase
-        case .sCREAMING_SNAKE_CASE: .screamingSnakeCase
-        }
+        nameStyle.coreNameStyle
     }
 }

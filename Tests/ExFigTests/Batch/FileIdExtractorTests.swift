@@ -19,19 +19,19 @@ final class FileIdExtractorTests: XCTestCase {
 
     // MARK: - Basic Extraction
 
-    func testExtractsLightFileId() throws {
+    func testExtractsLightFileId() async throws {
         let configURL = try createConfig("""
         figma {
           lightFileId = "abc123"
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertEqual(result, ["abc123"])
     }
 
-    func testExtractsBothLightAndDarkFileIds() throws {
+    func testExtractsBothLightAndDarkFileIds() async throws {
         let configURL = try createConfig("""
         figma {
           lightFileId = "light-id"
@@ -39,12 +39,12 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertEqual(result, ["light-id", "dark-id"])
     }
 
-    func testExtractsTokensFileId() throws {
+    func testExtractsTokensFileId() async throws {
         let configURL = try createConfig("""
         figma {
           lightFileId = "main-file"
@@ -58,14 +58,14 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertEqual(result, ["main-file", "tokens-file"])
     }
 
     // MARK: - Deduplication
 
-    func testDeduplicatesSameFileIdAcrossConfigs() throws {
+    func testDeduplicatesSameFileIdAcrossConfigs() async throws {
         let config1 = try createConfig("""
         figma {
           lightFileId = "shared-file"
@@ -78,13 +78,13 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """, name: "config2.pkl")
 
-        let result = extractor.extractUniqueFileIds(from: [config1, config2])
+        let result = await extractor.extractUniqueFileIds(from: [config1, config2])
 
         XCTAssertEqual(result.count, 1)
         XCTAssertTrue(result.contains("shared-file"))
     }
 
-    func testDeduplicatesWhenDarkSameAsOtherLight() throws {
+    func testDeduplicatesWhenDarkSameAsOtherLight() async throws {
         let config1 = try createConfig("""
         figma {
           lightFileId = "file-a"
@@ -98,14 +98,14 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """, name: "config2.pkl")
 
-        let result = extractor.extractUniqueFileIds(from: [config1, config2])
+        let result = await extractor.extractUniqueFileIds(from: [config1, config2])
 
         XCTAssertEqual(result, ["file-a", "file-b"])
     }
 
     // MARK: - Multiple Configs
 
-    func testExtractsFromMultipleConfigs() throws {
+    func testExtractsFromMultipleConfigs() async throws {
         let config1 = try createConfig("""
         figma {
           lightFileId = "file-1"
@@ -119,44 +119,44 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """, name: "config2.pkl")
 
-        let result = extractor.extractUniqueFileIds(from: [config1, config2])
+        let result = await extractor.extractUniqueFileIds(from: [config1, config2])
 
         XCTAssertEqual(result, ["file-1", "file-2", "file-3"])
     }
 
     // MARK: - Error Handling
 
-    func testReturnsEmptySetForInvalidPkl() throws {
+    func testReturnsEmptySetForInvalidPkl() async throws {
         let configURL = try createConfig("not valid pkl syntax {{{", name: "invalid.pkl")
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertTrue(result.isEmpty)
     }
 
-    func testExtractsDarkFileIdWhenLightFileIdMissing() throws {
+    func testExtractsDarkFileIdWhenLightFileIdMissing() async throws {
         let configURL = try createConfig("""
         figma {
           darkFileId = "only-dark"
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         // lightFileId is now optional, so config parses successfully
         // Only darkFileId should be extracted
         XCTAssertEqual(result, Set(["only-dark"]))
     }
 
-    func testReturnsEmptySetForNonexistentFile() {
+    func testReturnsEmptySetForNonexistentFile() async {
         let nonexistent = tempDir.appendingPathComponent("nonexistent.pkl")
 
-        let result = extractor.extractUniqueFileIds(from: [nonexistent])
+        let result = await extractor.extractUniqueFileIds(from: [nonexistent])
 
         XCTAssertTrue(result.isEmpty)
     }
 
-    func testSkipsInvalidConfigsButExtractsFromValid() throws {
+    func testSkipsInvalidConfigsButExtractsFromValid() async throws {
         let valid = try createConfig("""
         figma {
           lightFileId = "valid-file"
@@ -165,22 +165,22 @@ final class FileIdExtractorTests: XCTestCase {
 
         let invalid = try createConfig("invalid pkl {{{", name: "invalid.pkl")
 
-        let result = extractor.extractUniqueFileIds(from: [valid, invalid])
+        let result = await extractor.extractUniqueFileIds(from: [valid, invalid])
 
         XCTAssertEqual(result, ["valid-file"])
     }
 
     // MARK: - Empty Input
 
-    func testReturnsEmptySetForEmptyInput() {
-        let result = extractor.extractUniqueFileIds(from: [])
+    func testReturnsEmptySetForEmptyInput() async {
+        let result = await extractor.extractUniqueFileIds(from: [])
 
         XCTAssertTrue(result.isEmpty)
     }
 
     // MARK: - High Contrast File IDs
 
-    func testExtractsHighContrastFileIds() throws {
+    func testExtractsHighContrastFileIds() async throws {
         let configURL = try createConfig("""
         figma {
           lightFileId = "light-file"
@@ -190,7 +190,7 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertEqual(result.count, 4)
         XCTAssertTrue(result.contains("light-file"))
@@ -201,7 +201,7 @@ final class FileIdExtractorTests: XCTestCase {
 
     // MARK: - Multi-Entry Colors
 
-    func testExtractsMultiEntryColorsTokensFileIds() throws {
+    func testExtractsMultiEntryColorsTokensFileIds() async throws {
         let configURL = try createConfig("""
         figma {
           lightFileId = "design-file"
@@ -230,14 +230,14 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertTrue(result.contains("design-file"))
         XCTAssertTrue(result.contains("ios-tokens-1"))
         XCTAssertTrue(result.contains("ios-tokens-2"))
     }
 
-    func testExtractsMultiPlatformMultiEntryColors() throws {
+    func testExtractsMultiPlatformMultiEntryColors() async throws {
         let configURL = try createConfig("""
         figma {
           lightFileId = "design-file"
@@ -269,14 +269,14 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertTrue(result.contains("design-file"))
         XCTAssertTrue(result.contains("ios-tokens"))
         XCTAssertTrue(result.contains("android-tokens"))
     }
 
-    func testCombinesCommonAndMultiEntryTokens() throws {
+    func testCombinesCommonAndMultiEntryTokens() async throws {
         let configURL = try createConfig("""
         figma {
           lightFileId = "design-file"
@@ -305,7 +305,7 @@ final class FileIdExtractorTests: XCTestCase {
         }
         """)
 
-        let result = extractor.extractUniqueFileIds(from: [configURL])
+        let result = await extractor.extractUniqueFileIds(from: [configURL])
 
         XCTAssertEqual(result.count, 3)
         XCTAssertTrue(result.contains("design-file"))

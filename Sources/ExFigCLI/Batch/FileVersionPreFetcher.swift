@@ -76,7 +76,7 @@ struct FileVersionPreFetcher: Sendable {
         // Extract unique file IDs from all configs
         let extractor = FileIdExtractor()
         let configURLs = configuration.configs.map(\.url)
-        let uniqueFileIds = extractor.extractUniqueFileIds(from: configURLs)
+        let uniqueFileIds = await extractor.extractUniqueFileIds(from: configURLs)
 
         guard !uniqueFileIds.isEmpty else {
             return nil
@@ -135,7 +135,7 @@ struct FileVersionPreFetcher: Sendable {
         }
 
         // Extract unique file IDs from all configs
-        let uniqueFileIds = extractUniqueFileIds(from: configuration)
+        let uniqueFileIds = await extractUniqueFileIds(from: configuration)
         guard !uniqueFileIds.isEmpty else {
             return PreFetchResult(versions: nil, components: nil, nodes: nil)
         }
@@ -164,10 +164,10 @@ struct FileVersionPreFetcher: Sendable {
     }
 
     /// Extracts unique file IDs from configuration.
-    private static func extractUniqueFileIds(from configuration: PreFetchConfiguration) -> Set<String> {
+    private static func extractUniqueFileIds(from configuration: PreFetchConfiguration) async -> Set<String> {
         let extractor = FileIdExtractor()
         let configURLs = configuration.configs.map(\.url)
-        return extractor.extractUniqueFileIds(from: configURLs)
+        return await extractor.extractUniqueFileIds(from: configURLs)
     }
 
     /// Creates a rate-limited pre-fetcher.

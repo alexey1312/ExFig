@@ -215,13 +215,6 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "ExFigConfigTests",
-            dependencies: [
-                "ExFigConfig",
-                .product(name: "CustomDump", package: "swift-custom-dump"),
-            ]
-        ),
-        .testTarget(
             name: "XcodeExportTests",
             dependencies: [
                 "XcodeExport", .product(name: "CustomDump", package: "swift-custom-dump"),

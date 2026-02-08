@@ -155,20 +155,26 @@ private extension AndroidImagesExporter {
         )
 
         let isSingleScale = scales.count == 1
-        let finalFiles = webpFiles.compactMap { file -> FileContents? in
-            guard let data = file.data else { return nil }
+        var collectedFiles: [FileContents] = []
+        for file in webpFiles {
+            guard let data = file.data else {
+                let name = file.destination.file.lastPathComponent
+                context.warning("Skipped image '\(name)': no data after WebP conversion")
+                continue
+            }
             let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
-            return FileContents(
+            collectedFiles.append(FileContents(
                 destination: Destination(directory: directory, file: stripped.destination.file),
                 data: data,
                 scale: file.scale,
                 dark: file.dark
-            )
+            ))
         }
+        let finalFiles = collectedFiles
 
         try await context.withSpinner("Writing files to Android project...") {
             try context.writeFiles(finalFiles)
@@ -208,20 +214,26 @@ private extension AndroidImagesExporter {
         )
 
         let isSingleScale = scales.count == 1
-        let finalFiles = pngFiles.compactMap { file -> FileContents? in
-            guard let data = file.data else { return nil }
+        var collectedFiles: [FileContents] = []
+        for file in pngFiles {
+            guard let data = file.data else {
+                let name = file.destination.file.lastPathComponent
+                context.warning("Skipped image '\(name)': no data after PNG conversion")
+                continue
+            }
             let stripped = file.strippingScaleSuffix()
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
                 .appendingPathComponent(dirName, isDirectory: true)
-            return FileContents(
+            collectedFiles.append(FileContents(
                 destination: Destination(directory: directory, file: stripped.destination.file),
                 data: data,
                 scale: file.scale,
                 dark: file.dark
-            )
+            ))
         }
+        let finalFiles = collectedFiles
 
         try await context.withSpinner("Writing files to Android project...") {
             try context.writeFiles(finalFiles)

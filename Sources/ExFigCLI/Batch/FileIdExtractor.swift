@@ -20,34 +20,15 @@ struct FileIdExtractor {
     ///
     /// - Parameter configURLs: URLs to config files.
     /// - Returns: Set of unique file IDs found across all configs.
-    func extractUniqueFileIds(from configURLs: [URL]) -> Set<String> {
+    func extractUniqueFileIds(from configURLs: [URL]) async -> Set<String> {
         var fileIds = Set<String>()
 
         for configURL in configURLs {
-            if let params = parseParams(from: configURL) {
-                fileIds.formUnion(params.getFileIds())
-            }
-        }
-
-        return fileIds
-    }
-
-    /// Parse ExFig.ModuleImpl from a PKL config file URL.
-    ///
-    /// - Parameter url: URL to the config file.
-    /// - Returns: Parsed ExFig.ModuleImpl or nil if parsing fails.
-    private func parseParams(from url: URL) -> ExFig.ModuleImpl? {
-        // Run async evaluation synchronously
-        // Semaphore ensures sequential access, so @unchecked Sendable is safe
-        let semaphore = DispatchSemaphore(value: 0)
-        let box = SendableBox<ExFig.ModuleImpl?>(nil)
-
-        Task {
-            defer { semaphore.signal() }
             do {
-                box.value = try await PKLEvaluator.evaluate(configPath: url)
+                let module: ExFig.ModuleImpl = try await PKLEvaluator.evaluate(configPath: configURL)
+                fileIds.formUnion(module.getFileIds())
             } catch {
-                let name = url.lastPathComponent
+                let name = configURL.lastPathComponent
                 let reason = error.localizedDescription
                 ExFigCommand.logger.error(
                     """
@@ -58,14 +39,6 @@ struct FileIdExtractor {
             }
         }
 
-        let waitResult = semaphore.wait(timeout: .now() + 30)
-        guard waitResult == .success else {
-            let name = url.lastPathComponent
-            ExFigCommand.logger.error(
-                "Pre-fetch optimization: PKL evaluation timed out for \(name)."
-            )
-            return nil
-        }
-        return box.value
+        return fileIds
     }
 }

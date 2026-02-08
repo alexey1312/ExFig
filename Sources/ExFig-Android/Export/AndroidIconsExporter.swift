@@ -208,14 +208,19 @@ private extension AndroidIconsExporter {
 
             // Collect SVG data
             var svgFiles: [String: Data] = [:]
+            var failedCount = 0
             for file in localFiles {
                 let iconName = file.destination.file.deletingPathExtension().lastPathComponent
                 do {
                     let data = try Data(contentsOf: file.destination.url)
                     svgFiles[iconName] = data
                 } catch {
+                    failedCount += 1
                     context.warning("Failed to read SVG file '\(iconName)': \(error.localizedDescription)")
                 }
+            }
+            if failedCount > 0 {
+                context.warning("\(failedCount) icon(s) skipped due to read failures")
             }
 
             if context.filter == nil {

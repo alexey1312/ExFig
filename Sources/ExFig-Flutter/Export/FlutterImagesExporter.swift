@@ -4,6 +4,22 @@ import ExFigCore
 import FlutterExport
 import Foundation
 
+/// Errors thrown during Flutter image export.
+enum FlutterImagesExportError: LocalizedError {
+    case incompatibleFormat(source: String, output: String)
+
+    var errorDescription: String? {
+        switch self {
+        case let .incompatibleFormat(source, output):
+            "Incompatible format: cannot convert \(source) source to \(output)"
+        }
+    }
+
+    var recoverySuggestion: String? {
+        "Use SVG source format for vector output, or PNG/WebP for raster output."
+    }
+}
+
 /// Exports images from Figma frames to Flutter assets and Dart code.
 ///
 /// Supports multiple workflows:
@@ -70,8 +86,7 @@ public struct FlutterImagesExporter: ImagesExporter {
                 entry: entry, platformConfig: platformConfig, context: context
             )
         case (.png, .svg):
-            context.warning("Cannot convert PNG source to SVG. Use SVG source for vector output.")
-            return 0
+            throw FlutterImagesExportError.incompatibleFormat(source: "PNG", output: "SVG")
         }
     }
 }
@@ -145,7 +160,8 @@ private extension FlutterImagesExporter {
         }
 
         let finalFiles = FlutterImagesHelpers.mapToFlutterScaleDirectories(
-            webpFiles, assetsDirectory: assetsDirectory
+            webpFiles, assetsDirectory: assetsDirectory,
+            onSkip: { context.warning("Skipped image '\($0)': no data after conversion") }
         )
 
         let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
@@ -197,7 +213,8 @@ private extension FlutterImagesExporter {
         }
 
         let finalFiles = FlutterImagesHelpers.mapToFlutterScaleDirectories(
-            pngFiles, assetsDirectory: assetsDirectory
+            pngFiles, assetsDirectory: assetsDirectory,
+            onSkip: { context.warning("Skipped image '\($0)': no data after conversion") }
         )
 
         let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
@@ -249,7 +266,8 @@ private extension FlutterImagesExporter {
         }
 
         let finalFiles = FlutterImagesHelpers.mapToFlutterScaleDirectories(
-            localFiles, assetsDirectory: assetsDirectory
+            localFiles, assetsDirectory: assetsDirectory,
+            onSkip: { context.warning("Skipped image '\($0)': no data after conversion") }
         )
 
         let resolvedTemplatesPath = entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
@@ -533,27 +551,31 @@ enum FlutterImagesHelpers {
 
     static func mapToFlutterScaleDirectories(
         _ files: [FileContents],
-        assetsDirectory: URL
+        assetsDirectory: URL,
+        onSkip: ((String) -> Void)? = nil
     ) -> [FileContents] {
-        files.compactMap { file -> FileContents? in
+        var result: [FileContents] = []
+        for file in files {
             let scaleDirectory = file.scale == 1.0
                 ? assetsDirectory
                 : assetsDirectory.appendingPathComponent("\(file.scale)x")
             let cleanFile = file.strippingScaleSuffix().destination.file
 
             if let data = file.data {
-                return FileContents(
+                result.append(FileContents(
                     destination: Destination(directory: scaleDirectory, file: cleanFile),
                     data: data, scale: file.scale, dark: file.dark
-                )
+                ))
             } else if let dataFile = file.dataFile {
-                return FileContents(
+                result.append(FileContents(
                     destination: Destination(directory: scaleDirectory, file: cleanFile),
                     dataFile: dataFile, scale: file.scale, dark: file.dark
-                )
+                ))
+            } else {
+                onSkip?(cleanFile.lastPathComponent)
             }
-            return nil
         }
+        return result
     }
 }
 
