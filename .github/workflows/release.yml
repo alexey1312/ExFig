@@ -279,12 +279,12 @@ jobs:
       - name: Build DocC
         run: |
           swift package --allow-writing-to-directory docs \
-              generate-documentation --target ExFig \
+              generate-documentation --target ExFigCLI \
               --disable-indexing \
               --transform-for-static-hosting \
               --hosting-base-path ExFig \
               --output-path docs
-          echo '<script>window.location.href += "/documentation/exfig"</script>' > docs/index.html
+          echo '<script>window.location.href += "/documentation/exfigcli"</script>' > docs/index.html
 
       - uses: actions/upload-pages-artifact@v4
         with:
