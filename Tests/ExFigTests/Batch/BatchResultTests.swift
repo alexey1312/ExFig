@@ -1,5 +1,5 @@
 // swiftlint:disable file_length type_body_length
-@testable import ExFig
+@testable import ExFigCLI
 import XCTest
 
 final class BatchResultTests: XCTestCase {
@@ -188,8 +188,8 @@ final class BatchResultTests: XCTestCase {
     // MARK: - BatchResult Tests
 
     func testBatchResultTotalStatsAggregatesComputedHashes() {
-        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.yaml"), name: "config1")
-        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.yaml"), name: "config2")
+        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.pkl"), name: "config1")
+        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.pkl"), name: "config2")
 
         let stats1 = ExportStats(
             icons: 5,
@@ -220,8 +220,8 @@ final class BatchResultTests: XCTestCase {
     }
 
     func testBatchResultTotalStatsAggregatesGranularStats() {
-        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.yaml"), name: "config1")
-        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.yaml"), name: "config2")
+        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.pkl"), name: "config1")
+        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.pkl"), name: "config2")
 
         let stats1 = ExportStats(
             icons: 5,
@@ -252,8 +252,8 @@ final class BatchResultTests: XCTestCase {
     }
 
     func testBatchResultTotalStatsIgnoresFailures() {
-        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.yaml"), name: "config1")
-        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.yaml"), name: "config2")
+        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.pkl"), name: "config1")
+        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.pkl"), name: "config2")
 
         let stats1 = ExportStats(
             icons: 5,
@@ -281,7 +281,7 @@ final class BatchResultTests: XCTestCase {
     }
 
     func testBatchResultSuccessesIncludesStats() {
-        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.yaml"), name: "config1")
+        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.pkl"), name: "config1")
         let stats1 = ExportStats(
             icons: 5,
             computedNodeHashes: ["fileA": ["1:1": "hash1"]]
@@ -385,8 +385,8 @@ final class BatchResultTests: XCTestCase {
     }
 
     func testBatchResultTotalStatsAggregatesFileVersions() {
-        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.yaml"), name: "config1")
-        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.yaml"), name: "config2")
+        let config1 = ConfigFile(url: URL(fileURLWithPath: "/config1.pkl"), name: "config1")
+        let config2 = ConfigFile(url: URL(fileURLWithPath: "/config2.pkl"), name: "config2")
 
         let version1 = FileVersionInfo(
             fileId: "fileA",

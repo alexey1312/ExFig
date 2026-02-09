@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import ExFigCore
 import XCTest
 
@@ -217,6 +217,76 @@ final class WarningFormatterTests: XCTestCase {
         // Zebra should come before alpha (original order, not alphabetical)
         XCTAssertLessThan(zebraRange.lowerBound, alphaRange.lowerBound)
         XCTAssertLessThan(alphaRange.lowerBound, betaRange.lowerBound)
+    }
+
+    // MARK: - Compact Mode
+
+    func testFormatCompactTruncatesLargeList() {
+        let assets = (1 ... 50).map { "asset-\($0)" }
+        let warning = AssetsValidatorWarning.lightAssetsNotFoundInDarkPalette(
+            assets: assets
+        )
+        let formatter = WarningFormatter()
+
+        let result = formatter.format(warning, compact: true)
+
+        // Should show first 10 items
+        XCTAssertTrue(result.contains("asset-1"))
+        XCTAssertTrue(result.contains("asset-10"))
+        // Should NOT show items beyond 10
+        XCTAssertFalse(result.contains("asset-11"))
+        XCTAssertFalse(result.contains("asset-50"))
+        // Should show truncation message
+        XCTAssertTrue(result.contains("... +40 more"), "Should show remaining count")
+        // Header should still show total count
+        XCTAssertTrue(result.contains("50 assets"))
+    }
+
+    func testFormatCompactFewItemsNoTruncation() {
+        let assets = ["icon-a", "icon-b", "icon-c"]
+        let warning = AssetsValidatorWarning.lightAssetsNotFoundInDarkPalette(
+            assets: assets
+        )
+        let formatter = WarningFormatter()
+
+        let result = formatter.format(warning, compact: true)
+
+        // Should show all items when under threshold
+        XCTAssertTrue(result.contains("icon-a"))
+        XCTAssertTrue(result.contains("icon-b"))
+        XCTAssertTrue(result.contains("icon-c"))
+        // Should NOT have truncation message
+        XCTAssertFalse(result.contains("more"))
+    }
+
+    func testFormatCompactExactlyMaxItems() {
+        let assets = (1 ... 10).map { "asset-\($0)" }
+        let warning = AssetsValidatorWarning.lightAssetsNotFoundInDarkPalette(
+            assets: assets
+        )
+        let formatter = WarningFormatter()
+
+        let result = formatter.format(warning, compact: true)
+
+        // Exactly 10 items — should show all without truncation
+        XCTAssertTrue(result.contains("asset-1"))
+        XCTAssertTrue(result.contains("asset-10"))
+        XCTAssertFalse(result.contains("more"))
+    }
+
+    func testFormatNonCompactDefaultShowsAll() {
+        let assets = (1 ... 50).map { "asset-\($0)" }
+        let warning = AssetsValidatorWarning.lightAssetsNotFoundInDarkPalette(
+            assets: assets
+        )
+        let formatter = WarningFormatter()
+
+        // Default compact=false should show all items
+        let result = formatter.format(warning)
+
+        XCTAssertTrue(result.contains("asset-1"))
+        XCTAssertTrue(result.contains("asset-50"))
+        XCTAssertFalse(result.contains("more"))
     }
 
     // MARK: - Universal Message

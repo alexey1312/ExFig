@@ -56,14 +56,21 @@ jobs:
           experimental: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify pkl installation
+        run: pkl --version
+
       - name: Show Swift version
         run: swift --version
 
-      - name: Build
-        run: swift build 2>&1 | xcsift
+      - name: Build (including tests)
+        run: swift build --build-tests 2>&1 | xcsift
 
       - name: Test
-        run: swift test --enable-code-coverage 2>&1 | xcsift
+        run: swift test --skip-build --parallel 2>&1 | xcsift
+
+      - name: Test with coverage
+        if: github.ref == 'refs/heads/main'
+        run: swift test --skip-build --parallel --enable-code-coverage 2>&1 | xcsift
 
       - name: Generate coverage report
         if: github.ref == 'refs/heads/main'
@@ -100,17 +107,21 @@ jobs:
           experimental: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Add xcsift to PATH
+      - name: Install tools (xcsift, pkl)
         run: |
-          mise install xcsift
+          mise install xcsift pkl
           mise where xcsift >> "$GITHUB_PATH"
+          mise where pkl >> "$GITHUB_PATH"
+
+      - name: Verify pkl installation
+        run: pkl --version
 
       - name: Show Swift version
         run: swift --version
 
-      - name: Build
-        run: swift build 2>&1 | xcsift
+      - name: Build (including tests)
+        run: swift build --build-tests 2>&1 | xcsift
 
       - name: Run tests
-        # Use --num-workers 1 to avoid memory corruption with libpng on Linux
-        run: swift test --parallel --num-workers 1 2>&1 | xcsift
+        # Build tests separately to avoid hangs from concurrent build + test execution
+        run: swift test --skip-build --parallel 2>&1 | xcsift

@@ -9,7 +9,6 @@ final class AssetsValidatorWarningTests: XCTestCase {
 
         XCTAssertTrue(warning.errorDescription?.contains("color1, color2, color3") == true)
         XCTAssertTrue(warning.errorDescription?.contains("not found in the dark palette") == true)
-        XCTAssertTrue(warning.errorDescription?.hasPrefix("⚠️") == true)
     }
 
     func testLightHCAssetsNotFoundInLightPaletteWarning() {

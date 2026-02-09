@@ -1,0 +1,33 @@
+/// Project-specific iOS configuration that inherits from base.pkl.
+/// Demonstrates PKL config inheritance via amends.
+amends "base.pkl"
+
+import "../iOS.pkl"
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "ProjectA.xcodeproj"
+  target = "ProjectA"
+  xcassetsPath = "ProjectA/Assets.xcassets"
+  xcassetsInMainBundle = true
+
+  colors = new Listing {
+    new iOS.ColorsEntry {
+      // Source comes from common.variablesColors (inherited from base.pkl)
+      useColorAssets = true
+      assetsFolder = "Colors"
+      nameStyle = "camelCase"
+      colorSwift = "ProjectA/Generated/UIColor+Colors.swift"
+      swiftuiColorSwift = "ProjectA/Generated/Color+Colors.swift"
+    }
+  }
+
+  icons = new Listing {
+    new iOS.IconsEntry {
+      // figmaFrameName comes from common.icons (inherited from base.pkl)
+      format = "pdf"
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+      renderMode = "template"
+    }
+  }
+}

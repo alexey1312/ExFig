@@ -1,0 +1,238 @@
+/// iOS platform configuration for ExFig.
+module iOS
+
+import "Common.pkl"
+
+/// Xcode asset catalog render mode.
+typealias XcodeRenderMode = "default"|"original"|"template"
+
+/// Output format for iOS images in asset catalogs.
+/// - `png`: Standard PNG format (default, maximum compatibility)
+/// - `heic`: HEIC format (~40-50% smaller, iOS 12+, macOS only for encoding)
+typealias ImageOutputFormat = "png"|"heic"
+
+/// HEIC encoding mode.
+typealias HeicEncoding = "lossy"|"lossless"
+
+// MARK: - HEIC Options
+
+/// HEIC encoding options for iOS images.
+class HeicOptions {
+  /// Encoding mode: lossy (default) or lossless.
+  encoding: HeicEncoding?
+
+  /// Quality for lossy encoding (0-100). Default: 90.
+  quality: Int(isBetween(0, 100))?
+}
+
+// MARK: - Colors
+
+/// iOS colors entry configuration.
+/// Can include inline source or use common.variablesColors.
+class ColorsEntry extends Common.VariablesSource {
+  /// Use Color Assets (.xcassets) instead of code-only colors.
+  useColorAssets: Boolean = true
+
+  /// Path to .xcassets folder for color assets.
+  assetsFolder: String?
+
+  /// Naming style for generated color names.
+  nameStyle: Common.NameStyle = "camelCase"
+
+  /// Group colors using namespace in asset catalog.
+  groupUsingNamespace: Boolean?
+
+  /// Path to generate UIColor extension Swift file.
+  colorSwift: String?
+
+  /// Path to generate SwiftUI Color extension Swift file.
+  swiftuiColorSwift: String?
+
+  /// Override path to .xcassets folder for this entry.
+  /// When set, overrides `iOSConfig.xcassetsPath`.
+  xcassetsPath: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `iOSConfig.templatesPath`.
+  templatesPath: String?
+
+  /// Sync generated code names back to Figma Variables codeSyntax.iOS field.
+  syncCodeSyntax: Boolean?
+
+  /// Template for codeSyntax.iOS. Use {name} for variable name.
+  /// Example: "Color.{name}" → "Color.backgroundAccent"
+  codeSyntaxTemplate: String?
+}
+
+// MARK: - Icons
+
+/// iOS icons entry configuration.
+class IconsEntry extends Common.FrameSource {
+  /// Vector format for icons.
+  format: Common.VectorFormat = "pdf"
+
+  /// Path to .xcassets folder for icons.
+  assetsFolder: String = "Icons"
+
+  /// Asset names that preserve vector representation.
+  preservesVectorRepresentation: Listing<String>?
+
+  /// Naming style for generated icon names.
+  nameStyle: Common.NameStyle = "camelCase"
+
+  /// Path to generate UIImage extension Swift file.
+  imageSwift: String?
+
+  /// Path to generate SwiftUI Image extension Swift file.
+  swiftUIImageSwift: String?
+
+  /// Path to generate Figma Code Connect Swift file.
+  codeConnectSwift: String?
+
+  /// Override path to .xcassets folder for this entry.
+  /// When set, overrides `iOSConfig.xcassetsPath`.
+  xcassetsPath: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `iOSConfig.templatesPath`.
+  templatesPath: String?
+
+  /// Default render mode for assets.
+  renderMode: XcodeRenderMode?
+
+  /// Suffix for assets using default render mode.
+  renderModeDefaultSuffix: String?
+
+  /// Suffix for assets using original render mode.
+  renderModeOriginalSuffix: String?
+
+  /// Suffix for assets using template render mode.
+  renderModeTemplateSuffix: String?
+}
+
+// MARK: - Images
+
+/// iOS images entry configuration.
+class ImagesEntry extends Common.FrameSource {
+  /// Path to .xcassets folder for images.
+  assetsFolder: String(!isEmpty)
+
+  /// Naming style for generated image names.
+  nameStyle: Common.NameStyle = "camelCase"
+
+  /// Scale factors to generate (e.g., [1, 2, 3]).
+  scales: Listing<Number>? = new Listing { 1.0; 2.0; 3.0 }
+
+  /// Path to generate UIImage extension Swift file.
+  imageSwift: String?
+
+  /// Path to generate SwiftUI Image extension Swift file.
+  swiftUIImageSwift: String?
+
+  /// Path to generate Figma Code Connect Swift file.
+  codeConnectSwift: String?
+
+  /// Source format for fetching from Figma API.
+  sourceFormat: Common.SourceFormat? = "png"
+
+  /// Output format for asset catalog.
+  outputFormat: ImageOutputFormat? = "png"
+
+  /// HEIC encoding options. Only used when outputFormat is heic.
+  heicOptions: HeicOptions?
+
+  /// Override path to .xcassets folder for this entry.
+  /// When set, overrides `iOSConfig.xcassetsPath`.
+  xcassetsPath: String?
+
+  /// Override path to custom Stencil templates for this entry.
+  /// When set, overrides `iOSConfig.templatesPath`.
+  templatesPath: String?
+
+  /// Default render mode for assets.
+  renderMode: XcodeRenderMode?
+
+  /// Suffix for assets using default render mode.
+  renderModeDefaultSuffix: String?
+
+  /// Suffix for assets using original render mode.
+  renderModeOriginalSuffix: String?
+
+  /// Suffix for assets using template render mode.
+  renderModeTemplateSuffix: String?
+}
+
+// MARK: - Typography
+
+/// iOS typography configuration.
+class Typography {
+  /// Figma file ID override for typography (optional).
+  fileId: String?
+
+  /// Regex pattern for validating/capturing text style names.
+  nameValidateRegexp: String?
+
+  /// Replacement pattern for text style names.
+  nameReplaceRegexp: String?
+
+  /// Path to generate UIFont extension Swift file.
+  fontSwift: String?
+
+  /// Path to generate UILabel.Style extension Swift file.
+  labelStyleSwift: String?
+
+  /// Path to generate SwiftUI Font extension Swift file.
+  swiftUIFontSwift: String?
+
+  /// Generate UILabel subclasses for each style.
+  generateLabels: Boolean = false
+
+  /// Directory to generate label subclasses.
+  labelsDirectory: String?
+
+  /// Naming style for generated font names.
+  nameStyle: Common.NameStyle = "camelCase"
+}
+
+// MARK: - iOS Platform Configuration
+
+/// Root iOS platform configuration.
+class iOSConfig {
+  /// Path to .xcodeproj file.
+  xcodeprojPath: String(!isEmpty)
+
+  /// Xcode target name.
+  target: String(!isEmpty)
+
+  /// Path to main .xcassets folder.
+  /// Required for colors (with useColorAssets), icons, and images export.
+  /// Can be omitted in base configs that don't directly export assets.
+  xcassetsPath: String?
+
+  /// Whether assets are in main bundle.
+  xcassetsInMainBundle: Boolean = true
+
+  /// Whether assets are in Swift Package.
+  xcassetsInSwiftPackage: Boolean?
+
+  /// Resource bundle names for asset lookup.
+  resourceBundleNames: Listing<String>?
+
+  /// Add @objc attribute to generated extensions.
+  addObjcAttribute: Boolean?
+
+  /// Path to custom Stencil templates.
+  templatesPath: String?
+
+  /// Colors configuration entries.
+  colors: Listing<ColorsEntry>?
+
+  /// Icons configuration entries.
+  icons: Listing<IconsEntry>?
+
+  /// Images configuration entries.
+  images: Listing<ImagesEntry>?
+
+  /// Typography configuration.
+  typography: Typography?
+}

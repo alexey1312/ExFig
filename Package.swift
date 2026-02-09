@@ -9,12 +9,11 @@ let package = Package(
         .macOS(.v13),
     ],
     products: [
-        .executable(name: "exfig", targets: ["ExFig"]),
+        .executable(name: "exfig", targets: ["ExFigCLI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
-        .package(url: "https://github.com/jpsim/Yams.git", from: "5.3.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: "0.15.1"),
         .package(url: "https://github.com/SwiftGen/StencilSwiftKit", from: "2.10.1"),
@@ -27,28 +26,36 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
         .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.3"),
         .package(url: "https://github.com/mattt/swift-yyjson", from: "0.5.0"),
+        .package(url: "https://github.com/apple/pkl-swift", from: "0.7.2"),
     ],
     targets: [
         // Main target
         .executableTarget(
-            name: "ExFig",
+            name: "ExFigCLI",
             dependencies: [
                 "FigmaAPI",
                 "ExFigCore",
+                "ExFigConfig",
                 "XcodeExport",
                 "AndroidExport",
                 "FlutterExport",
                 "WebExport",
                 "SVGKit",
+                "ExFig-iOS",
+                "ExFig-Android",
+                "ExFig-Flutter",
+                "ExFig-Web",
                 .product(name: "Resvg", package: "swift-resvg"),
                 .product(name: "XcodeProj", package: "XcodeProj"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Yams", package: "Yams"),
                 .product(name: "Logging", package: "swift-log"),
 
                 .product(name: "WebP", package: "libwebp"),
                 .product(name: "LibPNG", package: "libpng"),
                 .product(name: "Noora", package: "Noora"),
+            ],
+            resources: [
+                .copy("Resources/Schemas/"),
             ]
         ),
 
@@ -57,6 +64,15 @@ let package = Package(
             name: "ExFigCore",
             dependencies: [
                 .product(name: "YYJSON", package: "swift-yyjson"),
+            ]
+        ),
+
+        // PKL configuration and shared config types
+        .target(
+            name: "ExFigConfig",
+            dependencies: [
+                "ExFigCore",
+                .product(name: "PklSwift", package: "pkl-swift"),
             ]
         ),
 
@@ -122,6 +138,49 @@ let package = Package(
             ]
         ),
 
+        // MARK: - Platform Plugins
+
+        // iOS platform plugin
+        .target(
+            name: "ExFig-iOS",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+                "XcodeExport",
+            ]
+        ),
+
+        // Android platform plugin
+        .target(
+            name: "ExFig-Android",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+                "AndroidExport",
+                "SVGKit",
+            ]
+        ),
+
+        // Flutter platform plugin
+        .target(
+            name: "ExFig-Flutter",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+                "FlutterExport",
+            ]
+        ),
+
+        // Web platform plugin
+        .target(
+            name: "ExFig-Web",
+            dependencies: [
+                "ExFigCore",
+                "ExFigConfig",
+                "WebExport",
+            ]
+        ),
+
         // MARK: - Tests
 
         .testTarget(
@@ -137,10 +196,15 @@ let package = Package(
         .testTarget(
             name: "ExFigTests",
             dependencies: [
-                "ExFig",
+                "ExFigCLI",
                 "FigmaAPI",
+                "ExFig-Flutter",
+                "ExFig-Web",
                 .product(name: "CustomDump", package: "swift-custom-dump"),
                 .product(name: "LibPNG", package: "libpng"),
+            ],
+            resources: [
+                .copy("Fixtures/"),
             ]
         ),
         .testTarget(
@@ -180,6 +244,41 @@ let package = Package(
         .testTarget(
             name: "SVGKitTests",
             dependencies: ["SVGKit", .product(name: "CustomDump", package: "swift-custom-dump")]
+        ),
+
+        // MARK: - Plugin Tests
+
+        .testTarget(
+            name: "ExFig-iOSTests",
+            dependencies: [
+                "ExFig-iOS",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "ExFig-AndroidTests",
+            dependencies: [
+                "ExFig-Android",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "ExFig-FlutterTests",
+            dependencies: [
+                "ExFig-Flutter",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .testTarget(
+            name: "ExFig-WebTests",
+            dependencies: [
+                "ExFig-Web",
+                "ExFigCore",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
         ),
     ]
 )

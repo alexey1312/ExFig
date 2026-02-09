@@ -1,25 +1,3 @@
-<!-- OPENSPEC:START -->
-
-# OpenSpec Instructions
-
-These instructions are for AI assistants working in this project.
-
-Always open `@/openspec/AGENTS.md` when the request:
-
-- Mentions planning or proposals (words like proposal, spec, change, plan)
-- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
-- Sounds ambiguous and you need the authoritative spec before coding
-
-Use `@/openspec/AGENTS.md` to learn:
-
-- How to create and apply change proposals
-- Spec format and conventions
-- Project structure and guidelines
-
-Keep this managed block so 'openspec update' can refresh the instructions.
-
-<!-- OPENSPEC:END -->
-
 ## TOON Format Convention
 
 Use TOON (Token-Oriented Object Notation) for all tabular data in this file. TOON reduces token usage by 30-60% by declaring fields once in array headers.
@@ -87,6 +65,7 @@ and Flutter projects.
 ./bin/mise run build                # Debug build
 ./bin/mise run build:release        # Release build
 ./bin/mise run test                 # All tests
+# Linux: swift build --build-tests && swift test --skip-build --parallel
 ./bin/mise run test:filter NAME     # Filter by target/class/method
 ./bin/mise run test:file FILE       # Run tests for specific file
 
@@ -103,15 +82,21 @@ and Flutter projects.
 ./bin/mise run coverage             # Run tests with coverage report
 
 # Maintenance
+./bin/mise run codegen:pkl         # Regenerate Swift types from PKL schemas
 ./bin/mise run setup                # Install required tools
 ./bin/mise run clean                # Clean build artifacts
 ./bin/mise run clean:all            # Clean build + derived data
 
 # Run CLI
 .build/debug/exfig --help
-.build/debug/exfig colors -i exfig.yaml
-.build/debug/exfig icons -i exfig.yaml
+.build/debug/exfig colors -i exfig.pkl
+.build/debug/exfig icons -i exfig.pkl
+.build/debug/exfig batch exfig.pkl            # All resources from unified config (positional arg!)
 .build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
+
+# PKL Validation (validate config templates against schemas)
+pkl eval --format json <file.pkl>   # Package URI requires published package
+# For local validation, replace package:// URIs with local Schemas/ paths
 
 # Search (swiftindex) — use for ANY code search
 ./bin/mise exec -- swiftindex search "iOS config struct colors icons" Sources
@@ -126,34 +111,44 @@ and Flutter projects.
 | Language        | Swift 6.2, macOS 13.0+                                                             |
 | Package Manager | Swift Package Manager                                                              |
 | CLI Framework   | swift-argument-parser                                                              |
-| Config Format   | YAML (via Yams)                                                                    |
+| Config Format   | PKL (Programmable, Scalable, Safe)                                                 |
 | Templates       | Stencil                                                                            |
 | Required Env    | `FIGMA_PERSONAL_TOKEN`                                                             |
-| Config Files    | `exfig.yaml` or `figma-export.yaml` (auto-detected)                                |
+| Config Files    | `exfig.pkl` (PKL configuration)                                                    |
 | Tooling         | mise (`./bin/mise` self-contained, no global install needed)                       |
 | Platforms       | macOS 13+ (primary), Linux/Ubuntu 22.04 (CI) - see `.claude/rules/linux-compat.md` |
 
 ## Architecture
 
-Eight modules in `Sources/`:
+Twelve modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
-| `ExFig`         | CLI commands, loaders, file I/O, terminal UI              |
+| `ExFigCLI`      | CLI commands, loaders, file I/O, terminal UI              |
 | `ExFigCore`     | Domain models (Color, Image, TextStyle), processors       |
+| `ExFigConfig`   | PKL config parsing, evaluation, locator                   |
 | `FigmaAPI`      | Figma REST API client, endpoints, response models         |
+| `ExFig-iOS`     | iOS platform plugin (ColorsExporter, IconsExporter, etc.) |
+| `ExFig-Android` | Android platform plugin                                   |
+| `ExFig-Flutter` | Flutter platform plugin                                   |
+| `ExFig-Web`     | Web platform plugin                                       |
 | `XcodeExport`   | iOS export (.xcassets, Swift extensions)                  |
 | `AndroidExport` | Android export (XML resources, Compose, Vector Drawables) |
 | `FlutterExport` | Flutter export (Dart code, SVG/PNG assets)                |
 | `WebExport`     | Web/React export (CSS variables, JSX icons)               |
 | `SVGKit`        | SVG parsing, ImageVector/VectorDrawable generation        |
 
-**Data flow:** CLI -> Config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform export -> File write
+**Data flow:** CLI -> PKL config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform plugin -> Export module -> File write
+
+**Batch mode shared state:** Single `@TaskLocal` via `BatchSharedState.current` (actor).
+Access progress view: `BatchSharedState.current?.progressView`.
+Per-config data (configId, priority, download callback): passed via `ConfigExecutionContext` parameter.
+`BatchProgressViewStorage` was removed — do NOT recreate it.
 
 ## Key Directories
 
 ```
-Sources/ExFig/
+Sources/ExFigCLI/
 ├── Subcommands/     # CLI commands (ExportColors, ExportIcons, DownloadImages, etc.)
 │   └── Export/      # Platform-specific export logic (iOSIconsExport, AndroidImagesExport, etc.)
 ├── Loaders/         # Figma data loaders (ColorsLoader, ImagesLoader, etc.)
@@ -164,7 +159,22 @@ Sources/ExFig/
 ├── Pipeline/        # Cross-config download pipelining (SharedDownloadQueue)
 ├── Batch/           # Batch processing (executor, runner, checkpoint)
 ├── Sync/            # Figma sync functionality (state tracking, diff detection)
+├── Plugin/          # Plugin registry
+├── Context/         # Export context implementations (ColorsExportContextImpl, etc.)
 └── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger, EntryProcessor)
+
+Sources/ExFig-{iOS,Android,Flutter,Web}/
+├── Config/          # Entry types (iOSColorsEntry, AndroidIconsEntry, etc.)
+└── Export/          # Exporters (iOSColorsExporter, AndroidImagesExporter, etc.)
+
+Sources/ExFigConfig/
+└── PKL/             # PKL locator, evaluator, error types
+
+Sources/ExFigCLI/Resources/
+├── Schemas/         # PKL schemas (ExFig.pkl, iOS.pkl, Android.pkl, Flutter.pkl, Web.pkl, Common.pkl, Figma.pkl)
+│   └── examples/    # Example PKL configs (exfig-ios.pkl, exfig-multi.pkl, base.pkl)
+├── *Config.swift    # Init templates: PKL content as Swift raw string literals (ios, android, flutter, web)
+└── *.stencil        # Stencil templates for code generation
 
 Sources/*/Resources/ # Stencil templates for code generation
 Tests/               # Test targets mirror source structure
@@ -174,7 +184,7 @@ Tests/               # Test targets mirror source structure
 
 ### Adding a CLI Command
 
-1. Create `Sources/ExFig/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
+1. Create `Sources/ExFigCLI/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
 2. Register in `ExFigCommand.swift` subcommands array
 3. Use `@OptionGroup` for shared options (`GlobalOptions`, `CacheOptions`)
 4. Use `TerminalUI` for progress: `try await ui.withSpinner("Loading...") { ... }`
@@ -185,17 +195,25 @@ Tests/               # Test targets mirror source structure
 2. Add response models in `Sources/FigmaAPI/Model/`
 3. Add method to `FigmaClient.swift`
 
+### Adding a Platform Plugin Exporter
+
+1. Create entry type in `Sources/ExFig-{Platform}/Config/` (e.g., `iOSColorsEntry.swift`)
+2. Implement exporter in `Sources/ExFig-{Platform}/Export/` conforming to protocol (e.g., `ColorsExporter`)
+3. Register exporter in plugin's `exporters()` method
+4. Add export method in `Sources/ExFigCLI/Subcommands/Export/Plugin*Export.swift` (PKL config maps directly to entry types)
+
 ### Modifying Generated Code
 
 Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after changes.
 
 ## Code Conventions
 
-| Area            | Use                               | Instead of                  |
-| --------------- | --------------------------------- | --------------------------- |
-| JSON parsing    | `JSONCodec` (swift-yyjson)        | `JSONDecoder`/`JSONEncoder` |
-| Terminal UI     | Noora (`NooraUI`, `TerminalText`) | Rainbow color methods       |
-| Terminal output | `TerminalUI` facade               | Direct `print()` calls      |
+| Area            | Use                               | Instead of                           |
+| --------------- | --------------------------------- | ------------------------------------ |
+| JSON parsing    | `JSONCodec` (swift-yyjson)        | `JSONDecoder`/`JSONEncoder`          |
+| Terminal UI     | Noora (`NooraUI`, `TerminalText`) | Rainbow color methods                |
+| Terminal output | `TerminalUI` facade               | Direct `print()` calls               |
+| README.md       | Keep compact (~300 lines)         | Detailed docs (use CONFIG.md / DocC) |
 
 **JSONCodec usage:**
 
@@ -226,34 +244,35 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Dependencies
 
-| Package               | Version | Purpose                    |
-| --------------------- | ------- | -------------------------- |
-| swift-argument-parser | 1.5.0+  | CLI framework              |
-| swift-collections     | 1.2.x   | Ordered collections        |
-| Yams                  | 5.3.0+  | YAML parsing               |
-| Stencil               | 0.15.1+ | Template engine            |
-| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions   |
-| XcodeProj             | 8.27.0+ | Xcode project manipulation |
-| swift-log             | 1.6.0+  | Logging                    |
-
-| libwebp | 1.4.1+ | WebP encoding |
-| libpng | 1.6.45+ | PNG decoding |
-| swift-custom-dump | 1.3.0+ | Test assertions |
-| Noora | 0.54.0+ | Terminal UI design system |
-| swift-resvg | 0.45.1 | SVG parsing/rendering |
-| swift-docc-plugin | 1.4.5+ | DocC documentation |
-| swift-yyjson | 0.4.0+ | High-performance JSON codec |
+| Package               | Version | Purpose                         |
+| --------------------- | ------- | ------------------------------- |
+| swift-argument-parser | 1.5.0+  | CLI framework                   |
+| swift-collections     | 1.2.x   | Ordered collections             |
+| Stencil               | 0.15.1+ | Template engine                 |
+| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions        |
+| XcodeProj             | 8.27.0+ | Xcode project manipulation      |
+| swift-log             | 1.6.0+  | Logging                         |
+| Rainbow               | 4.2.0+  | Terminal colors                 |
+| libwebp               | 1.4.1+  | WebP encoding                   |
+| libpng                | 1.6.45+ | PNG decoding                    |
+| swift-custom-dump     | 1.3.0+  | Test assertions                 |
+| Noora                 | 0.54.0+ | Terminal UI design system       |
+| swift-resvg           | 0.45.1  | SVG parsing/rendering           |
+| swift-docc-plugin     | 1.4.5+  | DocC documentation              |
+| swift-yyjson          | 0.4.0+  | High-performance JSON codec     |
+| pkl-swift             | 0.7.2+  | PKL config evaluation & codegen |
 
 ## Troubleshooting
 
-| Problem               | Solution                                            |
-| --------------------- | --------------------------------------------------- |
-| Build fails           | `swift package clean && swift build`                |
-| Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                 |
-| Formatting fails      | Run `./bin/mise run setup` to install tools         |
-| Template errors       | Check Stencil syntax and context variables          |
-| Linux test crashes    | Use `--num-workers 1` for test parallelization      |
-| Android pathData long | Simplify in Figma or use `--strict-path-validation` |
+| Problem               | Solution                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| Build fails           | `swift package clean && swift build`                                                  |
+| Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                                                   |
+| Formatting fails      | Run `./bin/mise run setup` to install tools                                           |
+| Template errors       | Check Stencil syntax and context variables                                            |
+| Linux test hangs      | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`   |
+| Android pathData long | Simplify in Figma or use `--strict-path-validation`                                   |
+| PKL parse error 1     | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription` |
 
 ## Additional Rules
 
@@ -271,6 +290,7 @@ Contextual documentation is in `.claude/rules/`:
 | `gotchas.md`          | Swift 6 concurrency, SwiftLint, rate limits        |
 | `linux-compat.md`     | Linux-specific workarounds                         |
 | `testing-workflow.md` | Testing guidelines, commit format                  |
+| `pkl-codegen.md`      | pkl-swift generated types, enum bridging, codegen  |
 
 These rules are loaded lazily when working with related files.
 

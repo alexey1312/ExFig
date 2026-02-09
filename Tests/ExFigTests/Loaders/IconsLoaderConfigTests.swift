@@ -1,4 +1,9 @@
-@testable import ExFig
+import ExFig_Android
+import ExFig_Flutter
+import ExFig_iOS
+import ExFig_Web
+@testable import ExFigCLI
+import ExFigCore
 import XCTest
 
 final class IconsLoaderConfigTests: XCTestCase {
@@ -6,7 +11,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForIOS_entryFrameNameOverridesCommon() throws {
         let entry = try makeIOSEntry(figmaFrameName: "Actions")
-        let params = Params.make(lightFileId: "test", iconsFrameName: "CommonIcons")
+        let params = PKLConfig.make(lightFileId: "test", iconsFrameName: "CommonIcons")
 
         let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -15,7 +20,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForIOS_fallbackToCommonFrameName() throws {
         let entry = try makeIOSEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test", iconsFrameName: "CommonIcons")
+        let params = PKLConfig.make(lightFileId: "test", iconsFrameName: "CommonIcons")
 
         let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -24,7 +29,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForIOS_fallbackToDefaultFrameName() throws {
         let entry = try makeIOSEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -33,7 +38,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForIOS_passesFormatField() throws {
         let entry = try makeIOSEntry(format: "svg")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -42,7 +47,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForIOS_passesPDFFormat() throws {
         let entry = try makeIOSEntry(format: "pdf")
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -56,7 +61,7 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderModeOriginalSuffix: "_original",
             renderModeTemplateSuffix: "_template"
         )
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -68,7 +73,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForIOS_nilRenderModeFieldsWhenNotProvided() throws {
         let entry = try makeIOSEntry()
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
 
@@ -82,7 +87,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForAndroid_entryFrameNameOverridesCommon() throws {
         let entry = try makeAndroidEntry(figmaFrameName: "Actions")
-        let params = Params.make(lightFileId: "test", iconsFrameName: "CommonIcons")
+        let params = PKLConfig.make(lightFileId: "test", iconsFrameName: "CommonIcons")
 
         let config = IconsLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -91,7 +96,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForAndroid_fallbackToCommonFrameName() throws {
         let entry = try makeAndroidEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test", iconsFrameName: "CommonIcons")
+        let params = PKLConfig.make(lightFileId: "test", iconsFrameName: "CommonIcons")
 
         let config = IconsLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -100,7 +105,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForAndroid_fallbackToDefault() throws {
         let entry = try makeAndroidEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -109,7 +114,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForAndroid_hasNoIOSSpecificFields() throws {
         let entry = try makeAndroidEntry()
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forAndroid(entry: entry, params: params)
 
@@ -124,7 +129,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForFlutter_entryFrameNameOverridesCommon() throws {
         let entry = try makeFlutterEntry(figmaFrameName: "Actions")
-        let params = Params.make(lightFileId: "test", iconsFrameName: "CommonIcons")
+        let params = PKLConfig.make(lightFileId: "test", iconsFrameName: "CommonIcons")
 
         let config = IconsLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -133,7 +138,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForFlutter_fallbackToCommonFrameName() throws {
         let entry = try makeFlutterEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test", iconsFrameName: "CommonIcons")
+        let params = PKLConfig.make(lightFileId: "test", iconsFrameName: "CommonIcons")
 
         let config = IconsLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -142,7 +147,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForFlutter_fallbackToDefault() throws {
         let entry = try makeFlutterEntry(figmaFrameName: nil)
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -151,7 +156,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     func testForFlutter_hasNoIOSSpecificFields() throws {
         let entry = try makeFlutterEntry()
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.forFlutter(entry: entry, params: params)
 
@@ -165,7 +170,7 @@ final class IconsLoaderConfigTests: XCTestCase {
     // MARK: - Default Config
 
     func testDefaultConfig_usesCommonFrameName() {
-        let params = Params.make(lightFileId: "test", iconsFrameName: "CommonIcons")
+        let params = PKLConfig.make(lightFileId: "test", iconsFrameName: "CommonIcons")
 
         let config = IconsLoaderConfig.defaultConfig(params: params)
 
@@ -173,7 +178,7 @@ final class IconsLoaderConfigTests: XCTestCase {
     }
 
     func testDefaultConfig_fallbackToDefault() {
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.defaultConfig(params: params)
 
@@ -181,7 +186,7 @@ final class IconsLoaderConfigTests: XCTestCase {
     }
 
     func testDefaultConfig_hasNoIOSSpecificFields() {
-        let params = Params.make(lightFileId: "test")
+        let params = PKLConfig.make(lightFileId: "test")
 
         let config = IconsLoaderConfig.defaultConfig(params: params)
 
@@ -190,6 +195,79 @@ final class IconsLoaderConfigTests: XCTestCase {
         XCTAssertNil(config.renderModeDefaultSuffix)
         XCTAssertNil(config.renderModeOriginalSuffix)
         XCTAssertNil(config.renderModeTemplateSuffix)
+    }
+
+    // MARK: - Regression: SVG format must not be mapped to nil
+
+    /// Regression test: when IconsLoaderConfig is constructed with .svg format,
+    /// it must remain .svg (not nil). A previous bug used `source.format == .pdf ? .pdf : nil`
+    /// which turned .svg into nil, causing iOS to always export PDF instead of SVG.
+    func testSVGFormatPreservedInDirectConstruction() {
+        let config = IconsLoaderConfig(
+            entryFileId: nil,
+            frameName: "Icons",
+            format: .svg,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+
+        XCTAssertEqual(config.format, .svg)
+    }
+
+    func testPDFFormatPreservedInDirectConstruction() {
+        let config = IconsLoaderConfig(
+            entryFileId: nil,
+            frameName: "Icons",
+            format: .pdf,
+            renderMode: nil,
+            renderModeDefaultSuffix: nil,
+            renderModeOriginalSuffix: nil,
+            renderModeTemplateSuffix: nil
+        )
+
+        XCTAssertEqual(config.format, .pdf)
+    }
+
+    /// Regression test: verifies the full data path from iOSIconsEntry with SVG format
+    /// through IconsSourceInput to IconsLoaderConfig — format must be preserved at each step.
+    func testSVGFormatPreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(format: "svg")
+
+        // Step 1: entry → IconsSourceInput
+        let source = entry.iconsSourceInput()
+        XCTAssertEqual(source.format, .svg, "SVG format must survive entry → source conversion")
+
+        // Step 2: source → IconsLoaderConfig (simulates IconsExportContextImpl.loadIcons)
+        let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
+            frameName: source.frameName,
+            format: source.format,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+        )
+        XCTAssertEqual(config.format, .svg, "SVG format must survive source → config conversion")
+    }
+
+    func testPDFFormatPreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(format: "pdf")
+
+        let source = entry.iconsSourceInput()
+        XCTAssertEqual(source.format, .pdf)
+
+        let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
+            frameName: source.frameName,
+            format: source.format,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+        )
+        XCTAssertEqual(config.format, .pdf)
     }
 
     // MARK: - Helpers
@@ -203,7 +281,7 @@ final class IconsLoaderConfigTests: XCTestCase {
         renderModeDefaultSuffix: String? = nil,
         renderModeOriginalSuffix: String? = nil,
         renderModeTemplateSuffix: String? = nil
-    ) throws -> Params.iOS.IconsEntry {
+    ) throws -> iOSIconsEntry {
         var json = """
         {
             "format": "\(format)",
@@ -228,13 +306,13 @@ final class IconsLoaderConfigTests: XCTestCase {
         }
         json += "}"
 
-        return try JSONDecoder().decode(Params.iOS.IconsEntry.self, from: Data(json.utf8))
+        return try JSONDecoder().decode(iOSIconsEntry.self, from: Data(json.utf8))
     }
 
     private func makeAndroidEntry(
         figmaFrameName: String? = nil,
         output: String = "drawable"
-    ) throws -> Params.Android.IconsEntry {
+    ) throws -> AndroidIconsEntry {
         var json = """
         {
             "output": "\(output)"
@@ -245,13 +323,13 @@ final class IconsLoaderConfigTests: XCTestCase {
         }
         json += "}"
 
-        return try JSONDecoder().decode(Params.Android.IconsEntry.self, from: Data(json.utf8))
+        return try JSONDecoder().decode(AndroidIconsEntry.self, from: Data(json.utf8))
     }
 
     private func makeFlutterEntry(
         figmaFrameName: String? = nil,
         output: String = "assets/icons"
-    ) throws -> Params.Flutter.IconsEntry {
+    ) throws -> FlutterIconsEntry {
         var json = """
         {
             "output": "\(output)"
@@ -262,6 +340,6 @@ final class IconsLoaderConfigTests: XCTestCase {
         }
         json += "}"
 
-        return try JSONDecoder().decode(Params.Flutter.IconsEntry.self, from: Data(json.utf8))
+        return try JSONDecoder().decode(FlutterIconsEntry.self, from: Data(json.utf8))
     }
 }

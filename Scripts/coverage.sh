@@ -90,7 +90,7 @@ if [[ "$RUN_TESTS" == "true" ]]; then
     # Clean old profraw files to avoid mixing data from different runs
     rm -f "$PROFDATA_DIR"/*.profraw "$PROFDATA_DIR"/*.profdata 2>/dev/null || true
     # Run tests, ignore exit code (some test frameworks return non-zero even on success)
-    swift test --enable-code-coverage > /dev/null 2>&1 || true
+    swift test --parallel --enable-code-coverage > /dev/null 2>&1 || true
 
     # Verify tests produced coverage data
     if [[ -z "$(ls -A $PROFDATA_DIR/*.profraw 2>/dev/null)" ]]; then

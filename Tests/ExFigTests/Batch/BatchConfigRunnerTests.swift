@@ -1,4 +1,4 @@
-@testable import ExFig
+@testable import ExFigCLI
 import FigmaAPI
 import XCTest
 
@@ -111,10 +111,11 @@ final class BatchConfigRunnerTests: XCTestCase {
     }
 
     private func makeConfigFile() throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pkl")
         let content = """
-        figma:
-          lightFileId: "abc123"
+        figma {
+          lightFileId = "abc123"
+        }
         """
         try content.write(to: url, atomically: true, encoding: .utf8)
         tempFiles.append(url)

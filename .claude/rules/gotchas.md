@@ -77,6 +77,29 @@ BatchSharedState.$current.withValue(state) {
 3. Mutable state lives in actor methods, not nested `withValue`
 4. Never create nested `withValue` for the same TaskLocal
 
+### Type-Checker Timeout with Complex Closures
+
+Complex closures inside struct init calls cause "unable to type-check this expression" error.
+Break into a separate `let` variable with explicit type annotation:
+
+```swift
+// BAD — type-checker timeout
+let ctx = ConfigExecutionContext(
+    downloadProgressCallback: progressView.map { pv in
+        { (assetType, current, total) in await pv.updateProgress(...) }
+    }
+)
+
+// GOOD — extract closure with explicit types
+let callback: ConfigExecutionContext.DownloadProgressCallback? =
+    if let pv = progressView {
+        { (assetType: ConfigExecutionContext.AssetType, current: Int, total: Int) in
+            await pv.updateProgress(...)
+        }
+    } else { nil }
+let ctx = ConfigExecutionContext(downloadProgressCallback: callback)
+```
+
 ### @Sendable Closures Crash (Linux)
 
 Adding `@Sendable` to closures passed to TaskLocal `withValue` causes runtime crash on Linux:
@@ -94,6 +117,26 @@ func withContext<T>(operation: () async -> T) async -> T
 - Use `Data("string".utf8)` not `"string".data(using: .utf8)!`
 - Add `// swiftlint:disable:next force_try` before `try!` in tests
 - Add `// swiftlint:disable file_length` for files > 400 lines
+
+### swiftlint:disable with Doc Comments
+
+`// swiftlint:disable:next` only suppresses the immediately next line.
+With multiline doc comments, use `disable/enable` block BEFORE the doc comment:
+
+```swift
+// BAD — orphaned_doc_comment or rule not suppressed
+/// Doc comment...
+// swiftlint:disable:next function_parameter_count
+func foo(a:, b:, c:, d:, e:, f:) {}
+
+// GOOD
+// swiftlint:disable function_parameter_count
+
+/// Doc comment...
+func foo(a:, b:, c:, d:, e:, f:) {}
+
+// swiftlint:enable function_parameter_count
+```
 
 ### void_function_in_ternary False Positive
 
@@ -123,6 +166,13 @@ extension SomeType {
     }
 }
 ```
+
+## PklSwift Error Messages
+
+`PklSwift.PklError` has a `message` field but doesn't conform to `LocalizedError`.
+Without the extension in `PKLEvaluator.swift`, `.localizedDescription` returns useless
+`"The operation couldn't be completed. (PklSwift.PklError error 1.)"` instead of the actual PKL error.
+Fix: `extension PklError: @retroactive LocalizedError` in `Sources/ExFigConfig/PKL/PKLEvaluator.swift`.
 
 ## Figma API Rate Limits
 

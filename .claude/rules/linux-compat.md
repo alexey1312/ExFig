@@ -26,8 +26,9 @@ import Foundation
 ## Running Tests on Linux
 
 ```bash
-# Use single worker to avoid libpng memory corruption
-swift test --parallel --num-workers 1
+# Build tests separately, then run — avoids hangs from concurrent build + test execution
+swift build --build-tests
+swift test --skip-build --parallel
 ```
 
 ## Skip Tests on Linux
@@ -46,5 +47,5 @@ func testSomePngOperation() throws {
 | Feature      | macOS        | Linux                    |
 | ------------ | ------------ | ------------------------ |
 | HEIC encoding| ImageIO      | Falls back to PNG        |
-| libpng tests | Full support | Single worker required   |
+| libpng tests | Full support | Build tests first        |
 | Foundation   | Full         | Some APIs missing/broken |

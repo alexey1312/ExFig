@@ -63,6 +63,8 @@ public struct ThemeAttributeNameTransformer: Sendable {
             input.lowerCamelCased()
         case .snakeCase:
             input.snakeCased()
+        case .flatCase:
+            input.flatCased()
         case .kebabCase:
             input.kebabCased()
         case .screamingSnakeCase:
@@ -83,6 +85,9 @@ public struct ThemeAttributeNameTransformer: Sendable {
         case .snakeCase:
             // prefix + snake_value → prefix_snake_value
             return prefix + "_" + value
+        case .flatCase:
+            // prefix + flatvalue → prefixflatvalue
+            return prefix + value
         case .kebabCase:
             // prefix + kebab-value → prefix-kebab-value
             return prefix + "-" + value
