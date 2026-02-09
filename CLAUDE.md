@@ -140,6 +140,11 @@ Twelve modules in `Sources/`:
 
 **Data flow:** CLI -> PKL config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform plugin -> Export module -> File write
 
+**Batch mode shared state:** Single `@TaskLocal` via `BatchSharedState.current` (actor).
+Access progress view: `BatchSharedState.current?.progressView`.
+Per-config data (configId, priority, download callback): passed via `ConfigExecutionContext` parameter.
+`BatchProgressViewStorage` was removed — do NOT recreate it.
+
 ## Key Directories
 
 ```

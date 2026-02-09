@@ -77,6 +77,29 @@ BatchSharedState.$current.withValue(state) {
 3. Mutable state lives in actor methods, not nested `withValue`
 4. Never create nested `withValue` for the same TaskLocal
 
+### Type-Checker Timeout with Complex Closures
+
+Complex closures inside struct init calls cause "unable to type-check this expression" error.
+Break into a separate `let` variable with explicit type annotation:
+
+```swift
+// BAD — type-checker timeout
+let ctx = ConfigExecutionContext(
+    downloadProgressCallback: progressView.map { pv in
+        { (assetType, current, total) in await pv.updateProgress(...) }
+    }
+)
+
+// GOOD — extract closure with explicit types
+let callback: ConfigExecutionContext.DownloadProgressCallback? =
+    if let pv = progressView {
+        { (assetType: ConfigExecutionContext.AssetType, current: Int, total: Int) in
+            await pv.updateProgress(...)
+        }
+    } else { nil }
+let ctx = ConfigExecutionContext(downloadProgressCallback: callback)
+```
+
 ### @Sendable Closures Crash (Linux)
 
 Adding `@Sendable` to closures passed to TaskLocal `withValue` causes runtime crash on Linux:
