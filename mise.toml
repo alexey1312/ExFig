@@ -135,18 +135,18 @@ hk check --all 2>&1 | grep -E '^(✔|✗|hk )'
 description = "Generate DocC documentation"
 run = """
 swift package --allow-writing-to-directory docs \
-    generate-documentation --target ExFig \
+    generate-documentation --target ExFigCLI \
     --disable-indexing \
     --transform-for-static-hosting \
     --hosting-base-path ExFig \
     --output-path docs
-echo '<script>window.location.href += "/documentation/exfig"</script>' > docs/index.html
+echo '<script>window.location.href += "/documentation/exfigcli"</script>' > docs/index.html
 """
 
 [tasks."docs:preview"]
 description = "Generate and preview DocC documentation"
 run = """
-swift package --disable-sandbox preview-documentation --target ExFig
+swift package --disable-sandbox preview-documentation --target ExFigCLI
 """
 
 [tasks.clean]

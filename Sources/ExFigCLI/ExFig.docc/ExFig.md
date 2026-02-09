@@ -1,4 +1,4 @@
-# ``ExFig``
+# ``ExFigCLI``
 
 CLI tool for exporting colors, typography, icons, and images from Figma to iOS, Android, and Flutter projects.
 
