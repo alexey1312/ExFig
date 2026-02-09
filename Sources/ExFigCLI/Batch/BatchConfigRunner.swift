@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import ExFigConfig
 import FigmaAPI
 import Foundation
@@ -37,6 +38,7 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         try await runExports(options: options, client: client, ui: ui)
     }
 
+    // swiftlint:disable function_body_length cyclomatic_complexity
     private func runExports(
         options: ExFigOptions,
         client: Client,
@@ -47,64 +49,114 @@ struct SubcommandConfigExporter: ConfigExportPerforming {
         let heavyFaultTolerance = makeHeavyFaultToleranceOptions()
         let params = options.params
 
+        enum StepResult: Sendable {
+            case colors(ExportStats)
+            case icons(ExportStats)
+            case images(ExportStats)
+            case typography(ExportStats)
+        }
+
         var stats = ExportStats.zero
 
-        // Colors export
-        if hasColorsConfig(params) {
-            let cmd = makeColors(options: options, cacheOptions: cacheOpts, faultToleranceOptions: faultTolerance)
-            let result = try await cmd.performExportWithResult(
-                client: client,
-                ui: ui,
-                context: configContext.with(assetType: .colors)
-            )
-            stats += ExportStats(colors: result.count, fileVersions: result.fileVersions)
-        }
+        try await withThrowingTaskGroup(of: StepResult.self) { [self] group in
+            if hasColorsConfig(params) {
+                group.addTask { [self] in
+                    let cmd = makeColors(
+                        options: options,
+                        cacheOptions: cacheOpts,
+                        faultToleranceOptions: faultTolerance
+                    )
+                    let result = try await cmd.performExportWithResult(
+                        client: client,
+                        ui: ui,
+                        context: configContext.with(assetType: .colors)
+                    )
+                    return .colors(ExportStats(colors: result.count, fileVersions: result.fileVersions))
+                }
+            }
 
-        // Icons export
-        if hasIconsConfig(params) {
-            let cmd = makeIcons(options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance)
-            let result = try await cmd.performExportWithResult(
-                client: client,
-                ui: ui,
-                context: configContext.with(assetType: .icons)
-            )
-            stats += ExportStats(
-                icons: result.count,
-                computedNodeHashes: result.computedHashes,
-                granularCacheStats: result.granularCacheStats,
-                fileVersions: result.fileVersions
-            )
-        }
+            if hasIconsConfig(params) {
+                group.addTask { [self] in
+                    let cmd = makeIcons(
+                        options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance
+                    )
+                    let result = try await cmd.performExportWithResult(
+                        client: client,
+                        ui: ui,
+                        context: configContext.with(assetType: .icons)
+                    )
+                    return .icons(ExportStats(
+                        icons: result.count,
+                        computedNodeHashes: result.computedHashes,
+                        granularCacheStats: result.granularCacheStats,
+                        fileVersions: result.fileVersions
+                    ))
+                }
+            }
 
-        // Images export
-        if hasImagesConfig(params) {
-            let cmd = makeImages(options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance)
-            let result = try await cmd.performExportWithResult(
-                client: client,
-                ui: ui,
-                context: configContext.with(assetType: .images)
-            )
-            stats += ExportStats(
-                images: result.count,
-                computedNodeHashes: result.computedHashes,
-                granularCacheStats: result.granularCacheStats,
-                fileVersions: result.fileVersions
-            )
-        }
+            if hasImagesConfig(params) {
+                group.addTask { [self] in
+                    let cmd = makeImages(
+                        options: options, cacheOptions: cacheOpts, faultToleranceOptions: heavyFaultTolerance
+                    )
+                    let result = try await cmd.performExportWithResult(
+                        client: client,
+                        ui: ui,
+                        context: configContext.with(assetType: .images)
+                    )
+                    return .images(ExportStats(
+                        images: result.count,
+                        computedNodeHashes: result.computedHashes,
+                        granularCacheStats: result.granularCacheStats,
+                        fileVersions: result.fileVersions
+                    ))
+                }
+            }
 
-        // Typography export
-        if hasTypographyConfig(params) {
-            let cmd = makeTypography(options: options, cacheOptions: cacheOpts, faultToleranceOptions: faultTolerance)
-            let result = try await cmd.performExportWithResult(
-                client: client,
-                ui: ui,
-                context: configContext.with(assetType: .typography)
-            )
-            stats += ExportStats(typography: result.count, fileVersions: result.fileVersions)
+            if hasTypographyConfig(params) {
+                group.addTask { [self] in
+                    let cmd = makeTypography(
+                        options: options, cacheOptions: cacheOpts, faultToleranceOptions: faultTolerance
+                    )
+                    let result = try await cmd.performExportWithResult(
+                        client: client,
+                        ui: ui,
+                        context: configContext.with(assetType: .typography)
+                    )
+                    return .typography(ExportStats(typography: result.count, fileVersions: result.fileVersions))
+                }
+            }
+
+            for try await stepResult in group {
+                switch stepResult {
+                case let .colors(s):
+                    stats += s
+                    if let cb = configContext.stepCompletionCallback {
+                        await cb(.colors, s.colors)
+                    }
+                case let .icons(s):
+                    stats += s
+                    if let cb = configContext.stepCompletionCallback {
+                        await cb(.icons, s.icons)
+                    }
+                case let .images(s):
+                    stats += s
+                    if let cb = configContext.stepCompletionCallback {
+                        await cb(.images, s.images)
+                    }
+                case let .typography(s):
+                    stats += s
+                    if let cb = configContext.stepCompletionCallback {
+                        await cb(.typography, s.typography)
+                    }
+                }
+            }
         }
 
         return stats
     }
+
+    // swiftlint:enable function_body_length cyclomatic_complexity
 
     private func makeCacheOptions() -> CacheOptions {
         var options = CacheOptions()
@@ -209,6 +261,26 @@ struct BatchConfigRunner: Sendable {
         _testExporter = exporter
     }
 
+    // swiftlint:disable cyclomatic_complexity
+
+    /// Count the number of active asset types in a config (colors, icons, images, typography).
+    static func countActiveAssetTypes(_ params: ExFig.ModuleImpl?) -> Int {
+        guard let params else { return 0 }
+        let checks: [Bool] = [
+            params.common?.colors != nil || params.common?.variablesColors != nil
+                || params.ios?.colors != nil || params.android?.colors != nil
+                || params.flutter?.colors != nil || params.web?.colors != nil,
+            params.ios?.icons != nil || params.android?.icons != nil
+                || params.flutter?.icons != nil || params.web?.icons != nil,
+            params.ios?.images != nil || params.android?.images != nil
+                || params.flutter?.images != nil || params.web?.images != nil,
+            params.ios?.typography != nil || params.android?.typography != nil,
+        ]
+        return checks.filter { $0 }.count
+    }
+
+    // swiftlint:enable cyclomatic_complexity
+
     // swiftlint:disable:next function_body_length
     func process(
         configFile: ConfigFile,
@@ -268,11 +340,28 @@ struct BatchConfigRunner: Sendable {
                     nil
                 }
 
+            // Create step completion callback that routes to batch progress view
+            let stepCallback: ConfigExecutionContext.StepCompletionCallback? =
+                if let pv = progressView {
+                    { (assetType: ConfigExecutionContext.AssetType, count: Int) in
+                        await pv.completeExportStep(name: configName, assetType: assetType, count: count)
+                    }
+                } else {
+                    nil
+                }
+
+            // Set total steps before export starts
+            if let pv = progressView {
+                let totalSteps = Self.countActiveAssetTypes(options.params)
+                await pv.setTotalSteps(name: configName, total: totalSteps)
+            }
+
             // Create per-config execution context (passed explicitly, no TaskLocal nesting)
             let configContext = ConfigExecutionContext(
                 configId: configFile.name,
                 configPriority: configPriority,
-                downloadProgressCallback: downloadCallback
+                downloadProgressCallback: downloadCallback,
+                stepCompletionCallback: stepCallback
             )
 
             // Use test exporter if provided, otherwise create real exporter
@@ -296,15 +385,8 @@ struct BatchConfigRunner: Sendable {
                 ui: ui
             )
 
-            // Update progress view with final counts or log success
+            // Mark config as succeeded (step progress already updated incrementally)
             if let progressView {
-                await progressView.updateProgress(
-                    name: configFile.name,
-                    colors: stats.colors > 0 ? (stats.colors, stats.colors) : nil,
-                    icons: stats.icons > 0 ? (stats.icons, stats.icons) : nil,
-                    images: stats.images > 0 ? (stats.images, stats.images) : nil,
-                    typography: stats.typography > 0 ? (stats.typography, stats.typography) : nil
-                )
                 await progressView.succeedConfig(name: configFile.name)
             } else {
                 ui.success("Completed: \(configFile.name)")

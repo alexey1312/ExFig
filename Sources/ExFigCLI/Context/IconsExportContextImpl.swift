@@ -144,14 +144,8 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
                 files: files,
                 fileDownloader: fileDownloader,
                 context: configExecutionContext
-            ) { current, total in
+            ) { current, _ in
                 progress.update(current: current)
-                // Report to batch progress if in batch mode
-                if let callback = configExecutionContext?.downloadProgressCallback,
-                   let assetType = configExecutionContext?.assetType
-                {
-                    Task { await callback(assetType, current, total) }
-                }
             }
         }
     }

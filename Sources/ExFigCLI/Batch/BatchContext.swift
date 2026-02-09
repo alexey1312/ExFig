@@ -66,6 +66,10 @@ struct ConfigExecutionContext: Sendable {
     /// Parameters: (assetType, current, total)
     typealias DownloadProgressCallback = @Sendable (AssetType, Int, Int) async -> Void
 
+    /// Callback type for reporting step (asset type) completion to batch progress view.
+    /// Parameters: (assetType, exportedCount)
+    typealias StepCompletionCallback = @Sendable (AssetType, Int) async -> Void
+
     /// Config identifier for progress tracking and logging.
     let configId: String
 
@@ -80,6 +84,10 @@ struct ConfigExecutionContext: Sendable {
     /// in `BatchProgressView.updateProgress()`.
     let downloadProgressCallback: DownloadProgressCallback?
 
+    /// Callback to report step (asset type) completion to batch progress view.
+    /// Called from `runExports()` after each parallel export step finishes.
+    let stepCompletionCallback: StepCompletionCallback?
+
     /// Asset types that can be processed.
     enum AssetType: String, Sendable {
         case colors
@@ -92,22 +100,25 @@ struct ConfigExecutionContext: Sendable {
         configId: String,
         configPriority: Int = 0,
         assetType: AssetType? = nil,
-        downloadProgressCallback: DownloadProgressCallback? = nil
+        downloadProgressCallback: DownloadProgressCallback? = nil,
+        stepCompletionCallback: StepCompletionCallback? = nil
     ) {
         self.configId = configId
         self.configPriority = configPriority
         self.assetType = assetType
         self.downloadProgressCallback = downloadProgressCallback
+        self.stepCompletionCallback = stepCompletionCallback
     }
 
-    /// Returns a copy with different asset type, inheriting the progress callback
-    /// which routes updates to the correct asset type slot automatically.
+    /// Returns a copy with different asset type, inheriting the progress callbacks
+    /// which route updates to the correct asset type slot automatically.
     func with(assetType: AssetType) -> ConfigExecutionContext {
         ConfigExecutionContext(
             configId: configId,
             configPriority: configPriority,
             assetType: assetType,
-            downloadProgressCallback: downloadProgressCallback
+            downloadProgressCallback: downloadProgressCallback,
+            stepCompletionCallback: stepCompletionCallback
         )
     }
 }

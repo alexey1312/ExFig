@@ -21,6 +21,7 @@ actor BatchProgressView {
         let name: String
         var status: Status
         var exportProgress: ExportProgress
+        var stepProgress: (completed: Int, total: Int)?
         var startTime: Date?
 
         enum Status: Sendable {
@@ -44,6 +45,7 @@ actor BatchProgressView {
     private var configOrder: [String] = []
     private var lineCount: Int = 0
     private var rateLimiterStatus: RateLimiterStatus?
+    private var batchStartTime: Date?
 
     // Log queue to serialize warning/error output and prevent race conditions
     private var logQueue: [String] = []
@@ -74,6 +76,9 @@ actor BatchProgressView {
 
     /// Register a config for progress tracking.
     func registerConfig(name: String) {
+        if batchStartTime == nil {
+            batchStartTime = Date()
+        }
         configStates[name] = ConfigState(
             name: name,
             status: .pending,
@@ -107,6 +112,35 @@ actor BatchProgressView {
         if let icons { state.exportProgress.icons = icons }
         if let images { state.exportProgress.images = images }
         if let typography { state.exportProgress.typography = typography }
+        configStates[name] = state
+        render()
+    }
+
+    /// Set total number of export steps for a config (e.g. colors + icons + images = 3 steps).
+    func setTotalSteps(name: String, total: Int) {
+        guard var state = configStates[name] else { return }
+        state.stepProgress = (completed: 0, total: total)
+        configStates[name] = state
+        render()
+    }
+
+    /// Mark an export step as completed and update the corresponding asset type progress.
+    func completeExportStep(
+        name: String,
+        assetType: ConfigExecutionContext.AssetType,
+        count: Int
+    ) {
+        guard var state = configStates[name] else { return }
+        if var sp = state.stepProgress {
+            sp.completed += 1
+            state.stepProgress = sp
+        }
+        switch assetType {
+        case .colors: state.exportProgress.colors = (count, count)
+        case .icons: state.exportProgress.icons = (count, count)
+        case .images: state.exportProgress.images = (count, count)
+        case .typography: state.exportProgress.typography = (count, count)
+        }
         configStates[name] = state
         render()
     }
@@ -229,10 +263,27 @@ actor BatchProgressView {
             lines.append("├─ \(formatRateLimitText(status))")
         }
 
-        // Footer: progress counter (always last line)
-        let completed = configStates.values.filter { isCompleted($0.status) }.count
-        let total = configStates.count
-        let counterText = "\(completed)/\(total) configs"
+        // Footer: progress counter with step progress and elapsed time
+        let completedConfigs = configStates.values.filter { isCompleted($0.status) }.count
+        let totalConfigs = configStates.count
+        let elapsed = batchStartTime.map { formatDuration(Date().timeIntervalSince($0)) } ?? "0s"
+
+        // Aggregate step progress across all configs
+        var completedSteps = 0
+        var totalSteps = 0
+        for state in configStates.values {
+            if let sp = state.stepProgress {
+                completedSteps += sp.completed
+                totalSteps += sp.total
+            }
+        }
+
+        var counterParts = ["\(completedConfigs)/\(totalConfigs) configs"]
+        if totalSteps > 0 {
+            counterParts.append("\(completedSteps)/\(totalSteps) steps")
+        }
+        counterParts.append(elapsed)
+        let counterText = counterParts.joined(separator: " \u{2022} ")
         lines.append("└─ \(useColors ? NooraUI.format(.muted(counterText)) : counterText)")
 
         // Build output
@@ -293,6 +344,12 @@ actor BatchProgressView {
     }
 
     private func calculateOverallProgress(_ config: ConfigState) -> Double {
+        // Prefer step-level progress when available (batch mode)
+        if let sp = config.stepProgress, sp.total > 0 {
+            return Double(sp.completed) / Double(sp.total)
+        }
+
+        // Fallback to per-asset progress (download-level)
         var total = 0
         var completed = 0
 
