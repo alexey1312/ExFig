@@ -125,7 +125,7 @@ extension ExFigCommand {
 
             if options.params.ios != nil {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info(
                         "Using ExFig \(ExFigCommand.version) to export images to Xcode project."
                     )
@@ -143,7 +143,7 @@ extension ExFigCommand {
 
             if options.params.android != nil {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info(
                         "Using ExFig \(ExFigCommand.version) to export images to Android Studio project."
                     )
@@ -161,7 +161,7 @@ extension ExFigCommand {
 
             if options.params.flutter != nil {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info(
                         "Using ExFig \(ExFigCommand.version) to export images to Flutter project."
                     )
@@ -179,7 +179,7 @@ extension ExFigCommand {
 
             if options.params.web != nil {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export images to Web project.")
                 }
                 let result = try await exportWebImages(

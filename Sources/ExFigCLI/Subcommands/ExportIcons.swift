@@ -126,7 +126,7 @@ extension ExFigCommand {
             // Export icons via plugin architecture
             if let ios = options.params.ios, let iconsConfig = ios.icons {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Xcode project.")
                 }
                 let entries = iconsConfig
@@ -150,7 +150,7 @@ extension ExFigCommand {
 
             if let android = options.params.android, let iconsConfig = android.icons {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Android Studio project.")
                 }
                 let entries = iconsConfig
@@ -174,7 +174,7 @@ extension ExFigCommand {
 
             if let flutter = options.params.flutter, let iconsConfig = flutter.icons {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Flutter project.")
                 }
                 let entries = iconsConfig
@@ -198,7 +198,7 @@ extension ExFigCommand {
 
             if let web = options.params.web, let iconsConfig = web.icons {
                 // Suppress version message in batch mode
-                if BatchProgressViewStorage.progressView == nil {
+                if BatchSharedState.current?.progressView == nil {
                     ui.info("Using ExFig \(ExFigCommand.version) to export icons to Web project.")
                 }
                 let entries = iconsConfig

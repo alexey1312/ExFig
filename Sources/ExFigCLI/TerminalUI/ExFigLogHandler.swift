@@ -35,6 +35,31 @@ struct ExFigLogHandler: LogHandler {
             return
         }
 
+        // Batch mode: suppress info/debug to avoid corrupting progress display.
+        // Warnings/errors are routed through BatchProgressView.queueLogMessage
+        // which coordinates cursor position with the animated progress view.
+        if let progressView = BatchSharedState.current?.progressView {
+            if level < .warning { return }
+
+            let formattedMessage: String
+            if outputMode == .verbose {
+                let timestamp = ISO8601DateFormatter().string(from: Date())
+                let fileName = URL(fileURLWithPath: file).lastPathComponent
+                let levelStr = formatLevel(level)
+                formattedMessage = "[\(levelStr)] \(timestamp) \(fileName):\(line) \(message)"
+            } else {
+                formattedMessage = formatMessage(level: level, message: message)
+            }
+
+            let semaphore = DispatchSemaphore(value: 0)
+            Task {
+                await progressView.queueLogMessage(formattedMessage)
+                semaphore.signal()
+            }
+            semaphore.wait()
+            return
+        }
+
         let formattedMessage: String
 
         if outputMode == .verbose {

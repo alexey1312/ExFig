@@ -251,10 +251,28 @@ struct BatchConfigRunner: Sendable {
                 }
             )
 
+            // Create download progress callback that routes to batch progress view
+            let configName = configFile.name
+            let downloadCallback: ConfigExecutionContext.DownloadProgressCallback? =
+                if let pv = progressView {
+                    { (assetType: ConfigExecutionContext.AssetType, current: Int, total: Int) in
+                        await pv.updateProgress(
+                            name: configName,
+                            colors: assetType == .colors ? (current, total) : nil,
+                            icons: assetType == .icons ? (current, total) : nil,
+                            images: assetType == .images ? (current, total) : nil,
+                            typography: assetType == .typography ? (current, total) : nil
+                        )
+                    }
+                } else {
+                    nil
+                }
+
             // Create per-config execution context (passed explicitly, no TaskLocal nesting)
             let configContext = ConfigExecutionContext(
                 configId: configFile.name,
-                configPriority: configPriority
+                configPriority: configPriority,
+                downloadProgressCallback: downloadCallback
             )
 
             // Use test exporter if provided, otherwise create real exporter

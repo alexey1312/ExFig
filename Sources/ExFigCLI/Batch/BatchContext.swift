@@ -62,6 +62,10 @@ struct BatchContext: Sendable {
 /// This struct contains data specific to a single config being processed.
 /// It is passed as a parameter instead of using TaskLocal to avoid the Linux crash.
 struct ConfigExecutionContext: Sendable {
+    /// Callback type for reporting incremental download progress to batch view.
+    /// Parameters: (assetType, current, total)
+    typealias DownloadProgressCallback = @Sendable (AssetType, Int, Int) async -> Void
+
     /// Config identifier for progress tracking and logging.
     let configId: String
 
@@ -70,6 +74,11 @@ struct ConfigExecutionContext: Sendable {
 
     /// Asset type currently being processed (for progress routing).
     let assetType: AssetType?
+
+    /// Callback to report download progress to batch progress view.
+    /// The callback routes `(current, total)` to the correct asset type slot
+    /// in `BatchProgressView.updateProgress()`.
+    let downloadProgressCallback: DownloadProgressCallback?
 
     /// Asset types that can be processed.
     enum AssetType: String, Sendable {
@@ -82,19 +91,23 @@ struct ConfigExecutionContext: Sendable {
     init(
         configId: String,
         configPriority: Int = 0,
-        assetType: AssetType? = nil
+        assetType: AssetType? = nil,
+        downloadProgressCallback: DownloadProgressCallback? = nil
     ) {
         self.configId = configId
         self.configPriority = configPriority
         self.assetType = assetType
+        self.downloadProgressCallback = downloadProgressCallback
     }
 
-    /// Returns a copy with different asset type.
+    /// Returns a copy with different asset type, inheriting the progress callback
+    /// which routes updates to the correct asset type slot automatically.
     func with(assetType: AssetType) -> ConfigExecutionContext {
         ConfigExecutionContext(
             configId: configId,
             configPriority: configPriority,
-            assetType: assetType
+            assetType: assetType,
+            downloadProgressCallback: downloadProgressCallback
         )
     }
 }

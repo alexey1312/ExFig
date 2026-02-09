@@ -153,8 +153,10 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
             ) { current, total in
                 progress.update(current: current)
                 // Report to batch progress if in batch mode
-                if let callback = BatchProgressViewStorage.downloadProgressCallback {
-                    Task { await callback(current, total) }
+                if let callback = configExecutionContext?.downloadProgressCallback,
+                   let assetType = configExecutionContext?.assetType
+                {
+                    Task { await callback(assetType, current, total) }
                 }
             }
         }

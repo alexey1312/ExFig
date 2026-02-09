@@ -29,7 +29,7 @@ final class TerminalUI: Sendable {
     func info(_ message: String) {
         guard outputMode != .quiet else { return }
         // Suppress in batch mode - progress view shows status
-        if BatchProgressViewStorage.progressView != nil { return }
+        if BatchSharedState.current?.progressView != nil { return }
         TerminalOutputManager.shared.print(NooraUI.formatInfo(message, useColors: useColors))
     }
 
@@ -37,14 +37,14 @@ final class TerminalUI: Sendable {
     func success(_ message: String) {
         guard outputMode != .quiet else { return }
         // Suppress in batch mode - progress view shows status
-        if BatchProgressViewStorage.progressView != nil { return }
+        if BatchSharedState.current?.progressView != nil { return }
         TerminalOutputManager.shared.print(NooraUI.formatSuccess(message, useColors: useColors))
     }
 
     /// Print a warning message (handles multi-line properly)
     func warning(_ message: String) {
         // In batch mode, queue for coordinated output to prevent race conditions
-        if let progressView = BatchProgressViewStorage.progressView {
+        if let progressView = BatchSharedState.current?.progressView {
             let formatted = formatWarningForQueue(message)
             // Use semaphore to ensure log is processed before returning.
             // This prevents race conditions where updateProgress() calls render()
@@ -89,7 +89,7 @@ final class TerminalUI: Sendable {
     /// Print an error message
     func error(_ message: String) {
         // In batch mode, queue for coordinated output to prevent race conditions
-        if let progressView = BatchProgressViewStorage.progressView {
+        if let progressView = BatchSharedState.current?.progressView {
             let formatted = formatErrorForQueue(message)
             // Use semaphore to ensure log is processed before returning.
             // This prevents race conditions where updateProgress() calls render()
@@ -132,7 +132,7 @@ final class TerminalUI: Sendable {
     func debug(_ message: String) {
         guard outputMode == .verbose else { return }
         // Suppress in batch mode - progress view shows status
-        if BatchProgressViewStorage.progressView != nil { return }
+        if BatchSharedState.current?.progressView != nil { return }
         TerminalOutputManager.shared.print(NooraUI.formatDebug(message, useColors: useColors))
     }
 
@@ -156,7 +156,7 @@ final class TerminalUI: Sendable {
         operation: @Sendable () async throws -> T
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
-        if BatchProgressViewStorage.progressView != nil {
+        if BatchSharedState.current?.progressView != nil {
             return try await operation()
         }
 
@@ -193,7 +193,7 @@ final class TerminalUI: Sendable {
         operation: @Sendable () async throws -> T
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
-        if BatchProgressViewStorage.progressView != nil {
+        if BatchSharedState.current?.progressView != nil {
             return try await operation()
         }
 
@@ -232,7 +232,7 @@ final class TerminalUI: Sendable {
         operation: @Sendable @escaping (@escaping @Sendable (Int, Int) -> Void) async throws -> T
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
-        if BatchProgressViewStorage.progressView != nil {
+        if BatchSharedState.current?.progressView != nil {
             return try await operation { _, _ in }
         }
 
@@ -273,7 +273,7 @@ final class TerminalUI: Sendable {
         operation: @Sendable (ProgressBar) async throws -> T
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
-        if BatchProgressViewStorage.progressView != nil {
+        if BatchSharedState.current?.progressView != nil {
             let silentProgress = ProgressBar(
                 message: message,
                 total: max(total, 1),
