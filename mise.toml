@@ -25,7 +25,8 @@ legacy_version_file = false
 # Auto-configures on directory entry via hooks.enter
 
 [hooks.enter]
-run = """
+shell = "bash"
+script = """
 git config core.hooksPath .githooks 2>/dev/null || true
 # Auto-index on directory entry (incremental, background)
 [ -f .swiftindex.toml ] && swiftindex index . &>/dev/null &
