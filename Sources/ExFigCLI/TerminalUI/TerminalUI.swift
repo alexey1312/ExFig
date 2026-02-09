@@ -46,9 +46,15 @@ final class TerminalUI: Sendable {
         // In batch mode, queue for coordinated output to prevent race conditions
         if let progressView = BatchProgressViewStorage.progressView {
             let formatted = formatWarningForQueue(message)
+            // Use semaphore to ensure log is processed before returning.
+            // This prevents race conditions where updateProgress() calls render()
+            // before the log message is queued, causing duplicate lines.
+            let semaphore = DispatchSemaphore(value: 0)
             Task {
                 await progressView.queueLogMessage(formatted)
+                semaphore.signal()
             }
+            semaphore.wait()
             return
         }
 
@@ -85,9 +91,15 @@ final class TerminalUI: Sendable {
         // In batch mode, queue for coordinated output to prevent race conditions
         if let progressView = BatchProgressViewStorage.progressView {
             let formatted = formatErrorForQueue(message)
+            // Use semaphore to ensure log is processed before returning.
+            // This prevents race conditions where updateProgress() calls render()
+            // before the log message is queued, causing duplicate lines.
+            let semaphore = DispatchSemaphore(value: 0)
             Task {
                 await progressView.queueLogMessage(formatted)
+                semaphore.signal()
             }
+            semaphore.wait()
             return
         }
 
