@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-02-09
+
+### Other
+
+- Migrate to PKL configuration and plugin architecture (v2.0) 
+
+* feat!: migrate to PKL config and plugin architecture by @alexey1312 in [#48](https://github.com/alexey1312/ExFig/pull/48)
+
+
 ## [1.3.2] - 2026-02-06
 
 ### Miscellaneous Tasks
