@@ -355,6 +355,231 @@ final class FileIdProviderTests: XCTestCase {
         XCTAssertTrue(result.contains("ios-specific-tokens"))
     }
 
+    // MARK: - Icons/Images File IDs (FrameSource)
+
+    func testIOSIconsEntryExtractsFigmaFileId() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsInMainBundle": true,
+            "icons": [
+              {
+                "format": "svg",
+                "assetsFolder": "Icons",
+                "nameStyle": "camelCase",
+                "figmaFileId": "icons-file"
+              }
+            ]
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertTrue(result.contains("design-file"))
+        XCTAssertTrue(result.contains("icons-file"))
+    }
+
+    func testIOSImagesEntryExtractsFigmaFileId() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsInMainBundle": true,
+            "images": [
+              {
+                "assetsFolder": "Images",
+                "nameStyle": "camelCase",
+                "figmaFileId": "illustrations-file"
+              }
+            ]
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertTrue(result.contains("design-file"))
+        XCTAssertTrue(result.contains("illustrations-file"))
+    }
+
+    func testMultipleImagesEntriesWithDifferentFileIds() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsInMainBundle": true,
+            "images": [
+              {
+                "assetsFolder": "Icons",
+                "nameStyle": "camelCase",
+                "figmaFileId": "icons-file"
+              },
+              {
+                "assetsFolder": "Illustrations",
+                "nameStyle": "camelCase",
+                "figmaFileId": "illustrations-file"
+              }
+            ]
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertEqual(result.count, 3)
+        XCTAssertTrue(result.contains("design-file"))
+        XCTAssertTrue(result.contains("icons-file"))
+        XCTAssertTrue(result.contains("illustrations-file"))
+    }
+
+    func testImagesEntryWithoutFigmaFileIdDoesNotAddExtra() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsInMainBundle": true,
+            "images": [
+              {
+                "assetsFolder": "Images",
+                "nameStyle": "camelCase"
+              }
+            ]
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertEqual(result, ["design-file"])
+    }
+
+    func testAndroidIconsEntryExtractsFigmaFileId() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "android": {
+            "mainRes": "./res",
+            "icons": [
+              {
+                "output": "drawable",
+                "figmaFileId": "android-icons-file"
+              }
+            ]
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertTrue(result.contains("android-icons-file"))
+    }
+
+    func testDeduplicatesSharedFigmaFileIdAcrossEntryTypes() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "shared-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsInMainBundle": true,
+            "icons": [
+              {
+                "format": "svg",
+                "assetsFolder": "Icons",
+                "nameStyle": "camelCase",
+                "figmaFileId": "shared-file"
+              }
+            ],
+            "images": [
+              {
+                "assetsFolder": "Images",
+                "nameStyle": "camelCase",
+                "figmaFileId": "separate-file"
+              }
+            ]
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertEqual(result.count, 2)
+        XCTAssertTrue(result.contains("shared-file"))
+        XCTAssertTrue(result.contains("separate-file"))
+    }
+
+    // MARK: - Typography File IDs
+
+    func testIOSTypographyExtractsFileId() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsInMainBundle": true,
+            "typography": {
+              "fileId": "typography-file",
+              "generateLabels": false,
+              "nameStyle": "camelCase"
+            }
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertTrue(result.contains("design-file"))
+        XCTAssertTrue(result.contains("typography-file"))
+    }
+
+    func testTypographyWithoutFileIdDoesNotAddExtra() throws {
+        let params = try parseParams("""
+        {
+          "figma": {
+            "lightFileId": "design-file"
+          },
+          "ios": {
+            "xcodeprojPath": "Test.xcodeproj",
+            "target": "Test",
+            "xcassetsInMainBundle": true,
+            "typography": {
+              "generateLabels": false,
+              "nameStyle": "camelCase"
+            }
+          }
+        }
+        """)
+
+        let result = params.getFileIds()
+
+        XCTAssertEqual(result, ["design-file"])
+    }
+
     // MARK: - Edge Cases
 
     func testFiltersEmptyTokensFileIdInMultiEntry() throws {
