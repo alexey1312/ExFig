@@ -182,6 +182,14 @@ Tests/               # Test targets mirror source structure
 
 ## Code Patterns
 
+### Modifying Loader Configs (IconsLoaderConfig / ImagesLoaderConfig)
+
+When adding fields to loader configs, update ALL construction sites:
+
+1. Factory methods (`forIOS`, `forAndroid`, `forFlutter`, `forWeb`, `defaultConfig`)
+2. Context implementations (`Sources/ExFigCLI/Context/*ExportContextImpl.swift`) — direct constructions in `loadIcons`/`loadImages`
+3. Test files (`IconsLoaderConfigTests.swift`, `EnumBridgingTests.swift`) — direct init calls
+
 ### Adding a CLI Command
 
 1. Create `Sources/ExFigCLI/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
@@ -264,15 +272,17 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Troubleshooting
 
-| Problem               | Solution                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| Build fails           | `swift package clean && swift build`                                                  |
-| Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                                                   |
-| Formatting fails      | Run `./bin/mise run setup` to install tools                                           |
-| Template errors       | Check Stencil syntax and context variables                                            |
-| Linux test hangs      | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`   |
-| Android pathData long | Simplify in Figma or use `--strict-path-validation`                                   |
-| PKL parse error 1     | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription` |
+| Problem                 | Solution                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| pkl-gen-swift not found | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift` |
+| PKL FrameSource change  | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)         |
+| Build fails             | `swift package clean && swift build`                                                     |
+| Tests fail              | Check `FIGMA_PERSONAL_TOKEN` is set                                                      |
+| Formatting fails        | Run `./bin/mise run setup` to install tools                                              |
+| Template errors         | Check Stencil syntax and context variables                                               |
+| Linux test hangs        | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`      |
+| Android pathData long   | Simplify in Figma or use `--strict-path-validation`                                      |
+| PKL parse error 1       | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`    |
 
 ## Additional Rules
 

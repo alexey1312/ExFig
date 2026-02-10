@@ -69,20 +69,25 @@ class ImageLoaderBase: @unchecked Sendable {
     // MARK: - Component Loading
 
     /// Fetches image components from a Figma file filtered by frame name and platform.
+    /// When `rtlProperty` is set, RTL=On variants are filtered out.
     func fetchImageComponents(
         fileId: String,
         frameName: String,
-        filter: String? = nil
+        filter: String? = nil,
+        rtlProperty: String? = "RTL"
     ) async throws -> [NodeId: Component] {
         var components = try await loadComponents(fileId: fileId)
             .filter {
                 $0.containingFrame.name == frameName && $0.useForPlatform(platform)
             }
 
+        // Filter out RTL=On variants (they are auto-mirrored by iOS/Android)
+        components = components.filter { !$0.shouldSkipAsRTLVariant(propertyName: rtlProperty) }
+
         if let filter {
             let assetsFilter = AssetsFilter(filter: filter)
             components = components.filter { component -> Bool in
-                assetsFilter.match(name: component.name)
+                assetsFilter.match(name: component.iconName)
             }
         }
 
@@ -109,12 +114,14 @@ class ImageLoaderBase: @unchecked Sendable {
     func fetchImageComponentsWithGranularCache(
         fileId: String,
         frameName: String,
-        filter: String? = nil
+        filter: String? = nil,
+        rtlProperty: String? = "RTL"
     ) async throws -> GranularFilterResult {
         let allComponents = try await fetchImageComponents(
             fileId: fileId,
             frameName: frameName,
-            filter: filter
+            filter: filter,
+            rtlProperty: rtlProperty
         )
 
         logger.debug(
@@ -122,9 +129,9 @@ class ImageLoaderBase: @unchecked Sendable {
         )
 
         // Build metadata for all assets (for Code Connect and template generation)
-        // Names can be derived with allAssetMetadata.map(\.name)
+        // Use iconName to get the real name (component set name for variants)
         let allAssetMetadata = allComponents.map { nodeId, component in
-            AssetMetadata(name: component.name, nodeId: nodeId, fileId: fileId)
+            AssetMetadata(name: component.iconName, nodeId: nodeId, fileId: fileId)
         }
 
         guard let manager = granularCacheManager, !allComponents.isEmpty else {
@@ -179,13 +186,14 @@ class ImageLoaderBase: @unchecked Sendable {
         fileId: String,
         frameName: String,
         filter: String? = nil,
-        darkModeSuffix: String
+        darkModeSuffix: String,
+        rtlProperty: String? = "RTL"
     ) async throws -> GranularFilterResult {
         let allComponents = try await fetchImageComponents(
-            fileId: fileId, frameName: frameName, filter: filter
+            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
         )
         let allAssetMetadata = allComponents.map { nodeId, component in
-            AssetMetadata(name: component.name, nodeId: nodeId, fileId: fileId)
+            AssetMetadata(name: component.iconName, nodeId: nodeId, fileId: fileId)
         }
 
         guard let manager = granularCacheManager, !allComponents.isEmpty else {
@@ -260,16 +268,18 @@ class ImageLoaderBase: @unchecked Sendable {
         frameName: String,
         params: FormatParams,
         filter: String? = nil,
+        rtlProperty: String? = "RTL",
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
         let imagesDict = try await fetchImageComponents(
-            fileId: fileId, frameName: frameName, filter: filter
+            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
         )
         return try await loadVectorImagesFromComponents(
             fileId: fileId,
             frameName: frameName,
             components: imagesDict,
             params: params,
+            rtlProperty: rtlProperty,
             onBatchProgress: onBatchProgress
         )
     }
@@ -286,16 +296,18 @@ class ImageLoaderBase: @unchecked Sendable {
         frameName: String,
         params: FormatParams,
         filter: String? = nil,
+        rtlProperty: String? = "RTL",
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCache(
-            fileId: fileId, frameName: frameName, filter: filter
+            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
         )
         return try await loadVectorImagesFromGranularFilterResult(
             fileId: fileId,
             frameName: frameName,
             filterResult: filterResult,
             params: params,
+            rtlProperty: rtlProperty,
             onBatchProgress: onBatchProgress
         )
     }
@@ -311,19 +323,22 @@ class ImageLoaderBase: @unchecked Sendable {
         params: FormatParams,
         filter: String? = nil,
         darkModeSuffix: String,
+        rtlProperty: String? = "RTL",
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCacheAndPairing(
             fileId: fileId,
             frameName: frameName,
             filter: filter,
-            darkModeSuffix: darkModeSuffix
+            darkModeSuffix: darkModeSuffix,
+            rtlProperty: rtlProperty
         )
         return try await loadVectorImagesFromGranularFilterResult(
             fileId: fileId,
             frameName: frameName,
             filterResult: filterResult,
             params: params,
+            rtlProperty: rtlProperty,
             onBatchProgress: onBatchProgress
         )
     }
@@ -336,6 +351,7 @@ class ImageLoaderBase: @unchecked Sendable {
         frameName: String,
         components: [NodeId: Component],
         params: FormatParams,
+        rtlProperty: String? = "RTL",
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [ImagePack] {
         var imagesDict = components
@@ -360,7 +376,8 @@ class ImageLoaderBase: @unchecked Sendable {
             imagesDict: imagesDict,
             imageIdToImagePath: imageIdToImagePath,
             format: params.format,
-            fileId: fileId
+            fileId: fileId,
+            rtlProperty: rtlProperty
         )
     }
 
@@ -370,6 +387,7 @@ class ImageLoaderBase: @unchecked Sendable {
         frameName: String,
         filterResult: GranularFilterResult,
         params: FormatParams,
+        rtlProperty: String? = "RTL",
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> ImagesWithHashesResult {
         if filterResult.allSkipped {
@@ -386,6 +404,7 @@ class ImageLoaderBase: @unchecked Sendable {
             frameName: frameName,
             components: filterResult.components,
             params: params,
+            rtlProperty: rtlProperty,
             onBatchProgress: onBatchProgress
         )
 
@@ -400,7 +419,7 @@ class ImageLoaderBase: @unchecked Sendable {
     /// Filters out components with empty names and logs warnings for them.
     private func filterEmptyNameComponents(_ components: [NodeId: Component]) -> [NodeId: Component] {
         components.filter { _, component in
-            if component.name.trimmingCharacters(in: .whitespaces).isEmpty {
+            if component.iconName.trimmingCharacters(in: .whitespaces).isEmpty {
                 logger.warning(
                     """
                     Found a component with empty name.
@@ -434,10 +453,11 @@ class ImageLoaderBase: @unchecked Sendable {
         imagesDict: [NodeId: Component],
         imageIdToImagePath: [NodeId: ImagePath],
         format: String,
-        fileId: String
+        fileId: String,
+        rtlProperty: String? = "RTL"
     ) -> [ImagePack] {
         let groups = Dictionary(grouping: imagesDict) {
-            $1.name.parseNameAndIdiom(platform: platform).name
+            $1.iconName.parseNameAndIdiom(platform: platform).name
         }
 
         return groups.compactMap { packName, components -> ImagePack? in
@@ -447,14 +467,14 @@ class ImageLoaderBase: @unchecked Sendable {
                 else {
                     return nil
                 }
-                let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
+                let (name, idiom) = component.iconName.parseNameAndIdiom(platform: platform)
                 return Image(
                     name: name,
                     scale: .all,
                     idiom: idiom,
                     url: url,
                     format: format,
-                    isRTL: component.useRTL()
+                    isRTL: component.useRTL(rtlProperty: rtlProperty)
                 )
             }
             let primaryNodeId = components.first?.0
@@ -474,10 +494,11 @@ class ImageLoaderBase: @unchecked Sendable {
         frameName: String,
         filter: String? = nil,
         scales: [Double],
+        rtlProperty: String? = "RTL",
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
         let imagesDict = try await fetchImageComponents(
-            fileId: fileId, frameName: frameName, filter: filter
+            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
         )
         return try await loadPNGImagesFromComponents(
             fileId: fileId,
@@ -499,10 +520,11 @@ class ImageLoaderBase: @unchecked Sendable {
         frameName: String,
         filter: String? = nil,
         scales: [Double],
+        rtlProperty: String? = "RTL",
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCache(
-            fileId: fileId, frameName: frameName, filter: filter
+            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
         )
 
         if filterResult.allSkipped {
@@ -572,12 +594,12 @@ class ImageLoaderBase: @unchecked Sendable {
         fileId: String
     ) -> [ImagePack] {
         let groups = Dictionary(grouping: imagesDict) {
-            $1.name.parseNameAndIdiom(platform: platform).name
+            $1.iconName.parseNameAndIdiom(platform: platform).name
         }
 
         return groups.compactMap { packName, components -> ImagePack? in
             let packImages = components.flatMap { nodeId, component -> [Image] in
-                let (name, idiom) = component.name.parseNameAndIdiom(platform: platform)
+                let (name, idiom) = component.iconName.parseNameAndIdiom(platform: platform)
                 return scales.compactMap { scale -> Image? in
                     guard let urlString = imagesByScale[scale]?[nodeId],
                           let url = URL(string: urlString)
@@ -835,8 +857,37 @@ public extension Component {
         }
     }
 
-    /// Checks if component should use RTL layout based on its description.
-    func useRTL() -> Bool {
+    /// Real icon name: component set name for variants, own name otherwise.
+    var iconName: String {
+        containingFrame.containingComponentSet?.name ?? name
+    }
+
+    /// Extracts the RTL variant value from the component name (e.g. "Off" from "RTL=Off").
+    /// Parses "Property=Value, Property2=Value2" format used by Figma variant components.
+    func rtlVariantValue(propertyName: String) -> String? {
+        for pair in name.split(separator: ",") {
+            let trimmed = pair.trimmingCharacters(in: .whitespaces)
+            let parts = trimmed.split(separator: "=", maxSplits: 1)
+            if parts.count == 2, String(parts[0]) == propertyName {
+                return String(parts[1])
+            }
+        }
+        return nil
+    }
+
+    /// Whether this component should be skipped (RTL=On variant).
+    func shouldSkipAsRTLVariant(propertyName: String?) -> Bool {
+        guard let prop = propertyName else { return false }
+        return rtlVariantValue(propertyName: prop) == "On"
+    }
+
+    /// Determines RTL: variant property first (override), then description (fallback).
+    func useRTL(rtlProperty: String? = nil) -> Bool {
+        // 1. Variant-based detection (override)
+        if let prop = rtlProperty, rtlVariantValue(propertyName: prop) != nil {
+            return true // Presence of RTL variant = icon supports RTL
+        }
+        // 2. Fallback: description
         guard let description, !description.isEmpty else { return false }
         return description.localizedCaseInsensitiveContains("rtl")
     }

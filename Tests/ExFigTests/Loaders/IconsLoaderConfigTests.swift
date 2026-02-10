@@ -210,7 +210,8 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: nil,
             renderModeDefaultSuffix: nil,
             renderModeOriginalSuffix: nil,
-            renderModeTemplateSuffix: nil
+            renderModeTemplateSuffix: nil,
+            rtlProperty: nil
         )
 
         XCTAssertEqual(config.format, .svg)
@@ -224,7 +225,8 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: nil,
             renderModeDefaultSuffix: nil,
             renderModeOriginalSuffix: nil,
-            renderModeTemplateSuffix: nil
+            renderModeTemplateSuffix: nil,
+            rtlProperty: nil
         )
 
         XCTAssertEqual(config.format, .pdf)
@@ -247,7 +249,8 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
             renderModeOriginalSuffix: source.renderModeOriginalSuffix,
-            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix,
+            rtlProperty: nil
         )
         XCTAssertEqual(config.format, .svg, "SVG format must survive source → config conversion")
     }
@@ -265,7 +268,8 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
             renderModeOriginalSuffix: source.renderModeOriginalSuffix,
-            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix,
+            rtlProperty: nil
         )
         XCTAssertEqual(config.format, .pdf)
     }

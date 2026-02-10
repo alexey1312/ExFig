@@ -41,6 +41,17 @@ When Figma API response structure differs from project models, check:
 2. Figma API docs - actual response schema
 3. Create/update `Decodable` structs to match API response
 
+### Components Response Key Types
+
+| Type                    | Fields                   | Purpose                                          |
+| ----------------------- | ------------------------ | ------------------------------------------------ |
+| `Component`             | key, nodeId, name, description, containingFrame | Figma component metadata |
+| `ContainingFrame`       | nodeId, name, pageId, pageName, backgroundColor, containingComponentSet | Parent frame info |
+| `ContainingComponentSet`| nodeId, name             | Parent COMPONENT_SET for variant components      |
+
+`containingComponentSet` is present when a component is a variant inside a component set (e.g., `RTL=Off` variant).
+Used to get the real icon name from `componentSet.name` instead of the variant name.
+
 ## Rate Limits
 
 **Official docs:** https://developers.figma.com/docs/rest-api/rate-limits/

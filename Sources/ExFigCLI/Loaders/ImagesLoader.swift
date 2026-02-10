@@ -41,6 +41,9 @@ struct ImagesLoaderConfig: Sendable {
     /// When .svg, downloads SVG and rasterizes locally with resvg.
     let sourceFormat: ImagesSourceFormat
 
+    /// Figma component property name for RTL variant detection.
+    let rtlProperty: String?
+
     /// Creates config for a specific iOS images entry.
     static func forIOS(entry: iOSImagesEntry, params: PKLConfig) -> ImagesLoaderConfig {
         ImagesLoaderConfig(
@@ -48,7 +51,8 @@ struct ImagesLoaderConfig: Sendable {
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
             format: nil, // iOS always uses PNG output
-            sourceFormat: convertSourceFormat(entry.sourceFormat)
+            sourceFormat: convertSourceFormat(entry.sourceFormat),
+            rtlProperty: entry.rtlProperty
         )
     }
 
@@ -59,7 +63,8 @@ struct ImagesLoaderConfig: Sendable {
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
             format: convertAndroidFormat(entry.format),
-            sourceFormat: convertSourceFormat(entry.sourceFormat)
+            sourceFormat: convertSourceFormat(entry.sourceFormat),
+            rtlProperty: entry.rtlProperty
         )
     }
 
@@ -70,7 +75,8 @@ struct ImagesLoaderConfig: Sendable {
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: entry.scales,
             format: entry.format.flatMap { convertFlutterFormat($0) },
-            sourceFormat: convertSourceFormat(entry.sourceFormat)
+            sourceFormat: convertSourceFormat(entry.sourceFormat),
+            rtlProperty: entry.rtlProperty
         )
     }
 
@@ -81,7 +87,8 @@ struct ImagesLoaderConfig: Sendable {
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
             format: .svg, // Web uses SVG by default
-            sourceFormat: .svg // Web always uses SVG source
+            sourceFormat: .svg, // Web always uses SVG source
+            rtlProperty: entry.rtlProperty
         )
     }
 
@@ -92,7 +99,8 @@ struct ImagesLoaderConfig: Sendable {
             frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
             scales: nil,
             format: nil,
-            sourceFormat: .png
+            sourceFormat: .png,
+            rtlProperty: "RTL"
         )
     }
 
@@ -251,6 +259,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 frameName: frameName,
                 filter: filter,
                 scales: scales,
+                rtlProperty: config.rtlProperty,
                 onBatchProgress: onBatchProgress
             )
             let (lightImages, darkImages) = splitByDarkMode(images, darkSuffix: darkSuffix)
@@ -263,6 +272,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 frameName: frameName,
                 params: SVGParams(),
                 filter: filter,
+                rtlProperty: config.rtlProperty,
                 onBatchProgress: onBatchProgress
             )
             let (lightPack, darkPack) = splitByDarkMode(pack, darkSuffix: darkSuffix)
@@ -318,6 +328,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                         frameName: self.frameName,
                         filter: filter,
                         scales: scales,
+                        rtlProperty: self.config.rtlProperty,
                         onBatchProgress: onBatchProgress
                     )
                     return (key, images)
@@ -354,6 +365,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                         frameName: self.frameName,
                         params: SVGParams(),
                         filter: filter,
+                        rtlProperty: self.config.rtlProperty,
                         onBatchProgress: onBatchProgress
                     )
                     return (key, packs)
@@ -392,6 +404,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 frameName: frameName,
                 filter: filter,
                 scales: scales,
+                rtlProperty: config.rtlProperty,
                 onBatchProgress: onBatchProgress
             )
 
@@ -423,6 +436,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                 frameName: frameName,
                 params: SVGParams(),
                 filter: filter,
+                rtlProperty: config.rtlProperty,
                 onBatchProgress: onBatchProgress
             )
 
@@ -489,6 +503,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                             frameName: self.frameName,
                             filter: filter,
                             scales: scales,
+                            rtlProperty: self.config.rtlProperty,
                             onBatchProgress: onBatchProgress
                         )
                         return FileGranularResult(
@@ -506,6 +521,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                             frameName: self.frameName,
                             params: SVGParams(),
                             filter: filter,
+                            rtlProperty: self.config.rtlProperty,
                             onBatchProgress: onBatchProgress
                         )
                         return FileGranularResult(

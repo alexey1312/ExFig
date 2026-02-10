@@ -1,0 +1,165 @@
+@testable import ExFigCLI
+import FigmaAPI
+import XCTest
+
+// MARK: - Component RTL Detection Tests
+
+final class ComponentRTLTests: XCTestCase {
+    // MARK: - iconName
+
+    func testIconName_regularComponent_usesOwnName() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertEqual(component.iconName, "arrow-left")
+    }
+
+    func testIconName_variantComponent_usesComponentSetName() {
+        let component = makeComponent(
+            name: "RTL=Off",
+            componentSetName: "arrow-left"
+        )
+        XCTAssertEqual(component.iconName, "arrow-left")
+    }
+
+    func testIconName_variantComponentWithMultipleProperties() {
+        let component = makeComponent(
+            name: "State=Default, RTL=Off",
+            componentSetName: "new-orders"
+        )
+        XCTAssertEqual(component.iconName, "new-orders")
+    }
+
+    // MARK: - rtlVariantValue
+
+    func testRTLVariantValue_simpleOff() {
+        let component = makeComponent(name: "RTL=Off")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "RTL"), "Off")
+    }
+
+    func testRTLVariantValue_simpleOn() {
+        let component = makeComponent(name: "RTL=On")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "RTL"), "On")
+    }
+
+    func testRTLVariantValue_multipleProperties() {
+        let component = makeComponent(name: "State=Default, RTL=Off")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "RTL"), "Off")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "State"), "Default")
+    }
+
+    func testRTLVariantValue_noRTLProperty() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertNil(component.rtlVariantValue(propertyName: "RTL"))
+    }
+
+    func testRTLVariantValue_customPropertyName() {
+        let component = makeComponent(name: "Direction=RTL")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "Direction"), "RTL")
+        XCTAssertNil(component.rtlVariantValue(propertyName: "RTL"))
+    }
+
+    // MARK: - shouldSkipAsRTLVariant
+
+    func testShouldSkip_RTLOnVariant() {
+        let component = makeComponent(name: "RTL=On")
+        XCTAssertTrue(component.shouldSkipAsRTLVariant(propertyName: "RTL"))
+    }
+
+    func testShouldNotSkip_RTLOffVariant() {
+        let component = makeComponent(name: "RTL=Off")
+        XCTAssertFalse(component.shouldSkipAsRTLVariant(propertyName: "RTL"))
+    }
+
+    func testShouldNotSkip_regularComponent() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertFalse(component.shouldSkipAsRTLVariant(propertyName: "RTL"))
+    }
+
+    func testShouldNotSkip_nilPropertyName() {
+        let component = makeComponent(name: "RTL=On")
+        XCTAssertFalse(component.shouldSkipAsRTLVariant(propertyName: nil))
+    }
+
+    func testShouldSkip_RTLOnInMultipleProperties() {
+        let component = makeComponent(name: "State=Default, RTL=On")
+        XCTAssertTrue(component.shouldSkipAsRTLVariant(propertyName: "RTL"))
+    }
+
+    // MARK: - useRTL
+
+    func testUseRTL_variantPropertyPresent_returnsTrue() {
+        let component = makeComponent(
+            name: "RTL=Off",
+            componentSetName: "arrow-left"
+        )
+        XCTAssertTrue(component.useRTL(rtlProperty: "RTL"))
+    }
+
+    func testUseRTL_variantPropertyNotPresent_fallsBackToDescription() {
+        let component = makeComponent(name: "arrow-left", description: "rtl icon")
+        XCTAssertTrue(component.useRTL(rtlProperty: "RTL"))
+    }
+
+    func testUseRTL_noVariantNoDescription_returnsFalse() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertFalse(component.useRTL(rtlProperty: "RTL"))
+    }
+
+    func testUseRTL_nilRtlProperty_fallsBackToDescription() {
+        let component = makeComponent(name: "arrow-left", description: "RTL support")
+        XCTAssertTrue(component.useRTL(rtlProperty: nil))
+    }
+
+    func testUseRTL_nilRtlProperty_noDescription_returnsFalse() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertFalse(component.useRTL(rtlProperty: nil))
+    }
+
+    func testUseRTL_variantOverridesDescription() {
+        // Even if description doesn't mention RTL, variant property wins
+        let component = makeComponent(
+            name: "RTL=Off",
+            description: "no mention of direction",
+            componentSetName: "arrow-left"
+        )
+        XCTAssertTrue(component.useRTL(rtlProperty: "RTL"))
+    }
+
+    func testUseRTL_descriptionCaseInsensitive() {
+        let component = makeComponent(name: "arrow-left", description: "This is an RTL icon")
+        XCTAssertTrue(component.useRTL(rtlProperty: nil))
+    }
+
+    // MARK: - Helpers
+
+    private func makeComponent(
+        name: String,
+        description: String? = nil,
+        frameName: String = "Icons",
+        componentSetName: String? = nil
+    ) -> Component {
+        let descriptionField = description.map { ", \"description\": \"\($0)\"" } ?? ""
+
+        let componentSetField = if let componentSetName {
+            """
+            , "containingComponentSet": { "nodeId": "99:0", "name": "\(componentSetName)" }
+            """
+        } else {
+            ""
+        }
+
+        let json = """
+        {
+            "key": "test-key",
+            "node_id": "1:0",
+            "name": "\(name)"\(descriptionField),
+            "containing_frame": {
+                "nodeId": "2:0",
+                "name": "\(frameName)"\(componentSetField)
+            }
+        }
+        """
+
+        // swiftlint:disable:next force_try
+        return try! JSONDecoder().decode(Component.self, from: Data(json.utf8))
+    }
+}

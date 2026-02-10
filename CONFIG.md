@@ -311,6 +311,27 @@ typography = new Common.Typography {
 }
 ```
 
+### FrameSource (Inherited Fields)
+
+All Icons and Images entries across platforms extend `Common.FrameSource`, which provides:
+
+| Field                | Type      | Default | Description                                             |
+| -------------------- | --------- | ------- | ------------------------------------------------------- |
+| `figmaFrameName`     | `String?` | —       | Override Figma frame name for this entry                |
+| `figmaFileId`        | `String?` | —       | Override Figma file ID for this entry                   |
+| `rtlProperty`        | `String?` | `"RTL"` | Figma component property name for RTL variant detection |
+| `nameValidateRegexp` | `String?` | —       | Regex pattern for name validation                       |
+| `nameReplaceRegexp`  | `String?` | —       | Replacement pattern using captured groups               |
+
+**RTL Detection:** When `rtlProperty` is set (default `"RTL"`), ExFig detects RTL support via Figma
+COMPONENT_SET variant properties. Components with `RTL=On` variant are automatically skipped (iOS/Android
+handle mirroring at runtime). Components with `RTL=Off` variant are marked as RTL-supported, and the icon
+name is taken from the COMPONENT_SET name instead of the variant name.
+
+Priority: variant property > description-based detection (legacy fallback: if description contains "rtl").
+
+Set `rtlProperty = null` to disable variant-based detection and use only description-based fallback.
+
 ---
 
 ## iOS
@@ -410,8 +431,8 @@ icons = new iOS.IconsEntry {
 }
 ```
 
-`iOS.IconsEntry` extends `Common.FrameSource`, inheriting `figmaFrameName`, `nameValidateRegexp`, and
-`nameReplaceRegexp`.
+`iOS.IconsEntry` extends `Common.FrameSource`, inheriting `figmaFrameName`, `figmaFileId`, `rtlProperty`,
+`nameValidateRegexp`, and `nameReplaceRegexp`.
 
 | Field                           | Type               | Required | Description                                                  |
 | ------------------------------- | ------------------ | -------- | ------------------------------------------------------------ |
@@ -427,7 +448,7 @@ icons = new iOS.IconsEntry {
 | `renderModeOriginalSuffix`      | `String?`          | No       | Suffix for original render mode                              |
 | `renderModeTemplateSuffix`      | `String?`          | No       | Suffix for template render mode                              |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### iOS Images
 
@@ -468,7 +489,7 @@ images = new iOS.ImagesEntry {
 | `renderModeOriginalSuffix` | `String?`            | No       | Suffix for original render mode                                  |
 | `renderModeTemplateSuffix` | `String?`            | No       | Suffix for template render mode                                  |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 **HEIC Options:**
 
@@ -626,7 +647,7 @@ icons = new Android.IconsEntry {
 | `pathPrecision`          | `Int(1-6)?`          | No       | Coordinate precision for pathData (default: 4)              |
 | `strictPathValidation`   | `Boolean?`           | No       | Error on pathData > 32,767 bytes (default: false)           |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### Android Images
 
@@ -651,7 +672,7 @@ images = new Android.ImagesEntry {
 | `webpOptions`  | `WebpOptions?`     | No       | WebP encoding options (when format is `"webp"`)                      |
 | `sourceFormat` | `SourceFormat?`    | No       | Source from Figma: `"png"` (default) or `"svg"`                      |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 **WebP Options:**
 
@@ -738,7 +759,7 @@ icons = new Flutter.IconsEntry {
 | `className` | `String?`    | No       | Class name (default: `AppIcons`)    |
 | `nameStyle` | `NameStyle?` | No       | Name style for generated names      |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### Flutter Images
 
@@ -769,7 +790,7 @@ images = new Flutter.ImagesEntry {
 | `sourceFormat` | `SourceFormat?`        | No       | Source from Figma: `"png"` or `"svg"`     |
 | `nameStyle`    | `NameStyle?`           | No       | Name style for generated names            |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ---
 
@@ -841,7 +862,7 @@ icons = new Web.IconsEntry {
 | `iconSize`                | `Int?`       | No       | Icon size in pixels for viewBox (default: 24) |
 | `nameStyle`               | `NameStyle?` | No       | Name style for generated names                |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### Web Images
 
@@ -859,7 +880,7 @@ images = new Web.ImagesEntry {
 | `assetsDirectory`         | `String?`  | No       | Directory for raw image assets                |
 | `generateReactComponents` | `Boolean?` | No       | Generate React TSX components (default: true) |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ---
 

@@ -59,4 +59,14 @@ public struct ContainingFrame: Codable, Sendable {
     public let pageId: String?
     public let pageName: String?
     public let backgroundColor: String?
+    public let containingComponentSet: ContainingComponentSet?
+}
+
+// MARK: - ContainingComponentSet
+
+/// Represents the parent COMPONENT_SET for variant components.
+/// Present when a component is a variant inside a component set.
+public struct ContainingComponentSet: Codable, Sendable {
+    public let nodeId: String?
+    public let name: String?
 }

@@ -29,6 +29,8 @@ public protocol Common_FrameSource: Common_NameProcessing {
     var figmaFrameName: String? { get }
 
     var figmaFileId: String? { get }
+
+    var rtlProperty: String? { get }
 }
 
 extension Common {
@@ -169,6 +171,12 @@ extension Common {
         /// When set, overrides the global `figma.lightFileId` for loading data.
         public var figmaFileId: String?
 
+        /// Figma component property name for RTL variant detection.
+        /// When set, components with this variant property are marked as RTL.
+        /// RTL=On variants are automatically skipped (iOS/Android mirror automatically).
+        /// Set to null to disable variant-based RTL detection.
+        public var rtlProperty: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -178,11 +186,13 @@ extension Common {
         public init(
             figmaFrameName: String?,
             figmaFileId: String?,
+            rtlProperty: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
             self.figmaFrameName = figmaFrameName
             self.figmaFileId = figmaFileId
+            self.rtlProperty = rtlProperty
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }
