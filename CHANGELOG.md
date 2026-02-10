@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-02-10
+
+### Features
+
+- Add RTL variant detection via Figma component property  by @alexey1312 in [#52](https://github.com/alexey1312/ExFig/pull/52)
+
+
 ## [2.0.1] - 2026-02-09
 
 ### Bug Fixes
