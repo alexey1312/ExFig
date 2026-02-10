@@ -100,7 +100,7 @@ struct ImagesLoaderConfig: Sendable {
             scales: nil,
             format: nil,
             sourceFormat: .png,
-            rtlProperty: "RTL"
+            rtlProperty: Component.defaultRTLProperty
         )
     }
 

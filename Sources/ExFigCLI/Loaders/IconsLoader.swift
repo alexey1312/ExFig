@@ -110,7 +110,7 @@ struct IconsLoaderConfig: Sendable {
             renderModeDefaultSuffix: nil,
             renderModeOriginalSuffix: nil,
             renderModeTemplateSuffix: nil,
-            rtlProperty: "RTL"
+            rtlProperty: Component.defaultRTLProperty
         )
     }
 }

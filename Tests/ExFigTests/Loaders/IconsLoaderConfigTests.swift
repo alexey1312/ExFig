@@ -197,6 +197,14 @@ final class IconsLoaderConfigTests: XCTestCase {
         XCTAssertNil(config.renderModeTemplateSuffix)
     }
 
+    func testDefaultConfig_hasDefaultRTLProperty() {
+        let params = PKLConfig.make(lightFileId: "test")
+
+        let config = IconsLoaderConfig.defaultConfig(params: params)
+
+        XCTAssertEqual(config.rtlProperty, "RTL")
+    }
+
     // MARK: - Regression: SVG format must not be mapped to nil
 
     /// Regression test: when IconsLoaderConfig is constructed with .svg format,

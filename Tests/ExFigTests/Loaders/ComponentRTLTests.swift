@@ -57,6 +57,17 @@ final class ComponentRTLTests: XCTestCase {
         XCTAssertNil(component.rtlVariantValue(propertyName: "RTL"))
     }
 
+    func testRTLVariantValue_whitespaceAroundEquals() {
+        let component = makeComponent(name: "RTL = Off")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "RTL"), "Off")
+    }
+
+    func testRTLVariantValue_whitespaceInMultipleProperties() {
+        let component = makeComponent(name: "State = Default , RTL = On")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "RTL"), "On")
+        XCTAssertEqual(component.rtlVariantValue(propertyName: "State"), "Default")
+    }
+
     // MARK: - shouldSkipAsRTLVariant
 
     func testShouldSkip_RTLOnVariant() {
@@ -77,6 +88,11 @@ final class ComponentRTLTests: XCTestCase {
     func testShouldNotSkip_nilPropertyName() {
         let component = makeComponent(name: "RTL=On")
         XCTAssertFalse(component.shouldSkipAsRTLVariant(propertyName: nil))
+    }
+
+    func testShouldNotSkip_emptyPropertyName() {
+        let component = makeComponent(name: "RTL=On")
+        XCTAssertFalse(component.shouldSkipAsRTLVariant(propertyName: ""))
     }
 
     func testShouldSkip_RTLOnInMultipleProperties() {
@@ -127,6 +143,23 @@ final class ComponentRTLTests: XCTestCase {
     func testUseRTL_descriptionCaseInsensitive() {
         let component = makeComponent(name: "arrow-left", description: "This is an RTL icon")
         XCTAssertTrue(component.useRTL(rtlProperty: nil))
+    }
+
+    func testUseRTL_emptyStringFallsBackToDescription() {
+        // Empty rtlProperty should behave like nil — fall back to description
+        let component = makeComponent(name: "arrow-left", description: "rtl icon")
+        XCTAssertTrue(component.useRTL(rtlProperty: ""))
+    }
+
+    func testUseRTL_emptyStringNoDescription_returnsFalse() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertFalse(component.useRTL(rtlProperty: ""))
+    }
+
+    // MARK: - defaultRTLProperty
+
+    func testDefaultRTLProperty() {
+        XCTAssertEqual(Component.defaultRTLProperty, "RTL")
     }
 
     // MARK: - Helpers
