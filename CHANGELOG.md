@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-02-09
+
+### Bug Fixes
+
+- Use correct target name ExFigCLI for DocC build  by @alexey1312 in [#50](https://github.com/alexey1312/ExFig/pull/50)
+
+- Use correct mise hooks syntax (shell+script instead of run)  by @alexey1312 in [#51](https://github.com/alexey1312/ExFig/pull/51)
+
+
 ## [2.0.0] - 2026-02-09
 
 ### Other
