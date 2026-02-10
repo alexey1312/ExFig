@@ -38,6 +38,7 @@ public extension Android.ImagesEntry {
             scales: effectiveScales,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
+            rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )

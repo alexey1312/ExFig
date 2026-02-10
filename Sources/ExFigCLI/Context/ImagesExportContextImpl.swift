@@ -92,7 +92,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
             scales: source.scales,
             format: nil, // Format is determined by platform exporter
             sourceFormat: loaderSourceFormat,
-            rtlProperty: "RTL"
+            rtlProperty: source.rtlProperty
         )
 
         let loader = ImagesLoader(
@@ -369,7 +369,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
             scales: source.scales,
             format: nil,
             sourceFormat: loaderSourceFormat,
-            rtlProperty: "RTL"
+            rtlProperty: source.rtlProperty
         )
 
         let loader = ImagesLoader(

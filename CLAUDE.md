@@ -190,6 +190,12 @@ When adding fields to loader configs, update ALL construction sites:
 2. Context implementations (`Sources/ExFigCLI/Context/*ExportContextImpl.swift`) — direct constructions in `loadIcons`/`loadImages`
 3. Test files (`IconsLoaderConfigTests.swift`, `EnumBridgingTests.swift`) — direct init calls
 
+When adding fields to `FrameSource` (PKL) / `SourceInput` (ExFigCore), also update:
+
+4. Entry bridge methods (`iconsSourceInput()`/`imagesSourceInput()`) in ALL `Sources/ExFig-*/Config/*Entry.swift`
+5. Inline `SourceInput(` constructions in exporters (`iOSImagesExporter.svgSourceInput`, `AndroidImagesExporter.loadAndProcessSVG`)
+6. "Through" tests in `IconsLoaderConfigTests` — use `source.field` not hardcoded `nil`
+
 ### Adding a CLI Command
 
 1. Create `Sources/ExFigCLI/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`

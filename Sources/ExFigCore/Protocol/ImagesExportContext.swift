@@ -183,6 +183,10 @@ public struct ImagesSourceInput: Sendable {
     /// Suffix for dark mode images when using single file.
     public let darkModeSuffix: String
 
+    /// Figma component property name for RTL variant detection.
+    /// Default: `"RTL"`. Set to `nil` to disable variant-based RTL detection.
+    public let rtlProperty: String?
+
     /// Name validation regex.
     public let nameValidateRegexp: String?
 
@@ -197,6 +201,7 @@ public struct ImagesSourceInput: Sendable {
         scales: [Double] = [1.0, 2.0, 3.0],
         useSingleFile: Bool = false,
         darkModeSuffix: String = "_dark",
+        rtlProperty: String? = "RTL",
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil
     ) {
@@ -207,6 +212,7 @@ public struct ImagesSourceInput: Sendable {
         self.scales = scales
         self.useSingleFile = useSingleFile
         self.darkModeSuffix = darkModeSuffix
+        self.rtlProperty = rtlProperty
         self.nameValidateRegexp = nameValidateRegexp
         self.nameReplaceRegexp = nameReplaceRegexp
     }

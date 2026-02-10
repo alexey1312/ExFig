@@ -84,6 +84,10 @@ public struct IconsSourceInput: Sendable {
     public let renderModeOriginalSuffix: String?
     public let renderModeTemplateSuffix: String?
 
+    /// Figma component property name for RTL variant detection.
+    /// Default: `"RTL"`. Set to `nil` to disable variant-based RTL detection.
+    public let rtlProperty: String?
+
     /// Name validation regex.
     public let nameValidateRegexp: String?
 
@@ -101,6 +105,7 @@ public struct IconsSourceInput: Sendable {
         renderModeDefaultSuffix: String? = nil,
         renderModeOriginalSuffix: String? = nil,
         renderModeTemplateSuffix: String? = nil,
+        rtlProperty: String? = "RTL",
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil
     ) {
@@ -114,6 +119,7 @@ public struct IconsSourceInput: Sendable {
         self.renderModeDefaultSuffix = renderModeDefaultSuffix
         self.renderModeOriginalSuffix = renderModeOriginalSuffix
         self.renderModeTemplateSuffix = renderModeTemplateSuffix
+        self.rtlProperty = rtlProperty
         self.nameValidateRegexp = nameValidateRegexp
         self.nameReplaceRegexp = nameReplaceRegexp
     }
