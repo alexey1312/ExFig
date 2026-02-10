@@ -197,6 +197,14 @@ final class IconsLoaderConfigTests: XCTestCase {
         XCTAssertNil(config.renderModeTemplateSuffix)
     }
 
+    func testDefaultConfig_hasDefaultRTLProperty() {
+        let params = PKLConfig.make(lightFileId: "test")
+
+        let config = IconsLoaderConfig.defaultConfig(params: params)
+
+        XCTAssertEqual(config.rtlProperty, "RTL")
+    }
+
     // MARK: - Regression: SVG format must not be mapped to nil
 
     /// Regression test: when IconsLoaderConfig is constructed with .svg format,
@@ -210,7 +218,8 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: nil,
             renderModeDefaultSuffix: nil,
             renderModeOriginalSuffix: nil,
-            renderModeTemplateSuffix: nil
+            renderModeTemplateSuffix: nil,
+            rtlProperty: nil
         )
 
         XCTAssertEqual(config.format, .svg)
@@ -224,7 +233,8 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: nil,
             renderModeDefaultSuffix: nil,
             renderModeOriginalSuffix: nil,
-            renderModeTemplateSuffix: nil
+            renderModeTemplateSuffix: nil,
+            rtlProperty: nil
         )
 
         XCTAssertEqual(config.format, .pdf)
@@ -247,7 +257,8 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
             renderModeOriginalSuffix: source.renderModeOriginalSuffix,
-            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix,
+            rtlProperty: source.rtlProperty
         )
         XCTAssertEqual(config.format, .svg, "SVG format must survive source → config conversion")
     }
@@ -265,9 +276,47 @@ final class IconsLoaderConfigTests: XCTestCase {
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
             renderModeOriginalSuffix: source.renderModeOriginalSuffix,
-            renderModeTemplateSuffix: source.renderModeTemplateSuffix
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix,
+            rtlProperty: source.rtlProperty
         )
         XCTAssertEqual(config.format, .pdf)
+    }
+
+    // MARK: - RTL Property Passthrough
+
+    func testRTLPropertyPreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(rtlProperty: "RTL")
+
+        // Step 1: entry → IconsSourceInput
+        let source = entry.iconsSourceInput()
+        XCTAssertEqual(source.rtlProperty, "RTL", "rtlProperty must survive entry → source conversion")
+
+        // Step 2: source → IconsLoaderConfig
+        let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
+            frameName: source.frameName,
+            format: source.format,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix,
+            rtlProperty: source.rtlProperty
+        )
+        XCTAssertEqual(config.rtlProperty, "RTL", "rtlProperty must survive source → config conversion")
+    }
+
+    func testRTLPropertyNilPreservedThroughEntryToSource() throws {
+        let entry = try makeIOSEntry(rtlProperty: nil)
+
+        let source = entry.iconsSourceInput()
+        XCTAssertNil(source.rtlProperty, "nil rtlProperty must be preserved through entry → source")
+    }
+
+    func testRTLPropertyCustomNamePreservedThroughEntryToSource() throws {
+        let entry = try makeIOSEntry(rtlProperty: "IsRTL")
+
+        let source = entry.iconsSourceInput()
+        XCTAssertEqual(source.rtlProperty, "IsRTL", "Custom rtlProperty name must be preserved")
     }
 
     // MARK: - Helpers
@@ -280,7 +329,8 @@ final class IconsLoaderConfigTests: XCTestCase {
         renderMode: String? = nil,
         renderModeDefaultSuffix: String? = nil,
         renderModeOriginalSuffix: String? = nil,
-        renderModeTemplateSuffix: String? = nil
+        renderModeTemplateSuffix: String? = nil,
+        rtlProperty: String? = nil
     ) throws -> iOSIconsEntry {
         var json = """
         {
@@ -303,6 +353,9 @@ final class IconsLoaderConfigTests: XCTestCase {
         }
         if let renderModeTemplateSuffix {
             json += ", \"renderModeTemplateSuffix\": \"\(renderModeTemplateSuffix)\""
+        }
+        if let rtlProperty {
+            json += ", \"rtlProperty\": \"\(rtlProperty)\""
         }
         json += "}"
 

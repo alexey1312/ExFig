@@ -75,6 +75,14 @@ open class FrameSource extends NameProcessing {
   /// Override Figma file ID for this specific entry.
   /// When set, overrides the global `figma.lightFileId` for loading data.
   figmaFileId: String?
+
+  /// Figma component property name for RTL variant detection.
+  /// When set, components in a COMPONENT_SET with this variant property
+  /// have their RTL=Off variant exported with RTL metadata (isRTL flag).
+  /// RTL=On variants are automatically skipped — the base variant is
+  /// mirrored at runtime by the platform (iOS languageDirection, Android autoMirrored).
+  /// Set to null to disable variant-based RTL detection.
+  rtlProperty: String? = "RTL"
 }
 
 // MARK: - Common Settings

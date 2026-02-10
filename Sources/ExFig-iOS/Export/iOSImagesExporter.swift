@@ -476,6 +476,7 @@ private extension iOSImagesEntry {
             scales: [1.0],
             useSingleFile: true,
             darkModeSuffix: "_dark",
+            rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )

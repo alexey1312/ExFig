@@ -20,6 +20,7 @@ public extension Android.IconsEntry {
             format: .svg,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
+            rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )

@@ -47,6 +47,7 @@ ios = new iOS.iOSConfig {
       nameStyle = "camelCase"
       xcassetsPath = "BrandKit/Assets.xcassets"
       templatesPath = "BrandKit/Templates"
+      // rtlProperty = "RTL"  // default; set to null to disable variant-based RTL detection
     }
   }
 }

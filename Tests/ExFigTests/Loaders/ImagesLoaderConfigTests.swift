@@ -236,13 +236,59 @@ final class ImagesLoaderConfigTests: XCTestCase {
         XCTAssertNil(config.format)
     }
 
+    // MARK: - Default Config RTL Property
+
+    func testDefaultConfig_hasDefaultRTLProperty() {
+        let params = PKLConfig.make(lightFileId: "test")
+
+        let config = ImagesLoaderConfig.defaultConfig(params: params)
+
+        XCTAssertEqual(config.rtlProperty, "RTL")
+    }
+
+    // MARK: - RTL Property Passthrough
+
+    func testRTLPropertyPreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(rtlProperty: "RTL")
+
+        // Step 1: entry → ImagesSourceInput
+        let source = entry.imagesSourceInput()
+        XCTAssertEqual(source.rtlProperty, "RTL", "rtlProperty must survive entry → source conversion")
+
+        // Step 2: source → ImagesLoaderConfig
+        let config = ImagesLoaderConfig(
+            entryFileId: source.figmaFileId,
+            frameName: source.frameName,
+            scales: source.scales,
+            format: nil,
+            sourceFormat: .png,
+            rtlProperty: source.rtlProperty
+        )
+        XCTAssertEqual(config.rtlProperty, "RTL", "rtlProperty must survive source → config conversion")
+    }
+
+    func testRTLPropertyNilPreservedThroughEntryToSource() throws {
+        let entry = try makeIOSEntry(rtlProperty: nil)
+
+        let source = entry.imagesSourceInput()
+        XCTAssertNil(source.rtlProperty, "nil rtlProperty must be preserved through entry → source")
+    }
+
+    func testRTLPropertyCustomNamePreservedThroughEntryToSource() throws {
+        let entry = try makeIOSEntry(rtlProperty: "IsRTL")
+
+        let source = entry.imagesSourceInput()
+        XCTAssertEqual(source.rtlProperty, "IsRTL", "Custom rtlProperty name must be preserved")
+    }
+
     // MARK: - Helpers
 
     private func makeIOSEntry(
         figmaFrameName: String? = nil,
         assetsFolder: String = "Images",
         nameStyle: String = "camelCase",
-        scales: [Double]? = nil
+        scales: [Double]? = nil,
+        rtlProperty: String? = nil
     ) throws -> iOSImagesEntry {
         var json = """
         {
@@ -256,6 +302,9 @@ final class ImagesLoaderConfigTests: XCTestCase {
         if let scales {
             let scalesJson = scales.map { String($0) }.joined(separator: ", ")
             json += ", \"scales\": [\(scalesJson)]"
+        }
+        if let rtlProperty {
+            json += ", \"rtlProperty\": \"\(rtlProperty)\""
         }
         json += "}"
 

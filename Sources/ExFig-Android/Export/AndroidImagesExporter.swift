@@ -373,6 +373,7 @@ private extension AndroidImagesExporter {
                 scales: [1.0],
                 useSingleFile: true,
                 darkModeSuffix: "_dark",
+                rtlProperty: entry.rtlProperty,
                 nameValidateRegexp: entry.nameValidateRegexp,
                 nameReplaceRegexp: entry.nameReplaceRegexp
             )

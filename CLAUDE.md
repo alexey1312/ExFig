@@ -64,7 +64,7 @@ and Flutter projects.
 # Build & Test
 ./bin/mise run build                # Debug build
 ./bin/mise run build:release        # Release build
-./bin/mise run test                 # All tests
+./bin/mise run test                 # All tests (prefer over test:filter when 3+ files changed)
 # Linux: swift build --build-tests && swift test --skip-build --parallel
 ./bin/mise run test:filter NAME     # Filter by target/class/method
 ./bin/mise run test:file FILE       # Run tests for specific file
@@ -182,6 +182,33 @@ Tests/               # Test targets mirror source structure
 
 ## Code Patterns
 
+### Modifying Loader Configs (IconsLoaderConfig / ImagesLoaderConfig)
+
+When adding fields to loader configs, update ALL construction sites:
+
+1. Factory methods (`forIOS`, `forAndroid`, `forFlutter`, `forWeb`, `defaultConfig`)
+2. Context implementations (`Sources/ExFigCLI/Context/*ExportContextImpl.swift`) — direct constructions in `loadIcons`/`loadImages`
+3. Test files (`IconsLoaderConfigTests.swift`, `EnumBridgingTests.swift`) — direct init calls
+
+When adding fields to `FrameSource` (PKL) / `SourceInput` (ExFigCore), also update:
+
+4. Entry bridge methods (`iconsSourceInput()`/`imagesSourceInput()`) in ALL `Sources/ExFig-*/Config/*Entry.swift`
+5. Inline `SourceInput(` constructions in exporters (`iOSImagesExporter.svgSourceInput`, `AndroidImagesExporter.loadAndProcessSVG`)
+6. "Through" tests in `IconsLoaderConfigTests` — use `source.field` not hardcoded `nil`
+
+### Module Boundaries
+
+ExFigCore does NOT import FigmaAPI. Constants on `Component` (FigmaAPI, extended in ExFigCLI) are
+not accessible from ExFigCore types (`IconsSourceInput`, `ImagesSourceInput`). Keep default values
+as string literals in ExFigCore inits; use shared constants only within ExFigCLI.
+
+### RTL Detection Design
+
+- `Component.iconName`: uses `containingComponentSet.name` for variants, own `name` otherwise
+- `Component.defaultRTLProperty = "RTL"`: shared constant in ExFigCLI for the magic string
+- PNG images intentionally do NOT carry `isRTL` — raster images skip mirroring by design
+- `buildPairedComponents` must use `iconName` (not `name`) — variant `name` is `"RTL=Off"`, not the icon name
+
 ### Adding a CLI Command
 
 1. Create `Sources/ExFigCLI/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
@@ -264,15 +291,17 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Troubleshooting
 
-| Problem               | Solution                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| Build fails           | `swift package clean && swift build`                                                  |
-| Tests fail            | Check `FIGMA_PERSONAL_TOKEN` is set                                                   |
-| Formatting fails      | Run `./bin/mise run setup` to install tools                                           |
-| Template errors       | Check Stencil syntax and context variables                                            |
-| Linux test hangs      | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`   |
-| Android pathData long | Simplify in Figma or use `--strict-path-validation`                                   |
-| PKL parse error 1     | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription` |
+| Problem                 | Solution                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| pkl-gen-swift not found | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift` |
+| PKL FrameSource change  | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)         |
+| Build fails             | `swift package clean && swift build`                                                     |
+| Tests fail              | Check `FIGMA_PERSONAL_TOKEN` is set                                                      |
+| Formatting fails        | Run `./bin/mise run setup` to install tools                                              |
+| Template errors         | Check Stencil syntax and context variables                                               |
+| Linux test hangs        | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`      |
+| Android pathData long   | Simplify in Figma or use `--strict-path-validation`                                      |
+| PKL parse error 1       | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`    |
 
 ## Additional Rules
 

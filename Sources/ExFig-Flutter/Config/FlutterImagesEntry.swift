@@ -21,6 +21,7 @@ public extension Flutter.ImagesEntry {
             scales: effectiveScales,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
+            rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )
@@ -48,6 +49,7 @@ public extension Flutter.ImagesEntry {
             scales: [1.0],
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
+            rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )

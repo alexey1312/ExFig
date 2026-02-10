@@ -112,6 +112,7 @@ final class EnumBridgingTests: XCTestCase {
                 renderModeTemplateSuffix: nil,
                 figmaFrameName: nil,
                 figmaFileId: nil,
+                rtlProperty: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -153,6 +154,7 @@ final class EnumBridgingTests: XCTestCase {
                 renderModeTemplateSuffix: nil,
                 figmaFrameName: nil,
                 figmaFileId: nil,
+                rtlProperty: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -188,6 +190,7 @@ final class EnumBridgingTests: XCTestCase {
                 strictPathValidation: nil,
                 figmaFrameName: nil,
                 figmaFileId: nil,
+                rtlProperty: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -211,6 +214,7 @@ final class EnumBridgingTests: XCTestCase {
             strictPathValidation: nil,
             figmaFrameName: nil,
             figmaFileId: nil,
+            rtlProperty: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -241,6 +245,7 @@ final class EnumBridgingTests: XCTestCase {
                 nameStyle: pklStyle,
                 figmaFrameName: nil,
                 figmaFileId: nil,
+                rtlProperty: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -263,6 +268,7 @@ final class EnumBridgingTests: XCTestCase {
             nameStyle: nil,
             figmaFrameName: nil,
             figmaFileId: nil,
+            rtlProperty: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -323,6 +329,7 @@ final class EnumBridgingTests: XCTestCase {
                 renderModeTemplateSuffix: nil,
                 figmaFrameName: nil,
                 figmaFileId: nil,
+                rtlProperty: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -353,6 +360,7 @@ final class EnumBridgingTests: XCTestCase {
                 renderModeTemplateSuffix: nil,
                 figmaFrameName: nil,
                 figmaFileId: nil,
+                rtlProperty: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )

@@ -18,6 +18,7 @@ public extension Web.ImagesEntry {
             scales: [1.0],
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
+            rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp
         )
