@@ -161,9 +161,9 @@ extension Component {
             "node_id": "\(nodeId)",
             "name": "\(name)",
             "containing_frame": {
-                "node_id": "\(nodeId)",
+                "nodeId": "\(nodeId)",
                 "name": "\(frameName)",
-                "page_name": "\(pageName)"
+                "pageName": "\(pageName)"
             }
         """
         if let description {

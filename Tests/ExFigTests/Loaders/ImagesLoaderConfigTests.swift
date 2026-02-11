@@ -1,4 +1,4 @@
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 
 import ExFig_Android
 import ExFig_Flutter
@@ -347,6 +347,24 @@ final class ImagesLoaderConfigTests: XCTestCase {
         XCTAssertEqual(config.pageName, "Marketing", "pageName must survive source → config conversion")
     }
 
+    func testForAndroid_entryPageNameOverridesCommon() throws {
+        let entry = try makeAndroidEntry(figmaPageName: "Marketing")
+        let params = PKLConfig.make(lightFileId: "test", imagesPageName: "Promo")
+
+        let config = ImagesLoaderConfig.forAndroid(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Marketing")
+    }
+
+    func testForFlutter_entryPageNameOverridesCommon() throws {
+        let entry = try makeFlutterEntry(figmaPageName: "Marketing")
+        let params = PKLConfig.make(lightFileId: "test", imagesPageName: "Promo")
+
+        let config = ImagesLoaderConfig.forFlutter(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Marketing")
+    }
+
     // MARK: - Helpers
 
     private func makeIOSEntry(
@@ -383,6 +401,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     private func makeAndroidEntry(
         figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
         output: String = "drawable",
         format: String = "svg",
         scales: [Double]? = nil
@@ -396,6 +415,9 @@ final class ImagesLoaderConfigTests: XCTestCase {
         if let figmaFrameName {
             json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
         }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
+        }
         if let scales {
             let scalesJson = scales.map { String($0) }.joined(separator: ", ")
             json += ", \"scales\": [\(scalesJson)]"
@@ -407,6 +429,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
     private func makeFlutterEntry(
         figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
         output: String = "assets/images",
         scales: [Double]? = nil,
         format: String? = nil
@@ -418,6 +441,9 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
         if let figmaFrameName {
             json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
+        }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
         }
         if let scales {
             let scalesJson = scales.map { String($0) }.joined(separator: ", ")

@@ -31,7 +31,7 @@ final class DownloadImageLoader: Sendable {
         )
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         // Filter out empty names
@@ -88,7 +88,7 @@ final class DownloadImageLoader: Sendable {
         )
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         logger.info("Fetching \(imagesDict.count) images from '\(frameName)' at \(scale)x...")
@@ -126,11 +126,23 @@ final class DownloadImageLoader: Sendable {
         pageName: String? = nil,
         filter: String?
     ) async throws -> [NodeId: Component] {
-        var components = try await loadComponents(fileId: fileId)
+        let allComponents = try await loadComponents(fileId: fileId)
+        var components = allComponents
             .filter {
                 $0.containingFrame.name == frameName
                     && (pageName == nil || $0.containingFrame.pageName == pageName)
             }
+
+        if let pageName, components.isEmpty {
+            let frameComponents = allComponents.filter { $0.containingFrame.name == frameName }
+            if !frameComponents.isEmpty {
+                let availablePages = Set(frameComponents.compactMap(\.containingFrame.pageName))
+                let pages = availablePages.sorted().joined(separator: ", ")
+                logger.info(
+                    "Page filter '\(pageName)' matched no components in frame '\(frameName)'. Available pages: \(pages)"
+                )
+            }
+        }
 
         if let filter {
             let assetsFilter = AssetsFilter(filter: filter)

@@ -400,6 +400,24 @@ final class IconsLoaderConfigTests: XCTestCase {
         XCTAssertEqual(config.pageName, "Outlined", "pageName must survive source → config conversion")
     }
 
+    func testForFlutter_entryPageNameOverridesCommon() throws {
+        let entry = try makeFlutterEntry(figmaPageName: "Outlined")
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.forFlutter(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Outlined")
+    }
+
+    func testForWeb_entryPageNameOverridesCommon() throws {
+        let entry = try makeWebEntry(figmaPageName: "Outlined")
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.forWeb(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Outlined")
+    }
+
     // MARK: - Helpers
 
     private func makeIOSEntry(
@@ -470,6 +488,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     private func makeFlutterEntry(
         figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
         output: String = "assets/icons"
     ) throws -> FlutterIconsEntry {
         var json = """
@@ -480,8 +499,32 @@ final class IconsLoaderConfigTests: XCTestCase {
         if let figmaFrameName {
             json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
         }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
+        }
         json += "}"
 
         return try JSONDecoder().decode(FlutterIconsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeWebEntry(
+        figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
+        outputDirectory: String = "assets/icons"
+    ) throws -> WebIconsEntry {
+        var json = """
+        {
+            "outputDirectory": "\(outputDirectory)"
+        """
+
+        if let figmaFrameName {
+            json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
+        }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
+        }
+        json += "}"
+
+        return try JSONDecoder().decode(WebIconsEntry.self, from: Data(json.utf8))
     }
 }

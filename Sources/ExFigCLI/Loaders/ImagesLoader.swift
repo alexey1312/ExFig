@@ -358,7 +358,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         guard let lightImages = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         return (lightImages, results["dark"])
@@ -396,7 +396,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         guard let lightPacks = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         return (lightPacks, results["dark"])
@@ -587,7 +587,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
 
         // Extract light and dark packs
         guard let lightResult else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         let darkResult = results.first(where: { $0.key == "dark" })

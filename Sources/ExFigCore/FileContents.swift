@@ -12,6 +12,7 @@ public struct Destination: Equatable, Sendable {
     }
 
     public init(directory: URL, file: URL) {
+        precondition(!file.path.isEmpty, "Destination file URL must not have an empty path")
         self.directory = directory
         self.file = file
     }

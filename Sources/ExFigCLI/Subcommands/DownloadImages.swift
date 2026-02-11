@@ -100,7 +100,11 @@ extension ExFigCommand {
             }
 
             guard !imagePacks.isEmpty else {
-                ui.warning(.noAssetsFound(assetType: "images", frameName: downloadOptions.frameName))
+                ui.warning(.noAssetsFound(
+                    assetType: "images",
+                    frameName: downloadOptions.frameName,
+                    pageName: downloadOptions.pageName
+                ))
                 return
             }
 

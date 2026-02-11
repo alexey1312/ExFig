@@ -84,6 +84,7 @@ extension ExFigCommand.Download {
 
             let filterValue = filter
             let pageNameValue = pageName
+                ?? options.params.common?.icons?.figmaPageName
             guard let fileId = options.params.figma?.lightFileId else {
                 throw ExFigError.custom(errorString: "figma.lightFileId is required for icons download.")
             }
@@ -101,7 +102,7 @@ extension ExFigCommand.Download {
             }
 
             guard !components.isEmpty else {
-                throw ExFigError.componentsNotFound
+                throw ExFigError.componentsNotFound(frameName: effectiveFrameName, pageName: pageNameValue)
             }
 
             let nodeIds = Array(components.keys)

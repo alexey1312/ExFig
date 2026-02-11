@@ -15,7 +15,7 @@ enum ExFigWarning: Sendable, Equatable {
     // MARK: - Asset Discovery Warnings
 
     /// No assets found in the specified Figma frame.
-    case noAssetsFound(assetType: String, frameName: String)
+    case noAssetsFound(assetType: String, frameName: String, pageName: String? = nil)
 
     // MARK: - Xcode Project Warnings
 

@@ -249,7 +249,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         }
 
         guard let lightIcons = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         return (lightIcons, results["dark"])
@@ -419,7 +419,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
 
         // Extract light and dark icons
         guard let lightResult else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         let darkResult = results.first(where: { $0.key == "dark" })

@@ -405,4 +405,88 @@ final class DownloadImageLoaderTests: XCTestCase {
 
         XCTAssertEqual(result.count, 50)
     }
+
+    // MARK: - Page Name Filtering
+
+    func testLoadVectorImagesFiltersComponentsByPageName() async throws {
+        let components = [
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons", pageName: "Outlined"),
+            Component.make(nodeId: "1:2", name: "icon_settings", frameName: "Icons", pageName: "Outlined"),
+            Component.make(nodeId: "1:3", name: "icon_home", frameName: "Icons", pageName: "Filled"),
+        ]
+        let imageUrls: [NodeId: ImagePath?] = [
+            "1:1": "https://figma.com/icon_home.svg",
+            "1:2": "https://figma.com/icon_settings.svg",
+        ]
+
+        mockClient.setResponse(components, for: ComponentsEndpoint.self)
+        mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
+
+        let loader = DownloadImageLoader(client: mockClient, logger: logger)
+
+        let result = try await loader.loadVectorImages(
+            fileId: "test-file",
+            frameName: "Icons",
+            pageName: "Outlined",
+            params: SVGParams(),
+            filter: nil
+        )
+
+        XCTAssertEqual(result.count, 2)
+        let names = result.map(\.name).sorted()
+        XCTAssertEqual(names, ["icon_home", "icon_settings"])
+    }
+
+    func testLoadVectorImagesNilPageNamePassesAllPages() async throws {
+        let components = [
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons", pageName: "Outlined"),
+            Component.make(nodeId: "1:2", name: "icon_settings", frameName: "Icons", pageName: "Filled"),
+        ]
+        let imageUrls: [NodeId: ImagePath?] = [
+            "1:1": "https://figma.com/icon_home.svg",
+            "1:2": "https://figma.com/icon_settings.svg",
+        ]
+
+        mockClient.setResponse(components, for: ComponentsEndpoint.self)
+        mockClient.setResponse(imageUrls, for: ImageEndpoint.self)
+
+        let loader = DownloadImageLoader(client: mockClient, logger: logger)
+
+        let result = try await loader.loadVectorImages(
+            fileId: "test-file",
+            frameName: "Icons",
+            params: SVGParams(),
+            filter: nil
+        )
+
+        XCTAssertEqual(result.count, 2, "nil pageName should allow components from all pages")
+    }
+
+    func testLoadVectorImagesThrowsWhenPageFilterMatchesNothing() async throws {
+        let components = [
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons", pageName: "Outlined"),
+        ]
+
+        mockClient.setResponse(components, for: ComponentsEndpoint.self)
+
+        let loader = DownloadImageLoader(client: mockClient, logger: logger)
+
+        do {
+            _ = try await loader.loadVectorImages(
+                fileId: "test-file",
+                frameName: "Icons",
+                pageName: "NonExistent",
+                params: SVGParams(),
+                filter: nil
+            )
+            XCTFail("Expected componentsNotFound error")
+        } catch let error as ExFigError {
+            guard case let .componentsNotFound(frameName, pageName) = error else {
+                XCTFail("Expected componentsNotFound, got: \(error)")
+                return
+            }
+            XCTAssertEqual(frameName, "Icons")
+            XCTAssertEqual(pageName, "NonExistent")
+        }
+    }
 }

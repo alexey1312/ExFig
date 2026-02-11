@@ -77,12 +77,24 @@ class ImageLoaderBase: @unchecked Sendable {
         filter: String? = nil,
         rtlProperty: String? = Component.defaultRTLProperty
     ) async throws -> [NodeId: Component] {
-        var components = try await loadComponents(fileId: fileId)
+        let allComponents = try await loadComponents(fileId: fileId)
+        var components = allComponents
             .filter {
                 $0.containingFrame.name == frameName
                     && (pageName == nil || $0.containingFrame.pageName == pageName)
                     && $0.useForPlatform(platform)
             }
+
+        if let pageName, components.isEmpty {
+            let frameComponents = allComponents.filter { $0.containingFrame.name == frameName }
+            if !frameComponents.isEmpty {
+                let availablePages = Set(frameComponents.compactMap(\.containingFrame.pageName))
+                let pages = availablePages.sorted().joined(separator: ", ")
+                logger.info(
+                    "Page filter '\(pageName)' matched no components in frame '\(frameName)'. Available pages: \(pages)"
+                )
+            }
+        }
 
         // Skip RTL=On variants: the base (RTL=Off) icon is sufficient —
         // platforms mirror it at runtime (iOS languageDirection, Android autoMirrored).
@@ -373,7 +385,7 @@ class ImageLoaderBase: @unchecked Sendable {
         var imagesDict = components
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: nil)
         }
 
         imagesDict = filterEmptyNameComponents(imagesDict)
@@ -579,7 +591,7 @@ class ImageLoaderBase: @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [ImagePack] {
         guard !components.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: nil, pageName: nil)
         }
 
         let batchSize = 100
