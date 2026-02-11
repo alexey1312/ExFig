@@ -671,6 +671,67 @@ ios = new iOS.iOSConfig {
 
 Run with: `exfig colors -i project-a.pkl`
 
+## DRY Configs with `for`-Generators
+
+PKL is a programmable language — you can use `for`-generators to eliminate entry duplication. This is especially
+useful when you have many icon or image categories with identical settings except for the Figma frame name and output
+folder.
+
+**Before** — 34 nearly identical entries (~380 lines):
+
+```pkl
+icons = new Listing {
+  new iOS.IconsEntry {
+    figmaFrameName = "Actions"
+    format = "svg"
+    xcassetsPath = "./Resources/Icons.xcassets"
+    assetsFolder = "Actions"
+    imageSwift = "./Generated/ActionsIcons.generated.swift"
+  }
+  new iOS.IconsEntry {
+    figmaFrameName = "Chart"
+    format = "svg"
+    xcassetsPath = "./Resources/Icons.xcassets"
+    assetsFolder = "Chart"
+    imageSwift = "./Generated/ChartIcons.generated.swift"
+  }
+  // ... 32 more identical entries
+}
+```
+
+**After** — `local` Mapping + `for`-generator (~30 lines):
+
+```pkl
+// local properties are NOT included in the output
+local iconCategories: Mapping<String, String> = new {
+  ["Actions"] = "Actions"
+  ["Chart"] = "Chart"
+  ["Communication, Media, Art"] = "CommunicationMediaArt"
+  ["Text editor"] = "TextEditor"
+  // ...
+}
+
+icons = new Listing {
+  for (frameName, folder in iconCategories) {
+    new iOS.IconsEntry {
+      figmaFrameName = frameName
+      format = "svg"
+      xcassetsPath = "./Resources/Icons.xcassets"
+      assetsFolder = folder
+      imageSwift = "./Generated/\(folder)Icons.generated.swift"
+    }
+  }
+}
+```
+
+Key points:
+
+- `local` properties exist only during evaluation — they don't appear in the JSON output
+- `\(expr)` is PKL string interpolation for building paths from data
+- You can mix manual entries and `for`-generators in the same `Listing`
+- Use multiple Mappings for groups with different settings (e.g., template vs. colored icons)
+- Always verify with `pkl eval --format json` that the output is unchanged after refactoring
+
 ## Validation
 
 Validate your PKL config at any time:

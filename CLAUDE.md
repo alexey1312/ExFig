@@ -182,6 +182,21 @@ Tests/               # Test targets mirror source structure
 
 ## Code Patterns
 
+### PKL Consumer Config DRY Patterns
+
+Consumer `exfig.pkl` configs can use `local` Mapping + `for`-generators to eliminate entry duplication:
+
+```pkl
+local categories: Mapping<String, String> = new { ["FrameName"] = "folder" }
+icons = new Listing {
+  for (frameName, folder in categories) {
+    new iOS.IconsEntry { figmaFrameName = frameName; assetsFolder = folder; /* ... */ }
+  }
+}
+```
+
+`local` properties don't appear in JSON output. Verify refactoring with `pkl eval --format json` diff.
+
 ### Modifying Loader Configs (IconsLoaderConfig / ImagesLoaderConfig)
 
 When adding fields to loader configs, update ALL construction sites:

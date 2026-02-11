@@ -1109,6 +1109,100 @@ Without the typed constructor (e.g., `new { ... }` inside a Listing), PKL will r
 This pattern applies to all platforms: `iOS.ColorsEntry`, `iOS.IconsEntry`, `iOS.ImagesEntry`,
 `Android.ColorsEntry`, `Android.IconsEntry`, `Android.ImagesEntry`, `Flutter.ColorsEntry`, etc.
 
+### DRY Configs with `for`-Generators
+
+When you have many entries that share the same structure (e.g., 15+ icon categories with identical settings except
+`figmaFrameName` and `assetsFolder`), use PKL `local` Mapping and `for`-generators to eliminate duplication.
+
+**Define categories as `local` Mapping** — `local` properties are not included in the output:
+
+```pkl
+// figmaFrameName → assetsFolder
+local iconCategories: Mapping<String, String> = new {
+  ["Actions"] = "Actions"
+  ["Chart"] = "Chart"
+  ["Communication, Media, Art"] = "CommunicationMediaArt"
+  ["Text editor"] = "TextEditor"
+  // ... more categories
+}
+```
+
+**Generate entries with `for`:**
+
+```pkl
+icons = new Listing {
+  for (frameName, folder in iconCategories) {
+    new iOS.IconsEntry {
+      figmaFrameName = frameName
+      format = "svg"
+      xcassetsPath = "./Resources/Icons.xcassets"
+      assetsFolder = folder
+      imageSwift = "./Generated/\(folder)Icons.generated.swift"
+    }
+  }
+}
+```
+
+You can mix manual entries and `for`-generators in the same `Listing`:
+
+```pkl
+icons = new Listing {
+  // Manual entries for special cases
+  new iOS.IconsEntry {
+    figmaFrameName = "Colored Icons"
+    renderMode = "default"
+    // ...
+  }
+
+  // Generated entries for categories with identical settings
+  for (frameName, folder in iconCategories) {
+    new iOS.IconsEntry {
+      figmaFrameName = frameName
+      assetsFolder = folder
+      // ...
+    }
+  }
+}
+```
+
+**String interpolation** — use `\(expr)` to build paths from category data:
+
+```pkl
+imageSwift = "./Generated/\(folder)Icons.generated.swift"
+assetsFolder = "\(folder)Dc"  // e.g., "ActionsDc"
+```
+
+**Multiple Mappings** for different groups — define separate Mappings when groups need different settings:
+
+```pkl
+local allCategories: Mapping<String, String> = new { /* 17 items */ }
+local dcCategories: Mapping<String, String> = new { /* 15 items — all except Logo, Template */ }
+
+icons = new Listing {
+  // Template icons from allCategories
+  for (frameName, folder in allCategories) {
+    new iOS.IconsEntry { /* template settings */ }
+  }
+  // Double Color icons from dcCategories
+  for (frameName, folder in dcCategories) {
+    new iOS.IconsEntry { figmaFileId = "other-file"; renderMode = "default"; /* ... */ }
+  }
+}
+```
+
+**Verification** — always verify that the refactored config produces the same output:
+
+```bash
+# Save output before refactoring
+pkl eval --format json exfig.pkl > before.json
+
+# After refactoring
+pkl eval --format json exfig.pkl > after.json
+
+# Compare (order of entries within Listing is preserved)
+diff before.json after.json
+```
+
 ---
 
 ## Validation
