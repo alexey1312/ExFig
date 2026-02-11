@@ -152,8 +152,8 @@ class ImageLoaderBase: @unchecked Sendable {
         )
 
         // Build metadata for all assets (for Code Connect and template generation)
-        // Use iconName to get the real name (component set name for variants)
-        // Use codeConnectNodeId to get component set ID for variants (Figma Code Connect requires top-level node IDs)
+        // Use component set data for variants: iconName for name, codeConnectNodeId for node ID.
+        // Figma Code Connect rejects variant node IDs — requires top-level component/component set IDs.
         let allAssetMetadata = allComponents.map { _, component in
             AssetMetadata(name: component.iconName, nodeId: component.codeConnectNodeId, fileId: fileId)
         }
@@ -894,7 +894,8 @@ public extension Component {
     }
 
     /// Node ID for Code Connect: component set ID for variants, own ID otherwise.
-    /// Figma Code Connect requires top-level component or component set node IDs.
+    /// Figma Code Connect rejects variant node IDs — use this to avoid
+    /// "node is not a top level component or component set" errors.
     var codeConnectNodeId: String {
         containingFrame.containingComponentSet?.nodeId ?? nodeId
     }
