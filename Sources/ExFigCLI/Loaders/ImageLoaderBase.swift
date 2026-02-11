@@ -152,9 +152,10 @@ class ImageLoaderBase: @unchecked Sendable {
         )
 
         // Build metadata for all assets (for Code Connect and template generation)
-        // Use iconName to get the real name (component set name for variants)
-        let allAssetMetadata = allComponents.map { nodeId, component in
-            AssetMetadata(name: component.iconName, nodeId: nodeId, fileId: fileId)
+        // Use component set data for variants: iconName for name, codeConnectNodeId for node ID.
+        // Figma Code Connect rejects variant node IDs — requires top-level component/component set IDs.
+        let allAssetMetadata = allComponents.map { _, component in
+            AssetMetadata(name: component.iconName, nodeId: component.codeConnectNodeId, fileId: fileId)
         }
 
         guard let manager = granularCacheManager, !allComponents.isEmpty else {
@@ -216,8 +217,8 @@ class ImageLoaderBase: @unchecked Sendable {
         let allComponents = try await fetchImageComponents(
             fileId: fileId, frameName: frameName, pageName: pageName, filter: filter, rtlProperty: rtlProperty
         )
-        let allAssetMetadata = allComponents.map { nodeId, component in
-            AssetMetadata(name: component.iconName, nodeId: nodeId, fileId: fileId)
+        let allAssetMetadata = allComponents.map { _, component in
+            AssetMetadata(name: component.iconName, nodeId: component.codeConnectNodeId, fileId: fileId)
         }
 
         guard let manager = granularCacheManager, !allComponents.isEmpty else {
@@ -505,7 +506,7 @@ class ImageLoaderBase: @unchecked Sendable {
                     isRTL: component.useRTL(rtlProperty: rtlProperty)
                 )
             }
-            let primaryNodeId = components.first?.0
+            let primaryNodeId = components.first.map(\.1.codeConnectNodeId)
             return ImagePack(
                 name: packName,
                 images: packImages,
@@ -645,7 +646,7 @@ class ImageLoaderBase: @unchecked Sendable {
                     )
                 }
             }
-            let primaryNodeId = components.first?.0
+            let primaryNodeId = components.first.map(\.1.codeConnectNodeId)
             return ImagePack(
                 name: packName,
                 images: packImages,
@@ -890,6 +891,13 @@ public extension Component {
     /// Real icon name: component set name for variants, own name otherwise.
     var iconName: String {
         containingFrame.containingComponentSet?.name ?? name
+    }
+
+    /// Node ID for Code Connect: component set ID for variants, own ID otherwise.
+    /// Figma Code Connect rejects variant node IDs — use this to avoid
+    /// "node is not a top level component or component set" errors.
+    var codeConnectNodeId: String {
+        containingFrame.containingComponentSet?.nodeId ?? nodeId
     }
 
     /// Extracts the RTL variant value from the component name (e.g. "Off" from "RTL=Off").

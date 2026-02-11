@@ -247,9 +247,19 @@ as string literals in ExFigCore inits; use shared constants only within ExFigCLI
 ### RTL Detection Design
 
 - `Component.iconName`: uses `containingComponentSet.name` for variants, own `name` otherwise
+- `Component.codeConnectNodeId`: uses `containingComponentSet.nodeId` for variants, own `nodeId` otherwise (Figma Code Connect rejects variant node IDs)
 - `Component.defaultRTLProperty = "RTL"`: shared constant in ExFigCLI for the magic string
 - PNG images intentionally do NOT carry `isRTL` — raster images skip mirroring by design
 - `buildPairedComponents` must use `iconName` (not `name`) — variant `name` is `"RTL=Off"`, not the icon name
+
+### Modifying Node ID Logic (AssetMetadata / ImagePack)
+
+When changing how node IDs are resolved (e.g., `codeConnectNodeId`), update ALL construction sites in `ImageLoaderBase.swift`:
+
+1. `AssetMetadata` in `fetchImageComponentsWithGranularCache` (~line 156)
+2. `AssetMetadata` in `fetchImageComponentsWithGranularCacheAndPairing` (~line 220)
+3. `ImagePack` primaryNodeId in `loadVectorImages` (vector/SVG path)
+4. `ImagePack` primaryNodeId in `loadPNGImages` (raster path)
 
 ### Adding a CLI Command
 

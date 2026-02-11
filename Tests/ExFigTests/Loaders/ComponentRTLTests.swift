@@ -156,6 +156,41 @@ final class ComponentRTLTests: XCTestCase {
         XCTAssertFalse(component.useRTL(rtlProperty: ""))
     }
 
+    // MARK: - codeConnectNodeId
+
+    func testCodeConnectNodeId_variantComponent_usesComponentSetNodeId() {
+        let component = makeComponent(
+            name: "RTL=Off",
+            componentSetName: "arrow-left"
+        )
+        // Component set nodeId is "99:0", own nodeId is "1:0"
+        XCTAssertEqual(component.codeConnectNodeId, "99:0")
+    }
+
+    func testCodeConnectNodeId_regularComponent_usesOwnNodeId() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertEqual(component.codeConnectNodeId, "1:0")
+    }
+
+    func testCodeConnectNodeId_variantWithMultipleProperties_usesComponentSetNodeId() {
+        let component = makeComponent(
+            name: "State=Default, RTL=Off",
+            componentSetName: "new-orders"
+        )
+        XCTAssertEqual(component.codeConnectNodeId, "99:0")
+    }
+
+    func testCodeConnectNodeId_componentSetWithNilNodeId_fallsBackToOwnNodeId() {
+        // When containingComponentSet exists but has no nodeId (anomalous API response),
+        // should fall back to component's own nodeId
+        let component = makeComponent(
+            name: "RTL=Off",
+            componentSetName: "arrow-left",
+            componentSetNodeId: nil
+        )
+        XCTAssertEqual(component.codeConnectNodeId, "1:0")
+    }
+
     // MARK: - defaultRTLProperty
 
     func testDefaultRTLProperty() {
@@ -168,14 +203,21 @@ final class ComponentRTLTests: XCTestCase {
         name: String,
         description: String? = nil,
         frameName: String = "Icons",
-        componentSetName: String? = nil
+        componentSetName: String? = nil,
+        componentSetNodeId: String? = "99:0"
     ) -> Component {
         let descriptionField = description.map { ", \"description\": \"\($0)\"" } ?? ""
 
         let componentSetField = if let componentSetName {
-            """
-            , "containingComponentSet": { "nodeId": "99:0", "name": "\(componentSetName)" }
-            """
+            if let componentSetNodeId {
+                """
+                , "containingComponentSet": { "nodeId": "\(componentSetNodeId)", "name": "\(componentSetName)" }
+                """
+            } else {
+                """
+                , "containingComponentSet": { "name": "\(componentSetName)" }
+                """
+            }
         } else {
             ""
         }
