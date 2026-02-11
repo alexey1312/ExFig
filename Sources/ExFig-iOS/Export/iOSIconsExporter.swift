@@ -47,15 +47,12 @@ public struct iOSIconsExporter: IconsExporter {
         platformConfig: iOSPlatformConfig,
         context: some IconsExportContext
     ) async throws -> IconsExportResult {
-        var results: [IconsExportResult] = []
-
-        for entry in entries {
-            let result = try await exportSingleEntry(
+        let results = try await parallelMapEntries(entries) { entry in
+            try await exportSingleEntry(
                 entry: entry,
                 platformConfig: platformConfig,
                 context: context
             )
-            results.append(result)
         }
 
         let merged = IconsExportResult.merge(results)

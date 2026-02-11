@@ -52,11 +52,16 @@ extension ExFigCommand.ExportIcons {
 
         // Export via plugin (returns IconsExportResult with hashes)
         let exporter = iOSIconsExporter()
-        let result = try await exporter.exportIcons(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting iOS icons (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportIcons(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         // Post-export: update Xcode project (only if not in Swift Package)
         if ios.xcassetsInSwiftPackage != true {
@@ -114,11 +119,16 @@ extension ExFigCommand.ExportIcons {
         )
 
         let exporter = AndroidIconsExporter()
-        let result = try await exporter.exportIcons(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting Android icons (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportIcons(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)
@@ -153,11 +163,16 @@ extension ExFigCommand.ExportIcons {
         )
 
         let exporter = FlutterIconsExporter()
-        let result = try await exporter.exportIcons(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting Flutter icons (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportIcons(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)
@@ -192,11 +207,16 @@ extension ExFigCommand.ExportIcons {
         )
 
         let exporter = WebIconsExporter()
-        let result = try await exporter.exportIcons(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting Web icons (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportIcons(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)

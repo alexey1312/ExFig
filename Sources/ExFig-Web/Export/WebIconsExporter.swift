@@ -18,15 +18,14 @@ public struct WebIconsExporter: IconsExporter {
         platformConfig: WebPlatformConfig,
         context: some IconsExportContext
     ) async throws -> IconsExportResult {
-        var totalCount = 0
-
-        for entry in entries {
-            totalCount += try await exportSingleEntry(
+        let counts = try await parallelMapEntries(entries) { entry in
+            try await exportSingleEntry(
                 entry: entry,
                 platformConfig: platformConfig,
                 context: context
             )
         }
+        let totalCount = counts.reduce(0, +)
 
         if !context.isBatchMode {
             context.success("Done! Exported \(totalCount) icons to Web project.")

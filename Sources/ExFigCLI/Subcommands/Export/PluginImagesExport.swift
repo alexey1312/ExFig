@@ -51,11 +51,16 @@ extension ExFigCommand.ExportImages {
 
         // Export via plugin (returns ImagesExportResult with hashes)
         let exporter = iOSImagesExporter()
-        let result = try await exporter.exportImages(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting iOS images (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportImages(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         // Post-export: update Xcode project (only if not in Swift Package)
         if ios.xcassetsInSwiftPackage != true {
@@ -112,11 +117,16 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = AndroidImagesExporter()
-        let result = try await exporter.exportImages(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting Android images (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportImages(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)
@@ -151,11 +161,16 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = FlutterImagesExporter()
-        let result = try await exporter.exportImages(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting Flutter images (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportImages(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)
@@ -190,11 +205,16 @@ extension ExFigCommand.ExportImages {
         )
 
         let exporter = WebImagesExporter()
-        let result = try await exporter.exportImages(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let result = try await ui.withParallelEntries(
+            "Exporting Web images (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportImages(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)

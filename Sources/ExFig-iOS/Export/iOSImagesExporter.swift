@@ -28,15 +28,12 @@ public struct iOSImagesExporter: ImagesExporter {
         platformConfig: iOSPlatformConfig,
         context: some ImagesExportContext
     ) async throws -> ImagesExportResult {
-        var results: [ImagesExportResult] = []
-
-        for entry in entries {
-            let result = try await exportSingleEntry(
+        let results = try await parallelMapEntries(entries) { entry in
+            try await exportSingleEntry(
                 entry: entry,
                 platformConfig: platformConfig,
                 context: context
             )
-            results.append(result)
         }
 
         let merged = ImagesExportResult.merge(results)

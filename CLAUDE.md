@@ -145,6 +145,13 @@ Access progress view: `BatchSharedState.current?.progressView`.
 Per-config data (configId, priority, download callback): passed via `ConfigExecutionContext` parameter.
 `BatchProgressViewStorage` was removed — do NOT recreate it.
 
+**Entry-level parallelism:** All 12 platform exporters use `parallelMapEntries()` (in `ExFigCore/Concurrency/`)
+to process entries in parallel (max 5 concurrent). For multi-entry single export, `Plugin*Export` files
+wrap `exporter.export*()` in `ui.withParallelEntries()` which creates a parent spinner suppressing all
+inner output (`info/success/debug` + nested spinners + progress bars) via `hasActiveAnimation` check.
+Warnings/errors are NOT suppressed — `TerminalOutputManager.print()` coordinates them with active animation.
+For single entry, `withParallelEntries` is a no-op passthrough.
+
 ## Key Directories
 
 ```
@@ -161,7 +168,7 @@ Sources/ExFigCLI/
 ├── Sync/            # Figma sync functionality (state tracking, diff detection)
 ├── Plugin/          # Plugin registry
 ├── Context/         # Export context implementations (ColorsExportContextImpl, etc.)
-└── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger, EntryProcessor)
+└── Shared/          # Cross-cutting helpers (PlatformExportResult, HashMerger)
 
 Sources/ExFig-{iOS,Android,Flutter,Web}/
 ├── Config/          # Entry types (iOSColorsEntry, AndroidIconsEntry, etc.)
@@ -280,6 +287,7 @@ When changing how node IDs are resolved (e.g., `codeConnectNodeId`), update ALL 
 2. Implement exporter in `Sources/ExFig-{Platform}/Export/` conforming to protocol (e.g., `ColorsExporter`)
 3. Register exporter in plugin's `exporters()` method
 4. Add export method in `Sources/ExFigCLI/Subcommands/Export/Plugin*Export.swift` (PKL config maps directly to entry types)
+5. Use `parallelMapEntries(entries) { ... }` in the exporter's top-level method — do NOT use sequential `for entry in entries`
 
 ### Destination.url Contract (FileContents.swift)
 
