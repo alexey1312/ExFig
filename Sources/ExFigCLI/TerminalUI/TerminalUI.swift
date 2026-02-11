@@ -160,6 +160,11 @@ final class TerminalUI: Sendable {
             return try await operation()
         }
 
+        // Suppress when another spinner is active (parallel entries)
+        if TerminalOutputManager.shared.hasActiveAnimation {
+            return try await operation()
+        }
+
         guard outputMode.showProgress else {
             // Quiet mode or plain mode without animations
             if outputMode != .quiet {
@@ -194,6 +199,11 @@ final class TerminalUI: Sendable {
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
         if BatchSharedState.current?.progressView != nil {
+            return try await operation()
+        }
+
+        // Suppress when another spinner is active (parallel entries)
+        if TerminalOutputManager.shared.hasActiveAnimation {
             return try await operation()
         }
 
@@ -233,6 +243,11 @@ final class TerminalUI: Sendable {
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
         if BatchSharedState.current?.progressView != nil {
+            return try await operation { _, _ in }
+        }
+
+        // Suppress when another spinner is active (parallel entries)
+        if TerminalOutputManager.shared.hasActiveAnimation {
             return try await operation { _, _ in }
         }
 

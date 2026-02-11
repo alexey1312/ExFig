@@ -16,15 +16,14 @@ public struct WebImagesExporter: ImagesExporter {
         platformConfig: WebPlatformConfig,
         context: some ImagesExportContext
     ) async throws -> ImagesExportResult {
-        var totalCount = 0
-
-        for entry in entries {
-            totalCount += try await exportSingleEntry(
+        let counts = try await parallelMapEntries(entries) { entry in
+            try await exportSingleEntry(
                 entry: entry,
                 platformConfig: platformConfig,
                 context: context
             )
         }
+        let totalCount = counts.reduce(0, +)
 
         if !context.isBatchMode {
             context.success("Done! Exported \(totalCount) images to Web project.")
