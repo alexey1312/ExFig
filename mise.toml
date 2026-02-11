@@ -14,7 +14,6 @@
 # =============================================================================
 
 [settings]
-lockfile = true
 experimental = true
 legacy_version_file = false
 
@@ -24,9 +23,8 @@ legacy_version_file = false
 # Hooks are stored in .githooks/ directory (tracked in repo)
 # Auto-configures on directory entry via hooks.enter
 
-[hooks.enter]
-shell = "bash"
-script = """
+[hooks]
+enter = """
 git config core.hooksPath .githooks 2>/dev/null || true
 # Auto-index on directory entry (incremental, background)
 [ -f .swiftindex.toml ] && swiftindex index . &>/dev/null &
@@ -47,7 +45,7 @@ xcsift = "latest"      # xcodebuild output filtering
 dprint = "0.50.2" # MD/JSON/YAML formatting (Rust, fast)
 
 # --- Git & CI ---
-hk = "1.35.0"        # Git hooks manager
+hk = "1.36.0"        # Git hooks manager
 actionlint = "1.7.9" # GitHub Actions linting
 git-cliff = "2.10.1" # Changelog generation
 

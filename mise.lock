@@ -32,12 +32,12 @@ backend = "github:alexey1312/swift-index"
 "platforms.macos-x64" = { checksum = "sha256:67dd926c16b1447d8314d0106332a3dd3bb66d05e897de9800e69cfa2597f081", url = "https://github.com/alexey1312/swift-index/releases/download/v0.3.0/swiftindex-macos.zip", url_api = "https://api.github.com/repos/alexey1312/swift-index/releases/assets/349689493"}
 
 [[tools.hk]]
-version = "1.35.0"
+version = "1.36.0"
 backend = "aqua:jdx/hk"
-"platforms.linux-arm64" = { checksum = "sha256:e51d6404b59b2cebba411bf3900f93e81fb7ad807b7faaf8916c64c6fb327328", url = "https://github.com/jdx/hk/releases/download/v1.35.0/hk-aarch64-unknown-linux-gnu.tar.gz"}
-"platforms.linux-x64" = { checksum = "sha256:1e2b7642c099faa4df20b4591059826529d7dafaed9dac98cd2212317c7c071e", url = "https://github.com/jdx/hk/releases/download/v1.35.0/hk-x86_64-unknown-linux-gnu.tar.gz"}
-"platforms.macos-arm64" = { checksum = "sha256:ace34e486adc4fe22419e55ff14bacfe9a49deab47d6fba87138160bc0a6ee47", url = "https://github.com/jdx/hk/releases/download/v1.35.0/hk-aarch64-apple-darwin.tar.gz"}
-"platforms.windows-x64" = { checksum = "sha256:204789f5fa33600eecd8ac0c9ac13ebf4834d9512f9840d66cc0db8251e8d57d", url = "https://github.com/jdx/hk/releases/download/v1.35.0/hk-x86_64-pc-windows-msvc.zip"}
+"platforms.linux-arm64" = { checksum = "sha256:51cf51e2035038ee64d772e71f8daf4978380ef82faffee2b12c413f009341ab", url = "https://github.com/jdx/hk/releases/download/v1.36.0/hk-aarch64-unknown-linux-gnu.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:d20fa0be3f1135abc74471670306ae0353ad2336804595362293f0c8460952e7", url = "https://github.com/jdx/hk/releases/download/v1.36.0/hk-x86_64-unknown-linux-gnu.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:553ff3c7c18d91f1c1dcdbae44315db0324b52336b5a02ed5b9c382f08499b3b", url = "https://github.com/jdx/hk/releases/download/v1.36.0/hk-aarch64-apple-darwin.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:1f12218ccad806a3f49bcf521f86b6825fbd89486e830c1c04f72e3796f84589", url = "https://github.com/jdx/hk/releases/download/v1.36.0/hk-x86_64-pc-windows-msvc.zip"}
 
 [[tools."npm:@mixedbread/mgrep"]]
 version = "0.1.8"
@@ -69,9 +69,7 @@ backend = "aqua:realm/SwiftLint"
 "platforms.macos-x64" = { checksum = "sha256:c59a405c85f95b92ced677a500804e081596a4cae4a6a485af76065557d6ed29", url = "https://github.com/realm/SwiftLint/releases/download/0.63.2/portable_swiftlint.zip"}
 
 [[tools.xcsift]]
-version = "1.1.2"
+version = "1.1.3"
 backend = "github:ldomaradzki/xcsift"
-"platforms.linux-arm64" = { checksum = "sha256:0eb50bbaf13b4f287e3ce6b9bdf177ecc176de08c7a4d5137f1939b7125396b1", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.2/xcsift-v1.1.2-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/350617453"}
-"platforms.linux-x64" = { checksum = "sha256:0eb50bbaf13b4f287e3ce6b9bdf177ecc176de08c7a4d5137f1939b7125396b1", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.2/xcsift-v1.1.2-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/350617453"}
-"platforms.macos-arm64" = { checksum = "sha256:539cfdcc95eb308b247fcdf42e688129acb7b49c80d0252a72fbbfe449f61304", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.2/xcsift-v1.1.2-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/350617454"}
-"platforms.macos-x64" = { checksum = "sha256:539cfdcc95eb308b247fcdf42e688129acb7b49c80d0252a72fbbfe449f61304", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.2/xcsift-v1.1.2-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/350617454"}
+"platforms.linux-x64" = { checksum = "sha256:c4c9a773cbd5d7dc4e3fd525d6a372add3430ddc852ad9820f385b8709ace3dc", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.3/xcsift-v1.1.3-linux-x64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/351727422"}
+"platforms.macos-arm64" = { checksum = "sha256:5298bb8098c87a6d91bfcf5e9ed4e4413d5d29b8ce9462f4407aec98f98c2c30", url = "https://github.com/ldomaradzki/xcsift/releases/download/v1.1.3/xcsift-v1.1.3-macos-arm64.tar.gz", url_api = "https://api.github.com/repos/ldomaradzki/xcsift/releases/assets/351727421"}
