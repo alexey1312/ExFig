@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2026-02-11
+
+### Bug Fixes
+
+- Code Connect using variant node IDs instead of component set node IDs  by @alexey1312 in [#55](https://github.com/alexey1312/ExFig/pull/55)
+
+
+### Miscellaneous Tasks
+
+- Update tools verson by @alexey1312
+
+
 ## [2.2.0] - 2026-02-11
 
 ### Features
