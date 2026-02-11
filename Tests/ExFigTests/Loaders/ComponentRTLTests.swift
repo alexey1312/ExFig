@@ -156,6 +156,30 @@ final class ComponentRTLTests: XCTestCase {
         XCTAssertFalse(component.useRTL(rtlProperty: ""))
     }
 
+    // MARK: - codeConnectNodeId
+
+    func testCodeConnectNodeId_variantComponent_usesComponentSetNodeId() {
+        let component = makeComponent(
+            name: "RTL=Off",
+            componentSetName: "arrow-left"
+        )
+        // Component set nodeId is "99:0", own nodeId is "1:0"
+        XCTAssertEqual(component.codeConnectNodeId, "99:0")
+    }
+
+    func testCodeConnectNodeId_regularComponent_usesOwnNodeId() {
+        let component = makeComponent(name: "arrow-left")
+        XCTAssertEqual(component.codeConnectNodeId, "1:0")
+    }
+
+    func testCodeConnectNodeId_variantWithMultipleProperties_usesComponentSetNodeId() {
+        let component = makeComponent(
+            name: "State=Default, RTL=Off",
+            componentSetName: "new-orders"
+        )
+        XCTAssertEqual(component.codeConnectNodeId, "99:0")
+    }
+
     // MARK: - defaultRTLProperty
 
     func testDefaultRTLProperty() {
