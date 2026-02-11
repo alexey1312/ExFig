@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.2] - 2026-02-11
+
+### Bug Fixes
+
+- Flutter export by @alexey1312
+
+
 ## [2.2.1] - 2026-02-11
 
 ### Bug Fixes
