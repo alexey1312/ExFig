@@ -270,6 +270,8 @@ variablesColors = new Common.VariablesColors {
 icons = new Common.Icons {
   // [optional] Figma frame name. Default: "Icons"
   figmaFrameName = "Icons"
+  // [optional] Figma page name to filter by (useful when multiple pages share the same frame name)
+  // figmaPageName = "Outlined"
   // [optional] RegExp for icon name validation
   nameValidateRegexp = "^(ic)_(\\d\\d)_([a-z0-9_]+)$"
   // [optional] Replacement pattern
@@ -289,6 +291,8 @@ icons = new Common.Icons {
 images = new Common.Images {
   // [optional] Figma frame name. Default: "Illustrations"
   figmaFrameName = "Illustrations"
+  // [optional] Figma page name to filter by (useful when multiple pages share the same frame name)
+  // figmaPageName = "Marketing"
   // [optional] RegExp for image name validation
   nameValidateRegexp = "^(img)_([a-z0-9_]+)$"
   // [optional] Replacement pattern
@@ -318,6 +322,7 @@ All Icons and Images entries across platforms extend `Common.FrameSource`, which
 | Field                | Type      | Default | Description                                             |
 | -------------------- | --------- | ------- | ------------------------------------------------------- |
 | `figmaFrameName`     | `String?` | —       | Override Figma frame name for this entry                |
+| `figmaPageName`      | `String?` | —       | Filter by Figma page name for this entry                |
 | `figmaFileId`        | `String?` | —       | Override Figma file ID for this entry                   |
 | `rtlProperty`        | `String?` | `"RTL"` | Figma component property name for RTL variant detection |
 | `nameValidateRegexp` | `String?` | —       | Regex pattern for name validation                       |
@@ -431,7 +436,7 @@ icons = new iOS.IconsEntry {
 }
 ```
 
-`iOS.IconsEntry` extends `Common.FrameSource`, inheriting `figmaFrameName`, `figmaFileId`, `rtlProperty`,
+`iOS.IconsEntry` extends `Common.FrameSource`, inheriting `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`,
 `nameValidateRegexp`, and `nameReplaceRegexp`.
 
 | Field                           | Type               | Required | Description                                                  |
@@ -448,7 +453,7 @@ icons = new iOS.IconsEntry {
 | `renderModeOriginalSuffix`      | `String?`          | No       | Suffix for original render mode                              |
 | `renderModeTemplateSuffix`      | `String?`          | No       | Suffix for template render mode                              |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### iOS Images
 
@@ -489,7 +494,7 @@ images = new iOS.ImagesEntry {
 | `renderModeOriginalSuffix` | `String?`            | No       | Suffix for original render mode                                  |
 | `renderModeTemplateSuffix` | `String?`            | No       | Suffix for template render mode                                  |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 **HEIC Options:**
 
@@ -647,7 +652,7 @@ icons = new Android.IconsEntry {
 | `pathPrecision`          | `Int(1-6)?`          | No       | Coordinate precision for pathData (default: 4)              |
 | `strictPathValidation`   | `Boolean?`           | No       | Error on pathData > 32,767 bytes (default: false)           |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### Android Images
 
@@ -672,7 +677,7 @@ images = new Android.ImagesEntry {
 | `webpOptions`  | `WebpOptions?`     | No       | WebP encoding options (when format is `"webp"`)                      |
 | `sourceFormat` | `SourceFormat?`    | No       | Source from Figma: `"png"` (default) or `"svg"`                      |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 **WebP Options:**
 
@@ -759,7 +764,7 @@ icons = new Flutter.IconsEntry {
 | `className` | `String?`    | No       | Class name (default: `AppIcons`)    |
 | `nameStyle` | `NameStyle?` | No       | Name style for generated names      |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### Flutter Images
 
@@ -790,7 +795,7 @@ images = new Flutter.ImagesEntry {
 | `sourceFormat` | `SourceFormat?`       | No       | Source from Figma: `"png"` or `"svg"`     |
 | `nameStyle`    | `NameStyle?`          | No       | Name style for generated names            |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ---
 
@@ -862,7 +867,7 @@ icons = new Web.IconsEntry {
 | `iconSize`                | `Int?`       | No       | Icon size in pixels for viewBox (default: 24) |
 | `nameStyle`               | `NameStyle?` | No       | Name style for generated names                |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ### Web Images
 
@@ -880,7 +885,7 @@ images = new Web.ImagesEntry {
 | `assetsDirectory`         | `String?`  | No       | Directory for raw image assets                |
 | `generateReactComponents` | `Boolean?` | No       | Generate React TSX components (default: true) |
 
-**Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
+**Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
 ---
 
@@ -982,7 +987,7 @@ For multi-entry icons and images, per-entry fields fall back to `common` setting
 2. `common.icons.figmaFrameName` or `common.images.figmaFrameName`
 3. Default: `"Icons"` for icons, `"Illustrations"` for images
 
-The same fallback applies to `nameValidateRegexp`, `nameReplaceRegexp`, and `nameStyle`.
+The same fallback applies to `figmaPageName`, `nameValidateRegexp`, `nameReplaceRegexp`, and `nameStyle`.
 
 ### Performance
 
@@ -1103,6 +1108,100 @@ Without the typed constructor (e.g., `new { ... }` inside a Listing), PKL will r
 
 This pattern applies to all platforms: `iOS.ColorsEntry`, `iOS.IconsEntry`, `iOS.ImagesEntry`,
 `Android.ColorsEntry`, `Android.IconsEntry`, `Android.ImagesEntry`, `Flutter.ColorsEntry`, etc.
+
+### DRY Configs with `for`-Generators
+
+When you have many entries that share the same structure (e.g., 15+ icon categories with identical settings except
+`figmaFrameName` and `assetsFolder`), use PKL `local` Mapping and `for`-generators to eliminate duplication.
+
+**Define categories as `local` Mapping** — `local` properties are not included in the output:
+
+```pkl
+// figmaFrameName → assetsFolder
+local iconCategories: Mapping<String, String> = new {
+  ["Actions"] = "Actions"
+  ["Chart"] = "Chart"
+  ["Communication, Media, Art"] = "CommunicationMediaArt"
+  ["Text editor"] = "TextEditor"
+  // ... more categories
+}
+```
+
+**Generate entries with `for`:**
+
+```pkl
+icons = new Listing {
+  for (frameName, folder in iconCategories) {
+    new iOS.IconsEntry {
+      figmaFrameName = frameName
+      format = "svg"
+      xcassetsPath = "./Resources/Icons.xcassets"
+      assetsFolder = folder
+      imageSwift = "./Generated/\(folder)Icons.generated.swift"
+    }
+  }
+}
+```
+
+You can mix manual entries and `for`-generators in the same `Listing`:
+
+```pkl
+icons = new Listing {
+  // Manual entries for special cases
+  new iOS.IconsEntry {
+    figmaFrameName = "Colored Icons"
+    renderMode = "default"
+    // ...
+  }
+
+  // Generated entries for categories with identical settings
+  for (frameName, folder in iconCategories) {
+    new iOS.IconsEntry {
+      figmaFrameName = frameName
+      assetsFolder = folder
+      // ...
+    }
+  }
+}
+```
+
+**String interpolation** — use `\(expr)` to build paths from category data:
+
+```pkl
+imageSwift = "./Generated/\(folder)Icons.generated.swift"
+assetsFolder = "\(folder)Dc"  // e.g., "ActionsDc"
+```
+
+**Multiple Mappings** for different groups — define separate Mappings when groups need different settings:
+
+```pkl
+local allCategories: Mapping<String, String> = new { /* 17 items */ }
+local dcCategories: Mapping<String, String> = new { /* 15 items — all except Logo, Template */ }
+
+icons = new Listing {
+  // Template icons from allCategories
+  for (frameName, folder in allCategories) {
+    new iOS.IconsEntry { /* template settings */ }
+  }
+  // Double Color icons from dcCategories
+  for (frameName, folder in dcCategories) {
+    new iOS.IconsEntry { figmaFileId = "other-file"; renderMode = "default"; /* ... */ }
+  }
+}
+```
+
+**Verification** — always verify that the refactored config produces the same output:
+
+```bash
+# Save output before refactoring
+pkl eval --format json exfig.pkl > before.json
+
+# After refactoring
+pkl eval --format json exfig.pkl > after.json
+
+# Compare (order of entries within Listing is preserved)
+diff before.json after.json
+```
 
 ---
 

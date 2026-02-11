@@ -158,6 +158,7 @@ extension ExFigCommand.Download {
             let effectiveFrameName = iconsFrameName
                 ?? options.params.common?.icons?.figmaFrameName
                 ?? "Icons"
+            let effectivePageName = options.params.common?.icons?.figmaPageName
             guard let fileId = figmaParams.lightFileId else {
                 throw ExFigError.custom(errorString: "figma.lightFileId is required for icons download.")
             }
@@ -169,12 +170,17 @@ extension ExFigCommand.Download {
                     client: client,
                     fileId: fileId,
                     frameName: effectiveFrameName,
+                    pageName: effectivePageName,
                     filter: nil
                 )
             }
 
             guard !components.isEmpty else {
-                ui.warning(.noAssetsFound(assetType: "icons", frameName: effectiveFrameName))
+                ui.warning(.noAssetsFound(
+                    assetType: "icons",
+                    frameName: effectiveFrameName,
+                    pageName: effectivePageName
+                ))
                 return
             }
 
@@ -220,6 +226,7 @@ extension ExFigCommand.Download {
             let effectiveFrameName = imagesFrameName
                 ?? options.params.common?.images?.figmaFrameName
                 ?? "Illustrations"
+            let effectivePageName = options.params.common?.images?.figmaPageName
             guard let fileId = figmaParams.lightFileId else {
                 throw ExFigError.custom(errorString: "figma.lightFileId is required for images download.")
             }
@@ -231,12 +238,17 @@ extension ExFigCommand.Download {
                     client: client,
                     fileId: fileId,
                     frameName: effectiveFrameName,
+                    pageName: effectivePageName,
                     filter: nil
                 )
             }
 
             guard !components.isEmpty else {
-                ui.warning(.noAssetsFound(assetType: "images", frameName: effectiveFrameName))
+                ui.warning(.noAssetsFound(
+                    assetType: "images",
+                    frameName: effectiveFrameName,
+                    pageName: effectivePageName
+                ))
                 return
             }
 

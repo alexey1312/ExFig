@@ -75,7 +75,7 @@ extension ExFigCommand.Download {
             }
 
             guard !components.isEmpty else {
-                throw ExFigError.componentsNotFound
+                throw ExFigError.componentsNotFound(frameName: effectiveFrameName, pageName: nil)
             }
 
             let nodeIds = Array(components.keys)

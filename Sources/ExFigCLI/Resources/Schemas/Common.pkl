@@ -86,6 +86,11 @@ open class FrameSource extends NameProcessing {
   /// Figma frame name to export from.
   figmaFrameName: String?
 
+  /// Figma page name to filter components by.
+  /// When set, only components from this specific page are exported.
+  /// Useful when multiple pages have frames with the same name.
+  figmaPageName: String?
+
   /// Override Figma file ID for this specific entry.
   /// When set, overrides the global `figma.lightFileId` for loading data.
   figmaFileId: String?
@@ -121,6 +126,9 @@ class Icons extends NameProcessing {
   /// Figma frame name containing icons.
   figmaFrameName: String?
 
+  /// Figma page name to filter icons by.
+  figmaPageName: String?
+
   /// Use single file for all icon modes.
   useSingleFile: Boolean?
 
@@ -135,6 +143,9 @@ class Icons extends NameProcessing {
 class Images extends NameProcessing {
   /// Figma frame name containing images.
   figmaFrameName: String?
+
+  /// Figma page name to filter images by.
+  figmaPageName: String?
 
   /// Use single file for all image modes.
   useSingleFile: Boolean?

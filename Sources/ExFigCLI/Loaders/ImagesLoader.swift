@@ -31,6 +31,9 @@ struct ImagesLoaderConfig: Sendable {
     /// Figma frame name to load images from.
     let frameName: String
 
+    /// Optional page name to filter images by.
+    let pageName: String?
+
     /// Custom scales for raster images.
     let scales: [Double]?
 
@@ -49,6 +52,7 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            pageName: entry.figmaPageName ?? params.common?.images?.figmaPageName,
             scales: entry.scales,
             format: nil, // iOS always uses PNG output
             sourceFormat: convertSourceFormat(entry.sourceFormat),
@@ -61,6 +65,7 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            pageName: entry.figmaPageName ?? params.common?.images?.figmaPageName,
             scales: entry.scales,
             format: convertAndroidFormat(entry.format),
             sourceFormat: convertSourceFormat(entry.sourceFormat),
@@ -73,6 +78,7 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            pageName: entry.figmaPageName ?? params.common?.images?.figmaPageName,
             scales: entry.scales,
             format: entry.format.flatMap { convertFlutterFormat($0) },
             sourceFormat: convertSourceFormat(entry.sourceFormat),
@@ -85,6 +91,7 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.images?.figmaFrameName ?? "Illustrations",
+            pageName: entry.figmaPageName ?? params.common?.images?.figmaPageName,
             scales: nil,
             format: .svg, // Web uses SVG by default
             sourceFormat: .svg, // Web always uses SVG source
@@ -97,6 +104,7 @@ struct ImagesLoaderConfig: Sendable {
         ImagesLoaderConfig(
             entryFileId: nil,
             frameName: params.common?.images?.figmaFrameName ?? "Illustrations",
+            pageName: params.common?.images?.figmaPageName,
             scales: nil,
             format: nil,
             sourceFormat: .png,
@@ -161,6 +169,10 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
 
     private var frameName: String {
         config.frameName
+    }
+
+    private var pageName: String? {
+        config.pageName
     }
 
     /// Custom scales from config, or nil to use defaults.
@@ -257,6 +269,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             let images = try await loadPNGImages(
                 fileId: fileId,
                 frameName: frameName,
+                pageName: pageName,
                 filter: filter,
                 scales: scales,
                 rtlProperty: config.rtlProperty,
@@ -270,6 +283,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             let pack = try await loadVectorImages(
                 fileId: fileId,
                 frameName: frameName,
+                pageName: pageName,
                 params: SVGParams(),
                 filter: filter,
                 rtlProperty: config.rtlProperty,
@@ -326,6 +340,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                     let images = try await self.loadPNGImages(
                         fileId: fileId,
                         frameName: self.frameName,
+                        pageName: self.pageName,
                         filter: filter,
                         scales: scales,
                         rtlProperty: self.config.rtlProperty,
@@ -343,7 +358,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         guard let lightImages = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         return (lightImages, results["dark"])
@@ -363,6 +378,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                     let packs = try await self.loadVectorImages(
                         fileId: fileId,
                         frameName: self.frameName,
+                        pageName: self.pageName,
                         params: SVGParams(),
                         filter: filter,
                         rtlProperty: self.config.rtlProperty,
@@ -380,7 +396,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
         }
 
         guard let lightPacks = results["light"] else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         return (lightPacks, results["dark"])
@@ -402,6 +418,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             let result = try await loadPNGImagesWithGranularCache(
                 fileId: fileId,
                 frameName: frameName,
+                pageName: pageName,
                 filter: filter,
                 scales: scales,
                 rtlProperty: config.rtlProperty,
@@ -434,6 +451,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
             let result = try await loadVectorImagesWithGranularCache(
                 fileId: fileId,
                 frameName: frameName,
+                pageName: pageName,
                 params: SVGParams(),
                 filter: filter,
                 rtlProperty: config.rtlProperty,
@@ -501,6 +519,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                         let result = try await self.loadPNGImagesWithGranularCache(
                             fileId: fileId,
                             frameName: self.frameName,
+                            pageName: self.pageName,
                             filter: filter,
                             scales: scales,
                             rtlProperty: self.config.rtlProperty,
@@ -519,6 +538,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
                         let result = try await self.loadVectorImagesWithGranularCache(
                             fileId: fileId,
                             frameName: self.frameName,
+                            pageName: self.pageName,
                             params: SVGParams(),
                             filter: filter,
                             rtlProperty: self.config.rtlProperty,
@@ -567,7 +587,7 @@ final class ImagesLoader: ImageLoaderBase, @unchecked Sendable { // swiftlint:di
 
         // Extract light and dark packs
         guard let lightResult else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: pageName)
         }
 
         let darkResult = results.first(where: { $0.key == "dark" })

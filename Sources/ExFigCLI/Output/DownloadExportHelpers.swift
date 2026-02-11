@@ -83,11 +83,27 @@ enum AssetExportHelper {
         client: Client,
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         filter: String?
     ) async throws -> [NodeId: Component] {
         let endpoint = ComponentsEndpoint(fileId: fileId)
-        var comps = try await client.request(endpoint)
-            .filter { $0.containingFrame.name == frameName }
+        let allComponents = try await client.request(endpoint)
+        var comps = allComponents
+            .filter {
+                $0.containingFrame.name == frameName
+                    && (pageName == nil || $0.containingFrame.pageName == pageName)
+            }
+
+        if let pageName, comps.isEmpty {
+            let frameComponents = allComponents.filter { $0.containingFrame.name == frameName }
+            if !frameComponents.isEmpty {
+                let availablePages = Set(frameComponents.compactMap(\.containingFrame.pageName))
+                let pages = availablePages.sorted().joined(separator: ", ")
+                ExFigCommand.logger.info(
+                    "Page filter '\(pageName)' matched no components in frame '\(frameName)'. Available pages: \(pages)"
+                )
+            }
+        }
 
         if let filter {
             let assetsFilter = AssetsFilter(filter: filter)

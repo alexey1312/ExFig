@@ -17,6 +17,7 @@ public extension Android.IconsEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
+            pageName: figmaPageName,
             format: .svg,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",

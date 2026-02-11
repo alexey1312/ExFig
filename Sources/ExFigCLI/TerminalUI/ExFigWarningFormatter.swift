@@ -22,8 +22,8 @@ struct ExFigWarningFormatter {
             formatCompact(warning)
 
         // Multiline format warnings
-        case let .noAssetsFound(assetType, frameName):
-            formatNoAssetsFound(assetType: assetType, frameName: frameName)
+        case let .noAssetsFound(assetType, frameName, pageName):
+            formatNoAssetsFound(assetType: assetType, frameName: frameName, pageName: pageName)
 
         case let .invalidConfigsSkipped(count):
             formatInvalidConfigsSkipped(count: count)
@@ -97,12 +97,17 @@ struct ExFigWarningFormatter {
 
     // MARK: - Multiline Formatters
 
-    private func formatNoAssetsFound(assetType: String, frameName: String) -> String {
-        """
+    private func formatNoAssetsFound(assetType: String, frameName: String, pageName: String?) -> String {
+        var result = """
         No assets found:
           type: \(assetType)
           frame: \(frameName)
         """
+        if let pageName {
+            result += "\n  page: \(pageName)"
+            result += "\n  hint: Check that the page name matches exactly (case-sensitive)"
+        }
+        return result
     }
 
     private func formatInvalidConfigsSkipped(count: Int) -> String {

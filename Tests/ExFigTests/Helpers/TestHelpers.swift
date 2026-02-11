@@ -161,9 +161,9 @@ extension Component {
             "node_id": "\(nodeId)",
             "name": "\(name)",
             "containing_frame": {
-                "node_id": "\(nodeId)",
+                "nodeId": "\(nodeId)",
                 "name": "\(frameName)",
-                "page_name": "\(pageName)"
+                "pageName": "\(pageName)"
             }
         """
         if let description {
@@ -188,17 +188,22 @@ extension PKLConfig {
         lightFileId: String,
         darkFileId: String? = nil,
         iconsFrameName: String? = nil,
+        iconsPageName: String? = nil,
         imagesFrameName: String? = nil,
+        imagesPageName: String? = nil,
         useSingleFileIcons: Bool? = nil,
         useSingleFileImages: Bool? = nil,
         iconsDarkModeSuffix: String? = nil
     ) -> PKLConfig {
         var commonComponents: [String] = []
 
-        if iconsFrameName != nil || useSingleFileIcons != nil || iconsDarkModeSuffix != nil {
+        if iconsFrameName != nil || iconsPageName != nil || useSingleFileIcons != nil || iconsDarkModeSuffix != nil {
             var iconParts: [String] = []
             if let frameName = iconsFrameName {
                 iconParts.append("\"figmaFrameName\": \"\(frameName)\"")
+            }
+            if let pageName = iconsPageName {
+                iconParts.append("\"figmaPageName\": \"\(pageName)\"")
             }
             if let useSingle = useSingleFileIcons {
                 iconParts.append("\"useSingleFile\": \(useSingle)")
@@ -209,10 +214,13 @@ extension PKLConfig {
             commonComponents.append("\"icons\": { \(iconParts.joined(separator: ", ")) }")
         }
 
-        if imagesFrameName != nil || useSingleFileImages != nil {
+        if imagesFrameName != nil || imagesPageName != nil || useSingleFileImages != nil {
             var imageParts: [String] = []
             if let frameName = imagesFrameName {
                 imageParts.append("\"figmaFrameName\": \"\(frameName)\"")
+            }
+            if let pageName = imagesPageName {
+                imageParts.append("\"figmaPageName\": \"\(pageName)\"")
             }
             if let useSingle = useSingleFileImages {
                 imageParts.append("\"useSingleFile\": \(useSingle)")

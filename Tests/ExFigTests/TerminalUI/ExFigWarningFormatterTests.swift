@@ -69,6 +69,24 @@ final class ExFigWarningFormatterTests: XCTestCase {
         XCTAssertEqual(indentedLines.count, 2, "Should have 2 indented lines (type and frame)")
     }
 
+    func testNoAssetsFoundWithPageNameShowsPageAndHint() {
+        let warning = ExFigWarning.noAssetsFound(assetType: "icons", frameName: "Icons", pageName: "Outlined")
+
+        let result = formatter.format(warning)
+
+        XCTAssertTrue(result.contains("page: Outlined"))
+        XCTAssertTrue(result.contains("hint: Check that the page name matches exactly"))
+    }
+
+    func testNoAssetsFoundWithoutPageNameOmitsPageLine() {
+        let warning = ExFigWarning.noAssetsFound(assetType: "icons", frameName: "Icons")
+
+        let result = formatter.format(warning)
+
+        XCTAssertFalse(result.contains("page:"))
+        XCTAssertFalse(result.contains("hint:"))
+    }
+
     // MARK: - Xcode Project Update Failed
 
     func testXcodeProjectUpdateFailedFormatsAsCompact() {

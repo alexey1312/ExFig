@@ -182,6 +182,21 @@ Tests/               # Test targets mirror source structure
 
 ## Code Patterns
 
+### PKL Consumer Config DRY Patterns
+
+Consumer `exfig.pkl` configs can use `local` Mapping + `for`-generators to eliminate entry duplication:
+
+```pkl
+local categories: Mapping<String, String> = new { ["FrameName"] = "folder" }
+icons = new Listing {
+  for (frameName, folder in categories) {
+    new iOS.IconsEntry { figmaFrameName = frameName; assetsFolder = folder; /* ... */ }
+  }
+}
+```
+
+`local` properties don't appear in JSON output. Verify refactoring with `pkl eval --format json` diff.
+
 ### Modifying Loader Configs (IconsLoaderConfig / ImagesLoaderConfig)
 
 When adding fields to loader configs, update ALL construction sites:
@@ -190,11 +205,27 @@ When adding fields to loader configs, update ALL construction sites:
 2. Context implementations (`Sources/ExFigCLI/Context/*ExportContextImpl.swift`) — direct constructions in `loadIcons`/`loadImages`
 3. Test files (`IconsLoaderConfigTests.swift`, `EnumBridgingTests.swift`) — direct init calls
 
+**EnumBridgingTests gotcha:** Entry constructions have TWO indentation levels — 16-space (inside `for` loop)
+and 12-space ("defaults to" tests outside loop). A single `replace_all` with fixed indent misses one level.
+
 When adding fields to `FrameSource` (PKL) / `SourceInput` (ExFigCore), also update:
 
 4. Entry bridge methods (`iconsSourceInput()`/`imagesSourceInput()`) in ALL `Sources/ExFig-*/Config/*Entry.swift`
 5. Inline `SourceInput(` constructions in exporters (`iOSImagesExporter.svgSourceInput`, `AndroidImagesExporter.loadAndProcessSVG`)
 6. "Through" tests in `IconsLoaderConfigTests` — use `source.field` not hardcoded `nil`
+7. Download command files: `DownloadOptions.swift` (CLI flag), `DownloadImageLoader.swift` (filter), `DownloadExportHelpers.swift`, `DownloadImages.swift`, `DownloadIcons.swift`
+8. `DownloadAll.swift` — pass filter value to both `exportIcons` and `exportImages`
+9. Error/warning types with context (`ExFigError`, `ExFigWarning`) — add associated values if needed
+
+### Adding a New Filter Level (e.g., page filtering)
+
+Filter predicate sites that ALL need updating:
+
+1. `ImageLoaderBase.swift` — `fetchImageComponents` (icons + images)
+2. `DownloadImageLoader.swift` — `fetchImageComponents`
+3. `DownloadExportHelpers.swift` — `AssetExportHelper.fetchComponents`
+4. Inline `SourceInput()` constructions in platform exporters (iOS `svgSourceInput`, Android `loadAndProcessSVG`)
+5. `DownloadAll.swift` — pass filter value to both `exportIcons` and `exportImages`
 
 ### Moving/Renaming PKL Types Between Modules
 
@@ -239,6 +270,15 @@ as string literals in ExFigCore inits; use shared constants only within ExFigCLI
 2. Implement exporter in `Sources/ExFig-{Platform}/Export/` conforming to protocol (e.g., `ColorsExporter`)
 3. Register exporter in plugin's `exporters()` method
 4. Add export method in `Sources/ExFigCLI/Subcommands/Export/Plugin*Export.swift` (PKL config maps directly to entry types)
+
+### Destination.url Contract (FileContents.swift)
+
+`Destination.url` uses `isFileURL` to choose path strategy:
+
+- `URL(fileURLWithPath:)` → `lastPathComponent` (just filename) — iOS/Android/Web exporters
+- `URL(string:)` → `file.path` (preserves subdirectories like `"icons/actions.dart"`) — Flutter exporters
+
+`FileWriter` creates intermediate directories from `destination.url.deletingLastPathComponent()`, not `destination.directory`.
 
 ### Modifying Generated Code
 
@@ -302,17 +342,21 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Troubleshooting
 
-| Problem                 | Solution                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------- |
-| pkl-gen-swift not found | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift` |
-| PKL FrameSource change  | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)         |
-| Build fails             | `swift package clean && swift build`                                                     |
-| Tests fail              | Check `FIGMA_PERSONAL_TOKEN` is set                                                      |
-| Formatting fails        | Run `./bin/mise run setup` to install tools                                              |
-| Template errors         | Check Stencil syntax and context variables                                               |
-| Linux test hangs        | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`      |
-| Android pathData long   | Simplify in Figma or use `--strict-path-validation`                                      |
-| PKL parse error 1       | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`    |
+| Problem                   | Solution                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| pkl-gen-swift not found   | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift`     |
+| PKL FrameSource change    | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)             |
+| Build fails               | `swift package clean && swift build`                                                         |
+| Tests fail                | Check `FIGMA_PERSONAL_TOKEN` is set                                                          |
+| Formatting fails          | Run `./bin/mise run setup` to install tools                                                  |
+| Template errors           | Check Stencil syntax and context variables                                                   |
+| Linux test hangs          | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`          |
+| Android pathData long     | Simplify in Figma or use `--strict-path-validation`                                          |
+| PKL parse error 1         | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`        |
+| Test target won't compile | Broken test files block entire target; use `swift test --filter Target.Class` after `build`  |
+| Test helper JSON decode   | `ContainingFrame` uses default Codable (camelCase: `nodeId`, `pageName`), NOT snake_case     |
+| Web entry test fails      | Web entry types use `outputDirectory` field, while Android/Flutter use `output`              |
+| Logger concatenation err  | `Logger.Message` (swift-log) requires interpolation `"\(a) \(b)"`, not concatenation `a + b` |
 
 ## Additional Rules
 

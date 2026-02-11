@@ -53,6 +53,8 @@ common = new Common.CommonConfig {
   icons = new Common.Icons {
     // [optional] Name of the Figma's frame where icons components are located
     figmaFrameName = "Icons"
+    // [optional] Name of the Figma page to filter icons by (useful when multiple pages share the same frame name)
+    // figmaPageName = "Outlined"
     // [optional] RegExp pattern for icon name validation before exporting.
     // If a name contains "/" symbol it will be replaced by "_" before executing the RegExp.
     nameValidateRegexp = "^(ic)_(\\d\\d)_([a-z0-9_]+)$" // RegExp pattern for: ic_24_icon_name, ic_24_icon
@@ -67,6 +69,8 @@ common = new Common.CommonConfig {
   images = new Common.Images {
     // [optional] Name of the Figma's frame where image components are located
     figmaFrameName = "Illustrations"
+    // [optional] Name of the Figma page to filter images by (useful when multiple pages share the same frame name)
+    // figmaPageName = "Marketing"
     // [optional] RegExp pattern for image name validation before exporting.
     // If a name contains "/" symbol it will be replaced by "_" before executing the RegExp.
     nameValidateRegexp = "^(img)_([a-z0-9_]+)$" // RegExp pattern for: img_image_name

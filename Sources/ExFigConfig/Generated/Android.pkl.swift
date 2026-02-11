@@ -282,6 +282,11 @@ extension Android {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Figma page name to filter components by.
+        /// When set, only components from this specific page are exported.
+        /// Useful when multiple pages have frames with the same name.
+        public var figmaPageName: String?
+
         /// Override Figma file ID for this specific entry.
         /// When set, overrides the global `figma.lightFileId` for loading data.
         public var figmaFileId: String?
@@ -311,6 +316,7 @@ extension Android {
             pathPrecision: Int?,
             strictPathValidation: Bool?,
             figmaFrameName: String?,
+            figmaPageName: String?,
             figmaFileId: String?,
             rtlProperty: String?,
             nameValidateRegexp: String?,
@@ -326,6 +332,7 @@ extension Android {
             self.pathPrecision = pathPrecision
             self.strictPathValidation = strictPathValidation
             self.figmaFrameName = figmaFrameName
+            self.figmaPageName = figmaPageName
             self.figmaFileId = figmaFileId
             self.rtlProperty = rtlProperty
             self.nameValidateRegexp = nameValidateRegexp
@@ -366,6 +373,11 @@ extension Android {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Figma page name to filter components by.
+        /// When set, only components from this specific page are exported.
+        /// Useful when multiple pages have frames with the same name.
+        public var figmaPageName: String?
+
         /// Override Figma file ID for this specific entry.
         /// When set, overrides the global `figma.lightFileId` for loading data.
         public var figmaFileId: String?
@@ -394,6 +406,7 @@ extension Android {
             sourceFormat: Common.SourceFormat?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaPageName: String?,
             figmaFileId: String?,
             rtlProperty: String?,
             nameValidateRegexp: String?,
@@ -408,6 +421,7 @@ extension Android {
             self.sourceFormat = sourceFormat
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaPageName = figmaPageName
             self.figmaFileId = figmaFileId
             self.rtlProperty = rtlProperty
             self.nameValidateRegexp = nameValidateRegexp

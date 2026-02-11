@@ -369,6 +369,7 @@ private extension AndroidImagesExporter {
             let input = ImagesSourceInput(
                 figmaFileId: entry.figmaFileId,
                 frameName: entry.figmaFrameName ?? "Images",
+                pageName: entry.figmaPageName,
                 sourceFormat: .svg,
                 scales: [1.0],
                 useSingleFile: true,

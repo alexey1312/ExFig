@@ -11,6 +11,30 @@ final class DestinationTests: XCTestCase {
         XCTAssertEqual(destination.url.path, "/output/images/icon.png")
     }
 
+    func testURLWithSubdirectoryPath() throws {
+        let directory = URL(fileURLWithPath: "/output/lib")
+        let file = try XCTUnwrap(URL(string: "icons/actions.dart"))
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.path, "/output/lib/icons/actions.dart")
+    }
+
+    func testURLWithDeepSubdirectoryPath() throws {
+        let directory = URL(fileURLWithPath: "/output/lib")
+        let file = try XCTUnwrap(URL(string: "src/icons/actions.dart"))
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.path, "/output/lib/src/icons/actions.dart")
+    }
+
+    func testURLPreservesSimpleFileURLPath() {
+        let directory = URL(fileURLWithPath: "/output/images")
+        let file = URL(fileURLWithPath: "icon.png")
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.lastPathComponent, "icon.png")
+    }
+
     func testEquality() {
         let dest1 = Destination(
             directory: URL(fileURLWithPath: "/output"),

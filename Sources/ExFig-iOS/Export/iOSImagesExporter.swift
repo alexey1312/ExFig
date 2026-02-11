@@ -472,6 +472,7 @@ private extension iOSImagesEntry {
             figmaFileId: figmaFileId,
             darkFileId: nil,
             frameName: figmaFrameName ?? "Images",
+            pageName: figmaPageName,
             sourceFormat: .svg,
             scales: [1.0],
             useSingleFile: true,

@@ -73,13 +73,28 @@ class ImageLoaderBase: @unchecked Sendable {
     func fetchImageComponents(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         filter: String? = nil,
         rtlProperty: String? = Component.defaultRTLProperty
     ) async throws -> [NodeId: Component] {
-        var components = try await loadComponents(fileId: fileId)
+        let allComponents = try await loadComponents(fileId: fileId)
+        var components = allComponents
             .filter {
-                $0.containingFrame.name == frameName && $0.useForPlatform(platform)
+                $0.containingFrame.name == frameName
+                    && (pageName == nil || $0.containingFrame.pageName == pageName)
+                    && $0.useForPlatform(platform)
             }
+
+        if let pageName, components.isEmpty {
+            let frameComponents = allComponents.filter { $0.containingFrame.name == frameName }
+            if !frameComponents.isEmpty {
+                let availablePages = Set(frameComponents.compactMap(\.containingFrame.pageName))
+                let pages = availablePages.sorted().joined(separator: ", ")
+                logger.info(
+                    "Page filter '\(pageName)' matched no components in frame '\(frameName)'. Available pages: \(pages)"
+                )
+            }
+        }
 
         // Skip RTL=On variants: the base (RTL=Off) icon is sufficient —
         // platforms mirror it at runtime (iOS languageDirection, Android autoMirrored).
@@ -120,12 +135,14 @@ class ImageLoaderBase: @unchecked Sendable {
     func fetchImageComponentsWithGranularCache(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         filter: String? = nil,
         rtlProperty: String? = Component.defaultRTLProperty
     ) async throws -> GranularFilterResult {
         let allComponents = try await fetchImageComponents(
             fileId: fileId,
             frameName: frameName,
+            pageName: pageName,
             filter: filter,
             rtlProperty: rtlProperty
         )
@@ -191,12 +208,13 @@ class ImageLoaderBase: @unchecked Sendable {
     func fetchImageComponentsWithGranularCacheAndPairing(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         filter: String? = nil,
         darkModeSuffix: String,
         rtlProperty: String? = Component.defaultRTLProperty
     ) async throws -> GranularFilterResult {
         let allComponents = try await fetchImageComponents(
-            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
+            fileId: fileId, frameName: frameName, pageName: pageName, filter: filter, rtlProperty: rtlProperty
         )
         let allAssetMetadata = allComponents.map { nodeId, component in
             AssetMetadata(name: component.iconName, nodeId: nodeId, fileId: fileId)
@@ -272,13 +290,14 @@ class ImageLoaderBase: @unchecked Sendable {
     func loadVectorImages(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         params: FormatParams,
         filter: String? = nil,
         rtlProperty: String? = Component.defaultRTLProperty,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
         let imagesDict = try await fetchImageComponents(
-            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
+            fileId: fileId, frameName: frameName, pageName: pageName, filter: filter, rtlProperty: rtlProperty
         )
         return try await loadVectorImagesFromComponents(
             fileId: fileId,
@@ -300,13 +319,14 @@ class ImageLoaderBase: @unchecked Sendable {
     func loadVectorImagesWithGranularCache(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         params: FormatParams,
         filter: String? = nil,
         rtlProperty: String? = Component.defaultRTLProperty,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCache(
-            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
+            fileId: fileId, frameName: frameName, pageName: pageName, filter: filter, rtlProperty: rtlProperty
         )
         return try await loadVectorImagesFromGranularFilterResult(
             fileId: fileId,
@@ -326,6 +346,7 @@ class ImageLoaderBase: @unchecked Sendable {
     func loadVectorImagesWithGranularCacheAndPairing(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         params: FormatParams,
         filter: String? = nil,
         darkModeSuffix: String,
@@ -335,6 +356,7 @@ class ImageLoaderBase: @unchecked Sendable {
         let filterResult = try await fetchImageComponentsWithGranularCacheAndPairing(
             fileId: fileId,
             frameName: frameName,
+            pageName: pageName,
             filter: filter,
             darkModeSuffix: darkModeSuffix,
             rtlProperty: rtlProperty
@@ -363,7 +385,7 @@ class ImageLoaderBase: @unchecked Sendable {
         var imagesDict = components
 
         guard !imagesDict.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: frameName, pageName: nil)
         }
 
         imagesDict = filterEmptyNameComponents(imagesDict)
@@ -498,13 +520,14 @@ class ImageLoaderBase: @unchecked Sendable {
     func loadPNGImages(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         filter: String? = nil,
         scales: [Double],
         rtlProperty: String? = Component.defaultRTLProperty,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> [ImagePack] {
         let imagesDict = try await fetchImageComponents(
-            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
+            fileId: fileId, frameName: frameName, pageName: pageName, filter: filter, rtlProperty: rtlProperty
         )
         return try await loadPNGImagesFromComponents(
             fileId: fileId,
@@ -524,13 +547,14 @@ class ImageLoaderBase: @unchecked Sendable {
     func loadPNGImagesWithGranularCache(
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         filter: String? = nil,
         scales: [Double],
         rtlProperty: String? = Component.defaultRTLProperty,
         onBatchProgress: @escaping BatchProgressCallback = { _, _ in }
     ) async throws -> ImagesWithHashesResult {
         let filterResult = try await fetchImageComponentsWithGranularCache(
-            fileId: fileId, frameName: frameName, filter: filter, rtlProperty: rtlProperty
+            fileId: fileId, frameName: frameName, pageName: pageName, filter: filter, rtlProperty: rtlProperty
         )
 
         if filterResult.allSkipped {
@@ -567,7 +591,7 @@ class ImageLoaderBase: @unchecked Sendable {
         onBatchProgress: @escaping BatchProgressCallback
     ) async throws -> [ImagePack] {
         guard !components.isEmpty else {
-            throw ExFigError.componentsNotFound
+            throw ExFigError.componentsNotFound(frameName: nil, pageName: nil)
         }
 
         let batchSize = 100

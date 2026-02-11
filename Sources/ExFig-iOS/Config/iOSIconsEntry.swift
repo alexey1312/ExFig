@@ -16,6 +16,7 @@ public extension iOS.IconsEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
+            pageName: figmaPageName,
             format: coreVectorFormat,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",

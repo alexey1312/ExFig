@@ -1,3 +1,5 @@
+// swiftlint:disable file_length type_body_length
+
 import ExFig_Android
 import ExFig_Flutter
 import ExFig_iOS
@@ -214,6 +216,7 @@ final class IconsLoaderConfigTests: XCTestCase {
         let config = IconsLoaderConfig(
             entryFileId: nil,
             frameName: "Icons",
+            pageName: nil,
             format: .svg,
             renderMode: nil,
             renderModeDefaultSuffix: nil,
@@ -229,6 +232,7 @@ final class IconsLoaderConfigTests: XCTestCase {
         let config = IconsLoaderConfig(
             entryFileId: nil,
             frameName: "Icons",
+            pageName: nil,
             format: .pdf,
             renderMode: nil,
             renderModeDefaultSuffix: nil,
@@ -253,6 +257,7 @@ final class IconsLoaderConfigTests: XCTestCase {
         let config = IconsLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             format: source.format,
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
@@ -272,6 +277,7 @@ final class IconsLoaderConfigTests: XCTestCase {
         let config = IconsLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             format: source.format,
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
@@ -295,6 +301,7 @@ final class IconsLoaderConfigTests: XCTestCase {
         let config = IconsLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             format: source.format,
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
@@ -319,10 +326,103 @@ final class IconsLoaderConfigTests: XCTestCase {
         XCTAssertEqual(source.rtlProperty, "IsRTL", "Custom rtlProperty name must be preserved")
     }
 
+    // MARK: - Page Name Resolution
+
+    func testForIOS_entryPageNameOverridesCommon() throws {
+        let entry = try makeIOSEntry(figmaPageName: "Outlined")
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Outlined")
+    }
+
+    func testForIOS_fallbackToCommonPageName() throws {
+        let entry = try makeIOSEntry()
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Filled")
+    }
+
+    func testForIOS_pageNameNilByDefault() throws {
+        let entry = try makeIOSEntry()
+        let params = PKLConfig.make(lightFileId: "test")
+
+        let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
+
+        XCTAssertNil(config.pageName)
+    }
+
+    func testForAndroid_entryPageNameOverridesCommon() throws {
+        let entry = try makeAndroidEntry(figmaPageName: "Outlined")
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.forAndroid(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Outlined")
+    }
+
+    func testDefaultConfig_usesCommonPageName() {
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.defaultConfig(params: params)
+
+        XCTAssertEqual(config.pageName, "Filled")
+    }
+
+    func testDefaultConfig_pageNameNilByDefault() {
+        let params = PKLConfig.make(lightFileId: "test")
+
+        let config = IconsLoaderConfig.defaultConfig(params: params)
+
+        XCTAssertNil(config.pageName)
+    }
+
+    func testPageNamePreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(figmaPageName: "Outlined")
+
+        let source = entry.iconsSourceInput()
+        XCTAssertEqual(source.pageName, "Outlined", "pageName must survive entry → source conversion")
+
+        let config = IconsLoaderConfig(
+            entryFileId: source.figmaFileId,
+            frameName: source.frameName,
+            pageName: source.pageName,
+            format: source.format,
+            renderMode: source.renderMode,
+            renderModeDefaultSuffix: source.renderModeDefaultSuffix,
+            renderModeOriginalSuffix: source.renderModeOriginalSuffix,
+            renderModeTemplateSuffix: source.renderModeTemplateSuffix,
+            rtlProperty: source.rtlProperty
+        )
+        XCTAssertEqual(config.pageName, "Outlined", "pageName must survive source → config conversion")
+    }
+
+    func testForFlutter_entryPageNameOverridesCommon() throws {
+        let entry = try makeFlutterEntry(figmaPageName: "Outlined")
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.forFlutter(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Outlined")
+    }
+
+    func testForWeb_entryPageNameOverridesCommon() throws {
+        let entry = try makeWebEntry(figmaPageName: "Outlined")
+        let params = PKLConfig.make(lightFileId: "test", iconsPageName: "Filled")
+
+        let config = IconsLoaderConfig.forWeb(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Outlined")
+    }
+
     // MARK: - Helpers
 
     private func makeIOSEntry(
         figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
         format: String = "svg",
         assetsFolder: String = "Icons",
         nameStyle: String = "camelCase",
@@ -341,6 +441,9 @@ final class IconsLoaderConfigTests: XCTestCase {
 
         if let figmaFrameName {
             json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
+        }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
         }
         if let renderMode {
             json += ", \"renderMode\": \"\(renderMode)\""
@@ -364,6 +467,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     private func makeAndroidEntry(
         figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
         output: String = "drawable"
     ) throws -> AndroidIconsEntry {
         var json = """
@@ -374,6 +478,9 @@ final class IconsLoaderConfigTests: XCTestCase {
         if let figmaFrameName {
             json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
         }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
+        }
         json += "}"
 
         return try JSONDecoder().decode(AndroidIconsEntry.self, from: Data(json.utf8))
@@ -381,6 +488,7 @@ final class IconsLoaderConfigTests: XCTestCase {
 
     private func makeFlutterEntry(
         figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
         output: String = "assets/icons"
     ) throws -> FlutterIconsEntry {
         var json = """
@@ -391,8 +499,32 @@ final class IconsLoaderConfigTests: XCTestCase {
         if let figmaFrameName {
             json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
         }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
+        }
         json += "}"
 
         return try JSONDecoder().decode(FlutterIconsEntry.self, from: Data(json.utf8))
+    }
+
+    private func makeWebEntry(
+        figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
+        outputDirectory: String = "assets/icons"
+    ) throws -> WebIconsEntry {
+        var json = """
+        {
+            "outputDirectory": "\(outputDirectory)"
+        """
+
+        if let figmaFrameName {
+            json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
+        }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
+        }
+        json += "}"
+
+        return try JSONDecoder().decode(WebIconsEntry.self, from: Data(json.utf8))
     }
 }

@@ -6,7 +6,7 @@ import SVGKit
 enum ExFigError: LocalizedError {
     case invalidFileName(String)
     case stylesNotFound
-    case componentsNotFound
+    case componentsNotFound(frameName: String?, pageName: String?)
     case accessTokenNotFound
     case colorsAssetsFolderNotSpecified
     case configurationError(String)
@@ -18,8 +18,14 @@ enum ExFigError: LocalizedError {
             "Invalid file name: \(name)"
         case .stylesNotFound:
             "Styles not found in Figma file"
-        case .componentsNotFound:
-            "Components not found in Figma file"
+        case let .componentsNotFound(frameName, pageName):
+            if let frameName, let pageName {
+                "No components found in frame '\(frameName)' on page '\(pageName)'"
+            } else if let frameName {
+                "No components found in frame '\(frameName)'"
+            } else {
+                "Components not found in Figma file"
+            }
         case .accessTokenNotFound:
             "FIGMA_PERSONAL_TOKEN not set"
         case .colorsAssetsFolderNotSpecified:
@@ -37,8 +43,13 @@ enum ExFigError: LocalizedError {
             "Use alphanumeric characters, underscores, and hyphens only"
         case .stylesNotFound:
             "Publish Styles to the Team Library in Figma"
-        case .componentsNotFound:
-            "Publish Components to the Team Library in Figma"
+        case let .componentsNotFound(_, pageName):
+            if pageName != nil {
+                "Check that figmaPageName matches exactly (case-sensitive). "
+                    + "Publish Components to the Team Library in Figma."
+            } else {
+                "Publish Components to the Team Library in Figma"
+            }
         case .accessTokenNotFound:
             "Run: export FIGMA_PERSONAL_TOKEN=your_token"
         case .colorsAssetsFolderNotSpecified:

@@ -123,6 +123,11 @@ extension Web {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Figma page name to filter components by.
+        /// When set, only components from this specific page are exported.
+        /// Useful when multiple pages have frames with the same name.
+        public var figmaPageName: String?
+
         /// Override Figma file ID for this specific entry.
         /// When set, overrides the global `figma.lightFileId` for loading data.
         public var figmaFileId: String?
@@ -149,6 +154,7 @@ extension Web {
             iconSize: Int?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaPageName: String?,
             figmaFileId: String?,
             rtlProperty: String?,
             nameValidateRegexp: String?,
@@ -161,6 +167,7 @@ extension Web {
             self.iconSize = iconSize
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaPageName = figmaPageName
             self.figmaFileId = figmaFileId
             self.rtlProperty = rtlProperty
             self.nameValidateRegexp = nameValidateRegexp
@@ -191,6 +198,11 @@ extension Web {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Figma page name to filter components by.
+        /// When set, only components from this specific page are exported.
+        /// Useful when multiple pages have frames with the same name.
+        public var figmaPageName: String?
+
         /// Override Figma file ID for this specific entry.
         /// When set, overrides the global `figma.lightFileId` for loading data.
         public var figmaFileId: String?
@@ -216,6 +228,7 @@ extension Web {
             generateReactComponents: Bool?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
+            figmaPageName: String?,
             figmaFileId: String?,
             rtlProperty: String?,
             nameValidateRegexp: String?,
@@ -227,6 +240,7 @@ extension Web {
             self.generateReactComponents = generateReactComponents
             self.nameStyle = nameStyle
             self.figmaFrameName = figmaFrameName
+            self.figmaPageName = figmaPageName
             self.figmaFileId = figmaFileId
             self.rtlProperty = rtlProperty
             self.nameValidateRegexp = nameValidateRegexp
