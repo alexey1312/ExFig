@@ -69,6 +69,9 @@ public struct IconsSourceInput: Sendable {
     /// The frame name containing icons.
     public let frameName: String
 
+    /// Optional page name to filter icons by.
+    public let pageName: String?
+
     /// Icon format (svg or pdf, iOS only).
     public let format: VectorFormat
 
@@ -98,6 +101,7 @@ public struct IconsSourceInput: Sendable {
         figmaFileId: String? = nil,
         darkFileId: String? = nil,
         frameName: String,
+        pageName: String? = nil,
         format: VectorFormat = .svg,
         useSingleFile: Bool = false,
         darkModeSuffix: String = "_dark",
@@ -112,6 +116,7 @@ public struct IconsSourceInput: Sendable {
         self.figmaFileId = figmaFileId
         self.darkFileId = darkFileId
         self.frameName = frameName
+        self.pageName = pageName
         self.format = format
         self.useSingleFile = useSingleFile
         self.darkModeSuffix = darkModeSuffix

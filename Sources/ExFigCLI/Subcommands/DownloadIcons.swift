@@ -52,6 +52,9 @@ extension ExFigCommand.Download {
         @Option(name: .long, help: "Figma frame name containing icons (default: from config or 'Icons')")
         var frameName: String?
 
+        @Option(name: [.customLong("page"), .customShort("p")], help: "Filter by Figma page name.")
+        var pageName: String?
+
         @Argument(help: "Filter icons by name pattern (e.g., 'navigation/*')")
         var filter: String?
 
@@ -80,6 +83,7 @@ extension ExFigCommand.Download {
                 ?? "Icons"
 
             let filterValue = filter
+            let pageNameValue = pageName
             guard let fileId = options.params.figma?.lightFileId else {
                 throw ExFigError.custom(errorString: "figma.lightFileId is required for icons download.")
             }
@@ -91,6 +95,7 @@ extension ExFigCommand.Download {
                     client: client,
                     fileId: fileId,
                     frameName: effectiveFrameName,
+                    pageName: pageNameValue,
                     filter: filterValue
                 )
             }

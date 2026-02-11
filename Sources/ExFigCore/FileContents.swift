@@ -5,11 +5,10 @@ public struct Destination: Equatable, Sendable {
     public let file: URL
 
     public var url: URL {
-        // Use lastPathComponent to handle both URL(string:) and URL(fileURLWithPath:) cases
-        // URL(fileURLWithPath: "file.ext") creates absolute path, .path returns full path
-        // URL(string: "file.ext") creates relative URL, .path may be empty or just filename
-        // lastPathComponent reliably extracts just the filename in both cases
-        directory.appendingPathComponent(file.lastPathComponent)
+        // URL(fileURLWithPath:) → absolute file URL, use lastPathComponent (just filename)
+        // URL(string:) → relative URL, preserve full path including subdirectories
+        let relativePath = file.isFileURL ? file.lastPathComponent : file.path
+        return directory.appendingPathComponent(relativePath)
     }
 
     public init(directory: URL, file: URL) {

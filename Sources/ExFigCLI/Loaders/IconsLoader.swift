@@ -32,6 +32,9 @@ struct IconsLoaderConfig: Sendable {
     /// Figma frame name to load icons from.
     let frameName: String
 
+    /// Optional page name to filter icons by.
+    let pageName: String?
+
     /// Icon format for iOS (pdf or svg). Android always uses svg.
     let format: VectorFormat?
 
@@ -49,6 +52,7 @@ struct IconsLoaderConfig: Sendable {
         IconsLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            pageName: entry.figmaPageName ?? params.common?.icons?.figmaPageName,
             format: VectorFormat(rawValue: entry.format.rawValue) ?? .svg,
             renderMode: entry.coreRenderMode,
             renderModeDefaultSuffix: entry.renderModeDefaultSuffix,
@@ -63,6 +67,7 @@ struct IconsLoaderConfig: Sendable {
         IconsLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            pageName: entry.figmaPageName ?? params.common?.icons?.figmaPageName,
             format: nil,
             renderMode: nil,
             renderModeDefaultSuffix: nil,
@@ -77,6 +82,7 @@ struct IconsLoaderConfig: Sendable {
         IconsLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            pageName: entry.figmaPageName ?? params.common?.icons?.figmaPageName,
             format: nil,
             renderMode: nil,
             renderModeDefaultSuffix: nil,
@@ -91,6 +97,7 @@ struct IconsLoaderConfig: Sendable {
         IconsLoaderConfig(
             entryFileId: entry.figmaFileId,
             frameName: entry.figmaFrameName ?? params.common?.icons?.figmaFrameName ?? "Icons",
+            pageName: entry.figmaPageName ?? params.common?.icons?.figmaPageName,
             format: nil,
             renderMode: nil,
             renderModeDefaultSuffix: nil,
@@ -105,6 +112,7 @@ struct IconsLoaderConfig: Sendable {
         IconsLoaderConfig(
             entryFileId: nil,
             frameName: params.common?.icons?.figmaFrameName ?? "Icons",
+            pageName: params.common?.icons?.figmaPageName,
             format: nil,
             renderMode: nil,
             renderModeDefaultSuffix: nil,
@@ -132,6 +140,10 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
 
     private var frameName: String {
         config.frameName
+    }
+
+    private var pageName: String? {
+        config.pageName
     }
 
     /// Loads icons from Figma, supporting both single-file and separate light/dark file modes.
@@ -178,6 +190,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         let icons = try await loadVectorImages(
             fileId: fileId,
             frameName: frameName,
+            pageName: pageName,
             params: formatParams,
             filter: filter,
             rtlProperty: config.rtlProperty,
@@ -218,6 +231,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
                     let icons = try await self.loadVectorImages(
                         fileId: fileId,
                         frameName: self.frameName,
+                        pageName: self.pageName,
                         params: formatParams,
                         filter: filter,
                         rtlProperty: self.config.rtlProperty,
@@ -290,6 +304,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
         let result = try await loadVectorImagesWithGranularCacheAndPairing(
             fileId: fileId,
             frameName: frameName,
+            pageName: pageName,
             params: formatParams,
             filter: filter,
             darkModeSuffix: darkSuffix,
@@ -354,6 +369,7 @@ final class IconsLoader: ImageLoaderBase, @unchecked Sendable {
                     let result = try await self.loadVectorImagesWithGranularCache(
                         fileId: fileId,
                         frameName: self.frameName,
+                        pageName: self.pageName,
                         params: formatParams,
                         filter: filter,
                         rtlProperty: self.config.rtlProperty,

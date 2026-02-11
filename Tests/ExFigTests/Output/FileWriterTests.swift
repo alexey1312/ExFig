@@ -277,6 +277,41 @@ final class FileWriterTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: newDir.path))
     }
 
+    // MARK: - Subdirectory Paths
+
+    func testWriteCreatesSubdirectoriesFromFilePath() throws {
+        let writer = FileWriter()
+        let destination = try Destination(
+            directory: tempDirectory,
+            // swiftlint:disable:next force_unwrapping
+            file: XCTUnwrap(URL(string: "subdir/file.txt"))
+        )
+        let file = FileContents(destination: destination, data: Data("subdirectory content".utf8))
+
+        try writer.write(files: [file])
+
+        let writtenURL = tempDirectory.appendingPathComponent("subdir/file.txt")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: writtenURL.path))
+
+        let writtenData = try Data(contentsOf: writtenURL)
+        XCTAssertEqual(writtenData, Data("subdirectory content".utf8))
+    }
+
+    func testWriteParallelCreatesSubdirectoriesFromFilePath() async throws {
+        let writer = FileWriter()
+        let destination = try Destination(
+            directory: tempDirectory,
+            // swiftlint:disable:next force_unwrapping
+            file: XCTUnwrap(URL(string: "icons/actions.dart"))
+        )
+        let file = FileContents(destination: destination, data: Data("dart content".utf8))
+
+        try await writer.writeParallel(files: [file])
+
+        let writtenURL = tempDirectory.appendingPathComponent("icons/actions.dart")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: writtenURL.path))
+    }
+
     // MARK: - File from Disk
 
     func testWriteFromDataFile() throws {

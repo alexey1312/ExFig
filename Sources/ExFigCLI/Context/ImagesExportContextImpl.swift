@@ -89,6 +89,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         let config = ImagesLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             scales: source.scales,
             format: nil, // Format is determined by platform exporter
             sourceFormat: loaderSourceFormat,
@@ -366,6 +367,7 @@ struct ImagesExportContextImpl: ImagesExportContextWithGranularCache {
         let config = ImagesLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             scales: source.scales,
             format: nil,
             sourceFormat: loaderSourceFormat,

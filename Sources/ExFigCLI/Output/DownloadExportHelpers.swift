@@ -83,11 +83,15 @@ enum AssetExportHelper {
         client: Client,
         fileId: String,
         frameName: String,
+        pageName: String? = nil,
         filter: String?
     ) async throws -> [NodeId: Component] {
         let endpoint = ComponentsEndpoint(fileId: fileId)
         var comps = try await client.request(endpoint)
-            .filter { $0.containingFrame.name == frameName }
+            .filter {
+                $0.containingFrame.name == frameName
+                    && (pageName == nil || $0.containingFrame.pageName == pageName)
+            }
 
         if let filter {
             let assetsFilter = AssetsFilter(filter: filter)

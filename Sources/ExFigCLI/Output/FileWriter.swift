@@ -40,7 +40,7 @@ final class FileWriter: Sendable {
 
         // 1. Collect unique directories and create them (sequential, fast)
         var parentCache: ParentContentsCache = [:]
-        let directories = Set(files.map { URL(fileURLWithPath: $0.destination.directory.path) })
+        let directories = Set(files.map { URL(fileURLWithPath: $0.destination.url.deletingLastPathComponent().path) })
         for directory in directories {
             try fixCaseMismatchIfNeeded(for: directory, parentCache: &parentCache)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: nil)
@@ -92,7 +92,7 @@ final class FileWriter: Sendable {
     // MARK: - Private
 
     private func writeFile(_ file: FileContents, parentCache: inout ParentContentsCache) throws {
-        let directoryURL = URL(fileURLWithPath: file.destination.directory.path)
+        let directoryURL = URL(fileURLWithPath: file.destination.url.deletingLastPathComponent().path)
         try fixCaseMismatchIfNeeded(for: directoryURL, parentCache: &parentCache)
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
 

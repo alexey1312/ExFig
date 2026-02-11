@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import ExFig_Android
 import ExFig_Flutter
 import ExFig_iOS
@@ -259,6 +261,7 @@ final class ImagesLoaderConfigTests: XCTestCase {
         let config = ImagesLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             scales: source.scales,
             format: nil,
             sourceFormat: .png,
@@ -281,10 +284,74 @@ final class ImagesLoaderConfigTests: XCTestCase {
         XCTAssertEqual(source.rtlProperty, "IsRTL", "Custom rtlProperty name must be preserved")
     }
 
+    // MARK: - Page Name Resolution
+
+    func testForIOS_entryPageNameOverridesCommon() throws {
+        let entry = try makeIOSEntry(figmaPageName: "Marketing")
+        let params = PKLConfig.make(lightFileId: "test", imagesPageName: "Promo")
+
+        let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Marketing")
+    }
+
+    func testForIOS_fallbackToCommonPageName() throws {
+        let entry = try makeIOSEntry()
+        let params = PKLConfig.make(lightFileId: "test", imagesPageName: "Promo")
+
+        let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
+
+        XCTAssertEqual(config.pageName, "Promo")
+    }
+
+    func testForIOS_pageNameNilByDefault() throws {
+        let entry = try makeIOSEntry()
+        let params = PKLConfig.make(lightFileId: "test")
+
+        let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
+
+        XCTAssertNil(config.pageName)
+    }
+
+    func testDefaultConfig_usesCommonPageName() {
+        let params = PKLConfig.make(lightFileId: "test", imagesPageName: "Promo")
+
+        let config = ImagesLoaderConfig.defaultConfig(params: params)
+
+        XCTAssertEqual(config.pageName, "Promo")
+    }
+
+    func testDefaultConfig_pageNameNilByDefault() {
+        let params = PKLConfig.make(lightFileId: "test")
+
+        let config = ImagesLoaderConfig.defaultConfig(params: params)
+
+        XCTAssertNil(config.pageName)
+    }
+
+    func testPageNamePreservedThroughEntryToSourceToConfig() throws {
+        let entry = try makeIOSEntry(figmaPageName: "Marketing")
+
+        let source = entry.imagesSourceInput()
+        XCTAssertEqual(source.pageName, "Marketing", "pageName must survive entry → source conversion")
+
+        let config = ImagesLoaderConfig(
+            entryFileId: source.figmaFileId,
+            frameName: source.frameName,
+            pageName: source.pageName,
+            scales: source.scales,
+            format: nil,
+            sourceFormat: .png,
+            rtlProperty: source.rtlProperty
+        )
+        XCTAssertEqual(config.pageName, "Marketing", "pageName must survive source → config conversion")
+    }
+
     // MARK: - Helpers
 
     private func makeIOSEntry(
         figmaFrameName: String? = nil,
+        figmaPageName: String? = nil,
         assetsFolder: String = "Images",
         nameStyle: String = "camelCase",
         scales: [Double]? = nil,
@@ -298,6 +365,9 @@ final class ImagesLoaderConfigTests: XCTestCase {
 
         if let figmaFrameName {
             json = json.replacingOccurrences(of: "{", with: "{ \"figmaFrameName\": \"\(figmaFrameName)\",")
+        }
+        if let figmaPageName {
+            json += ", \"figmaPageName\": \"\(figmaPageName)\""
         }
         if let scales {
             let scalesJson = scales.map { String($0) }.joined(separator: ", ")

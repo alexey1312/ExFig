@@ -190,11 +190,15 @@ When adding fields to loader configs, update ALL construction sites:
 2. Context implementations (`Sources/ExFigCLI/Context/*ExportContextImpl.swift`) — direct constructions in `loadIcons`/`loadImages`
 3. Test files (`IconsLoaderConfigTests.swift`, `EnumBridgingTests.swift`) — direct init calls
 
+**EnumBridgingTests gotcha:** Entry constructions have TWO indentation levels — 16-space (inside `for` loop)
+and 12-space ("defaults to" tests outside loop). A single `replace_all` with fixed indent misses one level.
+
 When adding fields to `FrameSource` (PKL) / `SourceInput` (ExFigCore), also update:
 
 4. Entry bridge methods (`iconsSourceInput()`/`imagesSourceInput()`) in ALL `Sources/ExFig-*/Config/*Entry.swift`
 5. Inline `SourceInput(` constructions in exporters (`iOSImagesExporter.svgSourceInput`, `AndroidImagesExporter.loadAndProcessSVG`)
 6. "Through" tests in `IconsLoaderConfigTests` — use `source.field` not hardcoded `nil`
+7. Download command files: `DownloadOptions.swift` (CLI flag), `DownloadImageLoader.swift` (filter), `DownloadExportHelpers.swift`, `DownloadImages.swift`, `DownloadIcons.swift`
 
 ### Moving/Renaming PKL Types Between Modules
 
@@ -239,6 +243,15 @@ as string literals in ExFigCore inits; use shared constants only within ExFigCLI
 2. Implement exporter in `Sources/ExFig-{Platform}/Export/` conforming to protocol (e.g., `ColorsExporter`)
 3. Register exporter in plugin's `exporters()` method
 4. Add export method in `Sources/ExFigCLI/Subcommands/Export/Plugin*Export.swift` (PKL config maps directly to entry types)
+
+### Destination.url Contract (FileContents.swift)
+
+`Destination.url` uses `isFileURL` to choose path strategy:
+
+- `URL(fileURLWithPath:)` → `lastPathComponent` (just filename) — iOS/Android/Web exporters
+- `URL(string:)` → `file.path` (preserves subdirectories like `"icons/actions.dart"`) — Flutter exporters
+
+`FileWriter` creates intermediate directories from `destination.url.deletingLastPathComponent()`, not `destination.directory`.
 
 ### Modifying Generated Code
 
@@ -302,17 +315,18 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Troubleshooting
 
-| Problem                 | Solution                                                                                 |
-| ----------------------- | ---------------------------------------------------------------------------------------- |
-| pkl-gen-swift not found | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift` |
-| PKL FrameSource change  | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)         |
-| Build fails             | `swift package clean && swift build`                                                     |
-| Tests fail              | Check `FIGMA_PERSONAL_TOKEN` is set                                                      |
-| Formatting fails        | Run `./bin/mise run setup` to install tools                                              |
-| Template errors         | Check Stencil syntax and context variables                                               |
-| Linux test hangs        | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`      |
-| Android pathData long   | Simplify in Figma or use `--strict-path-validation`                                      |
-| PKL parse error 1       | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`    |
+| Problem                   | Solution                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| pkl-gen-swift not found   | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift`    |
+| PKL FrameSource change    | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)            |
+| Build fails               | `swift package clean && swift build`                                                        |
+| Tests fail                | Check `FIGMA_PERSONAL_TOKEN` is set                                                         |
+| Formatting fails          | Run `./bin/mise run setup` to install tools                                                 |
+| Template errors           | Check Stencil syntax and context variables                                                  |
+| Linux test hangs          | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`         |
+| Android pathData long     | Simplify in Figma or use `--strict-path-validation`                                         |
+| PKL parse error 1         | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`       |
+| Test target won't compile | Broken test files block entire target; use `swift test --filter Target.Class` after `build` |
 
 ## Additional Rules
 

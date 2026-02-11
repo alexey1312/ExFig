@@ -171,6 +171,9 @@ public struct ImagesSourceInput: Sendable {
     /// The frame name containing images.
     public let frameName: String
 
+    /// Optional page name to filter images by.
+    public let pageName: String?
+
     /// Source format for images (png or svg).
     public let sourceFormat: ImageSourceFormat
 
@@ -197,6 +200,7 @@ public struct ImagesSourceInput: Sendable {
         figmaFileId: String? = nil,
         darkFileId: String? = nil,
         frameName: String,
+        pageName: String? = nil,
         sourceFormat: ImageSourceFormat = .png,
         scales: [Double] = [1.0, 2.0, 3.0],
         useSingleFile: Bool = false,
@@ -208,6 +212,7 @@ public struct ImagesSourceInput: Sendable {
         self.figmaFileId = figmaFileId
         self.darkFileId = darkFileId
         self.frameName = frameName
+        self.pageName = pageName
         self.sourceFormat = sourceFormat
         self.scales = scales
         self.useSingleFile = useSingleFile

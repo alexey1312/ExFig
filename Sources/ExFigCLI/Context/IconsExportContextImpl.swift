@@ -81,6 +81,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
         let config = IconsLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             format: source.format,
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,
@@ -172,6 +173,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
         let config = IconsLoaderConfig(
             entryFileId: source.figmaFileId,
             frameName: source.frameName,
+            pageName: source.pageName,
             format: source.format,
             renderMode: source.renderMode,
             renderModeDefaultSuffix: source.renderModeDefaultSuffix,

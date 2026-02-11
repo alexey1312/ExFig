@@ -14,6 +14,7 @@ public extension Web.ImagesEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
+            pageName: figmaPageName,
             sourceFormat: .svg,
             scales: [1.0],
             useSingleFile: darkFileId == nil,

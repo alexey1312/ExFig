@@ -174,6 +174,7 @@ extension ExFigCommand {
                 return try await loader.loadVectorImages(
                     fileId: downloadOptions.fileId,
                     frameName: downloadOptions.frameName,
+                    pageName: downloadOptions.pageName,
                     params: params,
                     filter: downloadOptions.filter,
                     onBatchProgress: onBatchProgress
@@ -182,6 +183,7 @@ extension ExFigCommand {
                 return try await loader.loadRasterImages(
                     fileId: downloadOptions.fileId,
                     frameName: downloadOptions.frameName,
+                    pageName: downloadOptions.pageName,
                     scale: downloadOptions.effectiveScale,
                     format: downloadOptions.format.rawValue,
                     filter: downloadOptions.filter,

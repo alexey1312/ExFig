@@ -28,6 +28,8 @@ public protocol Common_NameProcessing: PklRegisteredType, DynamicallyEquatable, 
 public protocol Common_FrameSource: Common_NameProcessing {
     var figmaFrameName: String? { get }
 
+    var figmaPageName: String? { get }
+
     var figmaFileId: String? { get }
 
     var rtlProperty: String? { get }
@@ -189,6 +191,11 @@ extension Common {
         /// Figma frame name to export from.
         public var figmaFrameName: String?
 
+        /// Figma page name to filter components by.
+        /// When set, only components from this specific page are exported.
+        /// Useful when multiple pages have frames with the same name.
+        public var figmaPageName: String?
+
         /// Override Figma file ID for this specific entry.
         /// When set, overrides the global `figma.lightFileId` for loading data.
         public var figmaFileId: String?
@@ -209,12 +216,14 @@ extension Common {
 
         public init(
             figmaFrameName: String?,
+            figmaPageName: String?,
             figmaFileId: String?,
             rtlProperty: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
             self.figmaFrameName = figmaFrameName
+            self.figmaPageName = figmaPageName
             self.figmaFileId = figmaFileId
             self.rtlProperty = rtlProperty
             self.nameValidateRegexp = nameValidateRegexp
@@ -268,6 +277,9 @@ extension Common {
         /// Figma frame name containing icons.
         public var figmaFrameName: String?
 
+        /// Figma page name to filter icons by.
+        public var figmaPageName: String?
+
         /// Use single file for all icon modes.
         public var useSingleFile: Bool?
 
@@ -285,6 +297,7 @@ extension Common {
 
         public init(
             figmaFrameName: String?,
+            figmaPageName: String?,
             useSingleFile: Bool?,
             darkModeSuffix: String?,
             strictPathValidation: Bool?,
@@ -292,6 +305,7 @@ extension Common {
             nameReplaceRegexp: String?
         ) {
             self.figmaFrameName = figmaFrameName
+            self.figmaPageName = figmaPageName
             self.useSingleFile = useSingleFile
             self.darkModeSuffix = darkModeSuffix
             self.strictPathValidation = strictPathValidation
@@ -307,6 +321,9 @@ extension Common {
         /// Figma frame name containing images.
         public var figmaFrameName: String?
 
+        /// Figma page name to filter images by.
+        public var figmaPageName: String?
+
         /// Use single file for all image modes.
         public var useSingleFile: Bool?
 
@@ -321,12 +338,14 @@ extension Common {
 
         public init(
             figmaFrameName: String?,
+            figmaPageName: String?,
             useSingleFile: Bool?,
             darkModeSuffix: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
             self.figmaFrameName = figmaFrameName
+            self.figmaPageName = figmaPageName
             self.useSingleFile = useSingleFile
             self.darkModeSuffix = darkModeSuffix
             self.nameValidateRegexp = nameValidateRegexp

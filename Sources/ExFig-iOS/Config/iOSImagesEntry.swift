@@ -16,6 +16,7 @@ public extension iOS.ImagesEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
+            pageName: figmaPageName,
             sourceFormat: effectiveSourceFormat,
             scales: effectiveScales,
             useSingleFile: darkFileId == nil,

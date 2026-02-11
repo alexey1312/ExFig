@@ -62,6 +62,9 @@ struct DownloadOptions: ParsableArguments {
     )
     var frameName: String
 
+    @Option(name: [.customLong("page"), .customShort("p")], help: "Filter by Figma page name.")
+    var pageName: String?
+
     @Option(
         name: [.customLong("output"), .customShort("o")],
         help: "Output directory for downloaded images"

@@ -14,6 +14,7 @@ public extension Flutter.IconsEntry {
             figmaFileId: figmaFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
+            pageName: figmaPageName,
             useSingleFile: darkFileId == nil,
             darkModeSuffix: "_dark",
             rtlProperty: rtlProperty,
