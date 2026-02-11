@@ -359,6 +359,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Build fails               | `swift package clean && swift build`                                                         |
 | Tests fail                | Check `FIGMA_PERSONAL_TOKEN` is set                                                          |
 | Formatting fails          | Run `./bin/mise run setup` to install tools                                                  |
+| test:filter no matches    | SPM converts hyphens→underscores: use `ExFig_FlutterTests` not `ExFig-FlutterTests`          |
 | Template errors           | Check Stencil syntax and context variables                                                   |
 | Linux test hangs          | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`          |
 | Android pathData long     | Simplify in Figma or use `--strict-path-validation`                                          |

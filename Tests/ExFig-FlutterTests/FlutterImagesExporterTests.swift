@@ -118,6 +118,169 @@ final class FlutterScaleDirectoriesTests: XCTestCase {
     }
 }
 
+// MARK: - Dark Mode Suffix in makeSVGRemoteFiles
+
+final class FlutterDarkSVGRemoteFilesTests: XCTestCase {
+    private let assetsDir = URL(fileURLWithPath: "/project/assets/images")
+
+    func testDarkFilesGetSuffixInSVGRemoteFiles() throws {
+        let lightPack = try ImagePack(
+            image: Image(name: "icon", url: XCTUnwrap(URL(string: "https://figma.com/light")), format: "svg")
+        )
+        let darkPack = try ImagePack(
+            image: Image(name: "icon", url: XCTUnwrap(URL(string: "https://figma.com/dark")), format: "svg")
+        )
+        let pairs = [AssetPair(light: lightPack, dark: darkPack)]
+
+        let files = FlutterImagesHelpers.makeSVGRemoteFiles(
+            imagePairs: pairs, assetsDirectory: assetsDir, nameStyle: .snakeCase
+        )
+
+        XCTAssertEqual(files.count, 2)
+
+        // Light file: normal name, same directory
+        XCTAssertEqual(files[0].destination.file.lastPathComponent, "icon.svg")
+        XCTAssertEqual(files[0].destination.directory, assetsDir)
+        XCTAssertFalse(files[0].dark)
+
+        // Dark file: name with suffix, same directory (not dark/ subdirectory)
+        XCTAssertEqual(files[1].destination.file.lastPathComponent, "icon_dark.svg")
+        XCTAssertEqual(files[1].destination.directory, assetsDir)
+        XCTAssertTrue(files[1].dark)
+    }
+
+    func testDarkSVGFilesSuffixVariesByNameStyle() throws {
+        let lightPack = try ImagePack(
+            image: Image(name: "icon", url: XCTUnwrap(URL(string: "https://figma.com/light")), format: "svg")
+        )
+        let darkPack = try ImagePack(
+            image: Image(name: "icon", url: XCTUnwrap(URL(string: "https://figma.com/dark")), format: "svg")
+        )
+        let pairs = [AssetPair(light: lightPack, dark: darkPack)]
+
+        let camelFiles = FlutterImagesHelpers.makeSVGRemoteFiles(
+            imagePairs: pairs, assetsDirectory: assetsDir, nameStyle: .camelCase
+        )
+        XCTAssertEqual(camelFiles[1].destination.file.lastPathComponent, "iconDark.svg")
+
+        let kebabFiles = FlutterImagesHelpers.makeSVGRemoteFiles(
+            imagePairs: pairs, assetsDirectory: assetsDir, nameStyle: .kebabCase
+        )
+        XCTAssertEqual(kebabFiles[1].destination.file.lastPathComponent, "icon-dark.svg")
+    }
+}
+
+// MARK: - Dark Mode Suffix in makeRasterRemoteFiles
+
+final class FlutterDarkRasterRemoteFilesTests: XCTestCase {
+    private let tempDir = URL(fileURLWithPath: "/tmp/exfig-test")
+
+    func testDarkFilesGetSuffixInRasterRemoteFiles() throws {
+        let lightPack = try ImagePack(
+            name: "icon",
+            images: [
+                Image(
+                    name: "icon",
+                    scale: .individual(1.0),
+                    url: XCTUnwrap(URL(string: "https://figma.com/1x")),
+                    format: "png"
+                ),
+                Image(
+                    name: "icon",
+                    scale: .individual(2.0),
+                    url: XCTUnwrap(URL(string: "https://figma.com/2x")),
+                    format: "png"
+                ),
+            ]
+        )
+        let darkPack = try ImagePack(
+            name: "icon",
+            images: [
+                Image(
+                    name: "icon",
+                    scale: .individual(1.0),
+                    url: XCTUnwrap(URL(string: "https://figma.com/dark-1x")),
+                    format: "png"
+                ),
+                Image(
+                    name: "icon",
+                    scale: .individual(2.0),
+                    url: XCTUnwrap(URL(string: "https://figma.com/dark-2x")),
+                    format: "png"
+                ),
+            ]
+        )
+        let pairs = [AssetPair(light: lightPack, dark: darkPack)]
+
+        let files = try FlutterImagesHelpers.makeRasterRemoteFiles(
+            imagePairs: pairs, tempDirectory: tempDir, scales: [1.0, 2.0], nameStyle: .snakeCase
+        )
+
+        XCTAssertEqual(files.count, 4)
+
+        // Light files: normal name
+        let lightFiles = files.filter { !$0.dark }
+        XCTAssertEqual(lightFiles.count, 2)
+        XCTAssertTrue(lightFiles.allSatisfy { $0.destination.file.lastPathComponent == "icon.png" })
+
+        // Dark files: name with suffix, same scale directories (not dark/ subdirectory)
+        let darkFiles = files.filter(\.dark)
+        XCTAssertEqual(darkFiles.count, 2)
+        XCTAssertTrue(darkFiles.allSatisfy { $0.destination.file.lastPathComponent == "icon_dark.png" })
+
+        // Dark files use same scale directories as light (no dark/ prefix)
+        let darkDirs = darkFiles.map(\.destination.directory.lastPathComponent).sorted()
+        let lightDirs = lightFiles.map(\.destination.directory.lastPathComponent).sorted()
+        XCTAssertEqual(darkDirs, lightDirs)
+    }
+}
+
+// MARK: - Dark Mode End-to-End (makeSVGRemoteFiles → mapToFlutterScaleDirectories)
+
+final class FlutterDarkModeEndToEndTests: XCTestCase {
+    func testDarkFilesPreserveSuffixAfterScaleMapping() {
+        let assetsDir = URL(fileURLWithPath: "/project/assets/images")
+
+        // Simulate files after rasterization — dark files already have suffix from makeSVGRemoteFiles
+        let files = [
+            makeRasterFile(name: "icon.webp", scale: 1.0, dark: false),
+            makeRasterFile(name: "icon.webp", scale: 2.0, dark: false),
+            makeRasterFile(name: "icon_dark.webp", scale: 1.0, dark: true),
+            makeRasterFile(name: "icon_dark.webp", scale: 2.0, dark: true),
+        ]
+
+        let result = FlutterImagesHelpers.mapToFlutterScaleDirectories(files, assetsDirectory: assetsDir)
+
+        XCTAssertEqual(result.count, 4)
+
+        let lightResults = result.filter { !$0.dark }
+        let darkResults = result.filter(\.dark)
+
+        // Light: icon.webp in root and 2.0x/
+        XCTAssertEqual(lightResults[0].destination.file.lastPathComponent, "icon.webp")
+        XCTAssertEqual(lightResults[0].destination.directory, assetsDir)
+        XCTAssertEqual(lightResults[1].destination.file.lastPathComponent, "icon.webp")
+        XCTAssertEqual(lightResults[1].destination.directory, assetsDir.appendingPathComponent("2.0x"))
+
+        // Dark: icon_dark.webp in root and 2.0x/ (suffix preserved, no dark/ subdirectory)
+        XCTAssertEqual(darkResults[0].destination.file.lastPathComponent, "icon_dark.webp")
+        XCTAssertEqual(darkResults[0].destination.directory, assetsDir)
+        XCTAssertEqual(darkResults[1].destination.file.lastPathComponent, "icon_dark.webp")
+        XCTAssertEqual(darkResults[1].destination.directory, assetsDir.appendingPathComponent("2.0x"))
+    }
+
+    // MARK: - Helpers
+
+    private func makeRasterFile(name: String, scale: Double, dark: Bool) -> FileContents {
+        FileContents(
+            destination: Destination(directory: URL(fileURLWithPath: "/tmp"), file: URL(fileURLWithPath: name)),
+            data: Data("test".utf8),
+            scale: scale,
+            dark: dark
+        )
+    }
+}
+
 // MARK: - Mock Context
 
 /// Mock ImagesExportContext for testing.

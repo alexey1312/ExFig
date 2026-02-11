@@ -102,7 +102,7 @@ private extension FlutterImagesExporter {
         let (imagePairs, assetsDirectory) = try await loadAndProcessSVG(entry: entry, context: context)
 
         let remoteFiles = FlutterImagesHelpers.makeSVGRemoteFiles(
-            imagePairs: imagePairs, assetsDirectory: assetsDirectory
+            imagePairs: imagePairs, assetsDirectory: assetsDirectory, nameStyle: entry.effectiveNameStyle
         )
         let localFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading SVGs")
 
@@ -142,7 +142,7 @@ private extension FlutterImagesExporter {
         let (imagePairs, tempDir) = try await loadAndProcessSVGTemp(entry: entry, context: context)
 
         let remoteFiles = FlutterImagesHelpers.makeSVGRemoteFiles(
-            imagePairs: imagePairs, assetsDirectory: tempDir
+            imagePairs: imagePairs, assetsDirectory: tempDir, nameStyle: entry.effectiveNameStyle
         )
         let localSVGFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading SVGs")
         try context.writeFiles(localSVGFiles)
@@ -196,7 +196,7 @@ private extension FlutterImagesExporter {
         let (imagePairs, tempDir) = try await loadAndProcessSVGTemp(entry: entry, context: context)
 
         let remoteFiles = FlutterImagesHelpers.makeSVGRemoteFiles(
-            imagePairs: imagePairs, assetsDirectory: tempDir
+            imagePairs: imagePairs, assetsDirectory: tempDir, nameStyle: entry.effectiveNameStyle
         )
         let localSVGFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading SVGs")
         try context.writeFiles(localSVGFiles)
@@ -249,7 +249,8 @@ private extension FlutterImagesExporter {
         let (imagePairs, tempDir) = try await loadAndProcessPNG(entry: entry, context: context)
 
         let remoteFiles = try FlutterImagesHelpers.makeRasterRemoteFiles(
-            imagePairs: imagePairs, tempDirectory: tempDir, scales: entry.effectiveScales
+            imagePairs: imagePairs, tempDirectory: tempDir, scales: entry.effectiveScales,
+            nameStyle: entry.effectiveNameStyle
         )
         var localFiles = try await context.downloadFiles(remoteFiles, progressTitle: "Downloading images")
         try context.writeFiles(localFiles)
@@ -479,7 +480,8 @@ private extension FlutterImagesExporter {
 enum FlutterImagesHelpers {
     static func makeSVGRemoteFiles(
         imagePairs: [AssetPair<ImagePack>],
-        assetsDirectory: URL
+        assetsDirectory: URL,
+        nameStyle: NameStyle
     ) -> [FileContents] {
         var files: [FileContents] = []
 
@@ -493,11 +495,10 @@ enum FlutterImagesHelpers {
             }
 
             if let dark = pair.dark {
-                let darkDir = assetsDirectory.appendingPathComponent("dark")
                 for image in dark.images {
-                    let fileURL = URL(fileURLWithPath: "\(image.name).svg")
+                    let fileURL = URL(fileURLWithPath: "\(image.name)\(nameStyle.darkSuffix).svg")
                     files.append(FileContents(
-                        destination: Destination(directory: darkDir, file: fileURL),
+                        destination: Destination(directory: assetsDirectory, file: fileURL),
                         sourceURL: image.url,
                         dark: true
                     ))
@@ -511,7 +512,8 @@ enum FlutterImagesHelpers {
     static func makeRasterRemoteFiles(
         imagePairs: [AssetPair<ImagePack>],
         tempDirectory: URL,
-        scales: [Double]
+        scales: [Double],
+        nameStyle: NameStyle
     ) throws -> [FileContents] {
         var files: [FileContents] = []
 
@@ -534,8 +536,8 @@ enum FlutterImagesHelpers {
                     let scale = image.scale.value
                     guard scales.contains(scale) else { continue }
 
-                    let fileURL = URL(fileURLWithPath: "\(image.name).png")
-                    let scaleDir = tempDirectory.appendingPathComponent("dark").appendingPathComponent(String(scale))
+                    let fileURL = URL(fileURLWithPath: "\(image.name)\(nameStyle.darkSuffix).png")
+                    let scaleDir = tempDirectory.appendingPathComponent(String(scale))
                     files.append(FileContents(
                         destination: Destination(directory: scaleDir, file: fileURL),
                         sourceURL: image.url,
