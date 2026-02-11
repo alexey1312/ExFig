@@ -1,7 +1,7 @@
 ---
 paths:
-  - "Sources/ExFig/Batch/**"
-  - "Sources/ExFig/Pipeline/**"
+  - "Sources/ExFigCLI/Batch/**"
+  - "Sources/ExFigCLI/Pipeline/**"
 ---
 
 # Batch Processing Patterns
@@ -23,9 +23,9 @@ This avoids nested `TaskLocal.withValue()` calls which cause Swift runtime crash
 
 **Key files:**
 
-- `Sources/ExFig/Batch/BatchContext.swift` - BatchSharedState actor, BatchContext, ConfigExecutionContext
-- `Sources/ExFig/Batch/BatchConfigRunner.swift` - Per-config processing with explicit context passing
-- `Sources/ExFig/Shared/ComponentPreFetcher.swift` - Updates actor state, no nested withValue
+- `Sources/ExFigCLI/Batch/BatchContext.swift` - BatchSharedState actor, BatchContext, ConfigExecutionContext
+- `Sources/ExFigCLI/Batch/BatchConfigRunner.swift` - Per-config processing with explicit context passing
+- `Sources/ExFigCLI/Shared/ComponentPreFetcher.swift` - Updates actor state, no nested withValue
 
 **Architecture (single nesting level):**
 
@@ -98,11 +98,11 @@ before parallel config processing. This avoids redundant API calls when multiple
 
 **Key files:**
 
-- `Sources/ExFig/Batch/PreFetchedFileVersions.swift` - Storage struct for file metadata
-- `Sources/ExFig/Batch/PreFetchedComponents.swift` - Storage struct for components
-- `Sources/ExFig/Batch/PreFetchedNodes.swift` - Storage struct for nodes
-- `Sources/ExFig/Batch/FileVersionPreFetcher.swift` - Parallel pre-fetching with spinner
-- `Sources/ExFig/Cache/ImageTrackingManager.swift` - Checks BatchSharedState before API call
+- `Sources/ExFigCLI/Batch/PreFetchedFileVersions.swift` - Storage struct for file metadata
+- `Sources/ExFigCLI/Batch/PreFetchedComponents.swift` - Storage struct for components
+- `Sources/ExFigCLI/Batch/PreFetchedNodes.swift` - Storage struct for nodes
+- `Sources/ExFigCLI/Batch/FileVersionPreFetcher.swift` - Parallel pre-fetching with spinner
+- `Sources/ExFigCLI/Cache/ImageTrackingManager.swift` - Checks BatchSharedState before API call
 
 **Pattern:**
 
@@ -123,9 +123,9 @@ from CDN simultaneously.
 
 **Key files:**
 
-- `Sources/ExFig/Pipeline/SharedDownloadQueue.swift` - Actor coordinating downloads across configs
-- `Sources/ExFig/Pipeline/PipelinedDownloader.swift` - Uses queue from BatchSharedState
-- `Sources/ExFig/Pipeline/DownloadJob.swift` - Represents a batch of files to download
+- `Sources/ExFigCLI/Pipeline/SharedDownloadQueue.swift` - Actor coordinating downloads across configs
+- `Sources/ExFigCLI/Pipeline/PipelinedDownloader.swift` - Uses queue from BatchSharedState
+- `Sources/ExFigCLI/Pipeline/DownloadJob.swift` - Represents a batch of files to download
 
 **How it works:**
 
@@ -162,17 +162,5 @@ static func download(
     }
 }
 ```
-
-## Compatibility Shims
-
-For gradual migration, these shims read from `BatchSharedState.current`:
-
-| Shim | Reads From |
-|------|------------|
-| `BatchContextStorage.context` | `BatchSharedState.current?.context` |
-| `BatchProgressViewStorage.progressView` | `BatchSharedState.current?.progressView` |
-| `SharedDownloadQueueStorage.queue` | `BatchSharedState.current?.downloadQueue` |
-
-**Preferred:** Access `BatchSharedState.current` directly.
 
 **Expected performance:** ~45% improvement in batch mode with multiple configs.

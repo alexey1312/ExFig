@@ -140,17 +140,9 @@ Twelve modules in `Sources/`:
 
 **Data flow:** CLI -> PKL config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform plugin -> Export module -> File write
 
-**Batch mode shared state:** Single `@TaskLocal` via `BatchSharedState.current` (actor).
-Access progress view: `BatchSharedState.current?.progressView`.
-Per-config data (configId, priority, download callback): passed via `ConfigExecutionContext` parameter.
-`BatchProgressViewStorage` was removed — do NOT recreate it.
+**Batch mode:** Single `@TaskLocal` via `BatchSharedState` actor — see `ExFigCLI/CLAUDE.md`.
 
-**Entry-level parallelism:** All 12 platform exporters use `parallelMapEntries()` (in `ExFigCore/Concurrency/`)
-to process entries in parallel (max 5 concurrent). For multi-entry single export, `Plugin*Export` files
-wrap `exporter.export*()` in `ui.withParallelEntries()` which creates a parent spinner suppressing all
-inner output (`info/success/debug` + nested spinners + progress bars) via `hasActiveAnimation` check.
-Warnings/errors are NOT suppressed — `TerminalOutputManager.print()` coordinates them with active animation.
-For single entry, `withParallelEntries` is a no-op passthrough.
+**Entry-level parallelism:** All exporters use `parallelMapEntries()` (max 5 concurrent) — see `ExFigCore/CLAUDE.md`.
 
 ## Key Directories
 
@@ -270,37 +262,19 @@ When changing how node IDs are resolved (e.g., `codeConnectNodeId`), update ALL 
 
 ### Adding a CLI Command
 
-1. Create `Sources/ExFigCLI/Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
-2. Register in `ExFigCommand.swift` subcommands array
-3. Use `@OptionGroup` for shared options (`GlobalOptions`, `CacheOptions`)
-4. Use `TerminalUI` for progress: `try await ui.withSpinner("Loading...") { ... }`
+See `ExFigCLI/CLAUDE.md` (Adding a New Subcommand).
 
 ### Adding a Figma API Endpoint
 
-1. Create endpoint in `Sources/FigmaAPI/Endpoint/`
-2. Add response models in `Sources/FigmaAPI/Model/`
-3. Add method to `FigmaClient.swift`
+See `FigmaAPI/CLAUDE.md`.
 
 ### Adding a Platform Plugin Exporter
 
-1. Create entry type in `Sources/ExFig-{Platform}/Config/` (e.g., `iOSColorsEntry.swift`)
-2. Implement exporter in `Sources/ExFig-{Platform}/Export/` conforming to protocol (e.g., `ColorsExporter`)
-3. Register exporter in plugin's `exporters()` method
-4. Add export method in `Sources/ExFigCLI/Subcommands/Export/Plugin*Export.swift` (PKL config maps directly to entry types)
-5. Use `parallelMapEntries(entries) { ... }` in the exporter's top-level method — do NOT use sequential `for entry in entries`
+See `ExFigCore/CLAUDE.md` (Modification Checklist) and platform module CLAUDE.md files.
 
 ### Destination.url Contract (FileContents.swift)
 
-`Destination.url` uses `isFileURL` to choose path strategy:
-
-- `URL(fileURLWithPath:)` → `lastPathComponent` (just filename) — iOS/Android/Web exporters
-- `URL(string:)` → `file.path` (preserves subdirectories like `"icons/actions.dart"`) — Flutter exporters
-
-`FileWriter` creates intermediate directories from `destination.url.deletingLastPathComponent()`, not `destination.directory`.
-
-### Modifying Generated Code
-
-Templates are in `Sources/*/Resources/`. Use Stencil syntax. Update tests after changes.
+`URL(fileURLWithPath:)` → `lastPathComponent` (iOS/Android/Web). `URL(string:)` → preserves subdirectories (Flutter). See `ExFigCore/CLAUDE.md`.
 
 ## Code Conventions
 
@@ -394,6 +368,7 @@ Contextual documentation is in `.claude/rules/`:
 | `linux-compat.md`     | Linux-specific workarounds                         |
 | `testing-workflow.md` | Testing guidelines, commit format                  |
 | `pkl-codegen.md`      | pkl-swift generated types, enum bridging, codegen  |
+| `Sources/*/CLAUDE.md` | Module-specific patterns, modification checklists  |
 
 These rules are loaded lazily when working with related files.
 

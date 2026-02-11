@@ -1,0 +1,196 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Module Overview
+
+ExFigCLI is the main CLI module — the orchestration layer that connects PKL config parsing, Figma API client, domain processing (ExFigCore), and platform plugins (ExFig-iOS/Android/Flutter/Web) into a unified command-line tool. It owns all I/O: terminal output, file writing, image conversion, caching, batch processing, and download pipelining.
+
+**Imports:** ExFigCore, ExFigConfig, FigmaAPI, all four ExFig-{Platform} modules, all four {Platform}Export modules, SVGKit. This is the only module that imports everything.
+
+## Architecture
+
+### Command Structure
+
+`ExFigCommand` (`@main`) registers subcommands via swift-argument-parser:
+
+```
+exfig colors     (default)  → ExportColors
+exfig icons                 → ExportIcons
+exfig images                → ExportImages
+exfig typography            → ExportTypography
+exfig init                  → GenerateConfigFile
+exfig schemas               → ExtractSchemas
+exfig fetch                 → FetchImages
+exfig download {colors|icons|images|typography|all} → Download (nested)
+exfig batch                 → Batch
+```
+
+Each subcommand composes options via `@OptionGroup`:
+
+- `GlobalOptions` — `--verbose/-v`, `--quiet/-q`
+- `ExFigOptions` — `--input/-i`, validates PKL config + FIGMA_PERSONAL_TOKEN
+- `CacheOptions` — `--cache`, `--no-cache`, `--force`, `--experimental-granular-cache`
+- `FaultToleranceOptions` — retry/timeout configuration
+
+### Subcommand Execution Pattern
+
+Every export subcommand follows the same flow:
+
+```
+run()
+  → initializeTerminalUI(verbose:quiet:)
+  → checkSchemaVersionIfNeeded()
+  → resolveClient(accessToken:timeout:options:ui:)
+  → performExportWithResult(client:ui:context:)
+      → VersionTrackingHelper.checkForChanges()  [skip if unchanged]
+      → Route to platform-specific export methods
+      → VersionTrackingHelper.updateCacheIfNeeded()
+      → Return result with metadata (count, fileVersions, hashes)
+```
+
+`performExportWithResult()` is the key method — called both by standalone subcommands and by `BatchConfigRunner` in batch mode.
+
+### Plugin Routing
+
+`PluginRegistry.default` holds 4 built-in plugins (iOS, Android, Flutter, Web). Each export subcommand iterates platform sections from PKL config and dispatches to platform-specific export methods:
+
+```swift
+if let ios = params.ios, let colors = ios.colors {
+    exportiOSColorsViaPlugin(entries: colors, ...)
+}
+if let android = params.android, let colors = android.colors {
+    exportAndroidColorsViaPlugin(entries: colors, ...)
+}
+// ... flutter, web
+```
+
+Platform export orchestrators live in `Subcommands/Export/` (e.g., `iOSColorsExport.swift`, `AndroidImagesExport.swift`). They create context implementations and invoke plugin exporters.
+
+### Context Bridge Pattern
+
+`Context/` implementations bridge CLI infrastructure to ExFigCore's export context protocols:
+
+```
+IconsExportContextImpl  → implements IconsExportContext
+  .loadIcons()          → creates IconsLoader, calls Figma API
+  .writeFiles()         → delegates to FileWriter
+  .withSpinner()        → delegates to TerminalUI
+  .downloadFile()       → delegates to FileDownloader / PipelinedDownloader
+```
+
+Each context holds: `Client`, `TerminalUI`, `PKLConfig`, filter, batch mode flag, `ConfigExecutionContext`, optional `GranularCacheManager`.
+
+### Batch Processing
+
+`Batch` subcommand orchestrates multi-config export with shared state:
+
+```
+Batch.run()
+  → ConfigDiscovery.discover()         [find *.pkl files]
+  → FileIdExtractor.extractUniqueFileIds()  [collect all file IDs]
+  → FileVersionPreFetcher              [fetch metadata once, shared]
+  → GranularCacheSetup                 [optional per-node cache]
+  → BatchExecutor.execute()            [parallel, max 3 configs]
+      For each config:
+        → BatchSharedState.$current.withValue(state) {
+            BatchConfigRunner.run()
+          }
+```
+
+**Critical: Single TaskLocal pattern.** `BatchSharedState` actor consolidates ALL shared state (context, progressView, themeCollector, downloadQueue) into ONE `@TaskLocal`. This avoids the Linux crash from 10+ nested `withValue()` calls (https://github.com/swiftlang/swift/issues/75501). Per-config data goes through `ConfigExecutionContext` parameter, NOT TaskLocal.
+
+### Cache System
+
+Two layers:
+
+1. **Version tracking** (`ImageTrackingCache`) — file-level: skip export if Figma file version hasn't changed
+2. **Granular cache** (`GranularCacheManager`) — node-level: FNV-1a hash per Figma node, export only changed components
+
+Granular cache flow: pre-fetch nodes → compute hashes → compare with cached → filter to changed only.
+
+`ExportCheckpoint` / `CheckpointTracker` — resume batch from last successful config on failure.
+
+### Download Pipeline
+
+`SharedDownloadQueue` actor manages cross-config download coordination in batch mode:
+
+- Priority-ordered queue (lower configPriority = higher priority)
+- Concurrent download limit
+- LRU result eviction
+- Seamless integration via `PipelinedDownloader` wrapper
+
+### Terminal UI Coordination
+
+`TerminalUI` is the output facade. In batch mode, output coordination is critical:
+
+- `info()` / `success()` — suppressed when `BatchProgressView` or parent spinner is active
+- `warning()` / `error()` — NEVER suppressed; queued to `BatchProgressView.queueLogMessage()` for coordinated rendering
+- `TerminalOutputManager` singleton prevents race conditions between animations and log output via `hasActiveAnimation` flag
+- `withParallelEntries()` creates parent spinner suppressing all inner output (except warnings/errors)
+
+### Image Conversion Pipeline
+
+`Output/` contains native image encoders and converters:
+
+```
+SVG source → SvgToPngConverter (via resvg)  → PNG
+           → SvgToWebpConverter (via libwebp) → WebP
+           → SvgToHeicConverter (PNG → ImageIO) → HEIC (macOS only, falls back to PNG on Linux)
+```
+
+Converter factories (`WebpConverterFactory`, `HeicConverterFactory`) handle platform detection and fallback.
+
+### PKL Config Loading
+
+`ExFigOptions.validate()` uses a semaphore bridge to call async `PKLEvaluator.evaluate()` from sync `validate()` context (swift-argument-parser limitation). 30-second timeout. Auto-detects `exfig.pkl` if `-i` not specified.
+
+## Key Files
+
+| File                                     | Role                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------ |
+| `ExFigCommand.swift`                     | Entry point, version, shared instances, subcommand registration    |
+| `Input/ExFigOptions.swift`               | PKL config loading, token validation, auto-detection               |
+| `Batch/BatchContext.swift`               | `BatchContext`, `ConfigExecutionContext`, `BatchSharedState` actor |
+| `Batch/BatchExecutor.swift`              | Parallel config execution with rate limiting                       |
+| `Plugin/PluginRegistry.swift`            | Platform plugin routing (config key → plugin → exporters)          |
+| `TerminalUI/TerminalUI.swift`            | Output facade (info/success/warning/error, spinners, progress)     |
+| `TerminalUI/TerminalOutputManager.swift` | Thread-safe output synchronization, animation coordination         |
+| `TerminalUI/BatchProgressView.swift`     | Multi-config progress display with log queuing                     |
+| `Cache/GranularCacheManager.swift`       | Per-node change detection with FNV-1a hashing                      |
+| `Pipeline/SharedDownloadQueue.swift`     | Cross-config download pipelining actor                             |
+| `Output/FileWriter.swift`                | Sequential and parallel file writing with directory creation       |
+| `Shared/ComponentPreFetcher.swift`       | Pre-fetch components for multi-entry exports                       |
+
+## Modification Patterns
+
+### Adding a New Subcommand
+
+1. Create `Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`
+2. Register in `ExFigCommand.configuration.subcommands`
+3. Use `@OptionGroup` for shared options
+4. Call `initializeTerminalUI()` + `checkSchemaVersionIfNeeded()` in `run()`
+
+### Adding a New Platform Export
+
+1. Create platform export orchestrator in `Subcommands/Export/` (e.g., `NewPlatformColorsExport.swift`)
+2. Create context implementation in `Context/` implementing the ExFigCore protocol
+3. Wire into the export subcommand's platform dispatch section
+
+### Modifying Batch Shared State
+
+Never add new `@TaskLocal` properties. Add fields to `BatchSharedState` actor or `ConfigExecutionContext` struct. If the data is immutable and shared, add to `BatchContext`. If per-config, add to `ConfigExecutionContext`.
+
+### Modifying Terminal Output
+
+- Use `TerminalUI` methods, never `print()` directly
+- Warnings/errors must always be visible — never add suppression checks for them
+- In batch mode, queue to `BatchProgressView` via `TerminalUI.warning()` (it handles routing automatically)
+
+## Conventions
+
+- `ExFigCommand.terminalUI` is `nonisolated(unsafe) static var` — initialized once per subcommand via `initializeTerminalUI()`
+- `ExFigCommand.fileWriter`, `.svgFileConverter`, `.logger` are `static let` — safe shared instances
+- `resolveClient()` is a free function (in a separate file) that creates `FigmaClient` → wraps in `RateLimitedClient`
+- PKL config type is `ExFig.ModuleImpl` (generated by pkl-gen-swift), aliased as `PKLConfig` in `PKLConfigCompat.swift`
+- `BatchContextStorage` is a legacy shim — use `BatchSharedState.current` directly

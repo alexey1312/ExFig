@@ -1,8 +1,8 @@
 ---
 paths:
-  - "Sources/ExFig/Output/Svg*.swift"
-  - "Sources/ExFig/Output/*Heic*.swift"
-  - "Sources/ExFig/Output/Webp*.swift"
+  - "Sources/ExFigCLI/Output/Svg*.swift"
+  - "Sources/ExFigCLI/Output/*Heic*.swift"
+  - "Sources/ExFigCLI/Output/Webp*.swift"
 ---
 
 # Image Format Patterns
@@ -13,24 +13,31 @@ This rule covers SVG source format and HEIC output format for images.
 
 Images can use SVG as the source format from Figma API, with local rasterization using resvg for higher quality results:
 
-```yaml
-# iOS example - SVG source with PNG output
-ios:
-  images:
-    - figmaFrameName: "Illustrations"
-      assetsFolder: "Illustrations"
-      sourceFormat: svg  # Fetch SVG, rasterize locally to PNG
-      scales: [1, 2, 3]
+```pkl
+// iOS example - SVG source with PNG output
+ios {
+  images = new Listing {
+    new iOS.ImagesEntry {
+      figmaFrameName = "Illustrations"
+      assetsFolder = "Illustrations"
+      sourceFormat = "svg"   // Fetch SVG, rasterize locally to PNG
+      scales = new Listing { 1; 2; 3 }
+    }
+  }
+}
 
-# Android example - SVG source with WebP output
-android:
-  images:
-    - figmaFrameName: "Illustrations"
-      output: "src/main/res/"
-      format: webp
-      sourceFormat: svg  # Fetch SVG, rasterize locally to WebP
-      webpOptions:
-        encoding: lossless
+// Android example - SVG source with WebP output
+android {
+  images = new Listing {
+    new Android.ImagesEntry {
+      figmaFrameName = "Illustrations"
+      output = "src/main/res/"
+      format = "webp"
+      sourceFormat = "svg"   // Fetch SVG, rasterize locally to WebP
+      webpOptions = new Common.WebpOptions { encoding = "lossless" }
+    }
+  }
+}
 ```
 
 **How it works:**
@@ -49,8 +56,8 @@ android:
 
 | File                                            | Purpose                                             |
 | ----------------------------------------------- | --------------------------------------------------- |
-| `Sources/ExFig/Output/SvgToWebpConverter.swift` | SVG -> WebP conversion                              |
-| `Sources/ExFig/Output/SvgToPngConverter.swift`  | SVG -> PNG conversion                               |
+| `Sources/ExFigCLI/Output/SvgToWebpConverter.swift` | SVG -> WebP conversion                              |
+| `Sources/ExFigCLI/Output/SvgToPngConverter.swift`  | SVG -> PNG conversion                               |
 | `swift-resvg` (SPM dependency)                  | Swift wrapper for resvg (managed via Package.swift) |
 
 **Updating resvg:** Update version in `Package.swift` dependencies.
@@ -59,26 +66,34 @@ android:
 
 iOS images can be exported in HEIC format for ~40-50% smaller file sizes compared to PNG:
 
-```yaml
-# iOS example - PNG source with HEIC output
-ios:
-  images:
-    - figmaFrameName: "Illustrations"
-      assetsFolder: "Illustrations"
-      outputFormat: heic  # Convert to HEIC after download
-      heicOptions:
-        encoding: lossy   # or lossless
-        quality: 90       # 0-100, only used for lossy
+```pkl
+// iOS example - PNG source with HEIC output
+ios {
+  images = new Listing {
+    new iOS.ImagesEntry {
+      figmaFrameName = "Illustrations"
+      assetsFolder = "Illustrations"
+      outputFormat = "heic"   // Convert to HEIC after download
+      heicOptions = new iOS.HeicOptions {
+        encoding = "lossy"    // or "lossless"
+        quality = 90          // 0-100, only used for lossy
+      }
+    }
+  }
+}
 
-# iOS example - SVG source with HEIC output (best quality)
-ios:
-  images:
-    - figmaFrameName: "Illustrations"
-      assetsFolder: "Illustrations"
-      sourceFormat: svg   # Fetch SVG from Figma
-      outputFormat: heic  # Rasterize to HEIC locally
-      heicOptions:
-        encoding: lossless
+// iOS example - SVG source with HEIC output (best quality)
+ios {
+  images = new Listing {
+    new iOS.ImagesEntry {
+      figmaFrameName = "Illustrations"
+      assetsFolder = "Illustrations"
+      sourceFormat = "svg"    // Fetch SVG from Figma
+      outputFormat = "heic"   // Rasterize to HEIC locally
+      heicOptions = new iOS.HeicOptions { encoding = "lossless" }
+    }
+  }
+}
 ```
 
 **How it works:**
@@ -97,16 +112,16 @@ ios:
 
 | File                                            | Purpose                            |
 | ----------------------------------------------- | ---------------------------------- |
-| `Sources/ExFig/Output/NativeHeicEncoder.swift`  | RGBA -> HEIC encoding using ImageIO |
-| `Sources/ExFig/Output/SvgToHeicConverter.swift` | SVG -> HEIC conversion             |
-| `Sources/ExFig/Output/HeicConverter.swift`      | PNG -> HEIC batch conversion       |
+| `Sources/ExFigCLI/Output/NativeHeicEncoder.swift`  | RGBA -> HEIC encoding using ImageIO |
+| `Sources/ExFigCLI/Output/SvgToHeicConverter.swift` | SVG -> HEIC conversion             |
+| `Sources/ExFigCLI/Output/HeicConverter.swift`      | PNG -> HEIC batch conversion       |
 
-**Configuration types:**
+**Configuration types (PKL `iOS.pkl`):**
 
-| Type                       | Purpose                                            |
-| -------------------------- | -------------------------------------------------- |
-| `Params.ImageOutputFormat` | Enum: `.png` (default), `.heic`                    |
-| `Params.HeicOptions`       | Encoding mode (lossy/lossless) and quality (0-100) |
+| Type                    | Purpose                                            |
+| ----------------------- | -------------------------------------------------- |
+| `iOS.ImageOutputFormat` | Typealias: `"png"` (default), `"heic"`             |
+| `iOS.HeicOptions`       | Encoding mode (lossy/lossless) and quality (0-100) |
 
 **Important:** Apple ImageIO does not support true lossless HEIC encoding.
 The `lossless` option uses quality=1.0 (maximum) but is still technically lossy.

@@ -1,6 +1,6 @@
 ---
 paths:
-  - "Sources/ExFig/Input/FaultTolerance*.swift"
+  - "Sources/ExFigCLI/Input/FaultTolerance*.swift"
   - "Sources/FigmaAPI/Client/**"
 ---
 
@@ -27,7 +27,7 @@ exfig batch ./configs/ --timeout 60 --rate-limit 20
 exfig fetch -f FILE_ID -r "Frame" -o ./out --timeout 45 --fail-fast
 ```
 
-**Timeout precedence:** CLI `--timeout` > YAML `figma.timeout` > FigmaClient default (30s)
+**Timeout precedence:** CLI `--timeout` > PKL `figma.timeout` > FigmaClient default (30s)
 
 ## Implementing Fault Tolerance in New Commands
 
@@ -56,11 +56,11 @@ let data = try await client.request(endpoint)
 
 ## Key Files
 
-- `Sources/ExFig/Input/FaultToleranceOptions.swift` - CLI options for retry/rate limit/timeout/concurrent downloads
-- `Sources/ExFig/Output/FileDownloader.swift` - CDN download with configurable concurrency
+- `Sources/ExFigCLI/Input/FaultToleranceOptions.swift` - CLI options for retry/rate limit/timeout/concurrent downloads
+- `Sources/ExFigCLI/Output/FileDownloader.swift` - CDN download with configurable concurrency
 - `Sources/FigmaAPI/Client/RateLimitedClient.swift` - Rate-limiting wrapper
 - `Sources/FigmaAPI/Client/RetryPolicy.swift` - Retry with exponential backoff
-- `Sources/ExFig/Cache/CheckpointTracker.swift` - Checkpoint management for resumable exports
+- `Sources/ExFigCLI/Cache/CheckpointTracker.swift` - Checkpoint management for resumable exports
 
 ## Defaults
 

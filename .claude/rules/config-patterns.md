@@ -1,48 +1,53 @@
 ---
 paths:
-  - "Sources/ExFig/Input/Params.swift"
-  - "Sources/ExFig/Subcommands/Export/**"
-  - "Sources/ExFig/Loaders/**"
+  - "Sources/ExFigCLI/Input/PKLConfig*.swift"
+  - "Sources/ExFigCLI/Subcommands/Export/**"
+  - "Sources/ExFigCLI/Loaders/**"
 ---
 
 # Multi-Entry Configuration Patterns
 
-This rule covers Icons, Colors, and Images multi-entry configuration patterns.
+This rule covers Icons, Colors, and Images multi-entry configuration patterns using PKL.
 
-## Multiple Icons Configuration
+## PKL Entry Types
 
-Icons can be configured as a single object (legacy) or array (new format) in `Params.swift`:
+Each platform defines entry types in PKL schemas (`Sources/ExFigCLI/Resources/Schemas/`):
 
-```swift
-// IconsConfiguration enum handles both formats via custom Decodable
-enum IconsConfiguration: Decodable {
-    case single(Icons)      // Legacy: icons: { format: svg, ... }
-    case multiple([IconsEntry])  // New: icons: [{ figmaFrameName: "Actions", ... }]
+| PKL Type             | Extends              | Platform fields                                              |
+| -------------------- | -------------------- | ------------------------------------------------------------ |
+| `iOS.IconsEntry`     | `Common.FrameSource` | format, assetsFolder, nameStyle, renderMode, codeConnectSwift |
+| `iOS.ColorsEntry`    | `Common.VariablesSource` | useColorAssets, assetsFolder, colorSwift, swiftuiColorSwift |
+| `iOS.ImagesEntry`    | `Common.FrameSource` | assetsFolder, scales, sourceFormat, outputFormat, heicOptions |
+| `Android.IconsEntry` | `Common.FrameSource` | format, output, nameStyle, composeIconFormat                 |
+| `Android.ColorsEntry`| `Common.VariablesSource` | xmlOutputFileName, composePackageName, colorKotlin        |
+| `Android.ImagesEntry`| `Common.FrameSource` | format, output, scales, webpOptions                          |
+| `Flutter.IconsEntry` | `Common.FrameSource` | output, nameStyle, className                                 |
+| `Flutter.ColorsEntry`| `Common.VariablesSource` | output, className                                        |
+| `Flutter.ImagesEntry`| `Common.FrameSource` | output, scales, format                                       |
+| `Web.IconsEntry`     | `Common.FrameSource` | outputDirectory, nameStyle, className                        |
+| `Web.ColorsEntry`    | `Common.VariablesSource` | outputDirectory, cssFileName, jsonFileName               |
 
-    var entries: [IconsEntry]  // Unified access to all entries
-    var isMultiple: Bool       // Check format type
+Consumer configs declare entries as `Listing<Entry>`:
+
+```pkl
+ios {
+  icons = new Listing {
+    new iOS.IconsEntry { figmaFrameName = "Actions"; assetsFolder = "Actions" }
+    new iOS.IconsEntry { figmaFrameName = "Nav"; assetsFolder = "Nav" }
+  }
 }
-
-// IconsLoaderConfig passes frame-specific settings to loader
-let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
-let loader = IconsLoader(client: client, params: params, platform: .ios, logger: logger, config: config)
 ```
 
-**Key types:**
+## Per-Entry Field Fallback
 
-| Type                 | Purpose                                                                                                   |
-| -------------------- | --------------------------------------------------------------------------------------------------------- |
-| `IconsConfiguration` | Enum with `.single`/`.multiple` for backward compat                                                       |
-| `IconsEntry`         | Per-frame config (figmaFrameName, format, assetsFolder, nameValidateRegexp, nameReplaceRegexp, nameStyle) |
-| `IconsLoaderConfig`  | Sendable struct passed to IconsLoader for frame settings                                                  |
+Entry fields override `common` settings. Fallback order in Swift export code:
 
-**Per-entry fields with fallback:**
-
-| Field                | Fallback Order                                                           |
-| -------------------- | ------------------------------------------------------------------------ |
-| `figmaFrameName`     | entry -> `common.icons.figmaFrameName` -> `"Icons"`                      |
-| `nameValidateRegexp` | entry -> `common.icons.nameValidateRegexp` -> `nil`                      |
-| `nameReplaceRegexp`  | entry -> `common.icons.nameReplaceRegexp` -> `nil`                       |
+| Field                | Fallback Order                                                            |
+| -------------------- | ------------------------------------------------------------------------- |
+| `figmaFrameName`     | entry -> `common.icons.figmaFrameName` -> `"Icons"` / `"Illustrations"`   |
+| `figmaPageName`      | entry -> `common.icons.figmaPageName` -> `nil`                            |
+| `nameValidateRegexp` | entry -> `common.icons.nameValidateRegexp` -> `nil`                       |
+| `nameReplaceRegexp`  | entry -> `common.icons.nameReplaceRegexp` -> `nil`                        |
 | `nameStyle`          | entry -> platform default (iOS: `nil`, Android/Flutter/Web: `.snakeCase`) |
 
 **Fallback logic in export files:**
@@ -56,35 +61,40 @@ let processor = ImagesProcessor(
 )
 ```
 
-## Multiple Colors Configuration
-
-Colors can be configured as a single object (legacy) or array (new format) in `Params.swift`:
+**Loader config construction:**
 
 ```swift
-// ColorsConfiguration enum handles both formats via custom Decodable
-enum ColorsConfiguration: Decodable {
-    case single(Colors)      // Legacy: colors: { useColorAssets: true, ... }
-    case multiple([ColorsEntry])  // New: colors: [{ tokensFileId: "...", ... }]
-
-    var entries: [ColorsEntry]  // Unified access to all entries
-    var isMultiple: Bool        // Check format type
-}
-
-// Each platform has its own ColorsEntry with platform-specific output fields
-// iOS: useColorAssets, assetsFolder, colorSwift, swiftuiColorSwift
-// Android: xmlOutputFileName, xmlDisabled, composePackageName, colorKotlin
-// Flutter: output, className
+// IconsLoaderConfig passes per-entry settings to loader
+let config = IconsLoaderConfig.forIOS(entry: entry, params: params)
+let loader = IconsLoader(client: client, params: params, platform: .ios, logger: logger, config: config)
 ```
 
 **Key types:**
 
-| Type                  | Purpose                                                    |
-| --------------------- | ---------------------------------------------------------- |
-| `ColorsConfiguration` | Enum with `.single`/`.multiple` for backward compat        |
-| `ColorsEntry`         | Per-collection config (tokensFileId, tokensCollectionName) |
+| Type                | Purpose                                                  |
+| ------------------- | -------------------------------------------------------- |
+| `IconsLoaderConfig` | Sendable struct passed to IconsLoader for frame settings |
+| `ImagesLoaderConfig`| Sendable struct passed to ImagesLoader for frame settings|
 
-**Note:** Colors array format is self-contained - each entry specifies its own Figma Variables source (`tokensFileId`,
-`tokensCollectionName`, mode names) and output paths. Legacy format uses `common.variablesColors` for source.
+## Colors Entry Pattern
+
+Each colors entry is self-contained — specifies its own Figma Variables source and output paths:
+
+```pkl
+ios {
+  colors = new Listing {
+    new iOS.ColorsEntry {
+      tokensFileId = "FILE_ID"
+      tokensCollectionName = "Design Tokens"
+      lightModeName = "Light"
+      darkModeName = "Dark"
+      colorSwift = "Colors.swift"
+    }
+  }
+}
+```
+
+When entries omit source fields, they fall back to `common.variablesColors`.
 
 ## Figma codeSyntax Sync
 
@@ -94,7 +104,7 @@ The `CodeSyntaxSyncer` writes generated code names back to Figma Variables so de
 
 | File                                                      | Purpose                              |
 | --------------------------------------------------------- | ------------------------------------ |
-| `Sources/ExFig/Sync/CodeSyntaxSyncer.swift`               | Core sync logic with name processing |
+| `Sources/ExFigCLI/Sync/CodeSyntaxSyncer.swift`            | Core sync logic with name processing |
 | `Sources/FigmaAPI/Model/VariableUpdate.swift`             | Request/response models for POST API |
 | `Sources/FigmaAPI/Endpoint/UpdateVariablesEndpoint.swift` | POST endpoint implementation         |
 
@@ -124,31 +134,6 @@ if entry.syncCodeSyntax == true, let template = entry.codeSyntaxTemplate {
 
 **Requirements:** Figma Enterprise plan, `file_variables:write` token scope, Edit file access.
 
-## Multiple Images Configuration
+## Images Frame Name Resolution
 
-Images can be configured as a single object (legacy) or array (new format) in `Params.swift`:
-
-```swift
-// ImagesConfiguration enum handles both formats via custom Decodable
-enum ImagesConfiguration: Decodable {
-    case single(Images)       // Legacy: images: { assetsFolder: "Illustrations", ... }
-    case multiple([ImagesEntry])  // New: images: [{ figmaFrameName: "Promo", ... }]
-
-    var entries: [ImagesEntry]  // Unified access to all entries
-    var isMultiple: Bool        // Check format type
-}
-
-// ImagesLoaderConfig passes frame-specific settings to loader
-let config = ImagesLoaderConfig.forIOS(entry: entry, params: params)
-let loader = ImagesLoader(client: client, params: params, platform: .ios, logger: logger, config: config)
-```
-
-**Key types:**
-
-| Type                  | Purpose                                                   |
-| --------------------- | --------------------------------------------------------- |
-| `ImagesConfiguration` | Enum with `.single`/`.multiple` for backward compat       |
-| `ImagesEntry`         | Per-frame config (figmaFrameName, scales, output paths)   |
-| `ImagesLoaderConfig`  | Sendable struct passed to ImagesLoader for frame settings |
-
-**Frame name resolution:** `entry.figmaFrameName` -> `params.common?.images?.figmaFrameName` -> `"Illustrations"`
+`entry.figmaFrameName` -> `params.common?.images?.figmaFrameName` -> `"Illustrations"`

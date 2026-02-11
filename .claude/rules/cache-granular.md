@@ -1,6 +1,6 @@
 ---
 paths:
-  - "Sources/ExFig/Cache/**"
+  - "Sources/ExFigCLI/Cache/**"
 ---
 
 # Granular Node-Level Cache
@@ -47,13 +47,13 @@ exfig batch --cache --experimental-granular-cache --force
 
 ## Key Files
 
-- `Sources/ExFig/Cache/GranularCacheManager.swift` - Per-node hash tracking
-- `Sources/ExFig/Cache/NodeHasher.swift` - FNV-1a hash computation with recursive children
-- `Sources/ExFig/Cache/FNV1aHasher.swift` - Pure Swift FNV-1a 64-bit implementation
+- `Sources/ExFigCLI/Cache/GranularCacheManager.swift` - Per-node hash tracking
+- `Sources/ExFigCLI/Cache/NodeHasher.swift` - FNV-1a hash computation with recursive children
+- `Sources/ExFigCLI/Cache/FNV1aHasher.swift` - Pure Swift FNV-1a 64-bit implementation
 - `Sources/FigmaAPI/Model/NodeHashableProperties.swift` - Hashable visual properties struct
 - `Sources/FigmaAPI/Model/FloatNormalization.swift` - Float normalization for stable hashing
-- `Sources/ExFig/Batch/SharedGranularCache.swift` - Shared cache struct for batch mode
-- `Sources/ExFig/Batch/BatchContext.swift` - Unified TaskLocal storage for all batch data
+- `Sources/ExFigCLI/Batch/SharedGranularCache.swift` - Shared cache struct for batch mode
+- `Sources/ExFigCLI/Batch/BatchContext.swift` - Unified TaskLocal storage for all batch data
 
 ## Batch Mode Behavior
 

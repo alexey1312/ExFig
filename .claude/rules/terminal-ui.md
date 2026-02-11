@@ -1,6 +1,6 @@
 ---
 paths:
-  - "Sources/ExFig/TerminalUI/**"
+  - "Sources/ExFigCLI/TerminalUI/**"
 ---
 
 # Terminal UI Patterns
@@ -49,7 +49,7 @@ try await ui.withProgress("Downloading", total: files.count) { progress in
 | `Spinner`                  | Animated spinner with message updates                 |
 | `ProgressBar`              | Progress bar with percentage and ETA                  |
 | `BatchProgressView`        | Multi-line per-config progress display for batch mode |
-| `BatchProgressViewStorage` | `@TaskLocal` injection for batch progress view        |
+| `BatchSharedState`         | Actor with single `@TaskLocal` for all batch state    |
 | `BatchProgressCallback`    | `@Sendable (Int, Int) -> Void` for batch progress     |
 | `Lock<T>`                  | Thread-safe state wrapper (NSLock-based, Sendable)    |
 | `ExFigWarning`             | Enum of all warning types for consistent messaging    |
@@ -87,8 +87,8 @@ for config in configs {
     await progressView.registerConfig(name: config.name)
 }
 
-// Inject via @TaskLocal to suppress individual export UI
-await BatchProgressViewStorage.$progressView.withValue(progressView) {
+// Inject via single @TaskLocal to suppress individual export UI
+await BatchSharedState.$current.withValue(batchState) {
     // Process configs in parallel
 }
 
@@ -101,7 +101,7 @@ await BatchProgressViewStorage.$progressView.withValue(progressView) {
 
 **Batch mode UI suppression:**
 
-- Individual export commands detect `BatchProgressViewStorage.progressView` via `@TaskLocal`
+- Individual export commands detect `BatchSharedState.current?.progressView` via `@TaskLocal`
 - Spinners and progress bars are automatically suppressed in batch mode
 - Critical logs (errors/warnings) coordinate with progress display via `clearForLog()` -> print -> `render()`
 
@@ -145,7 +145,7 @@ print(NooraUI.format(text))
 // .success(String)   - Success color
 ```
 
-**NooraUI adapter** (`Sources/ExFig/TerminalUI/NooraUI.swift`):
+**NooraUI adapter** (`Sources/ExFigCLI/TerminalUI/NooraUI.swift`):
 
 | Method                                      | Purpose                               |
 | ------------------------------------------- | ------------------------------------- |
@@ -245,7 +245,7 @@ RetryLogger.formatRetryMessage(context)
 
 **Adding new warnings:**
 
-1. Add case to `ExFigWarning` enum in `Sources/ExFig/TerminalUI/ExFigWarning.swift`
+1. Add case to `ExFigWarning` enum in `Sources/ExFigCLI/TerminalUI/ExFigWarning.swift`
 2. Add formatting in `ExFigWarningFormatter.format(_:)` - use compact `key=value` for simple warnings, multiline for complex
 3. Call via `ui.warning(.yourNewCase)`
 
