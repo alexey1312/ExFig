@@ -34,6 +34,12 @@ public protocol Common_FrameSource: Common_NameProcessing {
 }
 
 extension Common {
+    /// WebP encoding mode.
+    public enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case lossy = "lossy"
+        case lossless = "lossless"
+    }
+
     /// Naming style for generated code identifiers.
     public enum NameStyle: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case camelCase = "camelCase"
@@ -141,6 +147,22 @@ extension Common {
         public init() {}
     }
 
+    /// WebP encoding options.
+    public struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common#WebpOptions"
+
+        /// Encoding mode.
+        public var encoding: WebpEncoding
+
+        /// Quality for lossy encoding (0-100).
+        public var quality: Int?
+
+        public init(encoding: WebpEncoding, quality: Int?) {
+            self.encoding = encoding
+            self.quality = quality
+        }
+    }
+
     /// Cache configuration for tracking Figma file versions.
     public struct Cache: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "Common#Cache"
@@ -172,8 +194,10 @@ extension Common {
         public var figmaFileId: String?
 
         /// Figma component property name for RTL variant detection.
-        /// When set, components with this variant property are marked as RTL.
-        /// RTL=On variants are automatically skipped (iOS/Android mirror automatically).
+        /// When set, components in a COMPONENT_SET with this variant property
+        /// have their RTL=Off variant exported with RTL metadata (isRTL flag).
+        /// RTL=On variants are automatically skipped — the base variant is
+        /// mirrored at runtime by the platform (iOS languageDirection, Android autoMirrored).
         /// Set to null to disable variant-based RTL detection.
         public var rtlProperty: String?
 

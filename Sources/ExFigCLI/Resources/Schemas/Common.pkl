@@ -16,6 +16,20 @@ typealias VectorFormat = "pdf"|"svg"
 /// - `svg`: Download SVG and rasterize locally with resvg (higher quality)
 typealias SourceFormat = "png"|"svg"
 
+// MARK: - WebP Options
+
+/// WebP encoding mode.
+typealias WebpEncoding = "lossy"|"lossless"
+
+/// WebP encoding options.
+class WebpOptions {
+  /// Encoding mode.
+  encoding: WebpEncoding = "lossy"
+
+  /// Quality for lossy encoding (0-100).
+  quality: Int(isBetween(0, 100))?
+}
+
 // MARK: - Cache
 
 /// Cache configuration for tracking Figma file versions.

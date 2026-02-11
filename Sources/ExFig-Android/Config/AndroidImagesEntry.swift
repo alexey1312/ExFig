@@ -9,11 +9,11 @@ public typealias AndroidImagesEntry = Android.ImagesEntry
 public typealias AndroidImageFormat = Android.ImageFormat
 
 /// Typealias for generated WebpOptions.
-public typealias WebpOptions = Android.WebpOptions
+public typealias WebpOptions = Common.WebpOptions
 
 // MARK: - WebpOptions Convenience
 
-public extension Android.WebpOptions {
+public extension Common.WebpOptions {
     /// Whether to use lossless encoding.
     var lossless: Bool {
         encoding == .lossless

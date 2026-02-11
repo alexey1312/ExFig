@@ -2,7 +2,6 @@
 module Flutter
 
 import "Common.pkl"
-import "Android.pkl"
 
 /// Flutter image format.
 typealias ImageFormat = "svg"|"png"|"webp"
@@ -67,7 +66,7 @@ class ImagesEntry extends Common.FrameSource {
   format: ImageFormat? = "png"
 
   /// WebP encoding options.
-  webpOptions: Android.WebpOptions?
+  webpOptions: Common.WebpOptions?
 
   /// Source format for fetching from Figma API.
   sourceFormat: Common.SourceFormat?

@@ -74,7 +74,7 @@ android = new Android.AndroidConfig {
       format = "webp"
       output = "drawable"
       mainRes = "media/src/main/res"
-      webpOptions = new Android.WebpOptions {
+      webpOptions = new Common.WebpOptions {
         quality = 90
       }
     }

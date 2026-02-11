@@ -196,6 +196,17 @@ When adding fields to `FrameSource` (PKL) / `SourceInput` (ExFigCore), also upda
 5. Inline `SourceInput(` constructions in exporters (`iOSImagesExporter.svgSourceInput`, `AndroidImagesExporter.loadAndProcessSVG`)
 6. "Through" tests in `IconsLoaderConfigTests` — use `source.field` not hardcoded `nil`
 
+### Moving/Renaming PKL Types Between Modules
+
+When relocating a type (e.g., `Android.WebpOptions` → `Common.WebpOptions`), update ALL reference sites:
+
+1. PKL schemas (`Schemas/*.pkl`) — definition + imports + field types
+2. Codegen (`./bin/mise run codegen:pkl` or `.build/debug/pkl-gen-swift`)
+3. Swift bridging (`Sources/ExFig-*/Config/*Entry.swift`) — typealiases + extensions
+4. Init-template configs (`Sources/ExFigCLI/Resources/*Config.swift`) — `new Type { }` refs
+5. PKL examples (`Schemas/examples/*.pkl`)
+6. DocC docs (`ExFig.docc/**/*.md`), CONFIG.md, MIGRATION.md
+
 ### Module Boundaries
 
 ExFigCore does NOT import FigmaAPI. Constants on `Component` (FigmaAPI, extended in ExFigCLI) are

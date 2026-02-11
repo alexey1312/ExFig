@@ -656,7 +656,7 @@ images = new Android.ImagesEntry {
   format = "webp"
   output = "figma-import-images"
   scales = new Listing { 1; 2; 3 }
-  webpOptions = new Android.WebpOptions {
+  webpOptions = new Common.WebpOptions {
     encoding = "lossy"
     quality = 90
   }
@@ -772,23 +772,23 @@ images = new Flutter.ImagesEntry {
   scales = new Listing { 1; 2; 3 }
   // nameStyle = "snake_case"
   // sourceFormat = "svg"
-  // webpOptions = new Android.WebpOptions {
+  // webpOptions = new Common.WebpOptions {
   //   encoding = "lossy"
   //   quality = 90
   // }
 }
 ```
 
-| Field          | Type                   | Required | Description                               |
-| -------------- | ---------------------- | -------- | ----------------------------------------- |
-| `output`       | `String`               | Yes      | Output directory for image files          |
-| `dartFile`     | `String?`              | No       | Dart file for image constants             |
-| `className`    | `String?`              | No       | Class name (default: `AppImages`)         |
-| `format`       | `ImageFormat?`         | No       | Output format: `"svg"`, `"png"`, `"webp"` |
-| `scales`       | `Listing<Number>?`     | No       | Scale factors (default: `[1, 2, 3]`)      |
-| `webpOptions`  | `Android.WebpOptions?` | No       | WebP encoding options                     |
-| `sourceFormat` | `SourceFormat?`        | No       | Source from Figma: `"png"` or `"svg"`     |
-| `nameStyle`    | `NameStyle?`           | No       | Name style for generated names            |
+| Field          | Type                  | Required | Description                               |
+| -------------- | --------------------- | -------- | ----------------------------------------- |
+| `output`       | `String`              | Yes      | Output directory for image files          |
+| `dartFile`     | `String?`             | No       | Dart file for image constants             |
+| `className`    | `String?`             | No       | Class name (default: `AppImages`)         |
+| `format`       | `ImageFormat?`        | No       | Output format: `"svg"`, `"png"`, `"webp"` |
+| `scales`       | `Listing<Number>?`    | No       | Scale factors (default: `[1, 2, 3]`)      |
+| `webpOptions`  | `Common.WebpOptions?` | No       | WebP encoding options                     |
+| `sourceFormat` | `SourceFormat?`       | No       | Source from Figma: `"png"` or `"svg"`     |
+| `nameStyle`    | `NameStyle?`          | No       | Name style for generated names            |
 
 **Inherited from `FrameSource`:** `figmaFrameName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
@@ -965,7 +965,7 @@ android = new Android.AndroidConfig {
       output = "drawable-photos"
       format = "webp"
       scales = new Listing { 1; 1.5; 2; 3; 4 }
-      webpOptions = new Android.WebpOptions {
+      webpOptions = new Common.WebpOptions {
         encoding = "lossy"
         quality = 80
       }

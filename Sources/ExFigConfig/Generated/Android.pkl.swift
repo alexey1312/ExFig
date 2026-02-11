@@ -4,12 +4,6 @@ import PklSwift
 public enum Android {}
 
 extension Android {
-    /// WebP encoding mode.
-    public enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case lossy = "lossy"
-        case lossless = "lossless"
-    }
-
     /// Compose icon generation format.
     /// - `resourceReference`: Generates extension functions using painterResource(R.drawable.xxx)
     /// - `imageVector`: Generates ImageVector code directly from SVG data
@@ -25,100 +19,52 @@ extension Android {
         case webp = "webp"
     }
 
-    /// WebP encoding options.
-    public struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#WebpOptions"
+    /// Root Android platform configuration.
+    public struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#AndroidConfig"
 
-        /// Encoding mode.
-        public var encoding: WebpEncoding
+        /// Path to main res directory.
+        public var mainRes: String
 
-        /// Quality for lossy encoding (0-100).
-        public var quality: Int?
+        /// Resource package name (R class package).
+        public var resourcePackage: String?
 
-        public init(encoding: WebpEncoding, quality: Int?) {
-            self.encoding = encoding
-            self.quality = quality
-        }
-    }
+        /// Path to main src directory for Kotlin generation.
+        public var mainSrc: String?
 
-    /// Android platform configuration for ExFig.
-    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android"
+        /// Path to custom Stencil templates.
+        public var templatesPath: String?
 
-        public init() {}
-    }
+        /// Colors configuration entries.
+        public var colors: [ColorsEntry]?
 
-    /// Name transformation for theme attributes.
-    public struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#NameTransform"
+        /// Icons configuration entries.
+        public var icons: [IconsEntry]?
 
-        /// Target case style for attribute names.
-        public var style: Common.NameStyle?
+        /// Images configuration entries.
+        public var images: [ImagesEntry]?
 
-        /// Prefix to add to attribute names.
-        public var prefix: String?
-
-        /// Prefixes to strip from color names before transformation.
-        public var stripPrefixes: [String]?
-
-        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
-            self.style = style
-            self.prefix = prefix
-            self.stripPrefixes = stripPrefixes
-        }
-    }
-
-    /// Theme attributes configuration for generating attrs.xml and styles.xml.
-    public struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#ThemeAttributes"
-
-        /// Whether theme attributes generation is enabled.
-        public var enabled: Bool?
-
-        /// Path to attrs.xml relative to mainRes.
-        public var attrsFile: String?
-
-        /// Path to styles.xml relative to mainRes.
-        public var stylesFile: String?
-
-        /// Path to styles-night.xml relative to mainRes.
-        public var stylesNightFile: String?
-
-        /// Theme name used in markers (e.g., "Theme.MyApp.Main").
-        public var themeName: String
-
-        /// Custom marker start text.
-        public var markerStart: String?
-
-        /// Custom marker end text.
-        public var markerEnd: String?
-
-        /// Name transformation configuration.
-        public var nameTransform: NameTransform?
-
-        /// If true, create file with markers if missing.
-        public var autoCreateMarkers: Bool?
+        /// Typography configuration.
+        public var typography: Typography?
 
         public init(
-            enabled: Bool?,
-            attrsFile: String?,
-            stylesFile: String?,
-            stylesNightFile: String?,
-            themeName: String,
-            markerStart: String?,
-            markerEnd: String?,
-            nameTransform: NameTransform?,
-            autoCreateMarkers: Bool?
+            mainRes: String,
+            resourcePackage: String?,
+            mainSrc: String?,
+            templatesPath: String?,
+            colors: [ColorsEntry]?,
+            icons: [IconsEntry]?,
+            images: [ImagesEntry]?,
+            typography: Typography?
         ) {
-            self.enabled = enabled
-            self.attrsFile = attrsFile
-            self.stylesFile = stylesFile
-            self.stylesNightFile = stylesNightFile
-            self.themeName = themeName
-            self.markerStart = markerStart
-            self.markerEnd = markerEnd
-            self.nameTransform = nameTransform
-            self.autoCreateMarkers = autoCreateMarkers
+            self.mainRes = mainRes
+            self.resourcePackage = resourcePackage
+            self.mainSrc = mainSrc
+            self.templatesPath = templatesPath
+            self.colors = colors
+            self.icons = icons
+            self.images = images
+            self.typography = typography
         }
     }
 
@@ -219,6 +165,87 @@ extension Android {
         }
     }
 
+    /// Theme attributes configuration for generating attrs.xml and styles.xml.
+    public struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#ThemeAttributes"
+
+        /// Whether theme attributes generation is enabled.
+        public var enabled: Bool?
+
+        /// Path to attrs.xml relative to mainRes.
+        public var attrsFile: String?
+
+        /// Path to styles.xml relative to mainRes.
+        public var stylesFile: String?
+
+        /// Path to styles-night.xml relative to mainRes.
+        public var stylesNightFile: String?
+
+        /// Theme name used in markers (e.g., "Theme.MyApp.Main").
+        public var themeName: String
+
+        /// Custom marker start text.
+        public var markerStart: String?
+
+        /// Custom marker end text.
+        public var markerEnd: String?
+
+        /// Name transformation configuration.
+        public var nameTransform: NameTransform?
+
+        /// If true, create file with markers if missing.
+        public var autoCreateMarkers: Bool?
+
+        public init(
+            enabled: Bool?,
+            attrsFile: String?,
+            stylesFile: String?,
+            stylesNightFile: String?,
+            themeName: String,
+            markerStart: String?,
+            markerEnd: String?,
+            nameTransform: NameTransform?,
+            autoCreateMarkers: Bool?
+        ) {
+            self.enabled = enabled
+            self.attrsFile = attrsFile
+            self.stylesFile = stylesFile
+            self.stylesNightFile = stylesNightFile
+            self.themeName = themeName
+            self.markerStart = markerStart
+            self.markerEnd = markerEnd
+            self.nameTransform = nameTransform
+            self.autoCreateMarkers = autoCreateMarkers
+        }
+    }
+
+    /// Name transformation for theme attributes.
+    public struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#NameTransform"
+
+        /// Target case style for attribute names.
+        public var style: Common.NameStyle?
+
+        /// Prefix to add to attribute names.
+        public var prefix: String?
+
+        /// Prefixes to strip from color names before transformation.
+        public var stripPrefixes: [String]?
+
+        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
+            self.style = style
+            self.prefix = prefix
+            self.stripPrefixes = stripPrefixes
+        }
+    }
+
+    /// Android platform configuration for ExFig.
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android"
+
+        public init() {}
+    }
+
     /// Android icons entry configuration.
     public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#IconsEntry"
@@ -260,8 +287,10 @@ extension Android {
         public var figmaFileId: String?
 
         /// Figma component property name for RTL variant detection.
-        /// When set, components with this variant property are marked as RTL.
-        /// RTL=On variants are automatically skipped (iOS/Android mirror automatically).
+        /// When set, components in a COMPONENT_SET with this variant property
+        /// have their RTL=Off variant exported with RTL metadata (isRTL flag).
+        /// RTL=On variants are automatically skipped — the base variant is
+        /// mirrored at runtime by the platform (iOS languageDirection, Android autoMirrored).
         /// Set to null to disable variant-based RTL detection.
         public var rtlProperty: String?
 
@@ -326,7 +355,7 @@ extension Android {
         public var format: ImageFormat
 
         /// WebP encoding options.
-        public var webpOptions: WebpOptions?
+        public var webpOptions: Common.WebpOptions?
 
         /// Source format for fetching from Figma API.
         public var sourceFormat: Common.SourceFormat?
@@ -342,8 +371,10 @@ extension Android {
         public var figmaFileId: String?
 
         /// Figma component property name for RTL variant detection.
-        /// When set, components with this variant property are marked as RTL.
-        /// RTL=On variants are automatically skipped (iOS/Android mirror automatically).
+        /// When set, components in a COMPONENT_SET with this variant property
+        /// have their RTL=Off variant exported with RTL metadata (isRTL flag).
+        /// RTL=On variants are automatically skipped — the base variant is
+        /// mirrored at runtime by the platform (iOS languageDirection, Android autoMirrored).
         /// Set to null to disable variant-based RTL detection.
         public var rtlProperty: String?
 
@@ -359,7 +390,7 @@ extension Android {
             scales: [Float64]?,
             output: String,
             format: ImageFormat,
-            webpOptions: WebpOptions?,
+            webpOptions: Common.WebpOptions?,
             sourceFormat: Common.SourceFormat?,
             nameStyle: Common.NameStyle?,
             figmaFrameName: String?,
@@ -415,55 +446,6 @@ extension Android {
             self.nameReplaceRegexp = nameReplaceRegexp
             self.nameStyle = nameStyle
             self.composePackageName = composePackageName
-        }
-    }
-
-    /// Root Android platform configuration.
-    public struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#AndroidConfig"
-
-        /// Path to main res directory.
-        public var mainRes: String
-
-        /// Resource package name (R class package).
-        public var resourcePackage: String?
-
-        /// Path to main src directory for Kotlin generation.
-        public var mainSrc: String?
-
-        /// Path to custom Stencil templates.
-        public var templatesPath: String?
-
-        /// Colors configuration entries.
-        public var colors: [ColorsEntry]?
-
-        /// Icons configuration entries.
-        public var icons: [IconsEntry]?
-
-        /// Images configuration entries.
-        public var images: [ImagesEntry]?
-
-        /// Typography configuration.
-        public var typography: Typography?
-
-        public init(
-            mainRes: String,
-            resourcePackage: String?,
-            mainSrc: String?,
-            templatesPath: String?,
-            colors: [ColorsEntry]?,
-            icons: [IconsEntry]?,
-            images: [ImagesEntry]?,
-            typography: Typography?
-        ) {
-            self.mainRes = mainRes
-            self.resourcePackage = resourcePackage
-            self.mainSrc = mainSrc
-            self.templatesPath = templatesPath
-            self.colors = colors
-            self.icons = icons
-            self.images = images
-            self.typography = typography
         }
     }
 

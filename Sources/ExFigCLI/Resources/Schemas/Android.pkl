@@ -11,20 +11,6 @@ typealias ComposeIconFormat = "resourceReference"|"imageVector"
 /// Android image format.
 typealias ImageFormat = "svg"|"png"|"webp"
 
-/// WebP encoding mode.
-typealias WebpEncoding = "lossy"|"lossless"
-
-// MARK: - WebP Options
-
-/// WebP encoding options.
-class WebpOptions {
-  /// Encoding mode.
-  encoding: WebpEncoding = "lossy"
-
-  /// Quality for lossy encoding (0-100).
-  quality: Int(isBetween(0, 100))?
-}
-
 // MARK: - Theme Attributes
 
 /// Name transformation for theme attributes.
@@ -157,7 +143,7 @@ class ImagesEntry extends Common.FrameSource {
   format: ImageFormat = "png"
 
   /// WebP encoding options.
-  webpOptions: WebpOptions?
+  webpOptions: Common.WebpOptions?
 
   /// Source format for fetching from Figma API.
   sourceFormat: Common.SourceFormat?
