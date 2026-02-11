@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-02-11
+
+### Features
+
+- Add page-level filtering for icons and images  by @alexey1312 in [#54](https://github.com/alexey1312/ExFig/pull/54)
+
+
+### Refactor
+
+- Standardize WebpOptions type to Common across platforms  by @alexey1312 in [#53](https://github.com/alexey1312/ExFig/pull/53)
+
+
 ## [2.1.0] - 2026-02-10
 
 ### Features
