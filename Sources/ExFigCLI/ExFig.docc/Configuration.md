@@ -306,7 +306,7 @@ android = new Android.AndroidConfig {
     format = "webp"
 
     // WebP encoding options
-    webpOptions = new Android.WebpOptions {
+    webpOptions = new Common.WebpOptions {
       encoding = "lossy"
       quality = 90
     }

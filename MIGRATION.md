@@ -380,7 +380,7 @@ android = new Android.AndroidConfig {
     format = "webp"
     output = "figma-import-images"
     scales = new Listing { 1; 2; 3 }
-    webpOptions = new Android.WebpOptions {
+    webpOptions = new Common.WebpOptions {
       encoding = "lossy"
       quality = 90
     }
@@ -395,7 +395,7 @@ android = new Android.AndroidConfig {
 
 Key changes:
 
-- Nested objects like `themeAttributes` and `webpOptions` require explicit type names: `new Android.ThemeAttributes { ... }`, `new Android.WebpOptions { ... }`
+- Nested objects like `themeAttributes` and `webpOptions` require explicit type names: `new Android.ThemeAttributes { ... }`, `new Common.WebpOptions { ... }`
 - YAML inline arrays `[1, 2, 3]` become `new Listing { 1; 2; 3 }`
 - YAML inline arrays of strings `["a", "b"]` become `new Listing { "a"; "b" }` (or one per line)
 
@@ -448,7 +448,7 @@ flutter = new Flutter.FlutterConfig {
     format = "png"
     scales = new Listing { 1; 2; 3 }
     // WebP options (uncomment if format = "webp")
-    // webpOptions = new Android.WebpOptions {
+    // webpOptions = new Common.WebpOptions {
     //   encoding = "lossy"
     //   quality = 90
     // }
@@ -456,7 +456,7 @@ flutter = new Flutter.FlutterConfig {
 }
 ```
 
-Note: Flutter's `webpOptions` reuses the `Android.WebpOptions` type, so you need `import ".exfig/schemas/Android.pkl"` if using WebP options in a Flutter config.
+Note: `webpOptions` uses the `Common.WebpOptions` type, which is already available in all platform schemas.
 
 ### 7. Migrate the Web section
 

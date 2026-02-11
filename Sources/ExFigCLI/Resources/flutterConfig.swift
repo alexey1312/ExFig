@@ -117,7 +117,7 @@ flutter = new Flutter.FlutterConfig {
     // [optional] An array of asset scales that should be downloaded. The valid values are 1, 2, 3. The default value is [1, 2, 3].
     scales = new Listing { 1.0; 2.0; 3.0 }
     // [optional] Format options for webp format only
-    // webpOptions = new Android.WebpOptions {
+    // webpOptions = new Common.WebpOptions {
     //   // Encoding type: lossy or lossless
     //   encoding = "lossy"
     //   // Encoding quality in percents. Only for lossy encoding.

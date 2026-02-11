@@ -133,7 +133,7 @@ android = new Android.AndroidConfig {
     // [optional] An array of asset scales that should be downloaded. The valid values are 1 (mdpi), 1.5 (hdpi), 2 (xhdpi), 3 (xxhdpi), 4 (xxxhdpi). The default value is [1, 1.5, 2, 3, 4].
     scales = new Listing { 1.0; 2.0; 3.0 }
     // Format options for webp format only
-    webpOptions = new Android.WebpOptions {
+    webpOptions = new Common.WebpOptions {
       // Encoding type: lossy or lossless
       encoding = "lossy"
       // Encoding quality in percents. Only for lossy encoding.

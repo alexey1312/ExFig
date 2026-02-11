@@ -29,7 +29,7 @@ android = new Android.AndroidConfig {
     scales = new Listing { 1; 1.5; 2; 3; 4 }
 
     // WebP options (for webp format only)
-    webpOptions = new Android.WebpOptions {
+    webpOptions = new Common.WebpOptions {
       encoding = "lossy"
       quality = 90
     }
@@ -160,7 +160,7 @@ fun MyScreen() {
 android = new Android.AndroidConfig {
   images = new Android.ImagesEntry {
     format = "webp"
-    webpOptions = new Android.WebpOptions {
+    webpOptions = new Common.WebpOptions {
       encoding = "lossy"
       quality = 90
     }

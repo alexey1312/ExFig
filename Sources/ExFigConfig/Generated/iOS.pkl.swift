@@ -209,8 +209,10 @@ extension iOS {
         public var figmaFileId: String?
 
         /// Figma component property name for RTL variant detection.
-        /// When set, components with this variant property are marked as RTL.
-        /// RTL=On variants are automatically skipped (iOS/Android mirror automatically).
+        /// When set, components in a COMPONENT_SET with this variant property
+        /// have their RTL=Off variant exported with RTL metadata (isRTL flag).
+        /// RTL=On variants are automatically skipped — the base variant is
+        /// mirrored at runtime by the platform (iOS languageDirection, Android autoMirrored).
         /// Set to null to disable variant-based RTL detection.
         public var rtlProperty: String?
 
@@ -320,8 +322,10 @@ extension iOS {
         public var figmaFileId: String?
 
         /// Figma component property name for RTL variant detection.
-        /// When set, components with this variant property are marked as RTL.
-        /// RTL=On variants are automatically skipped (iOS/Android mirror automatically).
+        /// When set, components in a COMPONENT_SET with this variant property
+        /// have their RTL=Off variant exported with RTL metadata (isRTL flag).
+        /// RTL=On variants are automatically skipped — the base variant is
+        /// mirrored at runtime by the platform (iOS languageDirection, Android autoMirrored).
         /// Set to null to disable variant-based RTL detection.
         public var rtlProperty: String?
 

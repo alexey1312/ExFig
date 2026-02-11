@@ -271,7 +271,7 @@ When using `format = "webp"` with `encoding = "lossy"`, you must specify a quali
 flutter = new Flutter.FlutterConfig {
   images = new Flutter.ImagesEntry {
     format = "webp"
-    // webpOptions configured via Android.WebpOptions
+    // webpOptions configured via Common.WebpOptions
   }
 }
 ```
