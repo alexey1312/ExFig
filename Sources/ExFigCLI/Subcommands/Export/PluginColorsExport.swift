@@ -41,11 +41,16 @@ extension ExFigCommand.ExportColors {
 
         // Export via plugin
         let exporter = iOSColorsExporter()
-        let count = try await exporter.exportColors(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let count = try await ui.withParallelEntries(
+            "Exporting iOS colors (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportColors(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         try await syncCodeSyntaxIfNeeded(entries: entries, client: client, ui: ui)
 
@@ -128,11 +133,16 @@ extension ExFigCommand.ExportColors {
         )
 
         let exporter = AndroidColorsExporter()
-        let count = try await exporter.exportColors(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let count = try await ui.withParallelEntries(
+            "Exporting Android colors (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportColors(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)
@@ -159,11 +169,16 @@ extension ExFigCommand.ExportColors {
         )
 
         let exporter = FlutterColorsExporter()
-        let count = try await exporter.exportColors(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let count = try await ui.withParallelEntries(
+            "Exporting Flutter colors (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportColors(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)
@@ -190,11 +205,16 @@ extension ExFigCommand.ExportColors {
         )
 
         let exporter = WebColorsExporter()
-        let count = try await exporter.exportColors(
-            entries: entries,
-            platformConfig: platformConfig,
-            context: context
-        )
+        let count = try await ui.withParallelEntries(
+            "Exporting Web colors (\(entries.count) entries)...",
+            count: entries.count
+        ) {
+            try await exporter.exportColors(
+                entries: entries,
+                platformConfig: platformConfig,
+                context: context
+            )
+        }
 
         if !batchMode {
             await checkForUpdate(logger: ExFigCommand.logger)

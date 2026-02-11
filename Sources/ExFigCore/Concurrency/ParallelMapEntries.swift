@@ -1,9 +1,11 @@
 /// Default maximum number of entries processed in parallel.
-/// Balances throughput vs Figma API Tier 1 rate limits (10-20 req/min).
+/// Limits concurrent export pipelines to avoid excessive memory and I/O pressure.
+/// API rate limiting is handled separately by `RateLimitedClient`.
 public let defaultMaxParallelEntries = 5
 
 /// Process entries in parallel using a sliding window approach.
 ///
+/// - Empty input: returns empty array immediately.
 /// - Single entry: direct call, no task group overhead.
 /// - Multiple entries: sliding window with configurable concurrency.
 ///
@@ -14,6 +16,7 @@ public let defaultMaxParallelEntries = 5
 ///   - maxParallel: Maximum number of concurrent tasks (default: 5).
 ///   - process: Async closure to process each entry.
 /// - Returns: Array of results in the same order as input entries.
+/// - Throws: Rethrows errors from `process`. Remaining in-flight tasks are cancelled on first failure.
 public func parallelMapEntries<Entry: Sendable, Result: Sendable>(
     _ entries: [Entry],
     maxParallel: Int = defaultMaxParallelEntries,
@@ -58,6 +61,8 @@ public func parallelMapEntries<Entry: Sendable, Result: Sendable>(
             }
         }
 
+        // Safety: every index 0..<entries.count is assigned exactly once by the sliding window.
+        // If any task throws, the function exits via `for try await` before reaching this line.
         return results.map { $0! } // swiftlint:disable:this force_unwrapping
     }
 }

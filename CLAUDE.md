@@ -146,8 +146,11 @@ Per-config data (configId, priority, download callback): passed via `ConfigExecu
 `BatchProgressViewStorage` was removed — do NOT recreate it.
 
 **Entry-level parallelism:** All 12 platform exporters use `parallelMapEntries()` (in `ExFigCore/Concurrency/`)
-to process entries in parallel (max 5 concurrent). Spinner suppression handled automatically via
-`TerminalOutputManager.hasActiveAnimation` check in `TerminalUI.withSpinner()`.
+to process entries in parallel (max 5 concurrent). For multi-entry single export, `Plugin*Export` files
+wrap `exporter.export*()` in `ui.withParallelEntries()` which creates a parent spinner suppressing all
+inner output (`info/success/debug` + nested spinners + progress bars) via `hasActiveAnimation` check.
+Warnings/errors are NOT suppressed — `TerminalOutputManager.print()` coordinates them with active animation.
+For single entry, `withParallelEntries` is a no-op passthrough.
 
 ## Key Directories
 

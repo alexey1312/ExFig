@@ -30,6 +30,8 @@ final class TerminalUI: Sendable {
         guard outputMode != .quiet else { return }
         // Suppress in batch mode - progress view shows status
         if BatchSharedState.current?.progressView != nil { return }
+        // Suppress when parent spinner is active (parallel entries)
+        if TerminalOutputManager.shared.hasActiveAnimation { return }
         TerminalOutputManager.shared.print(NooraUI.formatInfo(message, useColors: useColors))
     }
 
@@ -38,6 +40,8 @@ final class TerminalUI: Sendable {
         guard outputMode != .quiet else { return }
         // Suppress in batch mode - progress view shows status
         if BatchSharedState.current?.progressView != nil { return }
+        // Suppress when parent spinner is active (parallel entries)
+        if TerminalOutputManager.shared.hasActiveAnimation { return }
         TerminalOutputManager.shared.print(NooraUI.formatSuccess(message, useColors: useColors))
     }
 
@@ -133,6 +137,8 @@ final class TerminalUI: Sendable {
         guard outputMode == .verbose else { return }
         // Suppress in batch mode - progress view shows status
         if BatchSharedState.current?.progressView != nil { return }
+        // Suppress when parent spinner is active (parallel entries)
+        if TerminalOutputManager.shared.hasActiveAnimation { return }
         TerminalOutputManager.shared.print(NooraUI.formatDebug(message, useColors: useColors))
     }
 
@@ -148,6 +154,22 @@ final class TerminalUI: Sendable {
         NooraUI.formatMultilineError(message, useColors: useColors)
     }
 
+    // MARK: - Parallel Entry Wrapper
+
+    /// Wrap exporter call in a parent spinner when processing multiple entries.
+    /// All inner output (spinners, info, success) is suppressed via `hasActiveAnimation`.
+    /// Warnings/errors still print through `TerminalOutputManager` coordination.
+    func withParallelEntries<T: Sendable>(
+        _ message: String,
+        count: Int,
+        operation: @Sendable () async throws -> T
+    ) async rethrows -> T {
+        guard count > 1 else {
+            return try await operation()
+        }
+        return try await withSpinner(message, operation: operation)
+    }
+
     // MARK: - Spinner Operations
 
     /// Execute an operation with a spinner
@@ -160,7 +182,8 @@ final class TerminalUI: Sendable {
             return try await operation()
         }
 
-        // Suppress when another spinner is active (parallel entries)
+        // Parallel entry processing may overlap; nested spinners would
+        // produce garbled ANSI output, so only the first spinner renders.
         if TerminalOutputManager.shared.hasActiveAnimation {
             return try await operation()
         }
@@ -202,7 +225,7 @@ final class TerminalUI: Sendable {
             return try await operation()
         }
 
-        // Suppress when another spinner is active (parallel entries)
+        // See first withSpinner overload for rationale
         if TerminalOutputManager.shared.hasActiveAnimation {
             return try await operation()
         }
@@ -246,7 +269,7 @@ final class TerminalUI: Sendable {
             return try await operation { _, _ in }
         }
 
-        // Suppress when another spinner is active (parallel entries)
+        // See first withSpinner overload for rationale
         if TerminalOutputManager.shared.hasActiveAnimation {
             return try await operation { _, _ in }
         }
@@ -289,6 +312,18 @@ final class TerminalUI: Sendable {
     ) async rethrows -> T {
         // Suppress in batch mode to avoid corrupting multi-line progress display
         if BatchSharedState.current?.progressView != nil {
+            let silentProgress = ProgressBar(
+                message: message,
+                total: max(total, 1),
+                useColors: false,
+                useAnimations: false,
+                isSilent: true
+            )
+            return try await operation(silentProgress)
+        }
+
+        // Suppress when another animation is active (parallel entries)
+        if TerminalOutputManager.shared.hasActiveAnimation {
             let silentProgress = ProgressBar(
                 message: message,
                 total: max(total, 1),

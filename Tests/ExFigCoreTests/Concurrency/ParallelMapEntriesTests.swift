@@ -10,7 +10,7 @@ struct ParallelMapEntriesTests {
         #expect(results.isEmpty)
     }
 
-    @Test("Single entry processes without task group")
+    @Test("Single entry returns correct result")
     func singleEntry() async throws {
         let results = try await parallelMapEntries([42]) { $0 * 2 }
         #expect(results == [84])
@@ -57,23 +57,21 @@ struct ParallelMapEntriesTests {
         }
     }
 
-    @Test("Parallel verification — concurrent execution is faster than sequential")
+    @Test("Parallel verification — concurrent execution observed")
     func parallelVerification() async throws {
-        let entryCount = 5
-        let delayMs = 50
-        let input = Array(0 ..< entryCount)
+        let counter = ConcurrencyCounter()
+        let input = Array(0 ..< 10)
 
-        let start = ContinuousClock.now
-        let results = try await parallelMapEntries(input, maxParallel: 5) { value in
-            try await Task.sleep(for: .milliseconds(delayMs))
+        let results = try await parallelMapEntries(input, maxParallel: 3) { value in
+            counter.enter()
+            try await Task.sleep(for: .milliseconds(50))
+            counter.exit()
             return value
         }
-        let elapsed = ContinuousClock.now - start
 
-        #expect(results == input)
-        // Sequential would take ~250ms (5 * 50ms); parallel should be ~50-100ms
-        // Use generous 200ms threshold to avoid flaky tests
-        #expect(elapsed < .milliseconds(200), "Expected parallel execution under 200ms, got \(elapsed)")
+        #expect(results == Array(0 ..< 10))
+        #expect(counter.peak > 1, "Expected concurrent execution, peak was \(counter.peak)")
+        #expect(counter.peak <= 3, "Peak concurrency \(counter.peak) exceeded maxParallel 3")
     }
 
     @Test("Aggregation pattern — sum of results")
@@ -82,5 +80,50 @@ struct ParallelMapEntriesTests {
         let counts = try await parallelMapEntries(input) { $0 }
         let total = counts.reduce(0, +)
         #expect(total == 60)
+    }
+
+    @Test("maxParallel=0 is clamped to 1")
+    func maxParallelZero() async throws {
+        let results = try await parallelMapEntries([1, 2, 3], maxParallel: 0) { $0 * 2 }
+        #expect(results == [2, 4, 6])
+    }
+
+    @Test("Negative maxParallel is clamped to 1")
+    func maxParallelNegative() async throws {
+        let results = try await parallelMapEntries([1, 2, 3], maxParallel: -1) { $0 * 2 }
+        #expect(results == [2, 4, 6])
+    }
+
+    @Test("maxParallel greater than entry count works correctly")
+    func maxParallelExceedsCount() async throws {
+        let results = try await parallelMapEntries([1, 2, 3], maxParallel: 100) { $0 * 2 }
+        #expect(results == [2, 4, 6])
+    }
+}
+
+// MARK: - Helpers
+
+private final class ConcurrencyCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _active = 0
+    private var _peak = 0
+
+    func enter() {
+        lock.lock()
+        _active += 1
+        _peak = max(_peak, _active)
+        lock.unlock()
+    }
+
+    func exit() {
+        lock.lock()
+        _active -= 1
+        lock.unlock()
+    }
+
+    var peak: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _peak
     }
 }
