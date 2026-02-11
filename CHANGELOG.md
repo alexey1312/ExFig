@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-02-11
+
+### Features
+
+- Add parallel entry processing for all platform exporters  by @alexey1312 in [#56](https://github.com/alexey1312/ExFig/pull/56)
+
+
 ## [2.2.2] - 2026-02-11
 
 ### Bug Fixes
