@@ -65,6 +65,7 @@ public struct VariableValue: Codable, Sendable {
     public var variableCollectionId: String
     public var valuesByMode: [String: ValuesByMode]
     public var description: String
+    public var deletedButReferenced: Bool?
 }
 
 public typealias VariableId = String

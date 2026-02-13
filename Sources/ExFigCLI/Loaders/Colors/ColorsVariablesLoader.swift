@@ -30,6 +30,7 @@ final class ColorsVariablesLoader: Sendable {
 
         let variables: [Variable] = tokenCollection.value.variableIds.compactMap { tokenId in
             guard let variableMeta = meta.variables[tokenId] else { return nil }
+            guard variableMeta.deletedButReferenced != true else { return nil }
             return mapVariableMetaToVariable(
                 variableMeta: variableMeta,
                 modeIds: extractModeIds(from: tokenCollection.value)

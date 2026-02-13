@@ -508,6 +508,60 @@ final class ColorsVariablesLoaderTests: XCTestCase {
         XCTAssertEqual(result.dark?.first?.red, 0.0) // Black
     }
 
+    // MARK: - Deleted Variables
+
+    func testSkipsDeletedButReferencedVariables() async throws {
+        // Given: One active color and one deleted-but-referenced color
+        let variablesMeta = VariablesMeta.makeWithAliases(
+            collectionName: "Colors",
+            modes: [("1:0", "Light"), ("1:1", "Dark")],
+            variables: [
+                (
+                    id: "1:2",
+                    name: "primary/background",
+                    collectionId: nil,
+                    valuesByMode: [
+                        "1:0": .color(r: 1.0, g: 1.0, b: 1.0, a: 1.0),
+                        "1:1": .color(r: 0.1, g: 0.1, b: 0.1, a: 1.0),
+                    ]
+                ),
+                (
+                    id: "1:3",
+                    name: "Background/(!!!DEPRICATED)Float",
+                    collectionId: nil,
+                    valuesByMode: [
+                        "1:0": .color(r: 0.5, g: 0.5, b: 0.5, a: 1.0),
+                        "1:1": .color(r: 0.3, g: 0.3, b: 0.3, a: 1.0),
+                    ]
+                ),
+            ],
+            deletedVariableIds: ["1:3"]
+        )
+
+        mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
+
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
+            tokensFileId: "test-file",
+            tokensCollectionName: "Colors",
+            lightModeName: "Light",
+            darkModeName: "Dark"
+        )
+
+        let loader = ColorsVariablesLoader(
+            client: mockClient,
+            variableParams: variablesParams,
+            filter: nil
+        )
+
+        // When: Loading colors
+        let result = try await loader.load()
+
+        // Then: Only active variable should be included
+        XCTAssertEqual(result.light.count, 1)
+        XCTAssertEqual(result.light.first?.name, "primary/background")
+        XCTAssertEqual(result.dark?.count, 1)
+    }
+
     // MARK: - Single API Call Verification
 
     func testUseSingleAPICall() async throws {
