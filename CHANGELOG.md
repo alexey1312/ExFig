@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.1] - 2026-02-13
+
+### Bug Fixes
+
+- Filter out deleted but referenced variables  by @alexey1312 in [#57](https://github.com/alexey1312/ExFig/pull/57)
+
+
+### Miscellaneous Tasks
+
+- Update CLAUDE.md by @alexey1312
+
+
 ## [2.3.0] - 2026-02-11
 
 ### Features
