@@ -105,6 +105,8 @@ FigmaClientError (Figma's own error JSON: {"status": 404, "err": "Not found"})
 
 `ValuesByMode` is a tagged union decoded via try-chain: `VariableAlias` → `PaintColor` → `String` → `Double` → `Bool`.
 
+`VariableValue.deletedButReferenced: Bool?` — Figma marks deleted-but-still-referenced variables. Filter in loaders with `guard meta.deletedButReferenced != true`.
+
 ## Testing
 
 Tests use `MockClient` (thread-safe via DispatchQueue) and JSON fixtures in `Tests/FigmaAPITests/Fixtures/`.
