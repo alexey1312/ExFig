@@ -260,6 +260,18 @@ When changing how node IDs are resolved (e.g., `codeConnectNodeId`), update ALL 
 3. `ImagePack` primaryNodeId in `loadVectorImages` (vector/SVG path)
 4. `ImagePack` primaryNodeId in `loadPNGImages` (raster path)
 
+### Modifying ColorsVariablesLoader Return Type
+
+`ColorsLoaderOutput` is a tuple typealias used by both `ColorsLoader` and `ColorsVariablesLoader`.
+Changing `load()` return type affects:
+
+1. `ColorsExportContextImpl.loadColors()` — main export flow
+2. `Download.Colors.exportW3C()` — download command (inside `@Sendable withSpinner` closure)
+3. `DownloadAll.exportColors()` — download all command (inside `@Sendable withSpinner` closure)
+4. ALL assertions in `ColorsVariablesLoaderTests` — `result.light` → `result.output.light` etc.
+
+**`withSpinner` gotcha:** Closure is `@Sendable` — cannot capture mutable vars. Return full result from closure.
+
 ### Adding a CLI Command
 
 See `ExFigCLI/CLAUDE.md` (Adding a New Subcommand).
@@ -334,23 +346,23 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Troubleshooting
 
-| Problem                     | Solution                                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------------------- |
-| pkl-gen-swift not found     | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift`     |
-| PKL FrameSource change      | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)             |
-| Build fails                 | `swift package clean && swift build`                                                         |
-| Tests fail                  | Check `FIGMA_PERSONAL_TOKEN` is set                                                          |
-| Formatting fails            | Run `./bin/mise run setup` to install tools                                                  |
-| test:filter no matches      | SPM converts hyphens→underscores: use `ExFig_FlutterTests` not `ExFig-FlutterTests`          |
-| Template errors             | Check Stencil syntax and context variables                                                   |
-| Linux test hangs            | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`          |
-| Android pathData long       | Simplify in Figma or use `--strict-path-validation`                                          |
-| PKL parse error 1           | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`        |
-| Test target won't compile   | Broken test files block entire target; use `swift test --filter Target.Class` after `build`  |
-| Test helper JSON decode     | `ContainingFrame` uses default Codable (camelCase: `nodeId`, `pageName`), NOT snake_case     |
-| Web entry test fails        | Web entry types use `outputDirectory` field, while Android/Flutter use `output`              |
-| Logger concatenation err    | `Logger.Message` (swift-log) requires interpolation `"\(a) \(b)"`, not concatenation `a + b` |
-| Deleted variables in output | Filter `VariableValue.deletedButReferenced != true` in variable loaders                      |
+| Problem                     | Solution                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------- |
+| pkl-gen-swift not found     | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift`       |
+| PKL FrameSource change      | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)               |
+| Build fails                 | `swift package clean && swift build`                                                           |
+| Tests fail                  | Check `FIGMA_PERSONAL_TOKEN` is set                                                            |
+| Formatting fails            | Run `./bin/mise run setup` to install tools                                                    |
+| test:filter no matches      | SPM converts hyphens→underscores: use `ExFig_FlutterTests` not `ExFig-FlutterTests`            |
+| Template errors             | Check Stencil syntax and context variables                                                     |
+| Linux test hangs            | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`            |
+| Android pathData long       | Simplify in Figma or use `--strict-path-validation`                                            |
+| PKL parse error 1           | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`          |
+| Test target won't compile   | Broken test files block entire target; use `swift test --filter Target.Class` after `build`    |
+| Test helper JSON decode     | `ContainingFrame` uses default Codable (camelCase: `nodeId`, `pageName`), NOT snake_case       |
+| Web entry test fails        | Web entry types use `outputDirectory` field, while Android/Flutter use `output`                |
+| Logger concatenation err    | `Logger.Message` (swift-log) requires interpolation `"\(a) \(b)"`, not concatenation `a + b`   |
+| Deleted variables in output | Filter `VariableValue.deletedButReferenced != true` in variable loaders AND `CodeSyntaxSyncer` |
 
 ## Additional Rules
 

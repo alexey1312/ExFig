@@ -18,7 +18,7 @@ struct ExFigWarningFormatter {
              .preFetchComponentsPartialFailure, .preFetchNodesPartialFailure,
              .granularCacheWithoutCache, .themeAttributesFileNotFound,
              .themeAttributesMarkerNotFound, .themeAttributesNameCollision,
-             .heicUnavailableFallingBackToPng:
+             .heicUnavailableFallingBackToPng, .deletedVariableAlias:
             formatCompact(warning)
 
         // Multiline format warnings
@@ -88,6 +88,9 @@ struct ExFigWarningFormatter {
 
         case .heicUnavailableFallingBackToPng:
             "HEIC encoding unavailable on this platform, using PNG format instead"
+
+        case let .deletedVariableAlias(tokenName, referencedName):
+            "Skipped deleted variable alias: token=\(tokenName), referenced=\(referencedName)"
 
         // Multiline cases handled in main format() method
         case .noAssetsFound, .invalidConfigsSkipped, .webIconsMissingSVGData, .webIconsConversionFailed:

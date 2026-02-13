@@ -54,12 +54,12 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let result = try await loader.load()
 
-        XCTAssertEqual(result.light.count, 1)
-        XCTAssertEqual(result.light.first?.name, "primary/background")
-        XCTAssertEqual(result.light.first?.red, 1.0)
+        XCTAssertEqual(result.output.light.count, 1)
+        XCTAssertEqual(result.output.light.first?.name, "primary/background")
+        XCTAssertEqual(result.output.light.first?.red, 1.0)
 
-        XCTAssertEqual(result.dark?.count, 1)
-        XCTAssertEqual(result.dark?.first?.red, 0.1)
+        XCTAssertEqual(result.output.dark?.count, 1)
+        XCTAssertEqual(result.output.dark?.first?.red, 0.1)
     }
 
     func testLoadVariablesColorsWithMultipleColors() async throws {
@@ -101,11 +101,11 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let result = try await loader.load()
 
-        XCTAssertEqual(result.light.count, 2)
-        XCTAssertEqual(result.dark?.count, 2)
+        XCTAssertEqual(result.output.light.count, 2)
+        XCTAssertEqual(result.output.dark?.count, 2)
 
-        let bgLight = result.light.first { $0.name == "primary/background" }
-        let textLight = result.light.first { $0.name == "primary/text" }
+        let bgLight = result.output.light.first { $0.name == "primary/background" }
+        let textLight = result.output.light.first { $0.name == "primary/text" }
 
         XCTAssertEqual(bgLight?.red, 1.0)
         XCTAssertEqual(textLight?.red, 0.0)
@@ -152,8 +152,8 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let result = try await loader.load()
 
-        XCTAssertEqual(result.light.count, 1)
-        XCTAssertEqual(result.light.first?.name, "button/primary")
+        XCTAssertEqual(result.output.light.count, 1)
+        XCTAssertEqual(result.output.light.first?.name, "button/primary")
     }
 
     // MARK: - All Modes
@@ -200,15 +200,15 @@ final class ColorsVariablesLoaderTests: XCTestCase {
 
         let result = try await loader.load()
 
-        XCTAssertEqual(result.light.count, 1)
-        XCTAssertEqual(result.dark?.count, 1)
-        XCTAssertEqual(result.lightHC?.count, 1)
-        XCTAssertEqual(result.darkHC?.count, 1)
+        XCTAssertEqual(result.output.light.count, 1)
+        XCTAssertEqual(result.output.dark?.count, 1)
+        XCTAssertEqual(result.output.lightHC?.count, 1)
+        XCTAssertEqual(result.output.darkHC?.count, 1)
 
-        XCTAssertEqual(result.light.first?.red, 1.0)
-        XCTAssertEqual(result.dark?.first?.red, 0.1)
-        XCTAssertEqual(result.lightHC?.first?.red, 0.95)
-        XCTAssertEqual(result.darkHC?.first?.red, 0.05)
+        XCTAssertEqual(result.output.light.first?.red, 1.0)
+        XCTAssertEqual(result.output.dark?.first?.red, 0.1)
+        XCTAssertEqual(result.output.lightHC?.first?.red, 0.95)
+        XCTAssertEqual(result.output.darkHC?.first?.red, 0.05)
     }
 
     // MARK: - Error Handling
@@ -314,11 +314,11 @@ final class ColorsVariablesLoaderTests: XCTestCase {
         let result = try await loader.load()
 
         // Then: Alias should be resolved to the primitive color value
-        XCTAssertEqual(result.light.count, 1)
-        XCTAssertEqual(result.light.first?.name, "background/primary")
-        XCTAssertEqual(result.light.first?.red, 1.0)
-        XCTAssertEqual(result.light.first?.green, 0.0)
-        XCTAssertEqual(result.light.first?.blue, 0.0)
+        XCTAssertEqual(result.output.light.count, 1)
+        XCTAssertEqual(result.output.light.first?.name, "background/primary")
+        XCTAssertEqual(result.output.light.first?.red, 1.0)
+        XCTAssertEqual(result.output.light.first?.green, 0.0)
+        XCTAssertEqual(result.output.light.first?.blue, 0.0)
     }
 
     func testResolvesNestedVariableAliases() async throws {
@@ -385,9 +385,9 @@ final class ColorsVariablesLoaderTests: XCTestCase {
         let result = try await loader.load()
 
         // Then: Nested aliases should be fully resolved
-        XCTAssertEqual(result.light.count, 1)
-        XCTAssertEqual(result.light.first?.name, "button/primary")
-        XCTAssertEqual(result.light.first?.blue, 1.0)
+        XCTAssertEqual(result.output.light.count, 1)
+        XCTAssertEqual(result.output.light.first?.name, "button/primary")
+        XCTAssertEqual(result.output.light.first?.blue, 1.0)
     }
 
     func testResolvesAliasWithCustomPrimitivesModeName() async throws {
@@ -442,8 +442,8 @@ final class ColorsVariablesLoaderTests: XCTestCase {
         let result = try await loader.load()
 
         // Then: Should use the specified primitives mode
-        XCTAssertEqual(result.light.count, 1)
-        XCTAssertEqual(result.light.first?.green, 1.0) // Brand mode has green=1.0
+        XCTAssertEqual(result.output.light.count, 1)
+        XCTAssertEqual(result.output.light.first?.green, 1.0) // Brand mode has green=1.0
     }
 
     func testResolvesAliasesAcrossMultipleModes() async throws {
@@ -504,8 +504,8 @@ final class ColorsVariablesLoaderTests: XCTestCase {
         let result = try await loader.load()
 
         // Then: Each mode should resolve to correct primitive
-        XCTAssertEqual(result.light.first?.red, 1.0) // White
-        XCTAssertEqual(result.dark?.first?.red, 0.0) // Black
+        XCTAssertEqual(result.output.light.first?.red, 1.0) // White
+        XCTAssertEqual(result.output.dark?.first?.red, 0.0) // Black
     }
 
     // MARK: - Deleted Variables
@@ -557,9 +557,67 @@ final class ColorsVariablesLoaderTests: XCTestCase {
         let result = try await loader.load()
 
         // Then: Only active variable should be included
-        XCTAssertEqual(result.light.count, 1)
-        XCTAssertEqual(result.light.first?.name, "primary/background")
-        XCTAssertEqual(result.dark?.count, 1)
+        XCTAssertEqual(result.output.light.count, 1)
+        XCTAssertEqual(result.output.light.first?.name, "primary/background")
+        XCTAssertEqual(result.output.dark?.count, 1)
+        XCTAssertTrue(result.warnings.isEmpty)
+    }
+
+    func testWarnsWhenAliasTargetIsDeletedButReferenced() async throws {
+        // Given: A token that aliases a deleted-but-referenced primitive
+        let variablesMeta = VariablesMeta.makeWithAliases(
+            collectionName: "Tokens",
+            modes: [("1:0", "Light")],
+            variables: [
+                (
+                    id: "token:1",
+                    name: "surface/primary",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .alias("prim:old")]
+                ),
+                (
+                    id: "prim:old",
+                    name: "gray/deprecated",
+                    collectionId: "VariableCollectionId:primitives",
+                    valuesByMode: ["2:0": .color(r: 0.5, g: 0.5, b: 0.5, a: 1.0)]
+                ),
+            ],
+            primitiveCollections: [
+                (
+                    id: "VariableCollectionId:primitives",
+                    name: "Primitives",
+                    defaultModeId: "2:0",
+                    modes: [("2:0", "Value")],
+                    variableIds: ["prim:old"]
+                ),
+            ],
+            deletedVariableIds: ["prim:old"]
+        )
+
+        mockClient.setResponse(variablesMeta, for: VariablesEndpoint.self)
+
+        let variablesParams = PKLConfig.Common.VariablesColors.make(
+            tokensFileId: "test-file",
+            tokensCollectionName: "Tokens",
+            lightModeName: "Light"
+        )
+
+        let loader = ColorsVariablesLoader(
+            client: mockClient,
+            variableParams: variablesParams,
+            filter: nil
+        )
+
+        // When: Loading colors
+        let result = try await loader.load()
+
+        // Then: Token should be skipped (alias target is deleted) with a warning
+        XCTAssertEqual(result.output.light.count, 0)
+        XCTAssertEqual(result.warnings.count, 1)
+        XCTAssertEqual(
+            result.warnings.first,
+            .deletedVariableAlias(tokenName: "surface/primary", referencedName: "gray/deprecated")
+        )
     }
 
     // MARK: - Single API Call Verification

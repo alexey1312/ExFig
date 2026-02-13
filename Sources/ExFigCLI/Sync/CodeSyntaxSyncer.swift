@@ -43,6 +43,7 @@ public struct CodeSyntaxSyncer: Sendable {
         let variableIds = collection.value.variableIds
         let variables: [(id: String, name: String)] = variableIds.compactMap { id in
             guard let variable = meta.variables[id] else { return nil }
+            guard variable.deletedButReferenced != true else { return nil }
             return (id: id, name: variable.name)
         }
 

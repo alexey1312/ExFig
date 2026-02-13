@@ -76,11 +76,15 @@ struct ColorsExportContextImpl: ColorsExportContext {
 
         let result = try await loader.load()
 
+        for warning in result.warnings {
+            ui.warning(warning)
+        }
+
         return ColorsLoadOutput(
-            light: result.light,
-            dark: result.dark ?? [],
-            lightHC: result.lightHC ?? [],
-            darkHC: result.darkHC ?? []
+            light: result.output.light,
+            dark: result.output.dark ?? [],
+            lightHC: result.output.lightHC ?? [],
+            darkHC: result.output.darkHC ?? []
         )
     }
 

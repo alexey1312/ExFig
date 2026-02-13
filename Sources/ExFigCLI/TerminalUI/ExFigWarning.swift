@@ -88,4 +88,9 @@ enum ExFigWarning: Sendable, Equatable {
 
     /// HEIC encoding is not available on this platform, falling back to PNG.
     case heicUnavailableFallingBackToPng
+
+    // MARK: - Variables Warnings
+
+    /// A color token references a deleted-but-referenced variable via alias.
+    case deletedVariableAlias(tokenName: String, referencedName: String)
 }
