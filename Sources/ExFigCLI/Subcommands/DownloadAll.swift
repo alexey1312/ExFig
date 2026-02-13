@@ -64,7 +64,7 @@ extension ExFigCommand.Download {
             let figmaParams = options.params.figma
             let commonParams = options.params.common
 
-            let colors = try await ui.withSpinner("Fetching colors...") {
+            let colorsResult = try await ui.withSpinner("Fetching colors...") {
                 if let variableParams = commonParams?.variablesColors {
                     let loader = ColorsVariablesLoader(
                         client: client,
@@ -85,10 +85,16 @@ extension ExFigCommand.Download {
                         colorParams: commonParams?.colors,
                         filter: nil
                     )
-                    return try await loader.load()
+                    let output = try await loader.load()
+                    return ColorsVariablesLoader.LoadResult(output: output, warnings: [])
                 }
             }
 
+            for warning in colorsResult.warnings {
+                ui.warning(warning)
+            }
+
+            let colors = colorsResult.output
             let outputURL = outputDir.appendingPathComponent("colors.json")
 
             switch jsonOptions.format {

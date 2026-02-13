@@ -17,7 +17,12 @@ final class ColorsVariablesLoader: Sendable {
         self.filter = filter
     }
 
-    func load() async throws -> ColorsLoaderOutput {
+    struct LoadResult: Sendable {
+        let output: ColorsLoaderOutput
+        let warnings: [ExFigWarning]
+    }
+
+    func load() async throws -> LoadResult {
         guard
             let tokensFileId = variableParams?.tokensFileId,
             let tokensCollectionName = variableParams?.tokensCollectionName
@@ -30,13 +35,16 @@ final class ColorsVariablesLoader: Sendable {
 
         let variables: [Variable] = tokenCollection.value.variableIds.compactMap { tokenId in
             guard let variableMeta = meta.variables[tokenId] else { return nil }
+            guard variableMeta.deletedButReferenced != true else { return nil }
             return mapVariableMetaToVariable(
                 variableMeta: variableMeta,
                 modeIds: extractModeIds(from: tokenCollection.value)
             )
         }
 
-        return mapVariablesToColorOutput(variables: variables, meta: meta)
+        var warnings: [ExFigWarning] = []
+        let output = mapVariablesToColorOutput(variables: variables, meta: meta, warnings: &warnings)
+        return LoadResult(output: output, warnings: warnings)
     }
 
     private func loadVariables(fileId: String) async throws -> VariablesEndpoint.Content {
@@ -78,7 +86,8 @@ final class ColorsVariablesLoader: Sendable {
 
     private func mapVariablesToColorOutput(
         variables: [Variable],
-        meta: VariablesEndpoint.Content
+        meta: VariablesEndpoint.Content,
+        warnings: inout [ExFigWarning]
     ) -> ColorsLoaderOutput {
         var colorOutput = Colors()
         for variable in variables {
@@ -87,39 +96,45 @@ final class ColorsVariablesLoader: Sendable {
                 mode: variable.valuesByMode.light,
                 colorsArray: &colorOutput.lightColors,
                 filter: filter,
-                meta: meta
+                meta: meta,
+                warnings: &warnings
             )
             handleColorMode(
                 variable: variable,
                 mode: variable.valuesByMode.dark,
                 colorsArray: &colorOutput.darkColors,
                 filter: filter,
-                meta: meta
+                meta: meta,
+                warnings: &warnings
             )
             handleColorMode(
                 variable: variable,
                 mode: variable.valuesByMode.lightHC,
                 colorsArray: &colorOutput.lightHCColors,
                 filter: filter,
-                meta: meta
+                meta: meta,
+                warnings: &warnings
             )
             handleColorMode(
                 variable: variable,
                 mode: variable.valuesByMode.darkHC,
                 colorsArray: &colorOutput.darkHCColors,
                 filter: filter,
-                meta: meta
+                meta: meta,
+                warnings: &warnings
             )
         }
         return (colorOutput.lightColors, colorOutput.darkColors, colorOutput.lightHCColors, colorOutput.darkHCColors)
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func handleColorMode(
         variable: Variable,
         mode: ValuesByMode?,
         colorsArray: inout [Color],
         filter: String?,
-        meta: VariablesEndpoint.Content
+        meta: VariablesEndpoint.Content,
+        warnings: inout [ExFigWarning]
     ) {
         if case let .color(color) = mode, doesColorMatchFilter(from: variable) {
             colorsArray.append(createColor(from: variable, color: color))
@@ -127,6 +142,13 @@ final class ColorsVariablesLoader: Sendable {
                   let variableMeta = meta.variables[variableAlias.id],
                   let variableCollectionId = meta.variableCollections[variableMeta.variableCollectionId]
         {
+            if variableMeta.deletedButReferenced == true {
+                warnings.append(.deletedVariableAlias(
+                    tokenName: variable.name,
+                    referencedName: variableMeta.name
+                ))
+                return
+            }
             let modeId = variableCollectionId.modes.first(where: {
                 $0.name == variableParams?.primitivesModeName
             })?.modeId ?? variableCollectionId.defaultModeId
@@ -135,7 +157,8 @@ final class ColorsVariablesLoader: Sendable {
                 mode: variableMeta.valuesByMode[modeId],
                 colorsArray: &colorsArray,
                 filter: filter,
-                meta: meta
+                meta: meta,
+                warnings: &warnings
             )
         }
     }

@@ -151,7 +151,7 @@ extension ExFigCommand.Download {
         ) async throws {
             let filterValue = filter
 
-            let colors = try await ui.withSpinner("Fetching colors...") {
+            let colorsResult = try await ui.withSpinner("Fetching colors...") {
                 if let variableParams = commonParams?.variablesColors {
                     let loader = ColorsVariablesLoader(
                         client: client,
@@ -172,12 +172,17 @@ extension ExFigCommand.Download {
                         colorParams: commonParams?.colors,
                         filter: filterValue
                     )
-                    return try await loader.load()
+                    let output = try await loader.load()
+                    return ColorsVariablesLoader.LoadResult(output: output, warnings: [])
                 }
             }
 
+            for warning in colorsResult.warnings {
+                ui.warning(warning)
+            }
+
             try ColorExportHelper.exportW3C(
-                colors: colors,
+                colors: colorsResult.output,
                 outputURL: outputURL,
                 compact: jsonOptions.compact
             )

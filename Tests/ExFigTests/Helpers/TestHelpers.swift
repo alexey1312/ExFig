@@ -284,7 +284,8 @@ extension VariablesMeta {
         primitiveCollections: [(
             id: String, name: String, defaultModeId: String, modes: [(id: String, name: String)],
             variableIds: [String]
-        )] = []
+        )] = [],
+        deletedVariableIds: Set<String> = []
     ) -> VariablesMeta {
         // swiftlint:enable function_body_length large_tuple
         let modesJson = modes.map { mode in
@@ -309,6 +310,9 @@ extension VariablesMeta {
             }.joined(separator: ", ")
 
             let collectionId = variable.collectionId ?? "VariableCollectionId:1:1"
+            let deletedJson = deletedVariableIds.contains(variable.id)
+                ? ",\n            \"deletedButReferenced\": true"
+                : ""
 
             return """
             "VariableID:\(variable.id)": {
@@ -316,7 +320,7 @@ extension VariablesMeta {
                 "name": "\(variable.name)",
                 "variableCollectionId": "\(collectionId)",
                 "valuesByMode": { \(valuesJson) },
-                "description": ""
+                "description": ""\(deletedJson)
             }
             """
         }.joined(separator: ", ")
