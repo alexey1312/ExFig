@@ -98,7 +98,7 @@ extension ExFigCommand {
 
             var totalCount = 0
 
-            // Export colors via plugin architecture
+            // Platform routing: hardcoded dispatch (PluginRegistry is available but not used for dispatch yet)
             if let ios = options.params.ios, let colors = ios.colors {
                 totalCount += try await exportiOSColorsViaPlugin(
                     entries: colors, ios: ios, client: client, ui: ui

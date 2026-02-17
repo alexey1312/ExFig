@@ -4,6 +4,10 @@ import ExFig_iOS
 import ExFig_Web
 import ExFigCore
 
+// NOTE: Currently the registry is not used for dynamic dispatch.
+// Export commands route to platforms via hardcoded if-let chains in ExportColors/Icons/Images/Typography.
+// The registry is retained for future extensibility (e.g., third-party plugins, dynamic platform discovery).
+
 /// Registry that manages platform plugins and routes config keys to the appropriate plugin.
 ///
 /// The registry is the central coordination point for the plugin system. It:

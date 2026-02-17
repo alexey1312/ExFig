@@ -11,22 +11,18 @@ import Foundation
 ///
 /// ## Conformance
 ///
-/// Conforming types are typically actors to ensure thread-safe state management:
+/// Conforming types are typically structs marked as Sendable:
 ///
 /// ```swift
-/// actor iOSColorsExporter: AssetExporter {
+/// struct iOSColorsExporter: ColorsExporter {
 ///     let assetType: AssetType = .colors
 ///
-///     func load() async throws -> [Color] {
-///         // Fetch colors from Figma Variables API
-///     }
-///
-///     func process(_ data: [Color]) async throws -> [ProcessedColor] {
-///         // Transform to iOS color format
-///     }
-///
-///     func export(_ data: [ProcessedColor]) async throws -> ExportResult {
-///         // Write xcassets and Swift extensions
+///     func exportColors(
+///         entries: [iOSColorsEntry],
+///         platformConfig: iOS.PlatformImpl,
+///         context: ColorsExportContext
+///     ) async throws -> ColorsExportResult {
+///         // Load via context, process, write files
 ///     }
 /// }
 /// ```

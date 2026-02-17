@@ -54,6 +54,7 @@ let package = Package(
                 .product(name: "LibPNG", package: "libpng"),
                 .product(name: "Noora", package: "Noora"),
             ],
+            exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/Schemas/"),
             ]
@@ -64,7 +65,8 @@ let package = Package(
             name: "ExFigCore",
             dependencies: [
                 .product(name: "YYJSON", package: "swift-yyjson"),
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // PKL configuration and shared config types
@@ -73,7 +75,8 @@ let package = Package(
             dependencies: [
                 "ExFigCore",
                 .product(name: "PklSwift", package: "pkl-swift"),
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Loads data via Figma REST API
@@ -81,7 +84,8 @@ let package = Package(
             name: "FigmaAPI",
             dependencies: [
                 "ExFigCore",
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Exports resources to Xcode project
@@ -91,6 +95,7 @@ let package = Package(
                 "ExFigCore", .product(name: "Stencil", package: "Stencil"),
                 "StencilSwiftKit",
             ],
+            exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/"),
             ]
@@ -102,7 +107,8 @@ let package = Package(
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Resvg", package: "swift-resvg"),
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Exports resources to Android project
@@ -115,6 +121,7 @@ let package = Package(
                 "StencilSwiftKit",
                 .product(name: "OrderedCollections", package: "swift-collections"),
             ],
+            exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/"),
             ]
@@ -124,6 +131,7 @@ let package = Package(
         .target(
             name: "FlutterExport",
             dependencies: ["ExFigCore", "Stencil", "StencilSwiftKit"],
+            exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/"),
             ]
@@ -133,6 +141,7 @@ let package = Package(
         .target(
             name: "WebExport",
             dependencies: ["ExFigCore", "Stencil", "StencilSwiftKit"],
+            exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/"),
             ]
@@ -147,7 +156,8 @@ let package = Package(
                 "ExFigCore",
                 "ExFigConfig",
                 "XcodeExport",
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Android platform plugin
@@ -158,7 +168,8 @@ let package = Package(
                 "ExFigConfig",
                 "AndroidExport",
                 "SVGKit",
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Flutter platform plugin
@@ -168,7 +179,8 @@ let package = Package(
                 "ExFigCore",
                 "ExFigConfig",
                 "FlutterExport",
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Web platform plugin
@@ -178,7 +190,8 @@ let package = Package(
                 "ExFigCore",
                 "ExFigConfig",
                 "WebExport",
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // MARK: - Tests
