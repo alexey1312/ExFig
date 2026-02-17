@@ -119,6 +119,9 @@ class IconsEntry extends Common.FrameSource {
 
   /// If true, exit with error when pathData exceeds 32,767 bytes.
   strictPathValidation: Boolean?
+
+  /// Path to generate Figma Code Connect Kotlin file for Jetpack Compose.
+  codeConnectKotlin: String?
 }
 
 // MARK: - Images
@@ -150,6 +153,9 @@ class ImagesEntry extends Common.FrameSource {
 
   /// Naming style for generated image names.
   nameStyle: Common.NameStyle? = "snake_case"
+
+  /// Path to generate Figma Code Connect Kotlin file for Jetpack Compose.
+  codeConnectKotlin: String?
 }
 
 // MARK: - Typography

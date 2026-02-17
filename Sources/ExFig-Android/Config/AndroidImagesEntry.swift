@@ -45,6 +45,11 @@ public extension Android.ImagesEntry {
         )
     }
 
+    /// URL for Code Connect Kotlin file output.
+    var codeConnectKotlinURL: URL? {
+        codeConnectKotlin.map { URL(fileURLWithPath: $0) }
+    }
+
     /// Effective source format, defaulting to PNG.
     var effectiveSourceFormat: ImageSourceFormat {
         guard let sourceFormat else { return .png }
