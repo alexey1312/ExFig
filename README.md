@@ -36,7 +36,7 @@ Flutter, and React/TypeScript.
 ### Platform Support
 
 - 📱 SwiftUI and UIKit (iOS/macOS)
-- 🔗 Figma Code Connect integration (iOS)
+- 🔗 Figma Code Connect integration (iOS, Android)
 - 🤖 Jetpack Compose and XML resources (Android)
 - ⚠️ Android pathData validation (errors on 32,767 bytes AAPT limit)
 - 🦋 Flutter / Dart

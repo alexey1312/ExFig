@@ -122,6 +122,13 @@ private extension AndroidIconsExporter {
             allFiles.append(composeFile)
         }
 
+        // Generate Code Connect if configured
+        if let codeConnectFile = try generateCodeConnect(
+            iconPairs: iconPairs, entry: entry, platformConfig: platformConfig, context: context
+        ) {
+            allFiles.append(codeConnectFile)
+        }
+
         let filesToWrite = allFiles
         try await context.withSpinner("Writing files to Android project...") {
             try context.writeFiles(filesToWrite)
@@ -157,10 +164,37 @@ private extension AndroidIconsExporter {
             allIconNames: nil
         )
     }
+
+    func generateCodeConnect(
+        iconPairs: [AssetPair<ImagePack>],
+        entry: AndroidIconsEntry,
+        platformConfig: AndroidPlatformConfig,
+        context: some IconsExportContext
+    ) throws -> FileContents? {
+        guard let url = entry.codeConnectKotlinURL else { return nil }
+        guard let packageName = entry.composePackageName else {
+            context.warning("Code Connect skipped: 'composePackageName' is required")
+            return nil
+        }
+        guard let resourcePackage = platformConfig.resourcePackage else {
+            context.warning("Code Connect skipped: 'resourcePackage' is required")
+            return nil
+        }
+        let exporter = AndroidCodeConnectExporter(
+            templatesPath: entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
+        )
+        return try exporter.generateCodeConnect(
+            imagePacks: iconPairs,
+            url: url,
+            packageName: packageName,
+            xmlResourcePackage: resourcePackage
+        )
+    }
 }
 
 // MARK: - ImageVector Export
 
+// swiftlint:disable function_body_length
 private extension AndroidIconsExporter {
     func exportAsImageVector(
         entry: AndroidIconsEntry,
@@ -229,8 +263,17 @@ private extension AndroidIconsExporter {
             return try await exporter.exportAsync(svgFiles: svgFiles)
         }
 
+        // Generate Code Connect if configured
+        var allKotlinFiles = kotlinFiles
+        if let codeConnectFile = try generateCodeConnect(
+            iconPairs: iconPairs, entry: entry, platformConfig: platformConfig, context: context
+        ) {
+            allKotlinFiles.append(codeConnectFile)
+        }
+
+        let filesToWrite = allKotlinFiles
         try await context.withSpinner("Writing Kotlin files to Android project...") {
-            try context.writeFiles(kotlinFiles)
+            try context.writeFiles(filesToWrite)
         }
 
         // Cleanup
@@ -240,6 +283,8 @@ private extension AndroidIconsExporter {
         return kotlinFiles.count
     }
 }
+
+// swiftlint:enable function_body_length
 
 // MARK: - Load & Process
 

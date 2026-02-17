@@ -251,7 +251,7 @@ Track 5 зависит от всех треков.
 - [x] 5.1.3 Run `./bin/mise run build` — compiles
 - [x] 5.1.4 Run `./bin/mise run test` — all tests pass (2151 tests)
 - [x] 5.1.5 Run `./bin/mise run format && ./bin/mise run lint` — no issues
-- [x] 5.1.6 Create unified Oymyakon-style test config (6-in-1) and verify it parses
+- [x] 5.1.6 Create unified multi-config test config (6-in-1) and verify it parses
 - [x] 5.1.7 Verify backward compatibility: existing example configs work unchanged
 
 ### 5.2 Documentation

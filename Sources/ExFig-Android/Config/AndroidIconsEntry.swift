@@ -33,6 +33,11 @@ public extension Android.IconsEntry {
         return nameStyle.coreNameStyle
     }
 
+    /// URL for Code Connect Kotlin file output.
+    var codeConnectKotlinURL: URL? {
+        codeConnectKotlin.map { URL(fileURLWithPath: $0) }
+    }
+
     /// Effective compose format, defaulting to resourceReference.
     var effectiveComposeFormat: Android.ComposeIconFormat {
         composeFormat ?? .resourceReference

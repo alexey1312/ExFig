@@ -127,6 +127,8 @@ android = new Android.AndroidConfig {
     // composeFormat = "resourceReference"
     // [optional] Extension target package for Compose icons
     // composeExtensionTarget = "androidx.compose.ui.graphics.vector.ImageVector"
+    // [optional] Path to generate Figma Code Connect Kotlin file for Jetpack Compose
+    // codeConnectKotlin = "./main/src/java/com/example/Icons.figma.kt"
   }
   // Parameters for exporting images
   images = new Android.ImagesEntry {
@@ -136,6 +138,8 @@ android = new Android.AndroidConfig {
     output = "figma-import-images"
     // [optional] An array of asset scales that should be downloaded. The valid values are 1 (mdpi), 1.5 (hdpi), 2 (xhdpi), 3 (xxhdpi), 4 (xxxhdpi). The default value is [1, 1.5, 2, 3, 4].
     scales = new Listing { 1.0; 2.0; 3.0 }
+    // [optional] Path to generate Figma Code Connect Kotlin file for Jetpack Compose
+    // codeConnectKotlin = "./main/src/java/com/example/Images.figma.kt"
     // Format options for webp format only
     webpOptions = new Common.WebpOptions {
       // Encoding type: lossy or lossless

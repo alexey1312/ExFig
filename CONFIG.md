@@ -636,6 +636,7 @@ icons = new Android.IconsEntry {
   composePackageName = "com.example"
   // composeFormat = "resourceReference"
   // composeExtensionTarget = "com.example.app.ui.AppIcons"
+  // codeConnectKotlin = "./main/src/java/com/example/Icons.figma.kt"
   // nameStyle = "snake_case"
   // pathPrecision = 4
   // strictPathValidation = false
@@ -651,6 +652,7 @@ icons = new Android.IconsEntry {
 | `nameStyle`              | `NameStyle?`         | No       | Name style for generated names                              |
 | `pathPrecision`          | `Int(1-6)?`          | No       | Coordinate precision for pathData (default: 4)              |
 | `strictPathValidation`   | `Boolean?`           | No       | Error on pathData > 32,767 bytes (default: false)           |
+| `codeConnectKotlin`      | `String?`            | No       | Path to generate Figma Code Connect Kotlin file             |
 
 **Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 
@@ -666,16 +668,19 @@ images = new Android.ImagesEntry {
     quality = 90
   }
   // sourceFormat = "svg"
+  // codeConnectKotlin = "./main/src/java/com/example/Images.figma.kt"
 }
 ```
 
-| Field          | Type               | Required | Description                                                          |
-| -------------- | ------------------ | -------- | -------------------------------------------------------------------- |
-| `format`       | `ImageFormat`      | Yes      | Output format: `"svg"`, `"png"`, or `"webp"`                         |
-| `output`       | `String`           | Yes      | Output directory for images (relative to mainRes)                    |
-| `scales`       | `Listing<Number>?` | No       | Scale factors (valid: 1, 1.5, 2, 3, 4; default: `[1, 1.5, 2, 3, 4]`) |
-| `webpOptions`  | `WebpOptions?`     | No       | WebP encoding options (when format is `"webp"`)                      |
-| `sourceFormat` | `SourceFormat?`    | No       | Source from Figma: `"png"` (default) or `"svg"`                      |
+| Field               | Type               | Required | Description                                                          |
+| ------------------- | ------------------ | -------- | -------------------------------------------------------------------- |
+| `format`            | `ImageFormat`      | Yes      | Output format: `"svg"`, `"png"`, or `"webp"`                         |
+| `output`            | `String`           | Yes      | Output directory for images (relative to mainRes)                    |
+| `scales`            | `Listing<Number>?` | No       | Scale factors (valid: 1, 1.5, 2, 3, 4; default: `[1, 1.5, 2, 3, 4]`) |
+| `webpOptions`       | `WebpOptions?`     | No       | WebP encoding options (when format is `"webp"`)                      |
+| `sourceFormat`      | `SourceFormat?`    | No       | Source from Figma: `"png"` (default) or `"svg"`                      |
+| `nameStyle`         | `NameStyle?`       | No       | Name style for generated names                                       |
+| `codeConnectKotlin` | `String?`          | No       | Path to generate Figma Code Connect Kotlin file                      |
 
 **Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 

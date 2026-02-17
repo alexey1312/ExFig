@@ -20,13 +20,14 @@ Orchestration (Figma fetching, processing, file writing) lives in `ExFig-Android
 
 ### Dual Output System
 
-Every exporter produces BOTH XML resources AND Kotlin Compose code:
+Exporters produce XML resources, Kotlin Compose code, or both:
 
 | Exporter                       | XML Output                                      | Compose Output                   |
 | ------------------------------ | ----------------------------------------------- | -------------------------------- |
 | AndroidColorExporter           | `values/colors.xml` + `values-night/colors.xml` | `Colors.kt`                      |
 | AndroidTypographyExporter      | `typography.xml`                                | `Typography.kt`                  |
 | AndroidComposeIconExporter     | (none)                                          | `Icons.kt`                       |
+| AndroidCodeConnectExporter     | (none)                                          | `*.figma.kt` (Code Connect)      |
 | AndroidImageVectorExporter     | (none)                                          | `IconName.kt` (ImageVector code) |
 | AndroidThemeAttributesExporter | `attrs.xml` + `styles.xml` content              | (none)                           |
 
@@ -34,13 +35,13 @@ XML generation can be disabled per-entry via `AndroidOutput.xmlDisabled`.
 
 ### Class Hierarchy
 
-`AndroidExporter` is the base class providing Stencil template loading and `FileContents` creation. `AndroidColorExporter`, `AndroidTypographyExporter`, `AndroidComposeIconExporter` inherit from it.
+`AndroidExporter` is the base class providing Stencil template loading and `FileContents` creation. `AndroidColorExporter`, `AndroidTypographyExporter`, `AndroidComposeIconExporter`, and `AndroidCodeConnectExporter` inherit from it.
 
 `AndroidImageVectorExporter` and `AndroidThemeAttributesExporter` are standalone (`Sendable`) — they don't use Stencil templates.
 
 ### Template System
 
-Six Stencil templates in `Resources/`: `colors.xml.stencil`, `Colors.kt.stencil`, `typography.xml.stencil`, `Typography.kt.stencil`, `Icons.kt.stencil`, `header.stencil`.
+Seven Stencil templates in `Resources/`: `colors.xml.stencil`, `Colors.kt.stencil`, `typography.xml.stencil`, `Typography.kt.stencil`, `Icons.kt.stencil`, `CodeConnect.figma.kt.stencil`, `header.stencil`.
 
 Template loading priority: custom `templatesPath` (from PKL config) > `Bundle.module` resources. StencilSwiftKit extensions are registered for all environments.
 

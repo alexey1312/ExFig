@@ -2,7 +2,7 @@
 
 ## Context
 
-ExFig v2.0 перешёл на PKL-конфигурацию с plugin architecture. Реальный проект Oymyakon-Atoms-iOS выявил ограничение: `xcassetsPath`, `templatesPath` задаются на уровне `iOSConfig`, а `figma.lightFileId` — на корневом уровне `figma`. Все entries в одном конфиге вынуждены использовать одинаковые значения, что приводит к 6 отдельным PKL-файлам вместо одного.
+ExFig v2.0 перешёл на PKL-конфигурацию с plugin architecture. Реальный проект выявил ограничение: `xcassetsPath`, `templatesPath` задаются на уровне `iOSConfig`, а `figma.lightFileId` — на корневом уровне `figma`. Все entries в одном конфиге вынуждены использовать одинаковые значения, что приводит к 6 отдельным PKL-файлам вместо одного.
 
 Текущие PKL-схемы также не используют default values — каждый конфиг обязан явно указывать очевидные значения (`nameStyle = "camelCase"`, `format = "pdf"`).
 

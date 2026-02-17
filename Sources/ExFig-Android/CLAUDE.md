@@ -59,6 +59,8 @@ entry.resolvedMainSrc(fallback: platformConfig.mainSrc)      // Kotlin src/ (col
 
 Both modes use temp directories for SVG download, then convert and write to final output.
 
+Both modes optionally generate Figma Code Connect (`.figma.kt`) when `codeConnectKotlin` is set. Requires `composePackageName` + `resourcePackage`.
+
 ### Images: Format Matrix
 
 `AndroidImagesExporter` handles 5 source→output combinations:
@@ -72,6 +74,8 @@ Both modes use temp directories for SVG download, then convert and write to fina
 | PNG    | PNG    | Download → density-qualified PNG                  |
 
 PNG→SVG is unsupported and throws `incompatibleFormat`.
+
+All 5 pipelines optionally generate Figma Code Connect (`.figma.kt`) when `codeConnectKotlin` is set. Uses `resourcePackage` as both package name and R class package.
 
 SVG images always use `scales: [1.0]` and `sourceFormat: .svg` — the `ImagesSourceInput` is constructed inline in `loadAndProcessSVG()`, NOT via `entry.imagesSourceInput()`.
 

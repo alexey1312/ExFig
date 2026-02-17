@@ -108,15 +108,21 @@ private extension AndroidImagesExporter {
             try? FileManager.default.removeItem(atPath: darkDir.path)
         }
 
-        let xmlFiles = localFiles.map { file -> FileContents in
+        var allFiles = localFiles.map { file -> FileContents in
             let dir = file.dark ? darkDir : lightDir
             let source = file.destination.url.deletingPathExtension().appendingPathExtension("xml")
             let fileURL = file.destination.file.deletingPathExtension().appendingPathExtension("xml")
             return FileContents(destination: Destination(directory: dir, file: fileURL), dataFile: source)
         }
 
+        try addCodeConnectFile(
+            to: &allFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
+
+        let filesToWrite = allFiles
         try await context.withSpinner("Writing files to Android project...") {
-            try context.writeFiles(xmlFiles)
+            try context.writeFiles(filesToWrite)
         }
 
         try? FileManager.default.removeItem(at: tempDirs.light)
@@ -173,6 +179,11 @@ private extension AndroidImagesExporter {
                 dark: file.dark
             ))
         }
+        try addCodeConnectFile(
+            to: &collectedFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
+
         let finalFiles = collectedFiles
 
         try await context.withSpinner("Writing files to Android project...") {
@@ -232,6 +243,12 @@ private extension AndroidImagesExporter {
                 dark: file.dark
             ))
         }
+
+        try addCodeConnectFile(
+            to: &collectedFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
+
         let finalFiles = collectedFiles
 
         try await context.withSpinner("Writing files to Android project...") {
@@ -274,7 +291,7 @@ private extension AndroidImagesExporter {
 
         let scales = entry.effectiveScales
         let isSingleScale = scales.count == 1
-        let finalFiles = localFiles.map { file -> FileContents in
+        var allFiles = localFiles.map { file -> FileContents in
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
@@ -285,8 +302,14 @@ private extension AndroidImagesExporter {
             )
         }
 
+        try addCodeConnectFile(
+            to: &allFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
+
+        let filesToWrite = allFiles
         try await context.withSpinner("Writing files to Android project...") {
-            try context.writeFiles(finalFiles)
+            try context.writeFiles(filesToWrite)
         }
 
         try? FileManager.default.removeItem(at: tempDir)
@@ -317,7 +340,7 @@ private extension AndroidImagesExporter {
 
         let scales = entry.effectiveScales
         let isSingleScale = scales.count == 1
-        let finalFiles = localFiles.map { file -> FileContents in
+        var allFiles = localFiles.map { file -> FileContents in
             let dirName = Drawable.scaleToDrawableName(file.scale, dark: file.dark, singleScale: isSingleScale)
             let directory = resolvedMainRes
                 .appendingPathComponent(entry.output)
@@ -328,13 +351,62 @@ private extension AndroidImagesExporter {
             )
         }
 
+        try addCodeConnectFile(
+            to: &allFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
+
+        let filesToWrite = allFiles
         try await context.withSpinner("Writing files to Android project...") {
-            try context.writeFiles(finalFiles)
+            try context.writeFiles(filesToWrite)
         }
 
         try? FileManager.default.removeItem(at: tempDir)
 
         return imagePairs.count
+    }
+}
+
+// MARK: - Code Connect
+
+private extension AndroidImagesExporter {
+    func generateCodeConnect(
+        imagePairs: [AssetPair<ImagePack>],
+        entry: AndroidImagesEntry,
+        platformConfig: AndroidPlatformConfig,
+        context: some ImagesExportContext
+    ) throws -> FileContents? {
+        guard let url = entry.codeConnectKotlinURL else { return nil }
+        guard let resourcePackage = platformConfig.resourcePackage else {
+            context.warning("Code Connect skipped: 'resourcePackage' is required")
+            return nil
+        }
+        let exporter = AndroidCodeConnectExporter(
+            templatesPath: entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
+        )
+        // Images use resourcePackage as both the Kotlin package and R class package,
+        // since image Code Connect files live alongside the resource module.
+        // Icons use the dedicated composePackageName which may differ.
+        return try exporter.generateCodeConnect(
+            imagePacks: imagePairs,
+            url: url,
+            packageName: resourcePackage,
+            xmlResourcePackage: resourcePackage
+        )
+    }
+
+    func addCodeConnectFile(
+        to files: inout [FileContents],
+        imagePairs: [AssetPair<ImagePack>],
+        entry: AndroidImagesEntry,
+        platformConfig: AndroidPlatformConfig,
+        context: some ImagesExportContext
+    ) throws {
+        if let codeConnectFile = try generateCodeConnect(
+            imagePairs: imagePairs, entry: entry, platformConfig: platformConfig, context: context
+        ) {
+            files.append(codeConnectFile)
+        }
     }
 }
 

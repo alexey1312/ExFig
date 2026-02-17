@@ -3,6 +3,12 @@ import PklSwift
 
 public enum Common {}
 
+public protocol Common_NameProcessing: PklRegisteredType, DynamicallyEquatable, Hashable, Sendable {
+    var nameValidateRegexp: String? { get }
+
+    var nameReplaceRegexp: String? { get }
+}
+
 public protocol Common_VariablesSource: Common_NameProcessing {
     var tokensFileId: String? { get }
 
@@ -19,12 +25,6 @@ public protocol Common_VariablesSource: Common_NameProcessing {
     var primitivesModeName: String? { get }
 }
 
-public protocol Common_NameProcessing: PklRegisteredType, DynamicallyEquatable, Hashable, Sendable {
-    var nameValidateRegexp: String? { get }
-
-    var nameReplaceRegexp: String? { get }
-}
-
 public protocol Common_FrameSource: Common_NameProcessing {
     var figmaFrameName: String? { get }
 
@@ -36,12 +36,6 @@ public protocol Common_FrameSource: Common_NameProcessing {
 }
 
 extension Common {
-    /// WebP encoding mode.
-    public enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case lossy = "lossy"
-        case lossless = "lossless"
-    }
-
     /// Naming style for generated code identifiers.
     public enum NameStyle: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case camelCase = "camelCase"
@@ -50,6 +44,12 @@ extension Common {
         case flatCase = "flatCase"
         case kebabCase = "kebab-case"
         case sCREAMING_SNAKE_CASE = "SCREAMING_SNAKE_CASE"
+    }
+
+    /// WebP encoding mode.
+    public enum WebpEncoding: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+        case lossy = "lossy"
+        case lossless = "lossless"
     }
 
     /// Vector format for icons.
@@ -64,6 +64,63 @@ extension Common {
     public enum SourceFormat: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case png = "png"
         case svg = "svg"
+    }
+
+    /// Common types and configurations shared across all platforms.
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common"
+
+        public init() {}
+    }
+
+    /// WebP encoding options.
+    public struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common#WebpOptions"
+
+        /// Encoding mode.
+        public var encoding: WebpEncoding
+
+        /// Quality for lossy encoding (0-100).
+        public var quality: Int?
+
+        public init(encoding: WebpEncoding, quality: Int?) {
+            self.encoding = encoding
+            self.quality = quality
+        }
+    }
+
+    /// Cache configuration for tracking Figma file versions.
+    public struct Cache: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common#Cache"
+
+        /// Enable version tracking cache.
+        public var enabled: Bool?
+
+        /// Custom path to cache file.
+        public var path: String?
+
+        public init(enabled: Bool?, path: String?) {
+            self.enabled = enabled
+            self.path = path
+        }
+    }
+
+    public typealias NameProcessing = Common_NameProcessing
+
+    /// Name validation and transformation configuration.
+    public struct NameProcessingImpl: NameProcessing {
+        public static let registeredIdentifier: String = "Common#NameProcessing"
+
+        /// Regex pattern for validating/capturing names.
+        public var nameValidateRegexp: String?
+
+        /// Replacement pattern using captured groups.
+        public var nameReplaceRegexp: String?
+
+        public init(nameValidateRegexp: String?, nameReplaceRegexp: String?) {
+            self.nameValidateRegexp = nameValidateRegexp
+            self.nameReplaceRegexp = nameReplaceRegexp
+        }
     }
 
     public typealias VariablesSource = Common_VariablesSource
@@ -121,63 +178,6 @@ extension Common {
             self.primitivesModeName = primitivesModeName
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
-        }
-    }
-
-    public typealias NameProcessing = Common_NameProcessing
-
-    /// Name validation and transformation configuration.
-    public struct NameProcessingImpl: NameProcessing {
-        public static let registeredIdentifier: String = "Common#NameProcessing"
-
-        /// Regex pattern for validating/capturing names.
-        public var nameValidateRegexp: String?
-
-        /// Replacement pattern using captured groups.
-        public var nameReplaceRegexp: String?
-
-        public init(nameValidateRegexp: String?, nameReplaceRegexp: String?) {
-            self.nameValidateRegexp = nameValidateRegexp
-            self.nameReplaceRegexp = nameReplaceRegexp
-        }
-    }
-
-    /// Common types and configurations shared across all platforms.
-    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Common"
-
-        public init() {}
-    }
-
-    /// WebP encoding options.
-    public struct WebpOptions: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Common#WebpOptions"
-
-        /// Encoding mode.
-        public var encoding: WebpEncoding
-
-        /// Quality for lossy encoding (0-100).
-        public var quality: Int?
-
-        public init(encoding: WebpEncoding, quality: Int?) {
-            self.encoding = encoding
-            self.quality = quality
-        }
-    }
-
-    /// Cache configuration for tracking Figma file versions.
-    public struct Cache: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Common#Cache"
-
-        /// Enable version tracking cache.
-        public var enabled: Bool?
-
-        /// Custom path to cache file.
-        public var path: String?
-
-        public init(enabled: Bool?, path: String?) {
-            self.enabled = enabled
-            self.path = path
         }
     }
 
