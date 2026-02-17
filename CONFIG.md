@@ -679,6 +679,7 @@ images = new Android.ImagesEntry {
 | `scales`            | `Listing<Number>?` | No       | Scale factors (valid: 1, 1.5, 2, 3, 4; default: `[1, 1.5, 2, 3, 4]`) |
 | `webpOptions`       | `WebpOptions?`     | No       | WebP encoding options (when format is `"webp"`)                      |
 | `sourceFormat`      | `SourceFormat?`    | No       | Source from Figma: `"png"` (default) or `"svg"`                      |
+| `nameStyle`         | `NameStyle?`       | No       | Name style for generated names                                       |
 | `codeConnectKotlin` | `String?`          | No       | Path to generate Figma Code Connect Kotlin file                      |
 
 **Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.

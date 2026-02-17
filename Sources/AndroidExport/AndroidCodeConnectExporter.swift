@@ -12,10 +12,10 @@ public final class AndroidCodeConnectExporter: AndroidExporter {
         super.init(templatesPath: templatesPath)
     }
 
-    /// Generates a Code Connect Kotlin file from image packs.
+    /// Generates a Code Connect Kotlin file from asset packs (icons or images).
     ///
     /// - Parameters:
-    ///   - imagePacks: Image packs with nodeId and fileId for Code Connect URLs.
+    ///   - imagePacks: Asset packs with nodeId and fileId for Code Connect URLs.
     ///   - url: Output URL for the generated `.figma.kt` file.
     ///   - packageName: Kotlin package name for the generated file.
     ///   - xmlResourcePackage: Package for the `R` class import.
@@ -32,25 +32,18 @@ public final class AndroidCodeConnectExporter: AndroidExporter {
         let assets: [[String: String]]
 
         if let allMetadata = allAssetMetadata, !allMetadata.isEmpty {
-            assets = allMetadata.map { meta in
+            let validMetadata = allMetadata.filter { !$0.nodeId.isEmpty && !$0.fileId.isEmpty }
+            guard !validMetadata.isEmpty else { return nil }
+            assets = validMetadata.map { meta in
                 makeAssetContext(name: meta.name, nodeId: meta.nodeId, fileId: meta.fileId)
             }
         } else {
-            let validAssets = imagePacks.filter { pack in
-                pack.light.nodeId != nil && pack.light.fileId != nil
+            assets = imagePacks.compactMap { pack -> [String: String]? in
+                guard let nodeId = pack.light.nodeId, let fileId = pack.light.fileId else { return nil }
+                return makeAssetContext(name: pack.light.name, nodeId: nodeId, fileId: fileId)
             }
-            guard !validAssets.isEmpty else { return nil }
-
-            assets = validAssets.map { pack in
-                makeAssetContext(
-                    name: pack.light.name,
-                    nodeId: pack.light.nodeId ?? "",
-                    fileId: pack.light.fileId ?? ""
-                )
-            }
+            guard !assets.isEmpty else { return nil }
         }
-
-        guard !assets.isEmpty else { return nil }
 
         let sortedAssets = assets.sorted { ($0["name"] ?? "") < ($1["name"] ?? "") }
 
@@ -70,14 +63,26 @@ public final class AndroidCodeConnectExporter: AndroidExporter {
 
     // MARK: - Private
 
+    /// Builds a template context dictionary for a single asset.
+    ///
+    /// - `resourceName`: sanitized for `R.drawable.*` (non-alphanumeric → `_`, no leading digit).
+    /// - `className`: unique Composable function name (`Asset_<sanitized>`).
     private func makeAssetContext(name: String, nodeId: String, fileId: String) -> [String: String] {
         let urlNodeId = nodeId.replacingOccurrences(of: ":", with: "-")
         let sanitizedName = name.map { $0.isLetter || $0.isNumber ? $0 : Character("_") }
         let className = "Asset_\(String(sanitizedName))"
+
+        // Sanitize for R.drawable: only [a-z0-9_], no leading digit
+        var resourceName = name.map { $0.isLetter || $0.isNumber || $0 == Character("_") ? $0 : Character("_") }
+        if let first = resourceName.first, first.isNumber {
+            resourceName.insert(Character("_"), at: resourceName.startIndex)
+        }
+
         let figmaUrl = "https://www.figma.com/design/\(fileId)?node-id=\(urlNodeId)"
 
         return [
             "name": name,
+            "resourceName": String(resourceName),
             "className": className,
             "nodeId": urlNodeId,
             "fileId": fileId,

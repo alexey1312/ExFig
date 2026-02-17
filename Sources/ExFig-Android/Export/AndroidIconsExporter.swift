@@ -124,7 +124,7 @@ private extension AndroidIconsExporter {
 
         // Generate Code Connect if configured
         if let codeConnectFile = try generateCodeConnect(
-            iconPairs: iconPairs, entry: entry, platformConfig: platformConfig
+            iconPairs: iconPairs, entry: entry, platformConfig: platformConfig, context: context
         ) {
             allFiles.append(codeConnectFile)
         }
@@ -168,12 +168,16 @@ private extension AndroidIconsExporter {
     func generateCodeConnect(
         iconPairs: [AssetPair<ImagePack>],
         entry: AndroidIconsEntry,
-        platformConfig: AndroidPlatformConfig
+        platformConfig: AndroidPlatformConfig,
+        context: some IconsExportContext
     ) throws -> FileContents? {
-        guard let url = entry.codeConnectKotlinURL,
-              let packageName = entry.composePackageName,
-              let resourcePackage = platformConfig.resourcePackage
-        else {
+        guard let url = entry.codeConnectKotlinURL else { return nil }
+        guard let packageName = entry.composePackageName else {
+            context.warning("Code Connect skipped: 'composePackageName' is required")
+            return nil
+        }
+        guard let resourcePackage = platformConfig.resourcePackage else {
+            context.warning("Code Connect skipped: 'resourcePackage' is required")
             return nil
         }
         let exporter = AndroidCodeConnectExporter(
@@ -262,7 +266,7 @@ private extension AndroidIconsExporter {
         // Generate Code Connect if configured
         var allKotlinFiles = kotlinFiles
         if let codeConnectFile = try generateCodeConnect(
-            iconPairs: iconPairs, entry: entry, platformConfig: platformConfig
+            iconPairs: iconPairs, entry: entry, platformConfig: platformConfig, context: context
         ) {
             allKotlinFiles.append(codeConnectFile)
         }

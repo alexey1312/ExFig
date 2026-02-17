@@ -115,11 +115,10 @@ private extension AndroidImagesExporter {
             return FileContents(destination: Destination(directory: dir, file: fileURL), dataFile: source)
         }
 
-        if let codeConnectFile = try generateCodeConnect(
-            imagePairs: imagePairs, entry: entry, platformConfig: platformConfig
-        ) {
-            allFiles.append(codeConnectFile)
-        }
+        try addCodeConnectFile(
+            to: &allFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let filesToWrite = allFiles
         try await context.withSpinner("Writing files to Android project...") {
@@ -180,11 +179,10 @@ private extension AndroidImagesExporter {
                 dark: file.dark
             ))
         }
-        if let codeConnectFile = try generateCodeConnect(
-            imagePairs: imagePairs, entry: entry, platformConfig: platformConfig
-        ) {
-            collectedFiles.append(codeConnectFile)
-        }
+        try addCodeConnectFile(
+            to: &collectedFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let finalFiles = collectedFiles
 
@@ -246,11 +244,10 @@ private extension AndroidImagesExporter {
             ))
         }
 
-        if let codeConnectFile = try generateCodeConnect(
-            imagePairs: imagePairs, entry: entry, platformConfig: platformConfig
-        ) {
-            collectedFiles.append(codeConnectFile)
-        }
+        try addCodeConnectFile(
+            to: &collectedFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let finalFiles = collectedFiles
 
@@ -305,11 +302,10 @@ private extension AndroidImagesExporter {
             )
         }
 
-        if let codeConnectFile = try generateCodeConnect(
-            imagePairs: imagePairs, entry: entry, platformConfig: platformConfig
-        ) {
-            allFiles.append(codeConnectFile)
-        }
+        try addCodeConnectFile(
+            to: &allFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let filesToWrite = allFiles
         try await context.withSpinner("Writing files to Android project...") {
@@ -355,11 +351,10 @@ private extension AndroidImagesExporter {
             )
         }
 
-        if let codeConnectFile = try generateCodeConnect(
-            imagePairs: imagePairs, entry: entry, platformConfig: platformConfig
-        ) {
-            allFiles.append(codeConnectFile)
-        }
+        try addCodeConnectFile(
+            to: &allFiles, imagePairs: imagePairs,
+            entry: entry, platformConfig: platformConfig, context: context
+        )
 
         let filesToWrite = allFiles
         try await context.withSpinner("Writing files to Android project...") {
@@ -378,22 +373,40 @@ private extension AndroidImagesExporter {
     func generateCodeConnect(
         imagePairs: [AssetPair<ImagePack>],
         entry: AndroidImagesEntry,
-        platformConfig: AndroidPlatformConfig
+        platformConfig: AndroidPlatformConfig,
+        context: some ImagesExportContext
     ) throws -> FileContents? {
-        guard let url = entry.codeConnectKotlinURL,
-              let resourcePackage = platformConfig.resourcePackage
-        else {
+        guard let url = entry.codeConnectKotlinURL else { return nil }
+        guard let resourcePackage = platformConfig.resourcePackage else {
+            context.warning("Code Connect skipped: 'resourcePackage' is required")
             return nil
         }
         let exporter = AndroidCodeConnectExporter(
             templatesPath: entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)
         )
+        // Images use resourcePackage as both the Kotlin package and R class package,
+        // since image Code Connect files live alongside the resource module.
+        // Icons use the dedicated composePackageName which may differ.
         return try exporter.generateCodeConnect(
             imagePacks: imagePairs,
             url: url,
             packageName: resourcePackage,
             xmlResourcePackage: resourcePackage
         )
+    }
+
+    func addCodeConnectFile(
+        to files: inout [FileContents],
+        imagePairs: [AssetPair<ImagePack>],
+        entry: AndroidImagesEntry,
+        platformConfig: AndroidPlatformConfig,
+        context: some ImagesExportContext
+    ) throws {
+        if let codeConnectFile = try generateCodeConnect(
+            imagePairs: imagePairs, entry: entry, platformConfig: platformConfig, context: context
+        ) {
+            files.append(codeConnectFile)
+        }
     }
 }
 

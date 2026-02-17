@@ -20,7 +20,7 @@ Orchestration (Figma fetching, processing, file writing) lives in `ExFig-Android
 
 ### Dual Output System
 
-Every exporter produces BOTH XML resources AND Kotlin Compose code:
+Exporters produce XML resources, Kotlin Compose code, or both:
 
 | Exporter                       | XML Output                                      | Compose Output                   |
 | ------------------------------ | ----------------------------------------------- | -------------------------------- |
