@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-02-17
+
+### Bug Fixes
+
+- Warning found 2 file(s) which are unhandled by @alexey1312
+
+
+### Other
+
+- Add Figma Code Connect generation for Android (Jetpack Compose) 
+
+* feat: add Figma Code Connect generation for Android
+
+Introduce functionality to generate Figma Code Connect Kotlin files for
+Jetpack Compose. The `AndroidCodeConnectExporter` class and related
+methods allow linking Figma design components to Compose code, creating
+an important connection for designers to view Compose implementations in
+Figma Dev Mode.
+
+- Added `AndroidCodeConnectExporter` with a method to generate Kotlin
+  files from image packs.
+- Expanded `AndroidIconsEntry` and `AndroidImagesEntry` to include a
+  `codeConnectKotlin` field for file path configuration.
+- Updated configuration schemas and generator logic for Code Connect
+  inclusion.
+- Integrated Code Connect generation into icon and image export
+  workflows within the `AndroidIconsExporter` and `AndroidImagesExporter`
+  classes.
+- Created tests for `AndroidCodeConnectExporter` to ensure expected
+  behavior, including asset filtering, URL generation, and file output.
+
+* fix: after review by @alexey1312 in [#58](https://github.com/alexey1312/ExFig/pull/58)
+
+
 ## [2.3.1] - 2026-02-13
 
 ### Bug Fixes
