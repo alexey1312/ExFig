@@ -341,7 +341,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Noora                 | 0.54.0+ | Terminal UI design system       |
 | swift-resvg           | 0.45.1  | SVG parsing/rendering           |
 | swift-docc-plugin     | 1.4.5+  | DocC documentation              |
-| swift-yyjson          | 0.4.0+  | High-performance JSON codec     |
+| swift-yyjson          | 0.5.0+  | High-performance JSON codec     |
 | pkl-swift             | 0.7.2+  | PKL config evaluation & codegen |
 
 ## Troubleshooting

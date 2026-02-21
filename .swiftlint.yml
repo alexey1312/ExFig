@@ -9,6 +9,7 @@ excluded:
   - Sources/ExFigCLI/Resources/iOSConfig.swift
   - Sources/ExFigCLI/Resources/androidConfig.swift
   - Sources/ExFigCLI/Resources/flutterConfig.swift
+  - Sources/ExFigCLI/Resources/webConfig.swift
   - Tests/XcodeExportTests/XcodeIconsExporterTests.swift
 
 disabled_rules:
