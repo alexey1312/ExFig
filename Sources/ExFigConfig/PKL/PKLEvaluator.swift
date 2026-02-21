@@ -18,11 +18,6 @@ extension PklError: @retroactive LocalizedError {
 /// print(config.ios?.colors) // [iOS.ColorsEntry]?
 /// ```
 public enum PKLEvaluator {
-    /// Evaluates a PKL configuration file and returns the typed ExFig module.
-    /// - Parameter configPath: Path to the .pkl configuration file
-    /// - Returns: Evaluated ExFig module with all platform configurations
-    /// - Throws: `PKLError.configNotFound` if file doesn't exist,
-    ///           or PklSwift evaluation errors on syntax/type issues
     /// Allowed module schemes (no http/https to prevent network imports).
     private static let allowedModules = [
         "pkl:", "repl:", "file:", "modulepath:", "package:", "projectpackage:",
@@ -33,6 +28,11 @@ public enum PKLEvaluator {
         "file:", "env:", "prop:", "modulepath:", "package:", "projectpackage:",
     ]
 
+    /// Evaluates a PKL configuration file and returns the typed ExFig module.
+    /// - Parameter configPath: Path to the .pkl configuration file
+    /// - Returns: Evaluated ExFig module with all platform configurations
+    /// - Throws: `PKLError.configNotFound` if file doesn't exist,
+    ///           or PklSwift evaluation errors on syntax/type issues
     public static func evaluate(configPath: URL) async throws -> ExFig.ModuleImpl {
         guard FileManager.default.fileExists(atPath: configPath.path) else {
             throw PKLError.configNotFound(path: configPath.path)

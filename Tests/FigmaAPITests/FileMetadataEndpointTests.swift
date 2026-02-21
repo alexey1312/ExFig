@@ -10,7 +10,7 @@ final class FileMetadataEndpointTests: XCTestCase {
         // swiftlint:disable:next force_unwrapping
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertEqual(
             request.url?.absoluteString,
@@ -23,7 +23,7 @@ final class FileMetadataEndpointTests: XCTestCase {
         // swiftlint:disable:next force_unwrapping
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertTrue(request.url?.query?.contains("depth=1") ?? false)
     }

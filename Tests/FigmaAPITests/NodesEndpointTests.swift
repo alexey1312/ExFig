@@ -9,7 +9,7 @@ final class NodesEndpointTests: XCTestCase {
         let endpoint = NodesEndpoint(fileId: "abc123", nodeIds: ["1:2", "1:3"])
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertTrue(request.url?.absoluteString.contains("files/abc123/nodes") ?? false)
         XCTAssertTrue(request.url?.absoluteString.contains("ids=1:2,1:3") ?? false)
@@ -19,7 +19,7 @@ final class NodesEndpointTests: XCTestCase {
         let endpoint = NodesEndpoint(fileId: "file123", nodeIds: ["10:5"])
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertTrue(request.url?.absoluteString.contains("ids=10:5") ?? false)
     }
@@ -29,7 +29,7 @@ final class NodesEndpointTests: XCTestCase {
         let endpoint = NodesEndpoint(fileId: "file123", nodeIds: nodeIds)
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         // All node IDs should be joined with commas
         let url = request.url?.absoluteString ?? ""

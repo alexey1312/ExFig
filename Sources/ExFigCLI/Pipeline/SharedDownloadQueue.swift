@@ -255,6 +255,7 @@ actor SharedDownloadQueue {
             return file
         }
 
+        try validateDownloadURL(remoteURL)
         let (localURL, _) = try await session.download(from: remoteURL)
 
         return FileContents(

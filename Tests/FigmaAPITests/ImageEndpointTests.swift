@@ -10,7 +10,7 @@ final class ImageEndpointTests: XCTestCase {
         let endpoint = ImageEndpoint(fileId: "abc123", nodeIds: ["1:2", "1:3"], params: params)
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""
 
         XCTAssertTrue(url.contains("images/abc123"))
@@ -27,7 +27,7 @@ final class ImageEndpointTests: XCTestCase {
         let endpoint = ImageEndpoint(fileId: "file123", nodeIds: ["10:1"], params: params)
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""
 
         XCTAssertTrue(url.contains("format=svg"))
@@ -40,7 +40,7 @@ final class ImageEndpointTests: XCTestCase {
         let endpoint = ImageEndpoint(fileId: "file123", nodeIds: ["5:1"], params: params)
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""
 
         XCTAssertTrue(url.contains("format=pdf"))
@@ -52,7 +52,7 @@ final class ImageEndpointTests: XCTestCase {
         let endpoint = ImageEndpoint(fileId: "file123", nodeIds: ["1:1"], params: params)
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
         let url = request.url?.absoluteString ?? ""
 
         XCTAssertTrue(url.contains("use_absolute_bounds=true"))

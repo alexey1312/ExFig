@@ -270,6 +270,49 @@ final class FileContentsTests: XCTestCase {
         XCTAssertEqual(url.strippingScaleSuffix().lastPathComponent, "user@home.png")
     }
 
+    // MARK: - Path Traversal Sanitization
+
+    func testURLSanitizesParentDirectoryTraversal() throws {
+        let directory = URL(fileURLWithPath: "/output/images")
+        let file = try XCTUnwrap(URL(string: "../../etc/passwd"))
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.path, "/output/images/etc/passwd")
+    }
+
+    func testURLSanitizesDotComponents() throws {
+        let directory = URL(fileURLWithPath: "/output/images")
+        let file = try XCTUnwrap(URL(string: "./icon.png"))
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.path, "/output/images/icon.png")
+    }
+
+    func testURLSanitizesMultipleTraversalSegments() throws {
+        let directory = URL(fileURLWithPath: "/output/images")
+        let file = try XCTUnwrap(URL(string: "a/../../../secret.txt"))
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.path, "/output/images/a/secret.txt")
+    }
+
+    func testURLSanitizesEmptySegments() throws {
+        let directory = URL(fileURLWithPath: "/output/images")
+        let file = try XCTUnwrap(URL(string: "a//b///c.png"))
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.path, "/output/images/a/b/c.png")
+    }
+
+    func testURLPreservesPathAfterFileURLTraversal() {
+        let directory = URL(fileURLWithPath: "/output/images")
+        // fileURL with "../" — uses lastPathComponent, so only the filename matters
+        let file = URL(fileURLWithPath: "../icon.png")
+        let destination = Destination(directory: directory, file: file)
+
+        XCTAssertEqual(destination.url.lastPathComponent, "icon.png")
+    }
+
     // MARK: - Equatable
 
     func testEquality() {

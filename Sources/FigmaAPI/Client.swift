@@ -71,10 +71,13 @@ public class BaseClient: Client, @unchecked Sendable {
 
 // MARK: - Redirect Guard
 
-/// Strips sensitive authentication headers when a redirect changes the target host.
+/// Strips sensitive authentication headers when a redirect changes the target host
+/// or downgrades from HTTPS to HTTP.
 /// Prevents token leakage if an API response redirects to an external domain.
-private final class RedirectGuardDelegate: NSObject, URLSessionTaskDelegate {
-    private static let sensitiveHeaders = ["X-Figma-Token", "Authorization"]
+///
+/// Fail-closed: if either host is nil, headers are stripped (safe default).
+final class RedirectGuardDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    static let sensitiveHeaders = ["X-Figma-Token", "Authorization"]
 
     func urlSession(
         _: URLSession,
@@ -85,11 +88,16 @@ private final class RedirectGuardDelegate: NSObject, URLSessionTaskDelegate {
     ) {
         var redirectRequest = request
 
-        // Strip sensitive headers if redirecting to a different host
-        if let originalHost = task.originalRequest?.url?.host,
-           let redirectHost = request.url?.host,
-           originalHost.lowercased() != redirectHost.lowercased()
-        {
+        let originalHost = task.originalRequest?.url?.host?.lowercased()
+        let redirectHost = request.url?.host?.lowercased()
+        let originalScheme = task.originalRequest?.url?.scheme?.lowercased()
+        let redirectScheme = request.url?.scheme?.lowercased()
+
+        let hostChanged = originalHost != redirectHost
+        let schemeDowngraded = originalScheme == "https" && redirectScheme != "https"
+
+        // Fail-closed: nil hosts, changed host, or downgraded scheme → strip sensitive headers
+        if originalHost == nil || redirectHost == nil || hostChanged || schemeDowngraded {
             for header in Self.sensitiveHeaders {
                 redirectRequest.setValue(nil, forHTTPHeaderField: header)
             }

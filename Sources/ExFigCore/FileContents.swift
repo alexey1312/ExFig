@@ -15,6 +15,11 @@ public struct Destination: Equatable, Sendable {
             .filter { $0 != ".." && $0 != "." && !$0.isEmpty }
             .joined(separator: "/")
 
+        if sanitized.isEmpty {
+            assertionFailure("Destination path is empty after sanitization (original: \(relativePath))")
+            return directory.appendingPathComponent(relativePath)
+        }
+
         return directory.appendingPathComponent(sanitized)
     }
 
