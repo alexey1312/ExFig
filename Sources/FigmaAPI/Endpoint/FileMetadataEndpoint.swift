@@ -14,7 +14,7 @@ public struct FileMetadataEndpoint: BaseEndpoint {
         self.fileId = fileId
     }
 
-    public func makeRequest(baseURL: URL) -> URLRequest {
+    public func makeRequest(baseURL: URL) throws -> URLRequest {
         let url = baseURL
             .appendingPathComponent("files")
             .appendingPathComponent(fileId)
@@ -25,7 +25,9 @@ public struct FileMetadataEndpoint: BaseEndpoint {
             URLQueryItem(name: "depth", value: "1"),
         ]
         guard let components = comps, let url = components.url else {
-            fatalError("Invalid URL components for FileMetadataEndpoint")
+            throw URLError(
+                .badURL, userInfo: [NSLocalizedDescriptionKey: "Invalid URL components for FileMetadataEndpoint"]
+            )
         }
         return URLRequest(url: url)
     }

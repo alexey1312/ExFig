@@ -8,6 +8,23 @@ import Logging
 /// Progress callback type for download operations
 typealias DownloadProgressCallback = @Sendable (Int, Int) async -> Void
 
+/// Validates that a download URL uses HTTPS and has a valid host.
+/// Shared by both `FileDownloader` and `SharedDownloadQueue`.
+func validateDownloadURL(_ url: URL) throws {
+    guard url.scheme?.lowercased() == "https" else {
+        throw URLError(
+            .badURL,
+            userInfo: [NSLocalizedDescriptionKey: "Download URL must use HTTPS scheme, got: \(url.scheme ?? "nil")"]
+        )
+    }
+    guard let host = url.host, !host.isEmpty else {
+        throw URLError(
+            .badURL,
+            userInfo: [NSLocalizedDescriptionKey: "Download URL must have a valid host"]
+        )
+    }
+}
+
 final class FileDownloader: Sendable {
     private let logger = Logger(label: "com.alexey1312.exfig.file-downloader")
     private let session: URLSession
@@ -87,6 +104,7 @@ final class FileDownloader: Sendable {
             return file
         }
 
+        try validateDownloadURL(remoteURL)
         let (localURL, _) = try await session.download(from: remoteURL)
 
         return FileContents(

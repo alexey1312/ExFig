@@ -13,7 +13,7 @@ public class FlutterExporter {
 
     func makeEnvironment() -> Environment {
         let loader = if let templateURL = templatesPath {
-            FileSystemLoader(paths: [Path(templateURL.path)])
+            FileSystemLoader(paths: [Path(templateURL.resolvingSymlinksInPath().path)])
         } else {
             FileSystemLoader(paths: [
                 Path((Bundle.module.resourcePath ?? "") + "/Resources"),

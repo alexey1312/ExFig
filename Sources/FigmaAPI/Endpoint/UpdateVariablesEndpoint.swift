@@ -17,7 +17,7 @@ public struct UpdateVariablesEndpoint: BaseEndpoint {
         self.body = body
     }
 
-    public func makeRequest(baseURL: URL) -> URLRequest {
+    public func makeRequest(baseURL: URL) throws -> URLRequest {
         let url = baseURL
             .appendingPathComponent("files")
             .appendingPathComponent(fileId)
@@ -26,9 +26,7 @@ public struct UpdateVariablesEndpoint: BaseEndpoint {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        // swiftlint:disable:next force_try
-        request.httpBody = try! JSONCodec.encode(body)
+        request.httpBody = try JSONCodec.encode(body)
 
         return request
     }

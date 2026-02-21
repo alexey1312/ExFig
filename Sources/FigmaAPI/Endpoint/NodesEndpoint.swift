@@ -18,7 +18,7 @@ public struct NodesEndpoint: BaseEndpoint {
         root.nodes
     }
 
-    public func makeRequest(baseURL: URL) -> URLRequest {
+    public func makeRequest(baseURL: URL) throws -> URLRequest {
         let url = baseURL
             .appendingPathComponent("files")
             .appendingPathComponent(fileId)
@@ -29,7 +29,7 @@ public struct NodesEndpoint: BaseEndpoint {
             URLQueryItem(name: "ids", value: nodeIds),
         ]
         guard let components = comps, let url = components.url else {
-            fatalError("Invalid URL components for NodesEndpoint")
+            throw URLError(.badURL, userInfo: [NSLocalizedDescriptionKey: "Invalid URL components for NodesEndpoint"])
         }
         return URLRequest(url: url)
     }

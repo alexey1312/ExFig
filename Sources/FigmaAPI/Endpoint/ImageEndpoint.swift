@@ -79,7 +79,7 @@ public struct ImageEndpoint: BaseEndpoint {
         root.images
     }
 
-    public func makeRequest(baseURL: URL) -> URLRequest {
+    public func makeRequest(baseURL: URL) throws -> URLRequest {
         let url = baseURL
             .appendingPathComponent("images")
             .appendingPathComponent(fileId)
@@ -88,7 +88,7 @@ public struct ImageEndpoint: BaseEndpoint {
         comps?.queryItems = params.queryItems
         comps?.queryItems?.append(URLQueryItem(name: "ids", value: nodeIds))
         guard let components = comps, let url = components.url else {
-            fatalError("Invalid URL components for ImageEndpoint")
+            throw URLError(.badURL, userInfo: [NSLocalizedDescriptionKey: "Invalid URL components for ImageEndpoint"])
         }
         return URLRequest(url: url)
     }

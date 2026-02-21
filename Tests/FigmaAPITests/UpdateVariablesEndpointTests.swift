@@ -10,7 +10,7 @@ final class UpdateVariablesEndpointTests: XCTestCase {
         // swiftlint:disable:next force_unwrapping
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertEqual(
             request.url?.absoluteString,
@@ -24,7 +24,7 @@ final class UpdateVariablesEndpointTests: XCTestCase {
         // swiftlint:disable:next force_unwrapping
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertEqual(request.httpMethod, "POST")
     }
@@ -35,7 +35,7 @@ final class UpdateVariablesEndpointTests: XCTestCase {
         // swiftlint:disable:next force_unwrapping
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
     }
@@ -50,7 +50,7 @@ final class UpdateVariablesEndpointTests: XCTestCase {
         // swiftlint:disable:next force_unwrapping
         let baseURL = try XCTUnwrap(URL(string: "https://api.figma.com/v1/"))
 
-        let request = endpoint.makeRequest(baseURL: baseURL)
+        let request = try endpoint.makeRequest(baseURL: baseURL)
 
         XCTAssertNotNil(request.httpBody)
 
