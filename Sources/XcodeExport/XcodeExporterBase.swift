@@ -35,7 +35,7 @@ public class XcodeExporterBase {
 
     func makeEnvironment(templatesPath: URL?) -> Environment {
         let loader = if let templateURL = templatesPath {
-            FileSystemLoader(paths: [Path(templateURL.path)])
+            FileSystemLoader(paths: [Path(templateURL.resolvingSymlinksInPath().path)])
         } else {
             FileSystemLoader(paths: [
                 Path((Bundle.module.resourcePath ?? "") + "/Resources"),

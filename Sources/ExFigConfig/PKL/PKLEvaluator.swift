@@ -23,12 +23,26 @@ public enum PKLEvaluator {
     /// - Returns: Evaluated ExFig module with all platform configurations
     /// - Throws: `PKLError.configNotFound` if file doesn't exist,
     ///           or PklSwift evaluation errors on syntax/type issues
+    /// Allowed module schemes (no http/https to prevent network imports).
+    private static let allowedModules = [
+        "pkl:", "repl:", "file:", "modulepath:", "package:", "projectpackage:",
+    ]
+
+    /// Allowed resource schemes (no http/https to prevent network reads).
+    private static let allowedResources = [
+        "file:", "env:", "prop:", "modulepath:", "package:", "projectpackage:",
+    ]
+
     public static func evaluate(configPath: URL) async throws -> ExFig.ModuleImpl {
         guard FileManager.default.fileExists(atPath: configPath.path) else {
             throw PKLError.configNotFound(path: configPath.path)
         }
 
-        return try await PklSwift.withEvaluator { evaluator in
+        var options = EvaluatorOptions.preconfigured
+        options.allowedModules = allowedModules
+        options.allowedResources = allowedResources
+
+        return try await PklSwift.withEvaluator(options: options) { evaluator in
             try await evaluator.evaluateModule(
                 source: .path(configPath.path),
                 as: ExFig.ModuleImpl.self

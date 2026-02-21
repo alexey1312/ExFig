@@ -12,7 +12,7 @@ public protocol Endpoint {
     ///
     /// - Returns: Resource request.
     /// - Throws: Any error creating request.
-    func makeRequest(baseURL: URL) -> URLRequest
+    func makeRequest(baseURL: URL) throws -> URLRequest
 
     /// Obtain new content from response with body.
     ///

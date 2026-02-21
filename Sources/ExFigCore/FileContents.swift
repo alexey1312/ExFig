@@ -8,7 +8,14 @@ public struct Destination: Equatable, Sendable {
         // URL(fileURLWithPath:) → absolute file URL, use lastPathComponent (just filename)
         // URL(string:) → relative URL, preserve full path including subdirectories
         let relativePath = file.isFileURL ? file.lastPathComponent : file.path
-        return directory.appendingPathComponent(relativePath)
+
+        // Sanitize: remove ".." and "." components to prevent path traversal
+        let sanitized = relativePath
+            .components(separatedBy: "/")
+            .filter { $0 != ".." && $0 != "." && !$0.isEmpty }
+            .joined(separator: "/")
+
+        return directory.appendingPathComponent(sanitized)
     }
 
     public init(directory: URL, file: URL) {
