@@ -21,6 +21,7 @@ mkdir -p ./templates
 import ".exfig/schemas/iOS.pkl"
 import ".exfig/schemas/Android.pkl"
 import ".exfig/schemas/Flutter.pkl"
+import ".exfig/schemas/Web.pkl"
 
 ios = new iOS.iOSConfig {
   templatesPath = "./templates"
@@ -33,6 +34,10 @@ android = new Android.AndroidConfig {
 flutter = new Flutter.FlutterConfig {
   templatesPath = "./templates"
 }
+
+web = new Web.WebConfig {
+  templatesPath = "./templates"
+}
 ```
 
 ### 3. Copy Default Templates
@@ -42,6 +47,7 @@ Copy the default templates from ExFig source to use as a starting point. Templat
 - `Sources/XcodeExport/Resources/` - iOS templates
 - `Sources/AndroidExport/Resources/` - Android templates
 - `Sources/FlutterExport/Resources/` - Flutter templates
+- `Sources/WebExport/Resources/` - Web templates
 
 ## iOS Templates
 
@@ -56,7 +62,12 @@ Copy the default templates from ExFig source to use as a starting point. Templat
 | `UIFont+extension.swift.jinja`        | UIFont extension  | UIKit font definitions    |
 | `Font+extension.swift.jinja`          | Font extension    | SwiftUI font definitions  |
 | `Label.swift.jinja`                   | Label class       | UIKit label styles        |
+| `LabelStyle.swift.jinja`             | LabelStyle enum   | Label style definitions   |
+| `LabelStyle+extension.swift.jinja`   | LabelStyle ext.   | LabelStyle factory methods |
+| `CodeConnect.figma.swift.jinja`      | Code Connect      | Figma Code Connect (debug) |
 | `header.jinja`                        | File header       | Common header comment     |
+
+> Note: Files ending in `.jinja.include` (e.g., `Bundle+extension.swift.jinja.include`) are partial templates — they are pre-rendered into context variables (like `bundleExtension`) and included in the main template output. You typically don't need to customize these.
 
 ### Context Variables (Colors)
 
@@ -136,6 +147,7 @@ public extension UIColor {
 | `typography.xml.jinja`  | typography.xml | XML text styles           |
 | `Typography.kt.jinja`  | Typography.kt  | Compose typography        |
 | `Icons.kt.jinja`       | Icons.kt       | Compose icon composables  |
+| `CodeConnect.figma.kt.jinja` | Code Connect | Figma Code Connect (debug) |
 | `header.jinja`         | File header    | Common header comment     |
 
 ### Context Variables (Colors)
@@ -249,6 +261,78 @@ class {{ className }}Dark {
   static const Color {{ color.name }} = Color({{ color.hex }});
   {% endfor %}
 }
+```
+
+## Web Templates
+
+### Available Templates
+
+| Template              | Output          | Description                        |
+| --------------------- | --------------- | ---------------------------------- |
+| `theme.css.jinja`     | theme.css       | CSS custom properties (light/dark) |
+| `variables.ts.jinja`  | variables.ts    | TypeScript CSS variable references |
+| `theme.json.jinja`    | theme.json      | JSON theme tokens                  |
+| `Icon.tsx.jinja`      | Icon component  | React SVG icon component           |
+| `types.ts.jinja`      | types.ts        | TypeScript type definitions        |
+| `IconIndex.ts.jinja`  | index.ts        | Icon barrel exports                |
+| `Image.tsx.jinja`     | Image component | React image component              |
+| `ImageIndex.ts.jinja` | index.ts        | Image barrel exports               |
+| `header.jinja`        | File header     | Common header comment              |
+
+### Context Variables (Colors)
+
+```typescript
+// variables.ts context
+colors: [{ camelName: "primaryBlue", cssName: "primary-blue" }]
+
+// theme.css / theme.json context
+lightColors: [{ cssName: "primary-blue", value: "#007AFF" }]
+darkColors: [{ cssName: "primary-blue", value: "#0A84FF" }]
+hasDarkColors: true
+```
+
+### Context Variables (Icons)
+
+```typescript
+// Icon.tsx context (per component)
+componentName: "ArrowRight"
+viewBox: "0 0 24 24"
+svgContent: "<path ...>"
+
+// IconIndex.ts context
+icons: [{ componentName: "ArrowRight", fileName: "arrow_right" }]
+```
+
+### Context Variables (Images)
+
+```typescript
+// Image.tsx context (per component)
+componentName: "HeroBanner"
+name: "hero_banner"
+assetPath: "assets/images/hero_banner.png"
+
+// ImageIndex.ts context
+images: [{ componentName: "HeroBanner", fileName: "hero_banner" }]
+```
+
+### Example: Custom theme.css Template
+
+```jinja
+:root {
+  {% for color in lightColors %}
+  --{{ color.cssName }}: {{ color.value }};
+  {% endfor %}
+}
+
+{% if hasDarkColors %}
+@media (prefers-color-scheme: dark) {
+  :root {
+    {% for color in darkColors %}
+    --{{ color.cssName }}: {{ color.value }};
+    {% endfor %}
+  }
+}
+{% endif %}
 ```
 
 ## Jinja2 Syntax Reference
