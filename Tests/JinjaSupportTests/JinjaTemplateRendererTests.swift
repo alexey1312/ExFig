@@ -115,6 +115,52 @@ final class JinjaTemplateRendererTests: XCTestCase {
         XCTAssertEqual(result, "from bundle")
     }
 
+    func testLoadTemplate_perCallPathOverridesDefaultPath() throws {
+        // Given: renderer with defaultTemplatesPath, per-call path has different content
+        let defaultPath = tempDir.appendingPathComponent("default")
+        let perCallPath = tempDir.appendingPathComponent("perCall")
+        try FileManager.default.createDirectory(at: defaultPath, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: perCallPath, withIntermediateDirectories: true)
+        try "default content".write(
+            to: defaultPath.appendingPathComponent("test.jinja"),
+            atomically: true,
+            encoding: .utf8
+        )
+        try "per-call content".write(
+            to: perCallPath.appendingPathComponent("test.jinja"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let bundle = Bundle.main
+        let renderer = JinjaTemplateRenderer(bundle: bundle, templatesPath: defaultPath)
+
+        // When: loading with explicit per-call templatesPath
+        let result = try renderer.loadTemplate(named: "test.jinja", templatesPath: perCallPath)
+
+        // Then: per-call path takes priority over defaultTemplatesPath
+        XCTAssertEqual(result, "per-call content")
+    }
+
+    func testLoadTemplate_throwsWhenBundleResourcePathIsNil() throws {
+        // Given: a bundle with nil resourcePath, no custom path
+        let bundle = Bundle(path: "/nonexistent") ?? Bundle.main
+        guard bundle.resourcePath == nil else {
+            // Cannot construct a nil-resourcePath bundle on this platform; skip
+            return
+        }
+        let renderer = JinjaTemplateRenderer(bundle: bundle)
+
+        // When/Then: throws notFound with diagnostic message
+        XCTAssertThrowsError(try renderer.loadTemplate(named: "test.jinja")) { error in
+            guard case let TemplateLoadError.notFound(_, paths) = error else {
+                XCTFail("Expected notFound, got \(error)")
+                return
+            }
+            XCTAssertTrue(paths.contains("(bundle.resourcePath is nil)"))
+        }
+    }
+
     // MARK: - renderTemplate(source:context:)
 
     func testRenderTemplate_withStringContext() throws {
@@ -178,6 +224,38 @@ final class JinjaTemplateRendererTests: XCTestCase {
         )
     }
 
+    func testRenderTemplate_invalidSyntaxWrapsWithTemplateName() throws {
+        let renderer = makeRenderer()
+        XCTAssertThrowsError(
+            try renderer.renderTemplate(
+                source: "{% for x in items %}no endfor",
+                context: ["items": ["a"]],
+                templateName: "broken.jinja"
+            )
+        ) { error in
+            guard case let TemplateLoadError.renderFailed(name, _) = error else {
+                XCTFail("Expected TemplateLoadError.renderFailed, got \(error)")
+                return
+            }
+            XCTAssertEqual(name, "broken.jinja")
+        }
+    }
+
+    func testRenderTemplate_unsupportedContextValueThrowsContextConversionFailed() throws {
+        let renderer = makeRenderer()
+        struct NotConvertible {}
+        XCTAssertThrowsError(
+            try renderer.renderTemplate(source: "{{ value }}", context: ["value": NotConvertible()])
+        ) { error in
+            guard case let TemplateLoadError.contextConversionFailed(key, valueType, _) = error else {
+                XCTFail("Expected contextConversionFailed, got \(error)")
+                return
+            }
+            XCTAssertEqual(key, "value")
+            XCTAssertTrue(valueType.contains("NotConvertible"))
+        }
+    }
+
     func testRenderTemplateByName_wrapsRenderErrorWithTemplateName() throws {
         let bundleDir = tempDir.appendingPathComponent("bundle/Resources")
         try FileManager.default.createDirectory(at: bundleDir, withIntermediateDirectories: true)
@@ -193,11 +271,11 @@ final class JinjaTemplateRendererTests: XCTestCase {
         XCTAssertThrowsError(
             try renderer.renderTemplate(name: "bad.jinja", context: ["items": ["a"]])
         ) { error in
-            guard case let TemplateLoadError.renderFailed(templateName, _) = error else {
+            guard case let TemplateLoadError.renderFailed(name, _) = error else {
                 XCTFail("Expected TemplateLoadError.renderFailed, got \(error)")
                 return
             }
-            XCTAssertEqual(templateName, "bad.jinja")
+            XCTAssertEqual(name, "bad.jinja")
         }
     }
 

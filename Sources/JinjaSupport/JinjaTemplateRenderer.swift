@@ -3,7 +3,7 @@ import Jinja
 
 public final class JinjaTemplateRenderer: @unchecked Sendable {
     private let bundle: Bundle
-    /// Stored as "default" because individual loadTemplate() calls can override it per-invocation.
+    /// The default templates path, used when individual loadTemplate() calls don't provide an override.
     private let defaultTemplatesPath: URL?
 
     public init(bundle: Bundle, templatesPath: URL? = nil) {
@@ -18,16 +18,25 @@ public final class JinjaTemplateRenderer: @unchecked Sendable {
             let url = customPath.appendingPathComponent(name)
             do {
                 return try String(contentsOf: url, encoding: .utf8)
-            } catch {
-                // Any failure on custom path falls through to bundle (including
-                // permission errors, encoding errors, and non-CocoaError types on Linux)
+            } catch let error as CocoaError
+                where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile
+            {
+                // File not found at custom path — fall through to bundle
+                // (expected for partials like header.jinja or .include files)
                 searchedPaths.append(customPath.path)
+            } catch {
+                // File exists but cannot be read (permission, encoding, I/O) — surface the error
+                throw TemplateLoadError.customPathFailed(
+                    name: name,
+                    path: customPath.path,
+                    underlyingError: error
+                )
             }
         }
         guard let resourcePath = bundle.resourcePath else {
             throw TemplateLoadError.notFound(
                 name: name,
-                searchedPaths: searchedPaths + ["(Bundle.module.resourcePath is nil)"]
+                searchedPaths: searchedPaths + ["(bundle.resourcePath is nil)"]
             )
         }
         let bundleDirs = [resourcePath + "/Resources", resourcePath]
@@ -36,14 +45,20 @@ public final class JinjaTemplateRenderer: @unchecked Sendable {
             let url = URL(fileURLWithPath: dir).appendingPathComponent(name)
             do {
                 return try String(contentsOf: url, encoding: .utf8)
-            } catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
+            } catch {
+                // Catch all errors (not just CocoaError) for Linux compatibility —
+                // Foundation on Linux may throw non-CocoaError for file-not-found.
                 continue
             }
         }
         throw TemplateLoadError.notFound(name: name, searchedPaths: searchedPaths)
     }
 
-    public func renderTemplate(source: String, context: [String: Any]) throws -> String {
+    public func renderTemplate(
+        source: String,
+        context: [String: Any],
+        templateName: String? = nil
+    ) throws -> String {
         var jinjaContext: [String: Value] = [:]
         for (key, value) in context {
             do {
@@ -56,8 +71,17 @@ public final class JinjaTemplateRenderer: @unchecked Sendable {
                 )
             }
         }
-        let template = try Template(source)
-        return try template.render(jinjaContext)
+        do {
+            let template = try Template(source)
+            return try template.render(jinjaContext)
+        } catch let error as TemplateLoadError {
+            throw error
+        } catch {
+            if let name = templateName {
+                throw TemplateLoadError.renderFailed(name: name, underlyingError: error)
+            }
+            throw error
+        }
     }
 
     public func renderTemplate(
@@ -67,11 +91,11 @@ public final class JinjaTemplateRenderer: @unchecked Sendable {
     ) throws -> String {
         let templateString = try loadTemplate(named: name, templatesPath: templatesPath)
         do {
-            return try renderTemplate(source: templateString, context: context)
+            return try renderTemplate(source: templateString, context: context, templateName: name)
         } catch let error as TemplateLoadError {
             throw error
         } catch {
-            throw TemplateLoadError.renderFailed(templateName: name, underlyingError: error)
+            throw TemplateLoadError.renderFailed(name: name, underlyingError: error)
         }
     }
 

@@ -45,8 +45,8 @@ public class XcodeExporterBase {
         try renderer.renderTemplate(name: name, context: context, templatesPath: templatesPath)
     }
 
-    func renderTemplate(source: String, context: [String: Any]) throws -> String {
-        try renderer.renderTemplate(source: source, context: context)
+    func renderTemplate(source: String, context: [String: Any], templateName: String? = nil) throws -> String {
+        try renderer.renderTemplate(source: source, context: context, templateName: templateName)
     }
 
     func loadTemplate(named name: String, templatesPath: URL?) throws -> String {

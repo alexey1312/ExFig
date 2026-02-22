@@ -156,7 +156,11 @@ public final class WebIconsExporter: WebExporter {
             ]
 
             let fullContext = try contextWithHeader(context)
-            let content = try renderTemplate(source: templateSource, context: fullContext)
+            let content = try renderTemplate(
+                source: templateSource,
+                context: fullContext,
+                templateName: "Icon.tsx.jinja"
+            )
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue
@@ -195,7 +199,11 @@ public final class WebIconsExporter: WebExporter {
             ]
 
             let fullContext = try contextWithHeader(context)
-            let content = try renderTemplate(source: templateSource, context: fullContext)
+            let content = try renderTemplate(
+                source: templateSource,
+                context: fullContext,
+                templateName: "Icon.tsx.jinja"
+            )
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue

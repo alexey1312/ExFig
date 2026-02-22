@@ -13,8 +13,8 @@ public class WebExporter {
         try renderer.renderTemplate(name: name, context: context)
     }
 
-    func renderTemplate(source: String, context: [String: Any]) throws -> String {
-        try renderer.renderTemplate(source: source, context: context)
+    func renderTemplate(source: String, context: [String: Any], templateName: String? = nil) throws -> String {
+        try renderer.renderTemplate(source: source, context: context, templateName: templateName)
     }
 
     func loadTemplate(named name: String) throws -> String {

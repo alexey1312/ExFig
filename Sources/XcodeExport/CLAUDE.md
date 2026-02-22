@@ -68,7 +68,7 @@ Templates in `Resources/` generate Swift code. Custom templates are supported vi
 | `CodeConnect.figma.swift.jinja`    | Figma Code Connect structs                |
 | `header.jinja`                     | Common "do not edit" header comment       |
 
-Templates with `.include` suffix are partial templates used for append mode (inserting into existing files).
+Templates with `.include` suffix are partial templates used for append mode (inserting into existing files). The loop body in each `.include` file must stay in sync with the corresponding main `.jinja` template (e.g., `UIImage+extension.swift.jinja.include` ↔ `UIImage+extension.swift.jinja`). Do not add Jinja comments (`{# #}`) to `.include` files — even `{#- -#}` alters whitespace and breaks append tests.
 
 ### Append Mode
 
