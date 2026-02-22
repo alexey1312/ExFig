@@ -222,7 +222,7 @@ flutter:
 | Option          | Type   | Required | Default | Description                             |
 | --------------- | ------ | -------- | ------- | --------------------------------------- |
 | `output`        | String | Yes      | -       | Path to output directory for Dart files |
-| `templatesPath` | String | No       | -       | Path to custom Stencil templates        |
+| `templatesPath` | String | No       | -       | Path to custom Jinja2 templates        |
 
 ### flutter.colors
 

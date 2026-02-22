@@ -35,20 +35,20 @@ XML generation can be disabled per-entry via `AndroidOutput.xmlDisabled`.
 
 ### Class Hierarchy
 
-`AndroidExporter` is the base class providing Stencil template loading and `FileContents` creation. `AndroidColorExporter`, `AndroidTypographyExporter`, `AndroidComposeIconExporter`, and `AndroidCodeConnectExporter` inherit from it.
+`AndroidExporter` is the base class providing Jinja template loading and `FileContents` creation. `AndroidColorExporter`, `AndroidTypographyExporter`, `AndroidComposeIconExporter`, and `AndroidCodeConnectExporter` inherit from it.
 
-`AndroidImageVectorExporter` and `AndroidThemeAttributesExporter` are standalone (`Sendable`) — they don't use Stencil templates.
+`AndroidImageVectorExporter` and `AndroidThemeAttributesExporter` are standalone (`Sendable`) — they don't use Jinja templates.
 
 ### Template System
 
-Seven Stencil templates in `Resources/`: `colors.xml.stencil`, `Colors.kt.stencil`, `typography.xml.stencil`, `Typography.kt.stencil`, `Icons.kt.stencil`, `CodeConnect.figma.kt.stencil`, `header.stencil`.
+Seven Jinja templates in `Resources/`: `colors.xml.jinja`, `Colors.kt.jinja`, `typography.xml.jinja`, `Typography.kt.jinja`, `Icons.kt.jinja`, `CodeConnect.figma.kt.jinja`, `header.jinja`.
 
-Template loading priority: custom `templatesPath` (from PKL config) > `Bundle.module` resources. StencilSwiftKit extensions are registered for all environments.
+Template loading priority: custom `templatesPath` (from PKL config) > `Bundle.module` resources.
 
 ### Key Data Flow
 
 ```
-ExFigCore models → AndroidOutput (config) → Exporter → Stencil render → [FileContents]
+ExFigCore models → AndroidOutput (config) → Exporter → Jinja render → [FileContents]
 ```
 
 `FileContents` is the universal output type — the plugin layer handles writing them to disk.
@@ -101,8 +101,8 @@ Single-scale assets use `drawable` / `drawable-night` (no qualifier).
 
 When adding a new exporter:
 
-1. Inherit from `AndroidExporter` (if using Stencil) or make standalone `Sendable` struct
-2. Add Stencil template to `Resources/` (if needed)
+1. Inherit from `AndroidExporter` (if using Jinja) or make standalone `Sendable` struct
+2. Add Jinja template to `Resources/` (if needed)
 3. Wire up in `ExFig-Android/Export/` plugin exporter
 4. Add PKL entry fields in `Sources/ExFigCLI/Resources/Schemas/Android.pkl`
 5. Regenerate: `./bin/mise run codegen:pkl`
@@ -113,7 +113,7 @@ When modifying `AndroidOutput`:
 - Update all construction sites in `ExFig-Android/Export/*.swift`
 - Update `ExFig-Android/Config/` bridge helpers (`resolvedMainRes`, `resolvedMainSrc`)
 
-When modifying Stencil templates:
+When modifying Jinja templates:
 
 - Template context variables must match the dictionary keys passed in the exporter's `render()` call
 - Update corresponding tests in `Tests/AndroidExportTests/`

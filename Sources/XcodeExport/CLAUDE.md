@@ -20,7 +20,7 @@ This module is consumed by `ExFig-iOS` exporters, which handle the pipeline orch
 ### Class Hierarchy
 
 ```
-XcodeExporterBase                  # Shared: Stencil env, Swift keyword escaping, FileContents creation
+XcodeExporterBase                  # Shared: Jinja template loading, Swift keyword escaping, FileContents creation
 ├── XcodeColorExporter             # Colors → colorsets + UIColor/Color extensions
 ├── XcodeImagesExporterBase        # Shared images logic: Swift extensions (UIKit/SwiftUI) + Code Connect
 │   ├── XcodeIconsExporter         # Icons → imagesets with preservesVectorRepresentation
@@ -48,22 +48,22 @@ Images generate `.imageset/Contents.json` with scale-qualified filenames. Dark v
 
 `XcodeEmptyContents` and `XcodeFolderNamespaceContents` generate folder-level `Contents.json` (with `provides-namespace: true` for grouped colors).
 
-### Stencil Templates
+### Jinja2 Templates
 
 Templates in `Resources/` generate Swift code. Custom templates are supported via `templatesPath` on Output structs (falls back to bundled defaults).
 
-| Template                             | Generated Output                          |
-| ------------------------------------ | ----------------------------------------- |
-| `UIColor+extension.swift.stencil`    | UIColor static properties (light/dark)    |
-| `Color+extension.swift.stencil`      | SwiftUI Color static properties           |
-| `UIImage+extension.swift.stencil`    | UIImage static properties                 |
-| `Image+extension.swift.stencil`      | SwiftUI Image static properties           |
-| `UIFont+extension.swift.stencil`     | UIFont convenience methods                |
-| `Font+extension.swift.stencil`       | SwiftUI Font convenience methods          |
-| `Label.swift.stencil`                | Custom UILabel subclasses per text style  |
-| `LabelStyle.swift.stencil`           | Base LabelStyle protocol                  |
-| `LabelStyle+extension.swift.stencil` | LabelStyle implementations per text style |
-| `CodeConnect.figma.swift.stencil`    | Figma Code Connect structs                |
+| Template                           | Generated Output                          |
+| ---------------------------------- | ----------------------------------------- |
+| `UIColor+extension.swift.jinja`    | UIColor static properties (light/dark)    |
+| `Color+extension.swift.jinja`      | SwiftUI Color static properties           |
+| `UIImage+extension.swift.jinja`    | UIImage static properties                 |
+| `Image+extension.swift.jinja`      | SwiftUI Image static properties           |
+| `UIFont+extension.swift.jinja`     | UIFont convenience methods                |
+| `Font+extension.swift.jinja`       | SwiftUI Font convenience methods          |
+| `Label.swift.jinja`                | Custom UILabel subclasses per text style  |
+| `LabelStyle.swift.jinja`           | Base LabelStyle protocol                  |
+| `LabelStyle+extension.swift.jinja` | LabelStyle implementations per text style |
+| `CodeConnect.figma.swift.jinja`    | Figma Code Connect structs                |
 
 Templates with `.include` suffix are partial templates used for append mode (inserting into existing files).
 
@@ -93,7 +93,7 @@ Icons and images exporters accept optional `allIconNames`/`allAssetNames` and `a
 When adding a template context variable:
 
 1. Add to the context dictionary in the exporter method
-2. Update the `.stencil` template to use `{{ variableName }}`
+2. Update the `.jinja` template to use `{{ variableName }}`
 3. Update tests — exporter tests verify rendered output strings
 
 When adding a new Output field:

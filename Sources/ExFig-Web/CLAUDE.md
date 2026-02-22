@@ -40,7 +40,7 @@ Each exporter follows the same 3-step pattern:
 All entries support per-entry overrides that take priority over platform config:
 
 - `entry.resolvedOutput(fallback:)` — output directory
-- `entry.resolvedTemplatesPath(fallback:)` — Stencil templates path
+- `entry.resolvedTemplatesPath(fallback:)` — Jinja2 templates path
 
 Colors uses `output` + `outputDirectory` (two levels), while icons/images use only `outputDirectory` appended to `platformConfig.output`.
 

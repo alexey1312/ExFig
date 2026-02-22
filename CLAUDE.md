@@ -112,7 +112,7 @@ pkl eval --format json <file.pkl>   # Package URI requires published package
 | Package Manager | Swift Package Manager                                                              |
 | CLI Framework   | swift-argument-parser                                                              |
 | Config Format   | PKL (Programmable, Scalable, Safe)                                                 |
-| Templates       | Stencil                                                                            |
+| Templates       | Jinja2 (swift-jinja)                                                               |
 | Required Env    | `FIGMA_PERSONAL_TOKEN`                                                             |
 | Config Files    | `exfig.pkl` (PKL configuration)                                                    |
 | Tooling         | mise (`./bin/mise` self-contained, no global install needed)                       |
@@ -173,9 +173,9 @@ Sources/ExFigCLI/Resources/
 ├── Schemas/         # PKL schemas (ExFig.pkl, iOS.pkl, Android.pkl, Flutter.pkl, Web.pkl, Common.pkl, Figma.pkl)
 │   └── examples/    # Example PKL configs (exfig-ios.pkl, exfig-multi.pkl, base.pkl)
 ├── *Config.swift    # Init templates: PKL content as Swift raw string literals (ios, android, flutter, web)
-└── *.stencil        # Stencil templates for code generation
+└── *.jinja          # Jinja2 templates for code generation
 
-Sources/*/Resources/ # Stencil templates for code generation
+Sources/*/Resources/ # Jinja2 templates for code generation
 Tests/               # Test targets mirror source structure
 ```
 
@@ -330,8 +330,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | --------------------- | ------- | ------------------------------- |
 | swift-argument-parser | 1.5.0+  | CLI framework                   |
 | swift-collections     | 1.2.x   | Ordered collections             |
-| Stencil               | 0.15.1+ | Template engine                 |
-| StencilSwiftKit       | 2.10.1+ | Swift Stencil extensions        |
+| swift-jinja           | 2.0.0+  | Jinja2 template engine          |
 | XcodeProj             | 8.27.0+ | Xcode project manipulation      |
 | swift-log             | 1.6.0+  | Logging                         |
 | Rainbow               | 4.2.0+  | Terminal colors                 |
@@ -354,7 +353,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Tests fail                  | Check `FIGMA_PERSONAL_TOKEN` is set                                                            |
 | Formatting fails            | Run `./bin/mise run setup` to install tools                                                    |
 | test:filter no matches      | SPM converts hyphens→underscores: use `ExFig_FlutterTests` not `ExFig-FlutterTests`            |
-| Template errors             | Check Stencil syntax and context variables                                                     |
+| Template errors             | Check Jinja2 syntax and context variables                                                      |
 | Linux test hangs            | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`            |
 | Android pathData long       | Simplify in Figma or use `--strict-path-validation`                                            |
 | PKL parse error 1           | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`          |

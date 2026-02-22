@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ExFig-Android is the Android **platform plugin** — it orchestrates the full export pipeline: Figma fetch → processing → file generation → disk write. It delegates rendering to `AndroidExport` (pure transformation layer) and I/O to `ExFigCore` context protocols.
 
-This is **NOT** the rendering layer. `AndroidExport` handles Stencil templates, XML/Kotlin generation. This module wires config, loads data, and writes output.
+This is **NOT** the rendering layer. `AndroidExport` handles Jinja2 templates, XML/Kotlin generation. This module wires config, loads data, and writes output.
 
 ## Build & Test
 
@@ -46,7 +46,7 @@ Each entry can override platform-wide paths. The pattern is consistent across al
 
 ```swift
 entry.resolvedMainRes(fallback: platformConfig.mainRes)      // res/ directory
-entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)  // Stencil templates
+entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath)  // Jinja2 templates
 entry.resolvedMainSrc(fallback: platformConfig.mainSrc)      // Kotlin src/ (colors only)
 ```
 

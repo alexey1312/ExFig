@@ -10,7 +10,7 @@ WebExport is the output/rendering layer for Web platform exports. It receives pr
 
 ## Architecture
 
-All exporters inherit from `WebExporter` base class, which provides Stencil template environment setup and `FileContents` creation. Each exporter produces `FileContents` objects — the CLI layer writes them to disk.
+All exporters inherit from `WebExporter` base class, which provides Jinja template loading and `FileContents` creation. Each exporter produces `FileContents` objects — the CLI layer writes them to disk.
 
 | Exporter            | Input                    | Output Files                                                       |
 | ------------------- | ------------------------ | ------------------------------------------------------------------ |
@@ -22,9 +22,9 @@ All exporters inherit from `WebExporter` base class, which provides Stencil temp
 
 ## Template System
 
-9 Stencil templates in `Resources/`. Custom templates can override defaults via `WebOutput.templatesPath`. Templates use `StencilSwiftKit` extensions. All templates include `header.stencil` as a "do not edit" comment.
+9 Jinja templates in `Resources/`. Custom templates can override defaults via `WebOutput.templatesPath`. All templates include `header.jinja` as a "do not edit" comment.
 
-Template context variables are plain `[[String: String]]` arrays — color names are pre-formatted as `cssName` (kebab-case) and `camelName` (lowerCamelCase) before passing to Stencil.
+Template context variables are plain `[[String: String]]` arrays — color names are pre-formatted as `cssName` (kebab-case) and `camelName` (lowerCamelCase) before passing to Jinja.
 
 ## Key Conventions
 
