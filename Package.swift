@@ -87,12 +87,20 @@ let package = Package(
             exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
+        // Shared Jinja template rendering utilities
+        .target(
+            name: "JinjaSupport",
+            dependencies: [
+                .product(name: "Jinja", package: "swift-jinja"),
+            ]
+        ),
+
         // Exports resources to Xcode project
         .target(
             name: "XcodeExport",
             dependencies: [
                 "ExFigCore",
-                .product(name: "Jinja", package: "swift-jinja"),
+                "JinjaSupport",
             ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
@@ -116,7 +124,7 @@ let package = Package(
             dependencies: [
                 "ExFigCore",
                 "SVGKit",
-                .product(name: "Jinja", package: "swift-jinja"),
+                "JinjaSupport",
                 .product(name: "OrderedCollections", package: "swift-collections"),
             ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
@@ -130,7 +138,7 @@ let package = Package(
             name: "FlutterExport",
             dependencies: [
                 "ExFigCore",
-                .product(name: "Jinja", package: "swift-jinja"),
+                "JinjaSupport",
             ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
@@ -143,7 +151,7 @@ let package = Package(
             name: "WebExport",
             dependencies: [
                 "ExFigCore",
-                .product(name: "Jinja", package: "swift-jinja"),
+                "JinjaSupport",
             ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [

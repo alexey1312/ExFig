@@ -1,19 +1,14 @@
 import ExFigCore
 import Foundation
-import Jinja
-
-enum TemplateLoadError: Error, LocalizedError {
-    case notFound(String)
-
-    var errorDescription: String? {
-        switch self {
-        case let .notFound(name):
-            "Template not found: \(name)"
-        }
-    }
-}
+import JinjaSupport
 
 public class XcodeExporterBase {
+    let renderer: JinjaTemplateRenderer
+
+    init() {
+        renderer = JinjaTemplateRenderer(bundle: Bundle.module)
+    }
+
     /// All Swift keywords that need escaping with backticks when used as identifiers.
     /// Using a Set for O(1) lookup instead of O(n) array search.
     private static let swiftKeywords: Set<String> = [
@@ -47,38 +42,22 @@ public class XcodeExporterBase {
         context: [String: Any],
         templatesPath: URL?
     ) throws -> String {
-        let templateString = try loadTemplate(named: name, templatesPath: templatesPath)
-        return try renderTemplate(source: templateString, context: context)
+        try renderer.renderTemplate(name: name, context: context, templatesPath: templatesPath)
     }
 
     func renderTemplate(source: String, context: [String: Any]) throws -> String {
-        let jinjaContext = try context.mapValues { try Value(any: $0) }
-        let template = try Template(source)
-        return try template.render(jinjaContext)
+        try renderer.renderTemplate(source: source, context: context)
     }
 
     func loadTemplate(named name: String, templatesPath: URL?) throws -> String {
-        if let customPath = templatesPath {
-            let url = customPath.appendingPathComponent(name)
-            return try String(contentsOf: url, encoding: .utf8)
-        }
-        let resourcePath = Bundle.module.resourcePath ?? ""
-        for dir in [resourcePath + "/Resources", resourcePath] {
-            let url = URL(fileURLWithPath: dir).appendingPathComponent(name)
-            if let contents = try? String(contentsOf: url, encoding: .utf8) {
-                return contents
-            }
-        }
-        throw TemplateLoadError.notFound(name)
+        try renderer.loadTemplate(named: name, templatesPath: templatesPath)
     }
 
     func contextWithHeader(
         _ context: [String: Any],
         templatesPath: URL?
     ) throws -> [String: Any] {
-        var ctx = context
-        ctx["header"] = try loadTemplate(named: "header.jinja", templatesPath: templatesPath)
-        return ctx
+        try renderer.contextWithHeader(context, templatesPath: templatesPath)
     }
 
     func contextWithHeaderAndBundle(

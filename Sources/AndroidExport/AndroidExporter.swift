@@ -1,55 +1,28 @@
 import ExFigCore
 import Foundation
-import Jinja
-
-enum TemplateLoadError: Error, LocalizedError {
-    case notFound(String)
-
-    var errorDescription: String? {
-        switch self {
-        case let .notFound(name):
-            "Template not found: \(name)"
-        }
-    }
-}
+import JinjaSupport
 
 public class AndroidExporter {
-    private let templatesPath: URL?
+    let renderer: JinjaTemplateRenderer
 
     init(templatesPath: URL?) {
-        self.templatesPath = templatesPath
+        renderer = JinjaTemplateRenderer(bundle: Bundle.module, templatesPath: templatesPath)
     }
 
     func renderTemplate(name: String, context: [String: Any]) throws -> String {
-        let templateString = try loadTemplate(named: name)
-        return try renderTemplate(source: templateString, context: context)
+        try renderer.renderTemplate(name: name, context: context)
     }
 
     func renderTemplate(source: String, context: [String: Any]) throws -> String {
-        let jinjaContext = try context.mapValues { try Value(any: $0) }
-        let template = try Template(source)
-        return try template.render(jinjaContext)
+        try renderer.renderTemplate(source: source, context: context)
     }
 
     func loadTemplate(named name: String) throws -> String {
-        if let customPath = templatesPath {
-            let url = customPath.appendingPathComponent(name)
-            return try String(contentsOf: url, encoding: .utf8)
-        }
-        let resourcePath = Bundle.module.resourcePath ?? ""
-        for dir in [resourcePath + "/Resources", resourcePath] {
-            let url = URL(fileURLWithPath: dir).appendingPathComponent(name)
-            if let contents = try? String(contentsOf: url, encoding: .utf8) {
-                return contents
-            }
-        }
-        throw TemplateLoadError.notFound(name)
+        try renderer.loadTemplate(named: name)
     }
 
     func contextWithHeader(_ context: [String: Any]) throws -> [String: Any] {
-        var ctx = context
-        ctx["header"] = try loadTemplate(named: "header.jinja")
-        return ctx
+        try renderer.contextWithHeader(context)
     }
 
     func makeFileContents(for string: String, directory: URL, file: URL) throws -> FileContents {
