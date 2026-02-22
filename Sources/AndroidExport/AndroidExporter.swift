@@ -22,8 +22,12 @@ public class AndroidExporter {
 
     func renderTemplate(name: String, context: [String: Any]) throws -> String {
         let templateString = try loadTemplate(named: name)
+        return try renderTemplate(source: templateString, context: context)
+    }
+
+    func renderTemplate(source: String, context: [String: Any]) throws -> String {
         let jinjaContext = try context.mapValues { try Value(any: $0) }
-        let template = try Template(templateString)
+        let template = try Template(source)
         return try template.render(jinjaContext)
     }
 

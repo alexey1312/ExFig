@@ -97,6 +97,8 @@ public final class WebImagesExporter: WebExporter {
     private func makeReactComponents(images: [AssetPair<ImagePack>]) throws -> [FileContents] {
         var files: [FileContents] = []
 
+        let templateSource = try loadTemplate(named: "Image.tsx.jinja")
+
         for imagePair in images {
             let componentName = imagePair.light.name.camelCased()
             let fileName = componentName
@@ -112,7 +114,7 @@ public final class WebImagesExporter: WebExporter {
             ]
 
             let fullContext = try contextWithHeader(context)
-            let content = try renderTemplate(name: "Image.tsx.jinja", context: fullContext)
+            let content = try renderTemplate(source: templateSource, context: fullContext)
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue

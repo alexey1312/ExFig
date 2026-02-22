@@ -127,6 +127,8 @@ public final class WebIconsExporter: WebExporter {
         var missingDataIcons: [String] = []
         var conversionFailedIcons: [(name: String, error: String)] = []
 
+        let templateSource = try loadTemplate(named: "Icon.tsx.jinja")
+
         for iconPair in icons {
             let componentName = iconPair.light.name.camelCased()
             let snakeName = iconPair.light.name.snakeCased()
@@ -154,7 +156,7 @@ public final class WebIconsExporter: WebExporter {
             ]
 
             let fullContext = try contextWithHeader(context)
-            let content = try renderTemplate(name: "Icon.tsx.jinja", context: fullContext)
+            let content = try renderTemplate(source: templateSource, context: fullContext)
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue
@@ -180,6 +182,8 @@ public final class WebIconsExporter: WebExporter {
         // For production use, call generateReactComponentsFromSVGData after downloading SVGs.
         var files: [FileContents] = []
 
+        let templateSource = try loadTemplate(named: "Icon.tsx.jinja")
+
         for iconPair in icons {
             let componentName = iconPair.light.name.camelCased()
             let fileName = componentName
@@ -191,7 +195,7 @@ public final class WebIconsExporter: WebExporter {
             ]
 
             let fullContext = try contextWithHeader(context)
-            let content = try renderTemplate(name: "Icon.tsx.jinja", context: fullContext)
+            let content = try renderTemplate(source: templateSource, context: fullContext)
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue
