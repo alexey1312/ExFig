@@ -65,10 +65,9 @@ public class XcodeExporterBase {
         templatesPath: URL?
     ) throws -> [String: Any] {
         var ctx = try contextWithHeader(context, templatesPath: templatesPath)
-        let bundleCtx = context.filter { ["resourceBundleNames"].contains($0.key) }
         let bundleExtension = try renderTemplate(
             name: "Bundle+extension.swift.jinja.include",
-            context: bundleCtx,
+            context: context,
             templatesPath: templatesPath
         )
         ctx["bundleExtension"] = bundleExtension

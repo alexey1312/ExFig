@@ -16,14 +16,22 @@ public final class JinjaTemplateRenderer {
             let url = customPath.appendingPathComponent(name)
             return try String(contentsOf: url, encoding: .utf8)
         }
-        let resourcePath = bundle.resourcePath ?? ""
-        for dir in [resourcePath + "/Resources", resourcePath] {
+        guard let resourcePath = bundle.resourcePath else {
+            throw TemplateLoadError.notFound(
+                name: name,
+                searchedPaths: ["(Bundle.module.resourcePath is nil)"]
+            )
+        }
+        let searchDirs = [resourcePath + "/Resources", resourcePath]
+        for dir in searchDirs {
             let url = URL(fileURLWithPath: dir).appendingPathComponent(name)
-            if let contents = try? String(contentsOf: url, encoding: .utf8) {
-                return contents
+            do {
+                return try String(contentsOf: url, encoding: .utf8)
+            } catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
+                continue
             }
         }
-        throw TemplateLoadError.notFound(name)
+        throw TemplateLoadError.notFound(name: name, searchedPaths: searchDirs)
     }
 
     public func renderTemplate(source: String, context: [String: Any]) throws -> String {
