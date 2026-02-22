@@ -49,11 +49,11 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
         if append {
             let partialContents = try makeExtensionContents(
                 names: names,
-                templateName: "Image+extension.swift.stencil.include"
+                templateName: "Image+extension.swift.jinja.include"
             )
             contents = try appendContent(string: partialContents, to: url)
         } else {
-            contents = try makeExtensionContents(names: names, templateName: "Image+extension.swift.stencil")
+            contents = try makeExtensionContents(names: names, templateName: "Image+extension.swift.jinja")
         }
         return try makeFileContents(for: contents, url: url)
     }
@@ -68,11 +68,11 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
         if append {
             let partialContents = try makeExtensionContents(
                 names: names,
-                templateName: "UIImage+extension.swift.stencil.include"
+                templateName: "UIImage+extension.swift.jinja.include"
             )
             contents = try appendContent(string: partialContents, to: url)
         } else {
-            contents = try makeExtensionContents(names: names, templateName: "UIImage+extension.swift.stencil")
+            contents = try makeExtensionContents(names: names, templateName: "UIImage+extension.swift.jinja")
         }
 
         return try makeFileContents(for: contents, url: url)
@@ -81,15 +81,18 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
     private func makeExtensionContents(names: [String], templateName: String) throws -> String {
         // Sort names for stable output across regenerations
         let sortedNames = names.sorted()
-        let context: [String: Any] = [
+        var context: [String: Any] = [
             "addObjcPrefix": output.addObjcAttribute,
             "assetsInSwiftPackage": output.assetsInSwiftPackage,
             "resourceBundleNames": output.resourceBundleNames ?? [],
             "assetsInMainBundle": output.assetsInMainBundle,
             "images": sortedNames.map { ["name": $0] },
         ]
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        return try env.renderTemplate(name: templateName, context: context)
+        // Full templates need header and bundle extension; .include partials don't
+        if !templateName.hasSuffix(".include") {
+            context = try contextWithHeaderAndBundle(context, templatesPath: output.templatesPath)
+        }
+        return try renderTemplate(name: templateName, context: context, templatesPath: output.templatesPath)
     }
 
     private func appendContent(string: String, to fileURL: URL) throws -> String {
@@ -184,8 +187,12 @@ public class XcodeImagesExporterBase: XcodeExporterBase {
         let sortedAssets = assets.sorted { ($0["name"] ?? "") < ($1["name"] ?? "") }
 
         let context: [String: Any] = ["assets": sortedAssets]
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        let contents = try env.renderTemplate(name: "CodeConnect.figma.swift.stencil", context: context)
+        let fullContext = try contextWithHeader(context, templatesPath: output.templatesPath)
+        let contents = try renderTemplate(
+            name: "CodeConnect.figma.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
 
         return try makeFileContents(for: contents, url: url)
     }

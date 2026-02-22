@@ -1,7 +1,5 @@
 import ExFigCore
 import Foundation
-import PathKit
-import Stencil
 
 public final class AndroidColorExporter: AndroidExporter {
     private let output: AndroidOutput
@@ -80,8 +78,8 @@ public final class AndroidColorExporter: AndroidExporter {
             "colors": colors,
         ]
 
-        let env = makeEnvironment()
-        return try env.renderTemplate(name: "colors.xml.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        return try renderTemplate(name: "colors.xml.jinja", context: fullContext)
     }
 
     private func makeComposeColorsFileContents(
@@ -144,8 +142,8 @@ public final class AndroidColorExporter: AndroidExporter {
             context["xmlResourcePackage"] = xmlResourcePackage
         }
 
-        let env = makeEnvironment()
-        let string = try env.renderTemplate(name: "Colors.kt.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        let string = try renderTemplate(name: "Colors.kt.jinja", context: fullContext)
 
         guard let fileURL = URL(string: fileName) else {
             fatalError("Invalid file URL: \(fileName)")

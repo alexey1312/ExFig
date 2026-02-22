@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 public final class AndroidComposeIconExporter: AndroidExporter {
     private let output: AndroidOutput
@@ -47,7 +46,7 @@ public final class AndroidComposeIconExporter: AndroidExporter {
             "xmlResourcePackage": xmlResourcePackage,
             "icons": icons,
         ]
-        let env = makeEnvironment()
-        return try env.renderTemplate(name: "Icons.kt.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        return try renderTemplate(name: "Icons.kt.jinja", context: fullContext)
     }
 }

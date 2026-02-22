@@ -1,8 +1,0 @@
-{
-  "light": {
-{% for color in lightColors %}    "{{ color.cssName }}": "{{ color.value }}"{% if not forloop.last %},{% endif %}
-{% endfor %}  }{% if hasDarkColors %},
-  "dark": {
-{% for color in darkColors %}    "{{ color.cssName }}": "{{ color.value }}"{% if not forloop.last %},{% endif %}
-{% endfor %}  }{% endif %}
-}

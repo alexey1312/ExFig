@@ -48,8 +48,8 @@ public final class AndroidTypographyExporter: AndroidExporter {
         let context: [String: Any] = [
             "textStyles": fonts,
         ]
-        let env = makeEnvironment()
-        let contents = try env.renderTemplate(name: "typography.xml.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        let contents = try renderTemplate(name: "typography.xml.jinja", context: fullContext)
 
         let directoryURL = output.xmlOutputDirectory.appendingPathComponent("values")
         guard let fileURL = URL(string: "typography.xml") else {
@@ -81,8 +81,8 @@ public final class AndroidTypographyExporter: AndroidExporter {
             "package": package,
             "xmlResourcePackage": xmlResourcePackage,
         ]
-        let env = makeEnvironment()
-        let contents = try env.renderTemplate(name: "Typography.kt.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        let contents = try renderTemplate(name: "Typography.kt.jinja", context: fullContext)
 
         guard let fileURL = URL(string: "Typography.kt") else {
             fatalError("Invalid file URL: Typography.kt")

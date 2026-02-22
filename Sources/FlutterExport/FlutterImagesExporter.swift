@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 public final class FlutterImagesExporter: FlutterExporter {
     private let output: FlutterOutput
@@ -130,8 +129,8 @@ public final class FlutterImagesExporter: FlutterExporter {
             "images": imagesList,
         ]
 
-        let env = makeEnvironment()
-        return try env.renderTemplate(name: "images.dart.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        return try renderTemplate(name: "images.dart.jinja", context: fullContext)
     }
 
     private func makeImagesAssetFiles(images: [AssetPair<ImagePack>]) -> [FileContents] {

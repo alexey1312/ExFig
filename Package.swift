@@ -15,8 +15,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
-        .package(url: "https://github.com/stencilproject/Stencil.git", from: "0.15.1"),
-        .package(url: "https://github.com/SwiftGen/StencilSwiftKit", from: "2.10.1"),
+        .package(url: "https://github.com/huggingface/swift-jinja.git", from: "2.0.0"),
         .package(url: "https://github.com/tuist/XcodeProj.git", from: "8.27.0"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.0"),
 
@@ -92,8 +91,8 @@ let package = Package(
         .target(
             name: "XcodeExport",
             dependencies: [
-                "ExFigCore", .product(name: "Stencil", package: "Stencil"),
-                "StencilSwiftKit",
+                "ExFigCore",
+                .product(name: "Jinja", package: "swift-jinja"),
             ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
@@ -117,8 +116,7 @@ let package = Package(
             dependencies: [
                 "ExFigCore",
                 "SVGKit",
-                "Stencil",
-                "StencilSwiftKit",
+                .product(name: "Jinja", package: "swift-jinja"),
                 .product(name: "OrderedCollections", package: "swift-collections"),
             ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
@@ -130,7 +128,10 @@ let package = Package(
         // Exports resources to Flutter project
         .target(
             name: "FlutterExport",
-            dependencies: ["ExFigCore", "Stencil", "StencilSwiftKit"],
+            dependencies: [
+                "ExFigCore",
+                .product(name: "Jinja", package: "swift-jinja"),
+            ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/"),
@@ -140,7 +141,10 @@ let package = Package(
         // Exports resources to Web/React project
         .target(
             name: "WebExport",
-            dependencies: ["ExFigCore", "Stencil", "StencilSwiftKit"],
+            dependencies: [
+                "ExFigCore",
+                .product(name: "Jinja", package: "swift-jinja"),
+            ],
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/"),
@@ -230,8 +234,8 @@ let package = Package(
         .testTarget(
             name: "XcodeExportTests",
             dependencies: [
-                "XcodeExport", .product(name: "CustomDump", package: "swift-custom-dump"),
-                "StencilSwiftKit",
+                "XcodeExport",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
             ]
         ),
         .testTarget(
