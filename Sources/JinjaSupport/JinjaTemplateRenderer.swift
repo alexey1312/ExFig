@@ -12,18 +12,24 @@ public final class JinjaTemplateRenderer {
 
     public func loadTemplate(named name: String, templatesPath: URL? = nil) throws -> String {
         let effectivePath = templatesPath ?? defaultTemplatesPath
+        var searchedPaths: [String] = []
         if let customPath = effectivePath {
             let url = customPath.appendingPathComponent(name)
-            return try String(contentsOf: url, encoding: .utf8)
+            do {
+                return try String(contentsOf: url, encoding: .utf8)
+            } catch let error as CocoaError where error.code == .fileReadNoSuchFile || error.code == .fileNoSuchFile {
+                searchedPaths.append(customPath.path)
+            }
         }
         guard let resourcePath = bundle.resourcePath else {
             throw TemplateLoadError.notFound(
                 name: name,
-                searchedPaths: ["(Bundle.module.resourcePath is nil)"]
+                searchedPaths: searchedPaths + ["(Bundle.module.resourcePath is nil)"]
             )
         }
-        let searchDirs = [resourcePath + "/Resources", resourcePath]
-        for dir in searchDirs {
+        let bundleDirs = [resourcePath + "/Resources", resourcePath]
+        searchedPaths += bundleDirs
+        for dir in bundleDirs {
             let url = URL(fileURLWithPath: dir).appendingPathComponent(name)
             do {
                 return try String(contentsOf: url, encoding: .utf8)
@@ -31,7 +37,7 @@ public final class JinjaTemplateRenderer {
                 continue
             }
         }
-        throw TemplateLoadError.notFound(name: name, searchedPaths: searchDirs)
+        throw TemplateLoadError.notFound(name: name, searchedPaths: searchedPaths)
     }
 
     public func renderTemplate(source: String, context: [String: Any]) throws -> String {

@@ -233,6 +233,10 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "JinjaSupportTests",
+            dependencies: ["JinjaSupport"]
+        ),
+        .testTarget(
             name: "ExFigCoreTests",
             dependencies: [
                 "ExFigCore",
