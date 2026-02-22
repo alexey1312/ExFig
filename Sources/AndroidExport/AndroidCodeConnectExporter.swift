@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 /// Generates Figma Code Connect Kotlin files for Jetpack Compose.
 ///
@@ -53,8 +52,8 @@ public final class AndroidCodeConnectExporter: AndroidExporter {
             "assets": sortedAssets,
         ]
 
-        let env = makeEnvironment()
-        let contents = try env.renderTemplate(name: "CodeConnect.figma.kt.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        let contents = try renderTemplate(name: "CodeConnect.figma.kt.jinja", context: fullContext)
 
         let directory = url.deletingLastPathComponent()
         let file = URL(fileURLWithPath: url.lastPathComponent)

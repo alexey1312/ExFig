@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 public final class WebImagesExporter: WebExporter {
     private let output: WebOutput
@@ -112,8 +111,8 @@ public final class WebImagesExporter: WebExporter {
                 "assetPath": "'\(snakeName).\(ext)'",
             ]
 
-            let env = makeEnvironment()
-            let content = try env.renderTemplate(name: "Image.tsx.stencil", context: context)
+            let fullContext = try contextWithHeader(context)
+            let content = try renderTemplate(name: "Image.tsx.jinja", context: fullContext)
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue
@@ -159,8 +158,8 @@ public final class WebImagesExporter: WebExporter {
             "images": imagesList,
         ]
 
-        let env = makeEnvironment()
-        let content = try env.renderTemplate(name: "ImageIndex.ts.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        let content = try renderTemplate(name: "ImageIndex.ts.jinja", context: fullContext)
 
         guard let fileURL = URL(string: "index.ts") else {
             throw WebExportError.invalidFileName(name: "index.ts")

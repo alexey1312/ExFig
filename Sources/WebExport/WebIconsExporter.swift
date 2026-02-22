@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 public final class WebIconsExporter: WebExporter {
     private let output: WebOutput
@@ -154,8 +153,8 @@ public final class WebIconsExporter: WebExporter {
                 "svgContent": conversion.jsxContent,
             ]
 
-            let env = makeEnvironment()
-            let content = try env.renderTemplate(name: "Icon.tsx.stencil", context: context)
+            let fullContext = try contextWithHeader(context)
+            let content = try renderTemplate(name: "Icon.tsx.jinja", context: fullContext)
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue
@@ -191,8 +190,8 @@ public final class WebIconsExporter: WebExporter {
                 "svgContent": "{/* SVG content placeholder */}",
             ]
 
-            let env = makeEnvironment()
-            let content = try env.renderTemplate(name: "Icon.tsx.stencil", context: context)
+            let fullContext = try contextWithHeader(context)
+            let content = try renderTemplate(name: "Icon.tsx.jinja", context: fullContext)
 
             guard let fileURL = URL(string: "\(fileName).tsx") else {
                 continue
@@ -212,8 +211,8 @@ public final class WebIconsExporter: WebExporter {
     // MARK: - Types File
 
     private func makeTypesFile() throws -> FileContents {
-        let env = makeEnvironment()
-        let content = try env.renderTemplate(name: "types.ts.stencil", context: [:])
+        let fullContext = try contextWithHeader([:])
+        let content = try renderTemplate(name: "types.ts.jinja", context: fullContext)
 
         guard let fileURL = URL(string: "types.ts") else {
             throw WebExportError.invalidFileName(name: "types.ts")
@@ -255,8 +254,8 @@ public final class WebIconsExporter: WebExporter {
             "icons": iconsList,
         ]
 
-        let env = makeEnvironment()
-        let content = try env.renderTemplate(name: "IconIndex.ts.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        let content = try renderTemplate(name: "IconIndex.ts.jinja", context: fullContext)
 
         guard let fileURL = URL(string: "index.ts") else {
             throw WebExportError.invalidFileName(name: "index.ts")

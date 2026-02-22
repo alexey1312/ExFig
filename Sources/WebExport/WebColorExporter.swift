@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 public final class WebColorExporter: WebExporter {
     private let output: WebOutput
@@ -81,8 +80,8 @@ public final class WebColorExporter: WebExporter {
             "darkColors": darkColors,
         ]
 
-        let env = makeEnvironment()
-        return try env.renderTemplate(name: "theme.css.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        return try renderTemplate(name: "theme.css.jinja", context: fullContext)
     }
 
     // MARK: - TypeScript Generation
@@ -109,8 +108,8 @@ public final class WebColorExporter: WebExporter {
             "colors": colors,
         ]
 
-        let env = makeEnvironment()
-        return try env.renderTemplate(name: "variables.ts.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        return try renderTemplate(name: "variables.ts.jinja", context: fullContext)
     }
 
     // MARK: - JSON Generation
@@ -153,8 +152,8 @@ public final class WebColorExporter: WebExporter {
             "darkColors": darkColors,
         ]
 
-        let env = makeEnvironment()
-        return try env.renderTemplate(name: "theme.json.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        return try renderTemplate(name: "theme.json.jinja", context: fullContext)
     }
 }
 

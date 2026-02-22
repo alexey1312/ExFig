@@ -1,4 +1,4 @@
-{% include "header.stencil" %}
+{{ header }}
 import UIKit
 {% if assetsInSwiftPackage and resourceBundleNames %}
 private class BundleProvider {
@@ -13,6 +13,7 @@ private class BundleProvider {
     static let bundle = Bundle(for: BundleProvider.self)
 }
 {% endif %}
-public extension UIImage {{ "{" }}{% include "UIImage+extension.swift.stencil.include" %}
+public extension UIImage {{ "{" }}{% for image in images %}
+    {% if addObjcPrefix %}@objc {% endif %}static var {{ image.name }}: UIImage { UIImage(named: #function{% if not assetsInMainBundle %}, in: BundleProvider.bundle, compatibleWith: nil{% endif %})! }{% endfor %}
 }
-{% include "Bundle+extension.swift.stencil.include" %}
+{{ bundleExtension }}

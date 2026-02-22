@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 public final class FlutterColorExporter: FlutterExporter {
     private let output: FlutterOutput
@@ -33,8 +32,6 @@ public final class FlutterColorExporter: FlutterExporter {
         let className = output.colorsClassName ?? "AppColors"
 
         let context: [String: Any]
-        let env = makeEnvironment()
-
         if hasHighContrastColors {
             // Unified 4-mode approach: single class with all variants
             let unifiedColors: [[String: Any]] = colorPairs.sorted { $0.light.name < $1.light.name }.map { pair in
@@ -82,7 +79,8 @@ public final class FlutterColorExporter: FlutterExporter {
             ]
         }
 
-        return try env.renderTemplate(name: "colors.dart.stencil", context: context)
+        let fullContext = try contextWithHeader(context)
+        return try renderTemplate(name: "colors.dart.jinja", context: fullContext)
     }
 }
 

@@ -1,10 +1,10 @@
-// {% include "header.stencil" %}
+// {{ header }}
 
 import type { ImageProps } from './types';
 
 export const {{ componentName }} = ({ alt = '{{ name }}', ...props }: ImageProps) => (
   <img
-    src={{{ assetPath }}}
+    src={{ "{" }}{{ assetPath }}{{ "}" }}
     alt={alt}
     {...props}
   />

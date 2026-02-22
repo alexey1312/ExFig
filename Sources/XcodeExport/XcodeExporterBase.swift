@@ -1,8 +1,17 @@
 import ExFigCore
 import Foundation
-import PathKit
-import Stencil
-import StencilSwiftKit
+import Jinja
+
+enum TemplateLoadError: Error, LocalizedError {
+    case notFound(String)
+
+    var errorDescription: String? {
+        switch self {
+        case let .notFound(name):
+            "Template not found: \(name)"
+        }
+    }
+}
 
 public class XcodeExporterBase {
     /// All Swift keywords that need escaping with backticks when used as identifiers.
@@ -33,18 +42,54 @@ public class XcodeExporterBase {
         return name
     }
 
-    func makeEnvironment(templatesPath: URL?) -> Environment {
-        let loader = if let templateURL = templatesPath {
-            FileSystemLoader(paths: [Path(templateURL.resolvingSymlinksInPath().path)])
-        } else {
-            FileSystemLoader(paths: [
-                Path((Bundle.module.resourcePath ?? "") + "/Resources"),
-                Path(Bundle.module.resourcePath ?? ""),
-            ])
+    func renderTemplate(
+        name: String,
+        context: [String: Any],
+        templatesPath: URL?
+    ) throws -> String {
+        let templateString = try loadTemplate(named: name, templatesPath: templatesPath)
+        let jinjaContext = try context.mapValues { try Value(any: $0) }
+        let template = try Template(templateString)
+        return try template.render(jinjaContext)
+    }
+
+    func loadTemplate(named name: String, templatesPath: URL?) throws -> String {
+        if let customPath = templatesPath {
+            let url = customPath.appendingPathComponent(name)
+            return try String(contentsOf: url, encoding: .utf8)
         }
-        let ext = Extension()
-        ext.registerStencilSwiftExtensions()
-        return Environment(loader: loader, extensions: [ext])
+        let resourcePath = Bundle.module.resourcePath ?? ""
+        for dir in [resourcePath + "/Resources", resourcePath] {
+            let url = URL(fileURLWithPath: dir).appendingPathComponent(name)
+            if let contents = try? String(contentsOf: url, encoding: .utf8) {
+                return contents
+            }
+        }
+        throw TemplateLoadError.notFound(name)
+    }
+
+    func contextWithHeader(
+        _ context: [String: Any],
+        templatesPath: URL?
+    ) throws -> [String: Any] {
+        var ctx = context
+        ctx["header"] = try loadTemplate(named: "header.jinja", templatesPath: templatesPath)
+        return ctx
+    }
+
+    func contextWithHeaderAndBundle(
+        _ context: [String: Any],
+        templatesPath: URL?
+    ) throws -> [String: Any] {
+        var ctx = try contextWithHeader(context, templatesPath: templatesPath)
+        let bundleCtx = context.filter { ["resourceBundleNames"].contains($0.key) }
+        let bundleExtension = try renderTemplate(
+            name: "Bundle+extension.swift.jinja.include",
+            context: bundleCtx,
+            templatesPath: templatesPath
+        )
+        ctx["bundleExtension"] = bundleExtension
+        return ctx
     }
 
     func makeFileContents(for string: String, url: URL) throws -> FileContents {

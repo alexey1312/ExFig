@@ -1,7 +1,5 @@
 import ExFigCore
 import Foundation
-import PathKit
-import Stencil
 
 public final class XcodeColorExporter: XcodeExporterBase {
     private let output: XcodeColorsOutput
@@ -79,8 +77,12 @@ public final class XcodeColorExporter: XcodeExporterBase {
             "colors": colors,
         ]
 
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        return try env.renderTemplate(name: "Color+extension.swift.stencil", context: context)
+        let fullContext = try contextWithHeaderAndBundle(context, templatesPath: output.templatesPath)
+        return try renderTemplate(
+            name: "Color+extension.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
     }
 
     private func makeUIColorExtensionContents(_ colorPairs: [AssetPair<Color>]) throws -> String {
@@ -132,8 +134,12 @@ public final class XcodeColorExporter: XcodeExporterBase {
             "colors": colors,
         ]
 
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        return try env.renderTemplate(name: "UIColor+extension.swift.stencil", context: context)
+        let fullContext = try contextWithHeaderAndBundle(context, templatesPath: output.templatesPath)
+        return try renderTemplate(
+            name: "UIColor+extension.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
     }
 
     private func makeXcodeEmptyFileContents(directoryURL: URL) -> FileContents {

@@ -1,6 +1,5 @@
 import ExFigCore
 import Foundation
-import Stencil
 
 public final class XcodeTypographyExporter: XcodeExporterBase {
     private let output: XcodeTypographyOutput
@@ -56,11 +55,16 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
                 "type": $0.fontStyle?.uiKitStyleName ?? "",
             ]
         }
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        let contents = try env.renderTemplate(name: "UIFont+extension.swift.stencil", context: [
+        let context: [String: Any] = [
             "textStyles": textStyles,
             "addObjcPrefix": output.addObjcAttribute,
-        ])
+        ]
+        let fullContext = try contextWithHeader(context, templatesPath: output.templatesPath)
+        let contents = try renderTemplate(
+            name: "UIFont+extension.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
         return try makeFileContents(for: contents, url: fontExtensionURL)
     }
 
@@ -74,10 +78,15 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
                 "type": $0.fontStyle?.swiftUIStyleName ?? "",
             ]
         }
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        let contents = try env.renderTemplate(name: "Font+extension.swift.stencil", context: [
+        let context: [String: Any] = [
             "textStyles": textStyles,
-        ])
+        ]
+        let fullContext = try contextWithHeader(context, templatesPath: output.templatesPath)
+        let contents = try renderTemplate(
+            name: "Font+extension.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
         return try makeFileContents(for: contents, url: swiftUIFontExtensionURL)
     }
 
@@ -98,8 +107,13 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
                 "textCase": style.textCase.rawValue,
             ]
         }
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        let contents = try env.renderTemplate(name: "LabelStyle+extension.swift.stencil", context: ["styles": dict])
+        let context: [String: Any] = ["styles": dict]
+        let fullContext = try contextWithHeader(context, templatesPath: output.templatesPath)
+        let contents = try renderTemplate(
+            name: "LabelStyle+extension.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
 
         return try makeFileContents(for: contents, url: labelStyleExtensionURL)
     }
@@ -118,18 +132,27 @@ public final class XcodeTypographyExporter: XcodeExporterBase {
                 "textCase": style.textCase.rawValue,
             ]
         }
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        let contents = try env.renderTemplate(name: "Label.swift.stencil", context: [
+        let context: [String: Any] = [
             "styles": dict,
             "separateStyles": separateStyles,
-        ])
+        ]
+        let fullContext = try contextWithHeader(context, templatesPath: output.templatesPath)
+        let contents = try renderTemplate(
+            name: "Label.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
         // swiftlint:disable:next force_unwrapping
         return try makeFileContents(for: contents, directory: labelsDirectory, file: URL(string: "Label.swift")!)
     }
 
     private func makeLabelStyle(labelsDirectory: URL) throws -> FileContents {
-        let env = makeEnvironment(templatesPath: output.templatesPath)
-        let labelStyleSwiftContents = try env.renderTemplate(name: "LabelStyle.swift.stencil")
+        let fullContext = try contextWithHeader([:], templatesPath: output.templatesPath)
+        let labelStyleSwiftContents = try renderTemplate(
+            name: "LabelStyle.swift.jinja",
+            context: fullContext,
+            templatesPath: output.templatesPath
+        )
         return try makeFileContents(
             for: labelStyleSwiftContents,
             directory: labelsDirectory,
