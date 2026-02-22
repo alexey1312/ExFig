@@ -50,6 +50,8 @@ Images generate `.imageset/Contents.json` with scale-qualified filenames. Dark v
 
 ### Jinja2 Templates
 
+**bundleExtension normalization:** `Bundle+extension.swift.jinja.include` renders `"\n"` when conditions are false (Jinja2 preserves newline after `{% endif %}`). `contextWithHeaderAndBundle` strips whitespace-only results to `""` to prevent extra trailing newlines in output.
+
 Templates in `Resources/` generate Swift code. Custom templates are supported via `templatesPath` on Output structs (falls back to bundled defaults).
 
 | Template                           | Generated Output                          |
@@ -64,6 +66,7 @@ Templates in `Resources/` generate Swift code. Custom templates are supported vi
 | `LabelStyle.swift.jinja`           | Base LabelStyle protocol                  |
 | `LabelStyle+extension.swift.jinja` | LabelStyle implementations per text style |
 | `CodeConnect.figma.swift.jinja`    | Figma Code Connect structs                |
+| `header.jinja`                     | Common "do not edit" header comment       |
 
 Templates with `.include` suffix are partial templates used for append mode (inserting into existing files).
 

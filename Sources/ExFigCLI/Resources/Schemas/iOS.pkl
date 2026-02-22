@@ -52,7 +52,7 @@ class ColorsEntry extends Common.VariablesSource {
   /// When set, overrides `iOSConfig.xcassetsPath`.
   xcassetsPath: String?
 
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `iOSConfig.templatesPath`.
   templatesPath: String?
 
@@ -93,7 +93,7 @@ class IconsEntry extends Common.FrameSource {
   /// When set, overrides `iOSConfig.xcassetsPath`.
   xcassetsPath: String?
 
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `iOSConfig.templatesPath`.
   templatesPath: String?
 
@@ -145,7 +145,7 @@ class ImagesEntry extends Common.FrameSource {
   /// When set, overrides `iOSConfig.xcassetsPath`.
   xcassetsPath: String?
 
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `iOSConfig.templatesPath`.
   templatesPath: String?
 
@@ -221,7 +221,7 @@ class iOSConfig {
   /// Add @objc attribute to generated extensions.
   addObjcAttribute: Boolean?
 
-  /// Path to custom Stencil templates.
+  /// Path to custom Jinja2 templates.
   templatesPath: String?
 
   /// Colors configuration entries.

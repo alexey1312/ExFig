@@ -88,7 +88,7 @@ common = new Common.CommonConfig {
 web = new Web.WebConfig {
   // Output directory for generated TypeScript/CSS files
   output = "./src/tokens"
-  // [optional] Path to the Stencil templates used to generate code
+  // [optional] Path to the Jinja2 templates used to generate code
   // templatesPath = "./Resources/Templates"
 
   // Parameters for exporting colors

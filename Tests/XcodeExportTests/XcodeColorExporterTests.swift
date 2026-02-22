@@ -230,6 +230,27 @@ final class XcodeColorExporterTests: XCTestCase {
         """)
     }
 
+    func testExport_with_assets_in_swift_package_and_resourceBundleNames() throws {
+        let output = XcodeColorsOutput(
+            assetsColorsURL: colorsAssetCatalog,
+            assetsInMainBundle: false,
+            assetsInSwiftPackage: true,
+            resourceBundleNames: ["MyBundle", "OtherBundle"],
+            colorSwiftURL: colorsFile
+        )
+        let exporter = XcodeColorExporter(output: output)
+
+        let result = try exporter.export(colorPairs: [colorPair1])
+
+        let content = try XCTUnwrap(result[0].data)
+        let code = try XCTUnwrap(String(data: content, encoding: .utf8))
+        // Verify the resource bundle names are rendered as a valid Swift array literal
+        XCTAssertTrue(
+            code.contains(#"let bundleNames = ["MyBundle", "OtherBundle"]"#),
+            "Expected Swift array literal with bundle names, got:\n\(code)"
+        )
+    }
+
     func testExport_swiftui() throws {
         let output = XcodeColorsOutput(
             assetsColorsURL: colorsAssetCatalog,

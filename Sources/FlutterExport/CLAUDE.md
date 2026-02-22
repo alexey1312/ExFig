@@ -9,8 +9,7 @@ FlutterExport is the rendering layer for Flutter. It takes processed domain mode
 ## Dependencies
 
 - `ExFigCore` — domain models (`Color`, `ImagePack`, `AssetPair`, `FileContents`, `NameStyle`, `Scale`)
-- `swift-jinja` (Jinja2) — template rendering
-- `PathKit` — template file path resolution
+- `JinjaSupport` — Jinja2 template rendering via `JinjaTemplateRenderer`
 
 ## Architecture
 

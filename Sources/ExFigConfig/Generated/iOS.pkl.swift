@@ -75,7 +75,7 @@ extension iOS {
         /// When set, overrides `iOSConfig.xcassetsPath`.
         public var xcassetsPath: String?
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `iOSConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -185,7 +185,7 @@ extension iOS {
         /// When set, overrides `iOSConfig.xcassetsPath`.
         public var xcassetsPath: String?
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `iOSConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -305,7 +305,7 @@ extension iOS {
         /// When set, overrides `iOSConfig.xcassetsPath`.
         public var xcassetsPath: String?
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `iOSConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -475,7 +475,7 @@ extension iOS {
         /// Add @objc attribute to generated extensions.
         public var addObjcAttribute: Bool?
 
-        /// Path to custom Stencil templates.
+        /// Path to custom Jinja2 templates.
         public var templatesPath: String?
 
         /// Colors configuration entries.

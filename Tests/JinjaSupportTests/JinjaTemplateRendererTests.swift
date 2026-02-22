@@ -114,4 +114,116 @@ final class JinjaTemplateRendererTests: XCTestCase {
         // Then: falls back to bundle
         XCTAssertEqual(result, "from bundle")
     }
+
+    // MARK: - renderTemplate(source:context:)
+
+    func testRenderTemplate_withStringContext() throws {
+        let renderer = makeRenderer()
+        let result = try renderer.renderTemplate(
+            source: "Hello, {{ name }}!",
+            context: ["name": "World"]
+        )
+        XCTAssertEqual(result, "Hello, World!")
+    }
+
+    func testRenderTemplate_withBooleanContext() throws {
+        let renderer = makeRenderer()
+        let result = try renderer.renderTemplate(
+            source: "{% if flag %}yes{% else %}no{% endif %}",
+            context: ["flag": true]
+        )
+        XCTAssertEqual(result, "yes")
+    }
+
+    func testRenderTemplate_withNestedArrayOfDictionaries() throws {
+        let renderer = makeRenderer()
+        let items: [[String: String]] = [
+            ["name": "Alice"],
+            ["name": "Bob"],
+        ]
+        let result = try renderer.renderTemplate(
+            source: "{% for item in items %}{{ item.name }}{% if not loop.last %}, {% endif %}{% endfor %}",
+            context: ["items": items]
+        )
+        XCTAssertEqual(result, "Alice, Bob")
+    }
+
+    func testRenderTemplate_withEmptyContext() throws {
+        let renderer = makeRenderer()
+        let result = try renderer.renderTemplate(
+            source: "static text",
+            context: [:]
+        )
+        XCTAssertEqual(result, "static text")
+    }
+
+    func testRenderTemplate_withIntAndDoubleValues() throws {
+        let renderer = makeRenderer()
+        let result = try renderer.renderTemplate(
+            source: "count={{ count }}, ratio={{ ratio }}",
+            context: ["count": 42, "ratio": 3.14]
+        )
+        XCTAssertEqual(result, "count=42, ratio=3.14")
+    }
+
+    // MARK: - Error propagation
+
+    func testRenderTemplate_invalidSyntaxThrowsError() throws {
+        let renderer = makeRenderer()
+        XCTAssertThrowsError(
+            try renderer.renderTemplate(
+                source: "{% for x in items %}no endfor",
+                context: ["items": ["a"]]
+            )
+        )
+    }
+
+    func testRenderTemplateByName_wrapsRenderErrorWithTemplateName() throws {
+        let bundleDir = tempDir.appendingPathComponent("bundle/Resources")
+        try FileManager.default.createDirectory(at: bundleDir, withIntermediateDirectories: true)
+        try "{% for x in items %}no endfor".write(
+            to: bundleDir.appendingPathComponent("bad.jinja"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let bundle = try XCTUnwrap(Bundle(path: tempDir.appendingPathComponent("bundle").path))
+        let renderer = JinjaTemplateRenderer(bundle: bundle)
+
+        XCTAssertThrowsError(
+            try renderer.renderTemplate(name: "bad.jinja", context: ["items": ["a"]])
+        ) { error in
+            guard case let TemplateLoadError.renderFailed(templateName, _) = error else {
+                XCTFail("Expected TemplateLoadError.renderFailed, got \(error)")
+                return
+            }
+            XCTAssertEqual(templateName, "bad.jinja")
+        }
+    }
+
+    // MARK: - contextWithHeader
+
+    func testContextWithHeader_loadsHeaderAndMergesIntoContext() throws {
+        let bundleDir = tempDir.appendingPathComponent("bundle/Resources")
+        try FileManager.default.createDirectory(at: bundleDir, withIntermediateDirectories: true)
+        try "// Do not edit".write(
+            to: bundleDir.appendingPathComponent("header.jinja"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let bundle = try XCTUnwrap(Bundle(path: tempDir.appendingPathComponent("bundle").path))
+        let renderer = JinjaTemplateRenderer(bundle: bundle)
+
+        let ctx = try renderer.contextWithHeader(["foo": "bar"])
+
+        XCTAssertEqual(ctx["foo"] as? String, "bar")
+        XCTAssertEqual(ctx["header"] as? String, "// Do not edit")
+    }
+
+    // MARK: - Helpers
+
+    private func makeRenderer() -> JinjaTemplateRenderer {
+        JinjaTemplateRenderer(bundle: Bundle.main)
+    }
 }

@@ -107,7 +107,7 @@ android = new Android.AndroidConfig {
   resourcePackage = "com.example"
   // [optional] Relative or absolute path to the code source folder including it. The typography for Jetpack Compose will be exported to this folder
   mainSrc = "./main/src/java"
-  // [optional] Path to the Stencil templates used to generate code
+  // [optional] Path to the Jinja2 templates used to generate code
   // templatesPath = "./Resources/Templates"
 
   // Parameters for exporting colors

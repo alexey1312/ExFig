@@ -3,7 +3,7 @@ import Foundation
 import JinjaSupport
 
 public class XcodeExporterBase {
-    let renderer: JinjaTemplateRenderer
+    private let renderer: JinjaTemplateRenderer
 
     init() {
         renderer = JinjaTemplateRenderer(bundle: Bundle.module)
@@ -67,10 +67,11 @@ public class XcodeExporterBase {
         var ctx = try contextWithHeader(context, templatesPath: templatesPath)
         let bundleExtension = try renderTemplate(
             name: "Bundle+extension.swift.jinja.include",
-            context: context,
+            context: ctx,
             templatesPath: templatesPath
         )
-        ctx["bundleExtension"] = bundleExtension
+        let trimmed = bundleExtension.trimmingCharacters(in: .whitespacesAndNewlines)
+        ctx["bundleExtension"] = trimmed.isEmpty ? "" : bundleExtension
         return ctx
     }
 

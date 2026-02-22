@@ -3,7 +3,7 @@ import Foundation
 import JinjaSupport
 
 public class AndroidExporter {
-    let renderer: JinjaTemplateRenderer
+    private let renderer: JinjaTemplateRenderer
 
     init(templatesPath: URL?) {
         renderer = JinjaTemplateRenderer(bundle: Bundle.module, templatesPath: templatesPath)

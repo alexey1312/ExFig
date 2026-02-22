@@ -115,5 +115,5 @@ When modifying `AndroidOutput`:
 
 When modifying Jinja templates:
 
-- Template context variables must match the dictionary keys passed in the exporter's `render()` call
+- Template context variables must match the dictionary keys passed in the exporter's `renderTemplate(name:context:)` call
 - Update corresponding tests in `Tests/AndroidExportTests/`

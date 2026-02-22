@@ -47,16 +47,16 @@ Copy the default templates from ExFig source to use as a starting point. Templat
 
 ### Available Templates
 
-| Template                          | Output            | Description               |
-| --------------------------------- | ----------------- | ------------------------- |
-| `UIColor.swift.jinja`             | UIColor extension | UIKit color definitions   |
-| `Color.swift.jinja`               | Color extension   | SwiftUI color definitions |
-| `UIImage.swift.jinja`             | UIImage extension | UIKit image accessors     |
-| `Image.swift.jinja`               | Image extension   | SwiftUI image accessors   |
-| `UIFont.swift.jinja`              | UIFont extension  | UIKit font definitions    |
-| `Font.swift.jinja`                | Font extension    | SwiftUI font definitions  |
-| `UILabel.swift.jinja`             | UILabel extension | UIKit label styles        |
-| `header.jinja`                    | File header       | Common header comment     |
+| Template                              | Output            | Description               |
+| ------------------------------------- | ----------------- | ------------------------- |
+| `UIColor+extension.swift.jinja`       | UIColor extension | UIKit color definitions   |
+| `Color+extension.swift.jinja`         | Color extension   | SwiftUI color definitions |
+| `UIImage+extension.swift.jinja`       | UIImage extension | UIKit image accessors     |
+| `Image+extension.swift.jinja`         | Image extension   | SwiftUI image accessors   |
+| `UIFont+extension.swift.jinja`        | UIFont extension  | UIKit font definitions    |
+| `Font+extension.swift.jinja`          | Font extension    | SwiftUI font definitions  |
+| `Label.swift.jinja`                   | Label class       | UIKit label styles        |
+| `header.jinja`                        | File header       | Common header comment     |
 
 ### Context Variables (Colors)
 
@@ -298,6 +298,8 @@ class {{ className }}Dark {
 {{ name | lower }}
 {{ name | capitalize }}
 ```
+
+> Note: Name transformation filters (camelCase, snake_case, etc.) are not needed — name formatting is applied before template rendering, so variable values arrive pre-formatted.
 
 ### Comments
 
