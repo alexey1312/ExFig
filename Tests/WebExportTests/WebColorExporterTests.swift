@@ -115,10 +115,40 @@ final class WebColorExporterTests: XCTestCase {
         XCTAssertNotNil(jsonFile)
 
         let fileContent = try XCTUnwrap(jsonFile?.data)
-        let generatedCode = String(data: fileContent, encoding: .utf8)
+        let generatedCode = try XCTUnwrap(String(data: fileContent, encoding: .utf8))
 
-        XCTAssertTrue(generatedCode?.contains("\"background-primary\"") == true)
-        XCTAssertTrue(generatedCode?.contains("\"#FFFFFF\"") == true)
+        // Verify generated output is valid JSON (catches loop.last comma issues)
+        let jsonObject = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: Data(generatedCode.utf8)) as? [String: Any]
+        )
+
+        // Verify light colors structure
+        let light = try XCTUnwrap(jsonObject["light"] as? [String: String])
+        XCTAssertEqual(light["background-primary"], "#FFFFFF")
+        XCTAssertEqual(light["text-default"], "#000000")
+
+        // Verify dark colors structure
+        let dark = try XCTUnwrap(jsonObject["dark"] as? [String: String])
+        XCTAssertEqual(dark["text-default"], "#FFFFFF")
+    }
+
+    func testExportJSONLightOnly() throws {
+        let exporter = WebColorExporter(output: output, cssFileName: nil, tsFileName: nil, jsonFileName: "tokens.json")
+
+        let result = try exporter.export(colorPairs: [colorPair1])
+
+        let jsonFile = result.first { $0.destination.file.absoluteString == "tokens.json" }
+        let fileContent = try XCTUnwrap(jsonFile?.data)
+        let generatedCode = try XCTUnwrap(String(data: fileContent, encoding: .utf8))
+
+        // Verify valid JSON without dark section
+        let jsonObject = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: Data(generatedCode.utf8)) as? [String: Any]
+        )
+
+        let light = try XCTUnwrap(jsonObject["light"] as? [String: String])
+        XCTAssertEqual(light["background-primary"], "#FFFFFF")
+        XCTAssertNil(jsonObject["dark"])
     }
 
     // MARK: - Custom File Names Tests

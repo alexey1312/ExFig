@@ -87,6 +87,20 @@ final class WebIconsExporterTests: XCTestCase {
         XCTAssertEqual(result.assetFiles.count, 1)
     }
 
+    func testExportIconComponentContent() throws {
+        let exporter = WebIconsExporter(output: output, generateReactComponents: true)
+
+        let result = try exporter.export(icons: [iconPairLightOnly])
+
+        let component = try XCTUnwrap(result.componentFiles.first)
+        let content = try XCTUnwrap(String(data: XCTUnwrap(component.data), encoding: .utf8))
+
+        // Verify component renders with correct structure
+        XCTAssertTrue(content.contains("export const IcAdd"), "Expected component name IcAdd")
+        XCTAssertTrue(content.contains("IconProps"), "Expected IconProps type import")
+        XCTAssertTrue(content.contains("viewBox=\"0 0 24 24\""), "Expected default viewBox")
+    }
+
     func testExportTypesFile() throws {
         let exporter = WebIconsExporter(output: output, generateReactComponents: true)
 

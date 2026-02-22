@@ -87,6 +87,20 @@ final class WebImagesExporterTests: XCTestCase {
         XCTAssertEqual(result.assetFiles.count, 1)
     }
 
+    func testExportImageComponentContent() throws {
+        let exporter = WebImagesExporter(output: output, generateReactComponents: true)
+
+        let result = try exporter.export(images: [imagePairLightOnly])
+
+        let component = try XCTUnwrap(result.componentFiles.first)
+        let content = try XCTUnwrap(String(data: XCTUnwrap(component.data), encoding: .utf8))
+
+        // Verify Jinja brace escaping produces valid JSX: src={'hero_banner.svg'}
+        XCTAssertTrue(content.contains("src={'hero_banner.svg'}"), "Expected valid JSX src attribute")
+        XCTAssertTrue(content.contains("export const HeroBanner"))
+        XCTAssertTrue(content.contains("ImageProps"))
+    }
+
     func testExportBarrelFile() throws {
         let exporter = WebImagesExporter(output: output, generateReactComponents: true)
 
