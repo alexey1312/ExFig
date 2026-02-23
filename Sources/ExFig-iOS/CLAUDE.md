@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Module Overview
 
-ExFig-iOS is the iOS **platform plugin** — it orchestrates the full export pipeline: Figma fetch → processing → file generation → disk write. It delegates rendering to `XcodeExport` (pure transformation layer: xcassets, Swift extensions, Stencil templates) and I/O to `ExFigCore` context protocols.
+ExFig-iOS is the iOS **platform plugin** — it orchestrates the full export pipeline: Figma fetch → processing → file generation → disk write. It delegates rendering to `XcodeExport` (pure transformation layer: xcassets, Swift extensions, Jinja2 templates) and I/O to `ExFigCore` context protocols.
 
 This is **NOT** the rendering layer. `XcodeExport` handles `.xcassets` generation, `Contents.json`, and Swift code output. This module wires config, loads data, and writes output.
 
@@ -46,7 +46,7 @@ Each entry can override platform-wide paths. The pattern is consistent:
 
 ```swift
 entry.resolvedXcassetsPath(fallback: platformConfig.xcassetsPath)  // .xcassets directory
-entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath) // Stencil templates
+entry.resolvedTemplatesPath(fallback: platformConfig.templatesPath) // Jinja2 templates
 ```
 
 ### iOSPlatformConfig

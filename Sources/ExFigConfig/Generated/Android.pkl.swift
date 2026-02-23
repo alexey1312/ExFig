@@ -19,84 +19,52 @@ extension Android {
         case webp = "webp"
     }
 
-    /// Android platform configuration for ExFig.
-    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android"
+    /// Root Android platform configuration.
+    public struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#AndroidConfig"
 
-        public init() {}
-    }
+        /// Path to main res directory.
+        public var mainRes: String
 
-    /// Name transformation for theme attributes.
-    public struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#NameTransform"
+        /// Resource package name (R class package).
+        public var resourcePackage: String?
 
-        /// Target case style for attribute names.
-        public var style: Common.NameStyle?
+        /// Path to main src directory for Kotlin generation.
+        public var mainSrc: String?
 
-        /// Prefix to add to attribute names.
-        public var prefix: String?
+        /// Path to custom Jinja2 templates.
+        public var templatesPath: String?
 
-        /// Prefixes to strip from color names before transformation.
-        public var stripPrefixes: [String]?
+        /// Colors configuration entries.
+        public var colors: [ColorsEntry]?
 
-        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
-            self.style = style
-            self.prefix = prefix
-            self.stripPrefixes = stripPrefixes
-        }
-    }
+        /// Icons configuration entries.
+        public var icons: [IconsEntry]?
 
-    /// Theme attributes configuration for generating attrs.xml and styles.xml.
-    public struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#ThemeAttributes"
+        /// Images configuration entries.
+        public var images: [ImagesEntry]?
 
-        /// Whether theme attributes generation is enabled.
-        public var enabled: Bool?
-
-        /// Path to attrs.xml relative to mainRes.
-        public var attrsFile: String?
-
-        /// Path to styles.xml relative to mainRes.
-        public var stylesFile: String?
-
-        /// Path to styles-night.xml relative to mainRes.
-        public var stylesNightFile: String?
-
-        /// Theme name used in markers (e.g., "Theme.MyApp.Main").
-        public var themeName: String
-
-        /// Custom marker start text.
-        public var markerStart: String?
-
-        /// Custom marker end text.
-        public var markerEnd: String?
-
-        /// Name transformation configuration.
-        public var nameTransform: NameTransform?
-
-        /// If true, create file with markers if missing.
-        public var autoCreateMarkers: Bool?
+        /// Typography configuration.
+        public var typography: Typography?
 
         public init(
-            enabled: Bool?,
-            attrsFile: String?,
-            stylesFile: String?,
-            stylesNightFile: String?,
-            themeName: String,
-            markerStart: String?,
-            markerEnd: String?,
-            nameTransform: NameTransform?,
-            autoCreateMarkers: Bool?
+            mainRes: String,
+            resourcePackage: String?,
+            mainSrc: String?,
+            templatesPath: String?,
+            colors: [ColorsEntry]?,
+            icons: [IconsEntry]?,
+            images: [ImagesEntry]?,
+            typography: Typography?
         ) {
-            self.enabled = enabled
-            self.attrsFile = attrsFile
-            self.stylesFile = stylesFile
-            self.stylesNightFile = stylesNightFile
-            self.themeName = themeName
-            self.markerStart = markerStart
-            self.markerEnd = markerEnd
-            self.nameTransform = nameTransform
-            self.autoCreateMarkers = autoCreateMarkers
+            self.mainRes = mainRes
+            self.resourcePackage = resourcePackage
+            self.mainSrc = mainSrc
+            self.templatesPath = templatesPath
+            self.colors = colors
+            self.icons = icons
+            self.images = images
+            self.typography = typography
         }
     }
 
@@ -112,7 +80,7 @@ extension Android {
         /// When set, overrides `AndroidConfig.mainSrc`.
         public var mainSrc: String?
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `AndroidConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -197,6 +165,87 @@ extension Android {
         }
     }
 
+    /// Theme attributes configuration for generating attrs.xml and styles.xml.
+    public struct ThemeAttributes: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#ThemeAttributes"
+
+        /// Whether theme attributes generation is enabled.
+        public var enabled: Bool?
+
+        /// Path to attrs.xml relative to mainRes.
+        public var attrsFile: String?
+
+        /// Path to styles.xml relative to mainRes.
+        public var stylesFile: String?
+
+        /// Path to styles-night.xml relative to mainRes.
+        public var stylesNightFile: String?
+
+        /// Theme name used in markers (e.g., "Theme.MyApp.Main").
+        public var themeName: String
+
+        /// Custom marker start text.
+        public var markerStart: String?
+
+        /// Custom marker end text.
+        public var markerEnd: String?
+
+        /// Name transformation configuration.
+        public var nameTransform: NameTransform?
+
+        /// If true, create file with markers if missing.
+        public var autoCreateMarkers: Bool?
+
+        public init(
+            enabled: Bool?,
+            attrsFile: String?,
+            stylesFile: String?,
+            stylesNightFile: String?,
+            themeName: String,
+            markerStart: String?,
+            markerEnd: String?,
+            nameTransform: NameTransform?,
+            autoCreateMarkers: Bool?
+        ) {
+            self.enabled = enabled
+            self.attrsFile = attrsFile
+            self.stylesFile = stylesFile
+            self.stylesNightFile = stylesNightFile
+            self.themeName = themeName
+            self.markerStart = markerStart
+            self.markerEnd = markerEnd
+            self.nameTransform = nameTransform
+            self.autoCreateMarkers = autoCreateMarkers
+        }
+    }
+
+    /// Name transformation for theme attributes.
+    public struct NameTransform: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android#NameTransform"
+
+        /// Target case style for attribute names.
+        public var style: Common.NameStyle?
+
+        /// Prefix to add to attribute names.
+        public var prefix: String?
+
+        /// Prefixes to strip from color names before transformation.
+        public var stripPrefixes: [String]?
+
+        public init(style: Common.NameStyle?, prefix: String?, stripPrefixes: [String]?) {
+            self.style = style
+            self.prefix = prefix
+            self.stripPrefixes = stripPrefixes
+        }
+    }
+
+    /// Android platform configuration for ExFig.
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Android"
+
+        public init() {}
+    }
+
     /// Android icons entry configuration.
     public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Android#IconsEntry"
@@ -205,7 +254,7 @@ extension Android {
         /// When set, overrides `AndroidConfig.mainRes`.
         public var mainRes: String?
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `AndroidConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -304,7 +353,7 @@ extension Android {
         /// When set, overrides `AndroidConfig.mainRes`.
         public var mainRes: String?
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `AndroidConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -421,55 +470,6 @@ extension Android {
             self.nameReplaceRegexp = nameReplaceRegexp
             self.nameStyle = nameStyle
             self.composePackageName = composePackageName
-        }
-    }
-
-    /// Root Android platform configuration.
-    public struct AndroidConfig: PklRegisteredType, Decodable, Hashable, Sendable {
-        public static let registeredIdentifier: String = "Android#AndroidConfig"
-
-        /// Path to main res directory.
-        public var mainRes: String
-
-        /// Resource package name (R class package).
-        public var resourcePackage: String?
-
-        /// Path to main src directory for Kotlin generation.
-        public var mainSrc: String?
-
-        /// Path to custom Stencil templates.
-        public var templatesPath: String?
-
-        /// Colors configuration entries.
-        public var colors: [ColorsEntry]?
-
-        /// Icons configuration entries.
-        public var icons: [IconsEntry]?
-
-        /// Images configuration entries.
-        public var images: [ImagesEntry]?
-
-        /// Typography configuration.
-        public var typography: Typography?
-
-        public init(
-            mainRes: String,
-            resourcePackage: String?,
-            mainSrc: String?,
-            templatesPath: String?,
-            colors: [ColorsEntry]?,
-            icons: [IconsEntry]?,
-            images: [ImagesEntry]?,
-            typography: Typography?
-        ) {
-            self.mainRes = mainRes
-            self.resourcePackage = resourcePackage
-            self.mainSrc = mainSrc
-            self.templatesPath = templatesPath
-            self.colors = colors
-            self.icons = icons
-            self.images = images
-            self.typography = typography
         }
     }
 

@@ -1,10 +1,10 @@
 # Custom Templates
 
-Customize generated code using Stencil templates.
+Customize generated code using Jinja2 templates.
 
 ## Overview
 
-ExFig uses [Stencil](https://stencil.fuller.li/) templates to generate platform-specific code. You can customize the
+ExFig uses [Jinja2](https://github.com/huggingface/swift-jinja) templates to generate platform-specific code. You can customize the
 output by providing your own templates.
 
 ## Setting Up Custom Templates
@@ -21,6 +21,7 @@ mkdir -p ./templates
 import ".exfig/schemas/iOS.pkl"
 import ".exfig/schemas/Android.pkl"
 import ".exfig/schemas/Flutter.pkl"
+import ".exfig/schemas/Web.pkl"
 
 ios = new iOS.iOSConfig {
   templatesPath = "./templates"
@@ -33,6 +34,10 @@ android = new Android.AndroidConfig {
 flutter = new Flutter.FlutterConfig {
   templatesPath = "./templates"
 }
+
+web = new Web.WebConfig {
+  templatesPath = "./templates"
+}
 ```
 
 ### 3. Copy Default Templates
@@ -42,21 +47,27 @@ Copy the default templates from ExFig source to use as a starting point. Templat
 - `Sources/XcodeExport/Resources/` - iOS templates
 - `Sources/AndroidExport/Resources/` - Android templates
 - `Sources/FlutterExport/Resources/` - Flutter templates
+- `Sources/WebExport/Resources/` - Web templates
 
 ## iOS Templates
 
 ### Available Templates
 
-| Template                | Output            | Description               |
-| ----------------------- | ----------------- | ------------------------- |
-| `UIColor.swift.stencil` | UIColor extension | UIKit color definitions   |
-| `Color.swift.stencil`   | Color extension   | SwiftUI color definitions |
-| `UIImage.swift.stencil` | UIImage extension | UIKit image accessors     |
-| `Image.swift.stencil`   | Image extension   | SwiftUI image accessors   |
-| `UIFont.swift.stencil`  | UIFont extension  | UIKit font definitions    |
-| `Font.swift.stencil`    | Font extension    | SwiftUI font definitions  |
-| `UILabel.swift.stencil` | UILabel extension | UIKit label styles        |
-| `header.stencil`        | File header       | Common header comment     |
+| Template                              | Output            | Description               |
+| ------------------------------------- | ----------------- | ------------------------- |
+| `UIColor+extension.swift.jinja`       | UIColor extension | UIKit color definitions   |
+| `Color+extension.swift.jinja`         | Color extension   | SwiftUI color definitions |
+| `UIImage+extension.swift.jinja`       | UIImage extension | UIKit image accessors     |
+| `Image+extension.swift.jinja`         | Image extension   | SwiftUI image accessors   |
+| `UIFont+extension.swift.jinja`        | UIFont extension  | UIKit font definitions    |
+| `Font+extension.swift.jinja`          | Font extension    | SwiftUI font definitions  |
+| `Label.swift.jinja`                   | Label class       | UIKit label styles        |
+| `LabelStyle.swift.jinja`             | LabelStyle enum   | Label style definitions   |
+| `LabelStyle+extension.swift.jinja`   | LabelStyle ext.   | LabelStyle factory methods |
+| `CodeConnect.figma.swift.jinja`      | Code Connect      | Figma Code Connect (debug) |
+| `header.jinja`                        | File header       | Common header comment     |
+
+> Note: Files ending in `.jinja.include` (e.g., `Bundle+extension.swift.jinja.include`) are partial templates — they are pre-rendered into context variables (like `bundleExtension`) and included in the main template output. You typically don't need to customize these.
 
 ### Context Variables (Colors)
 
@@ -107,8 +118,8 @@ textStyles: [
 
 ### Example: Custom UIColor Template
 
-```stencil
-{% include "header.stencil" %}
+```jinja
+{{ header }}
 
 import UIKit
 
@@ -129,14 +140,15 @@ public extension UIColor {
 
 ### Available Templates
 
-| Template                 | Output         | Description               |
-| ------------------------ | -------------- | ------------------------- |
-| `colors.xml.stencil`     | colors.xml     | XML color resources       |
-| `Colors.kt.stencil`      | Colors.kt      | Compose color definitions |
-| `typography.xml.stencil` | typography.xml | XML text styles           |
-| `Typography.kt.stencil`  | Typography.kt  | Compose typography        |
-| `Icons.kt.stencil`       | Icons.kt       | Compose icon composables  |
-| `header.stencil`         | File header    | Common header comment     |
+| Template               | Output         | Description               |
+| ---------------------- | -------------- | ------------------------- |
+| `colors.xml.jinja`     | colors.xml     | XML color resources       |
+| `Colors.kt.jinja`      | Colors.kt      | Compose color definitions |
+| `typography.xml.jinja`  | typography.xml | XML text styles           |
+| `Typography.kt.jinja`  | Typography.kt  | Compose typography        |
+| `Icons.kt.jinja`       | Icons.kt       | Compose icon composables  |
+| `CodeConnect.figma.kt.jinja` | Code Connect | Figma Code Connect (debug) |
+| `header.jinja`         | File header    | Common header comment     |
 
 ### Context Variables (Colors)
 
@@ -169,8 +181,8 @@ textStyles: [
 
 ### Example: Custom Colors.kt Template
 
-```stencil
-{% include "header.stencil" %}
+```jinja
+{{ header }}
 
 package {{ packageName }}
 
@@ -178,13 +190,13 @@ import androidx.compose.ui.graphics.Color
 
 object AppColors {
     {% for color in colors %}
-    val {{ color.name|camelcase }} = Color(0x{{ color.hexARGB }})
+    val {{ color.name }} = Color(0x{{ color.hexARGB }})
     {% endfor %}
 }
 
 object AppColorsDark {
     {% for color in darkColors %}
-    val {{ color.name|camelcase }} = Color(0x{{ color.hexARGB }})
+    val {{ color.name }} = Color(0x{{ color.hexARGB }})
     {% endfor %}
 }
 ```
@@ -193,12 +205,12 @@ object AppColorsDark {
 
 ### Available Templates
 
-| Template              | Output      | Description           |
-| --------------------- | ----------- | --------------------- |
-| `colors.dart.stencil` | colors.dart | Dart color constants  |
-| `icons.dart.stencil`  | icons.dart  | Dart icon paths       |
-| `images.dart.stencil` | images.dart | Dart image paths      |
-| `header.stencil`      | File header | Common header comment |
+| Template            | Output      | Description           |
+| ------------------- | ----------- | --------------------- |
+| `colors.dart.jinja` | colors.dart | Dart color constants  |
+| `icons.dart.jinja`  | icons.dart  | Dart icon paths       |
+| `images.dart.jinja` | images.dart | Dart image paths      |
+| `header.jinja`      | File header | Common header comment |
 
 ### Context Variables
 
@@ -228,8 +240,8 @@ images: [
 
 ### Example: Custom colors.dart Template
 
-```stencil
-{% include "header.stencil" %}
+```jinja
+{{ header }}
 
 import 'package:flutter/material.dart';
 
@@ -251,26 +263,109 @@ class {{ className }}Dark {
 }
 ```
 
-## Stencil Syntax Reference
+## Web Templates
+
+### Available Templates
+
+| Template              | Output          | Description                        |
+| --------------------- | --------------- | ---------------------------------- |
+| `theme.css.jinja`     | theme.css       | CSS custom properties (light/dark) |
+| `variables.ts.jinja`  | variables.ts    | TypeScript CSS variable references |
+| `theme.json.jinja`    | theme.json      | JSON theme tokens                  |
+| `Icon.tsx.jinja`      | Icon component  | React SVG icon component           |
+| `types.ts.jinja`      | types.ts        | TypeScript type definitions        |
+| `IconIndex.ts.jinja`  | index.ts        | Icon barrel exports                |
+| `Image.tsx.jinja`     | Image component | React image component              |
+| `ImageIndex.ts.jinja` | index.ts        | Image barrel exports               |
+| `header.jinja`        | File header     | Common header comment              |
+
+### Context Variables (Colors)
+
+```typescript
+// variables.ts context
+colors: [{ camelName: "primaryBlue", cssName: "primary-blue" }]
+
+// theme.css / theme.json context
+lightColors: [{ cssName: "primary-blue", value: "#007AFF" }]
+darkColors: [{ cssName: "primary-blue", value: "#0A84FF" }]
+hasDarkColors: true
+```
+
+### Context Variables (Icons)
+
+```typescript
+// Icon.tsx context (per component)
+componentName: "ArrowRight"
+viewBox: "0 0 24 24"
+svgContent: "<path ...>"
+
+// IconIndex.ts context
+icons: [{ componentName: "ArrowRight", fileName: "arrow_right" }]
+```
+
+### Context Variables (Images)
+
+```typescript
+// Image.tsx context (per component)
+componentName: "HeroBanner"
+name: "hero_banner"
+assetPath: "assets/images/hero_banner.png"
+
+// ImageIndex.ts context
+images: [{ componentName: "HeroBanner", fileName: "hero_banner" }]
+```
+
+### Example: Custom theme.css Template
+
+```jinja
+:root {
+  {% for color in lightColors %}
+  --{{ color.cssName }}: {{ color.value }};
+  {% endfor %}
+}
+
+{% if hasDarkColors %}
+@media (prefers-color-scheme: dark) {
+  :root {
+    {% for color in darkColors %}
+    --{{ color.cssName }}: {{ color.value }};
+    {% endfor %}
+  }
+}
+{% endif %}
+```
+
+## Jinja2 Syntax Reference
 
 ### Variables
 
-```stencil
+```jinja
 {{ variableName }}
 {{ object.property }}
 ```
 
 ### Loops
 
-```stencil
+```jinja
 {% for item in items %}
 {{ item.name }}
 {% endfor %}
 ```
 
+### Loop Variables
+
+```jinja
+{% for item in items %}
+{{ loop.index }}        {# 1-based index #}
+{{ loop.index0 }}       {# 0-based index #}
+{{ loop.first }}        {# true on first iteration #}
+{{ loop.last }}         {# true on last iteration #}
+{% endfor %}
+```
+
 ### Conditionals
 
-```stencil
+```jinja
 {% if condition %}
 ...
 {% elif otherCondition %}
@@ -282,32 +377,28 @@ class {{ className }}Dark {
 
 ### Filters
 
-```stencil
-{{ name|uppercase }}
-{{ name|lowercase }}
-{{ name|capitalize }}
-{{ name|camelcase }}
+```jinja
+{{ name | upper }}
+{{ name | lower }}
+{{ name | capitalize }}
 ```
 
-### Including Templates
-
-```stencil
-{% include "header.stencil" %}
-```
+> Note: Name transformation filters (camelCase, snake_case, etc.) are not needed — name formatting is applied before template rendering, so variable values arrive pre-formatted.
 
 ### Comments
 
-```stencil
+```jinja
 {# This is a comment #}
 ```
 
 ## Best Practices
 
 1. **Start from defaults**: Copy default templates as a starting point
-2. **Use includes**: Put common code (headers) in shared templates
+2. **Use context variables**: Common data (like headers) is provided as pre-rendered context variables
 3. **Validate output**: Test generated code compiles correctly
 4. **Document changes**: Add comments explaining customizations
 5. **Version control**: Keep templates in your repository
+6. **Pre-formatted names**: Name formatting (camelCase, snake_case, etc.) is done before template rendering — use names as-is
 
 ## See Also
 
@@ -315,4 +406,4 @@ class {{ className }}Dark {
 - <doc:iOS>
 - <doc:Android>
 - <doc:Flutter>
-- [Stencil Documentation](https://stencil.fuller.li/en/latest/)
+- [swift-jinja Documentation](https://github.com/huggingface/swift-jinja)

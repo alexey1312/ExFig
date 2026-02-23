@@ -1,28 +1,28 @@
 import ExFigCore
 import Foundation
-import PathKit
-import Stencil
-import StencilSwiftKit
+import JinjaSupport
 
 public class FlutterExporter {
-    private let templatesPath: URL?
+    private let renderer: JinjaTemplateRenderer
 
     init(templatesPath: URL?) {
-        self.templatesPath = templatesPath
+        renderer = JinjaTemplateRenderer(bundle: Bundle.module, templatesPath: templatesPath)
     }
 
-    func makeEnvironment() -> Environment {
-        let loader = if let templateURL = templatesPath {
-            FileSystemLoader(paths: [Path(templateURL.resolvingSymlinksInPath().path)])
-        } else {
-            FileSystemLoader(paths: [
-                Path((Bundle.module.resourcePath ?? "") + "/Resources"),
-                Path(Bundle.module.resourcePath ?? ""),
-            ])
-        }
-        let ext = Extension()
-        ext.registerStencilSwiftExtensions()
-        return Environment(loader: loader, extensions: [ext])
+    func renderTemplate(name: String, context: [String: Any]) throws -> String {
+        try renderer.renderTemplate(name: name, context: context)
+    }
+
+    func renderTemplate(source: String, context: [String: Any], templateName: String? = nil) throws -> String {
+        try renderer.renderTemplate(source: source, context: context, templateName: templateName)
+    }
+
+    func loadTemplate(named name: String) throws -> String {
+        try renderer.loadTemplate(named: name)
+    }
+
+    func contextWithHeader(_ context: [String: Any]) throws -> [String: Any] {
+        try renderer.contextWithHeader(context)
     }
 
     func makeFileContents(for string: String, directory: URL, file: URL) throws -> FileContents {

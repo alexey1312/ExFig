@@ -374,7 +374,7 @@ ios = new iOS.iOSConfig {
 | `xcassetsInSwiftPackage` | `Boolean?`         | No       | Whether assets are in a Swift package (default: false) |
 | `resourceBundleNames`    | `Listing<String>?` | No       | Resource bundle names for SPM packages                 |
 | `addObjcAttribute`       | `Boolean?`         | No       | Add `@objc` to generated properties (default: false)   |
-| `templatesPath`          | `String?`          | No       | Path to custom Stencil templates                       |
+| `templatesPath`          | `String?`          | No       | Path to custom Jinja2 templates                        |
 
 *Required when exporting colors (with `useColorAssets`), icons, or images. Can be omitted in base configs used only
 for inheritance.
@@ -558,7 +558,7 @@ android = new Android.AndroidConfig {
 | `mainRes`         | `String`  | Yes      | Path to `main/res` directory                          |
 | `resourcePackage` | `String?` | No       | Package for `R` class (required for Compose code gen) |
 | `mainSrc`         | `String?` | No       | Path to source directory (required for Compose)       |
-| `templatesPath`   | `String?` | No       | Path to custom Stencil templates                      |
+| `templatesPath`   | `String?` | No       | Path to custom Jinja2 templates                       |
 
 ### Android Colors
 
@@ -729,7 +729,7 @@ flutter = new Flutter.FlutterConfig {
 | Field           | Type      | Required | Description                          |
 | --------------- | --------- | -------- | ------------------------------------ |
 | `output`        | `String`  | Yes      | Base output directory for Dart files |
-| `templatesPath` | `String?` | No       | Path to custom Stencil templates     |
+| `templatesPath` | `String?` | No       | Path to custom Jinja2 templates      |
 
 ### Flutter Colors
 
@@ -827,7 +827,7 @@ web = new Web.WebConfig {
 | Field           | Type      | Required | Description                         |
 | --------------- | --------- | -------- | ----------------------------------- |
 | `output`        | `String`  | Yes      | Base output directory for all files |
-| `templatesPath` | `String?` | No       | Path to custom Stencil templates    |
+| `templatesPath` | `String?` | No       | Path to custom Jinja2 templates     |
 
 ### Web Colors
 

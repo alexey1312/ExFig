@@ -87,7 +87,7 @@ common = new Common.CommonConfig {
 flutter = new Flutter.FlutterConfig {
   // Output directory for generated Dart files
   output = "./lib/generated"
-  // [optional] Path to the Stencil templates used to generate code
+  // [optional] Path to the Jinja2 templates used to generate code
   // templatesPath = "./Resources/Templates"
 
   // Parameters for exporting colors

@@ -4,7 +4,7 @@ private extension Foundation.Bundle {
 
     /// Returns the resource bundle associated with the current Swift module.
     static var _module: Bundle = {
-        let bundleNames = {{ resourceBundleNames }}
+        let bundleNames = [{% for name in resourceBundleNames %}"{{ name }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 
         let candidates: [URL?] = {
             var candidates = [

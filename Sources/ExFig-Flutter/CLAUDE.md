@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Module Role
 
-ExFig-Flutter is the Flutter platform plugin. It wires PKL configuration to the export pipeline: Figma fetch -> processing -> Dart code generation -> file write. It does NOT render Dart code — that's `FlutterExport` (Stencil templates). It does NOT define domain models — that's `ExFigCore`.
+ExFig-Flutter is the Flutter platform plugin. It wires PKL configuration to the export pipeline: Figma fetch -> processing -> Dart code generation -> file write. It does NOT render Dart code — that's `FlutterExport` (Jinja2 templates). It does NOT define domain models — that's `ExFigCore`.
 
 No typography exporter exists (only colors, icons, images).
 
@@ -12,7 +12,7 @@ No typography exporter exists (only colors, icons, images).
 
 - `ExFigCore` — domain models (`Color`, `ImagePack`, `NameStyle`), protocols (`ColorsExporter`, `IconsExporter`, `ImagesExporter`), `parallelMapEntries()`
 - `ExFigConfig` — PKL-generated types (`Flutter.ColorsEntry`, `Flutter.IconsEntry`, `Flutter.ImagesEntry`)
-- `FlutterExport` — Dart code generation via Stencil templates (`FlutterColorExporter`, `FlutterIconsExporter`, `FlutterImagesExporter`)
+- `FlutterExport` — Dart code generation via Jinja2 templates (`FlutterColorExporter`, `FlutterIconsExporter`, `FlutterImagesExporter`)
 
 ## Architecture
 

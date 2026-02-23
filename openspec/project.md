@@ -10,7 +10,7 @@ keeping design systems in sync across platforms.
 - Swift 6.2 with Swift Package Manager
 - swift-argument-parser for CLI
 - PKL (Programmable, Scalable, Safe) for configuration
-- Stencil and StencilSwiftKit for code generation
+- swift-jinja (Jinja2) for code generation
 - Rainbow and swift-log for terminal output
 - Native libwebp and libpng for image conversion
 

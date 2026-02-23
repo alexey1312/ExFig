@@ -11,7 +11,7 @@ class ColorsEntry extends Common.VariablesSource {
   /// When set, overrides `WebConfig.output`.
   output: String?
 
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `WebConfig.templatesPath`.
   templatesPath: String?
 
@@ -32,7 +32,7 @@ class ColorsEntry extends Common.VariablesSource {
 
 /// Web icons entry configuration.
 class IconsEntry extends Common.FrameSource {
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `WebConfig.templatesPath`.
   templatesPath: String?
 
@@ -56,7 +56,7 @@ class IconsEntry extends Common.FrameSource {
 
 /// Web images entry configuration.
 class ImagesEntry extends Common.FrameSource {
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `WebConfig.templatesPath`.
   templatesPath: String?
 
@@ -80,7 +80,7 @@ class WebConfig {
   /// Base output directory for all generated files.
   output: String(!isEmpty)
 
-  /// Path to custom Stencil templates.
+  /// Path to custom Jinja2 templates.
   templatesPath: String?
 
   /// Colors configuration entries.

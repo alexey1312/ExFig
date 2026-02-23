@@ -178,7 +178,7 @@ and `flutter:` sections.
 #### Scenario: Web config with custom templates
 
 - **GIVEN** a YAML config with `web.templatesPath: "./custom-templates"`
-- **AND** custom Stencil templates exist at the specified path
+- **AND** custom Jinja2 templates exist at the specified path
 - **WHEN** export commands are executed
 - **THEN** custom templates are used instead of built-in templates
 

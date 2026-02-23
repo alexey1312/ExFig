@@ -4,30 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Module Role
 
-FlutterExport is the rendering layer for Flutter. It takes processed domain models (`Color`, `ImagePack` from ExFigCore) and generates Dart source files + asset file descriptors using Stencil templates. It does NOT fetch from Figma, parse config, or orchestrate the pipeline — that's `ExFig-Flutter`.
+FlutterExport is the rendering layer for Flutter. It takes processed domain models (`Color`, `ImagePack` from ExFigCore) and generates Dart source files + asset file descriptors using Jinja2 templates. It does NOT fetch from Figma, parse config, or orchestrate the pipeline — that's `ExFig-Flutter`.
 
 ## Dependencies
 
 - `ExFigCore` — domain models (`Color`, `ImagePack`, `AssetPair`, `FileContents`, `NameStyle`, `Scale`)
-- `Stencil` + `StencilSwiftKit` — template rendering
-- `PathKit` — template file path resolution
+- `JinjaSupport` — Jinja2 template rendering via `JinjaTemplateRenderer`
 
 ## Architecture
 
 ```
-FlutterExporter.swift          Base class — Stencil Environment setup, FileContents factory
+FlutterExporter.swift          Base class — Jinja template loading, FileContents factory
 FlutterColorExporter.swift     Colors -> Dart class (2 modes: legacy 2-class vs unified 4-mode)
 FlutterIconsExporter.swift     Icons -> SVG assets + Dart constants file
 FlutterImagesExporter.swift    Images -> multi-scale assets + Dart constants file
 Model/FlutterOutput.swift      Configuration struct (output dirs, class names, templates path)
-Resources/*.stencil            Stencil templates for Dart code generation
+Resources/*.jinja              Jinja2 templates for Dart code generation
 ```
 
 ### Inheritance
 
 All three exporters extend `FlutterExporter` (class, not protocol) which provides:
 
-- `makeEnvironment()` — Stencil Environment with custom or bundled templates
+- `loadTemplate()`/`renderTemplate()` — Jinja template loading with custom or bundled templates
 - `makeFileContents(for:directory:file:)` — wraps string output into `FileContents`
 
 ### Template Resolution
@@ -83,6 +82,6 @@ Tests verify generated Dart code against reference strings using `expectNoDiffer
 
 **Adding a field to FlutterOutput:** Update init + all construction sites in `ExFig-Flutter/Export/` and `FlutterExportTests/`.
 
-**Changing template output:** Edit `Resources/*.stencil`, then update reference strings in ALL affected tests. Template whitespace (blank lines, trailing newlines) is asserted exactly.
+**Changing template output:** Edit `Resources/*.jinja`, then update reference strings in ALL affected tests. Template whitespace (blank lines, trailing newlines) is asserted exactly.
 
-**Adding a new exporter:** Subclass `FlutterExporter`, add Stencil template in `Resources/`, create test file in `Tests/FlutterExportTests/`.
+**Adding a new exporter:** Subclass `FlutterExporter`, add Jinja template in `Resources/`, create test file in `Tests/FlutterExportTests/`.

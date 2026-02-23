@@ -122,7 +122,7 @@ ios = new iOS.iOSConfig {
   resourceBundleNames = new Listing {}
   // [optional] Add @objc attribute to generated properties so that they are accessible in Objective-C. Defaults to false
   addObjcAttribute = false
-  // [optional] Path to the Stencil templates used to generate code
+  // [optional] Path to the Jinja2 templates used to generate code
   // templatesPath = "./Resources/Templates"
 
   // [optional] Parameters for exporting colors

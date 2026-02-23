@@ -1,10 +1,14 @@
 import ExFigCore
 import Foundation
-import PathKit
-import Stencil
-import StencilSwiftKit
+import JinjaSupport
 
 public class XcodeExporterBase {
+    private let renderer: JinjaTemplateRenderer
+
+    init() {
+        renderer = JinjaTemplateRenderer(bundle: Bundle.module)
+    }
+
     /// All Swift keywords that need escaping with backticks when used as identifiers.
     /// Using a Set for O(1) lookup instead of O(n) array search.
     private static let swiftKeywords: Set<String> = [
@@ -33,18 +37,42 @@ public class XcodeExporterBase {
         return name
     }
 
-    func makeEnvironment(templatesPath: URL?) -> Environment {
-        let loader = if let templateURL = templatesPath {
-            FileSystemLoader(paths: [Path(templateURL.resolvingSymlinksInPath().path)])
-        } else {
-            FileSystemLoader(paths: [
-                Path((Bundle.module.resourcePath ?? "") + "/Resources"),
-                Path(Bundle.module.resourcePath ?? ""),
-            ])
-        }
-        let ext = Extension()
-        ext.registerStencilSwiftExtensions()
-        return Environment(loader: loader, extensions: [ext])
+    func renderTemplate(
+        name: String,
+        context: [String: Any],
+        templatesPath: URL?
+    ) throws -> String {
+        try renderer.renderTemplate(name: name, context: context, templatesPath: templatesPath)
+    }
+
+    func renderTemplate(source: String, context: [String: Any], templateName: String? = nil) throws -> String {
+        try renderer.renderTemplate(source: source, context: context, templateName: templateName)
+    }
+
+    func loadTemplate(named name: String, templatesPath: URL?) throws -> String {
+        try renderer.loadTemplate(named: name, templatesPath: templatesPath)
+    }
+
+    func contextWithHeader(
+        _ context: [String: Any],
+        templatesPath: URL?
+    ) throws -> [String: Any] {
+        try renderer.contextWithHeader(context, templatesPath: templatesPath)
+    }
+
+    func contextWithHeaderAndBundle(
+        _ context: [String: Any],
+        templatesPath: URL?
+    ) throws -> [String: Any] {
+        var ctx = try contextWithHeader(context, templatesPath: templatesPath)
+        let bundleExtension = try renderTemplate(
+            name: "Bundle+extension.swift.jinja.include",
+            context: ctx,
+            templatesPath: templatesPath
+        )
+        let trimmed = bundleExtension.trimmingCharacters(in: .whitespacesAndNewlines)
+        ctx["bundleExtension"] = trimmed.isEmpty ? "" : bundleExtension
+        return ctx
     }
 
     func makeFileContents(for string: String, url: URL) throws -> FileContents {

@@ -1,5 +1,5 @@
 {
-  "originHash" : "07e2422ee8fd5fde4b87b1d22cd3ac813cd11649b592820153ebf7306611e3f8",
+  "originHash" : "011f6ae74b685e4f02cbafb2b52fa7c4999ec379a804ef0dd84111453b28e959",
   "pins" : [
     {
       "identity" : "aexml",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "db806756c989760b35108146381535aec231092b",
         "version" : "4.7.0"
-      }
-    },
-    {
-      "identity" : "komondor",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/shibapm/Komondor.git",
-      "state" : {
-        "revision" : "90b087b1e39069684b1ff4bf915c2aae594f2d60",
-        "version" : "1.1.3"
       }
     },
     {
@@ -44,15 +35,6 @@
       "state" : {
         "revision" : "bf2222995703f2a2500a2bbb8153fdb5d3a851ed",
         "version" : "0.54.0"
-      }
-    },
-    {
-      "identity" : "packageconfig",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/shibapm/PackageConfig.git",
-      "state" : {
-        "revision" : "58523193c26fb821ed1720dcd8a21009055c7cdb",
-        "version" : "1.1.3"
       }
     },
     {
@@ -101,39 +83,12 @@
       }
     },
     {
-      "identity" : "shellout",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/JohnSundell/ShellOut.git",
-      "state" : {
-        "revision" : "e1577acf2b6e90086d01a6d5e2b8efdaae033568",
-        "version" : "2.3.0"
-      }
-    },
-    {
       "identity" : "spectre",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kylef/Spectre.git",
       "state" : {
         "revision" : "26cc5e9ae0947092c7139ef7ba612e34646086c7",
         "version" : "0.10.1"
-      }
-    },
-    {
-      "identity" : "stencil",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/stencilproject/Stencil.git",
-      "state" : {
-        "revision" : "4f222ac85d673f35df29962fc4c36ccfdaf9da5b",
-        "version" : "0.15.1"
-      }
-    },
-    {
-      "identity" : "stencilswiftkit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SwiftGen/StencilSwiftKit",
-      "state" : {
-        "revision" : "20e2de5322c83df005939d9d9300fab130b49f97",
-        "version" : "2.10.1"
       }
     },
     {
@@ -179,6 +134,15 @@
       "state" : {
         "revision" : "b45d1f2ed151d057b54504d653e0da5552844e34",
         "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "swift-jinja",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/huggingface/swift-jinja.git",
+      "state" : {
+        "revision" : "f731f03bf746481d4fda07f817c3774390c4d5b9",
+        "version" : "2.3.2"
       }
     },
     {

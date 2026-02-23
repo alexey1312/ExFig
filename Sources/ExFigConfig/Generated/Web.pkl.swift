@@ -19,7 +19,7 @@ extension Web {
         /// When set, overrides `WebConfig.output`.
         public var output: String?
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `WebConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -101,7 +101,7 @@ extension Web {
     public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Web#IconsEntry"
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `WebConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -179,7 +179,7 @@ extension Web {
     public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Web#ImagesEntry"
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `WebConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -255,7 +255,7 @@ extension Web {
         /// Base output directory for all generated files.
         public var output: String
 
-        /// Path to custom Stencil templates.
+        /// Path to custom Jinja2 templates.
         public var templatesPath: String?
 
         /// Colors configuration entries.

@@ -199,11 +199,12 @@ func fetchNewResource(fileId: String) async throws -> NewResponse {
 
 ## Modifying Templates
 
-Templates use Stencil syntax and are located in `Sources/*/Resources/`:
+Templates use Jinja2 syntax and are located in `Sources/*/Resources/`:
 
 - `XcodeExport/Resources/` - iOS templates
 - `AndroidExport/Resources/` - Android templates
 - `FlutterExport/Resources/` - Flutter templates
+- `WebExport/Resources/` - Web templates
 
 After modifying templates, update corresponding tests.
 

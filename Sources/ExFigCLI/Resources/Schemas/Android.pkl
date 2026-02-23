@@ -67,7 +67,7 @@ class ColorsEntry extends Common.VariablesSource {
   /// When set, overrides `AndroidConfig.mainSrc`.
   mainSrc: String?
 
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `AndroidConfig.templatesPath`.
   templatesPath: String?
 
@@ -95,7 +95,7 @@ class IconsEntry extends Common.FrameSource {
   /// When set, overrides `AndroidConfig.mainRes`.
   mainRes: String?
 
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `AndroidConfig.templatesPath`.
   templatesPath: String?
 
@@ -132,7 +132,7 @@ class ImagesEntry extends Common.FrameSource {
   /// When set, overrides `AndroidConfig.mainRes`.
   mainRes: String?
 
-  /// Override path to custom Stencil templates for this entry.
+  /// Override path to custom Jinja2 templates for this entry.
   /// When set, overrides `AndroidConfig.templatesPath`.
   templatesPath: String?
 
@@ -191,7 +191,7 @@ class AndroidConfig {
   /// Path to main src directory for Kotlin generation.
   mainSrc: String?
 
-  /// Path to custom Stencil templates.
+  /// Path to custom Jinja2 templates.
   templatesPath: String?
 
   /// Colors configuration entries.

@@ -22,7 +22,7 @@ extension Flutter {
     public struct ColorsEntry: Common.VariablesSource {
         public static let registeredIdentifier: String = "Flutter#ColorsEntry"
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `FlutterConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -92,7 +92,7 @@ extension Flutter {
     public struct IconsEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Flutter#IconsEntry"
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `FlutterConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -165,7 +165,7 @@ extension Flutter {
     public struct ImagesEntry: Common.FrameSource {
         public static let registeredIdentifier: String = "Flutter#ImagesEntry"
 
-        /// Override path to custom Stencil templates for this entry.
+        /// Override path to custom Jinja2 templates for this entry.
         /// When set, overrides `FlutterConfig.templatesPath`.
         public var templatesPath: String?
 
@@ -261,7 +261,7 @@ extension Flutter {
         /// Base output directory for all generated files.
         public var output: String
 
-        /// Path to custom Stencil templates.
+        /// Path to custom Jinja2 templates.
         public var templatesPath: String?
 
         /// Colors configuration entries.

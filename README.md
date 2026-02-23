@@ -41,7 +41,7 @@ Flutter, and React/TypeScript.
 - ⚠️ Android pathData validation (errors on 32,767 bytes AAPT limit)
 - 🦋 Flutter / Dart
 - 🌐 React / TypeScript (CSS variables, TSX components)
-- 🔧 Customizable code templates (Stencil)
+- 🔧 Customizable code templates (Jinja2)
 
 ### Export Formats
 
