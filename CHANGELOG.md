@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.1] - 2026-02-23
+
+### Bug Fixes
+
+- Allow HTTPS in PKL resource allowlist for package resolution by @alexey1312
+
+
 ## [2.5.0] - 2026-02-23
 
 ### Bug Fixes
