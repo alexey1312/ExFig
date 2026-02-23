@@ -23,9 +23,11 @@ public enum PKLEvaluator {
         "pkl:", "repl:", "file:", "modulepath:", "package:", "projectpackage:",
     ]
 
-    /// Allowed resource schemes (no http/https to prevent network reads).
+    /// Allowed resource schemes.
+    /// Includes https: because package: resolution requires downloading archives via HTTPS.
+    /// Module imports (allowedModules) still block https: to prevent executing remote code.
     private static let allowedResources = [
-        "file:", "env:", "prop:", "modulepath:", "package:", "projectpackage:",
+        "file:", "env:", "prop:", "modulepath:", "package:", "projectpackage:", "https:",
     ]
 
     /// Evaluates a PKL configuration file and returns the typed ExFig module.
