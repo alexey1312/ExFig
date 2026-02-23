@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.0] - 2026-02-23
+
+### Bug Fixes
+
+- Address 6 security vulnerabilities  by @alexey1312 in [#59](https://github.com/alexey1312/ExFig/pull/59)
+
+
+### Features
+
+- Migrate template engine from Stencil to swift-jinja  by @alexey1312 in [#60](https://github.com/alexey1312/ExFig/pull/60)
+
+
+### Miscellaneous Tasks
+
+- Some fix by @alexey1312
+
+
 ## [2.4.0] - 2026-02-17
 
 ### Bug Fixes
