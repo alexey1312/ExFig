@@ -77,7 +77,7 @@ Flutter, and React/TypeScript.
 
 ```bash
 # Using Homebrew (recommended)
-brew install alexey1312/exfig/exfig
+brew install alexey1312/tap/exfig
 
 # Using Mint
 mint install alexey1312/ExFig

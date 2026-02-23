@@ -228,9 +228,9 @@ jobs:
       - name: Checkout Homebrew tap
         uses: actions/checkout@v6
         with:
-          repository: alexey1312/homebrew-exfig
+          repository: alexey1312/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          path: homebrew-exfig
+          path: homebrew-tap
 
       - name: Update formula
         run: |
@@ -238,7 +238,7 @@ jobs:
           MACOS_SHA="${{ steps.sha.outputs.macos }}"
           LINUX_SHA="${{ steps.sha.outputs.linux }}"
 
-          FORMULA="homebrew-exfig/Formula/exfig.rb"
+          FORMULA="homebrew-tap/Formula/exfig.rb"
 
           sed -i "s/version \".*\"/version \"${VERSION}\"/" "$FORMULA"
           sed -i "0,/sha256 \"[a-f0-9]*\"/s//sha256 \"${MACOS_SHA}\"/" "$FORMULA"
@@ -247,7 +247,7 @@ jobs:
           cat "$FORMULA"
 
       - name: Commit and push
-        working-directory: homebrew-exfig
+        working-directory: homebrew-tap
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
