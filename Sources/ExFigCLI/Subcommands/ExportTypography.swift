@@ -24,6 +24,9 @@ extension ExFigCommand {
         @OptionGroup
         var faultToleranceOptions: FaultToleranceOptions
 
+        @Option(name: .long, help: "Path to write JSON report")
+        var report: String?
+
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             ExFigCommand.checkSchemaVersionIfNeeded()
@@ -36,7 +39,51 @@ extension ExFigCommand {
                 ui: ui
             )
 
-            _ = try await performExport(client: client, ui: ui)
+            let hasReport = report != nil
+            let warningCollector: WarningCollector? = hasReport ? WarningCollector() : nil
+            let manifestTracker: ManifestTracker? = hasReport ? ManifestTracker(assetType: "typography") : nil
+            if let collector = warningCollector { WarningCollectorStorage.current = collector }
+            if let tracker = manifestTracker { ManifestTrackerStorage.current = tracker }
+
+            let startTime = Date()
+            var exportCount = 0
+            var exportError: (any Error)?
+
+            do {
+                exportCount = try await performExport(client: client, ui: ui)
+            } catch {
+                exportError = error
+            }
+
+            if let reportPath = report {
+                let endTime = Date()
+                let warnings = await warningCollector?.getAll() ?? []
+                let manifest = await manifestTracker?.buildManifest(previousReportPath: reportPath)
+                WarningCollectorStorage.current = nil
+                ManifestTrackerStorage.current = nil
+
+                let exportReport = ExportReport(
+                    version: ExportReport.currentVersion,
+                    command: "typography",
+                    config: options.input ?? "exfig.pkl",
+                    startTime: ISO8601DateFormatter().string(from: startTime),
+                    endTime: ISO8601DateFormatter().string(from: endTime),
+                    duration: endTime.timeIntervalSince(startTime),
+                    success: exportError == nil,
+                    error: exportError?.localizedDescription,
+                    stats: ReportStats(colors: 0, icons: 0, images: 0, typography: exportCount),
+                    warnings: warnings,
+                    manifest: manifest
+                )
+                writeExportReport(exportReport, to: reportPath, ui: ui)
+            } else {
+                WarningCollectorStorage.current = nil
+                ManifestTrackerStorage.current = nil
+            }
+
+            if let error = exportError {
+                throw error
+            }
         }
 
         /// Export result for batch mode (includes file versions for deferred cache save).

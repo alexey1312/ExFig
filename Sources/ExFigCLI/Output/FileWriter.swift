@@ -160,6 +160,26 @@ final class FileWriter: Sendable {
 
     private func writeFileData(_ file: FileContents) throws {
         let fileURL = URL(fileURLWithPath: file.destination.url.path)
+
+        // Track file write for manifest (zero overhead when tracker is nil)
+        if let tracker = ManifestTrackerStorage.current {
+            if let data = file.data {
+                let semaphore = DispatchSemaphore(value: 0)
+                Task {
+                    await tracker.recordWrite(path: fileURL.path, data: data)
+                    semaphore.signal()
+                }
+                semaphore.wait()
+            } else if let localFileURL = file.dataFile {
+                let semaphore = DispatchSemaphore(value: 0)
+                Task {
+                    await tracker.recordCopy(path: fileURL.path, sourceURL: localFileURL)
+                    semaphore.signal()
+                }
+                semaphore.wait()
+            }
+        }
+
         if let data = file.data {
             try data.write(to: fileURL, options: .atomic)
         } else if let localFileURL = file.dataFile {
