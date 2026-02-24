@@ -21,7 +21,7 @@ Current divergences from the spec:
 | Descriptions      | Partial (colors only)             | `$description` on any token                                    |
 | Number types      | Not supported                     | `dimension` (object: value+unit), `number` (plain numeric)     |
 | Typography        | Composite only                    | Individual sub-tokens alongside composite                      |
-| Dimension format  | N/A                               | Object: `{"value": 16, "unit": "px"}`, not plain number       |
+| Dimension format  | N/A                               | Object: `{"value": 16, "unit": "px"}`, not plain number        |
 | Group features    | N/A                               | `$deprecated`, `$extends` (group inheritance), `$root` tokens  |
 
 The exporter uses `JSONSerialization` (Foundation) for output, producing `[String: Any]` dictionaries that are
@@ -94,12 +94,12 @@ better for ExFig's primary use case (CI export). Resolver module support can be 
 
 **Alternatives considered:**
 
-| Approach                        | Pros                                       | Cons                                                           |
-| ------------------------------- | ------------------------------------------ | -------------------------------------------------------------- |
-| Resolver module (spec-native)   | Fully spec-compliant theming, fallback chains | Multi-file, complex architecture, overkill for simple L/D    |
-| `$extensions` modes (chosen)    | Single file, mode relationship explicit    | Vendor extension, requires ExFig-aware tool support            |
-| Separate file per mode          | Clean separation, each file is spec-pure   | Multiple files to manage, harder to diff                       |
-| `$value` as mode dict (current) | Compact                                    | Violates spec (`$value` must be a color object)                |
+| Approach                        | Pros                                          | Cons                                                      |
+| ------------------------------- | --------------------------------------------- | --------------------------------------------------------- |
+| Resolver module (spec-native)   | Fully spec-compliant theming, fallback chains | Multi-file, complex architecture, overkill for simple L/D |
+| `$extensions` modes (chosen)    | Single file, mode relationship explicit       | Vendor extension, requires ExFig-aware tool support       |
+| Separate file per mode          | Clean separation, each file is spec-pure      | Multiple files to manage, harder to diff                  |
+| `$value` as mode dict (current) | Compact                                       | Violates spec (`$value` must be a color object)           |
 
 ### Decision 2: Asset References via `$extensions.com.exfig.assetUrl`
 
@@ -171,14 +171,14 @@ A new `ResolvedColor` type (or extending `Color` with optional `aliasPath`) carr
 **Choice:** Map Figma number variables to W3C types based on their `scopes` array. Dimension tokens use the v2025.10
 object format `{"value": N, "unit": "px"}` — the unit is part of the value, not in `$extensions`.
 
-| Figma Variable Scope       | W3C Token Type | `$value` Format                      |
-| -------------------------- | -------------- | ------------------------------------ |
-| `WIDTH_HEIGHT`, `GAP`      | `dimension`    | `{"value": 16, "unit": "px"}`       |
-| `CORNER_RADIUS`            | `dimension`    | `{"value": 8, "unit": "px"}`        |
-| `OPACITY`                  | `number`       | `0.5`                                |
-| `FONT_SIZE`, `LINE_HEIGHT` | `dimension`    | `{"value": 16, "unit": "px"}`       |
-| `FONT_WEIGHT`              | `number`       | `400`                                |
-| (no scope / unknown)       | `number`       | Raw numeric value                    |
+| Figma Variable Scope       | W3C Token Type | `$value` Format               |
+| -------------------------- | -------------- | ----------------------------- |
+| `WIDTH_HEIGHT`, `GAP`      | `dimension`    | `{"value": 16, "unit": "px"}` |
+| `CORNER_RADIUS`            | `dimension`    | `{"value": 8, "unit": "px"}`  |
+| `OPACITY`                  | `number`       | `0.5`                         |
+| `FONT_SIZE`, `LINE_HEIGHT` | `dimension`    | `{"value": 16, "unit": "px"}` |
+| `FONT_WEIGHT`              | `number`       | `400`                         |
+| (no scope / unknown)       | `number`       | Raw numeric value             |
 
 The dimension `$value` is an object with `value` (number) and `unit` (`"px"` or `"rem"` per spec). Figma variables
 don't carry unit information, so ExFig defaults to `"px"`. The number `$value` is a plain JSON number.
@@ -217,6 +217,7 @@ struct TokenGroup: Decodable {
 ```
 
 The parser must handle v2025.10 group features:
+
 - **`$root`**: Groups may contain a root token (`$root`) alongside child tokens, referenced as `{group.$root}`
 - **`$extends`**: Groups may inherit tokens/properties from another group via deep merge
 - **`$deprecated`**: Tokens and groups may be marked deprecated (boolean `true` or explanation string)

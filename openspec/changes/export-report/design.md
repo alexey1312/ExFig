@@ -87,11 +87,11 @@ the option set grows.
 
 **Options considered**:
 
-| Option                        | Pros                                     | Cons                                    |
-| ----------------------------- | ---------------------------------------- | --------------------------------------- |
-| Add collection to TerminalUI  | Single point of interception             | Adds state to stateless class           |
-| Separate WarningCollector     | Clean separation, follows actor pattern  | Must wire into export commands          |
-| Intercept at queueLogMessage  | No TerminalUI changes                    | Only works in batch mode                |
+| Option                       | Pros                                    | Cons                           |
+| ---------------------------- | --------------------------------------- | ------------------------------ |
+| Add collection to TerminalUI | Single point of interception            | Adds state to stateless class  |
+| Separate WarningCollector    | Clean separation, follows actor pattern | Must wire into export commands |
+| Intercept at queueLogMessage | No TerminalUI changes                   | Only works in batch mode       |
 
 **Decision**: Create new `WarningCollector` actor following `SharedThemeAttributesCollector` pattern
 (see `Sources/ExFigCLI/Batch/SharedThemeAttributes.swift`). TerminalUI currently does NOT store warnings —
@@ -134,11 +134,11 @@ report file at the same path (if it exists). This is the only action that requir
 
 **Options considered**:
 
-| Option                  | Pros                                    | Cons                                                      |
-| ----------------------- | --------------------------------------- | --------------------------------------------------------- |
-| SHA256 (CryptoKit)      | Industry standard, 64-char hex          | macOS-only; Linux needs `swift-crypto` dependency         |
-| SHA256 (swift-crypto)   | Cross-platform, industry standard       | New dependency                                            |
-| FNV-1a (already in use) | No new deps, fast (~2 GB/s), in codebase | Non-cryptographic, 16-char hex, collision-prone at scale  |
+| Option                  | Pros                                     | Cons                                                     |
+| ----------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| SHA256 (CryptoKit)      | Industry standard, 64-char hex           | macOS-only; Linux needs `swift-crypto` dependency        |
+| SHA256 (swift-crypto)   | Cross-platform, industry standard        | New dependency                                           |
+| FNV-1a (already in use) | No new deps, fast (~2 GB/s), in codebase | Non-cryptographic, 16-char hex, collision-prone at scale |
 
 **Decision**: Use `FNV1aHasher.hashToHex()` already available in the codebase (see
 `Sources/ExFigCLI/Cache/FNV1aHasher.swift`). The checksum purpose is change detection, not security —
@@ -182,5 +182,5 @@ and failure states. Capture `startTime` before export and `endTime` after.
 | exfig-action Phase 3 dependency   | Medium | Action requires CLI release with `--report` first     |
 | Report format evolution           | Low    | `version` field in report for forward compat          |
 | `deleted` detection needs history | Low    | Optional -- requires previous report at same path     |
-| Warning collector wiring          | Low    | Follow SharedThemeAttributesCollector actor pattern    |
+| Warning collector wiring          | Low    | Follow SharedThemeAttributesCollector actor pattern   |
 | run() refactor for result capture | Low    | performExportWithResult() already exists              |
