@@ -7,12 +7,13 @@
 **Phase 1 — `--report` for single export commands:**
 
 - Add `--report <path>` option to `ExportColors`, `ExportIcons`, `ExportImages`, `ExportTypography`
-- New `ExportReport` struct (analogous to `BatchReport` but for a single command): command name, config path, timing, success/error, stats, collected warnings
-- Reuse existing `ExportStats` from `BatchResult.swift` and `JSONCodec.encodePrettySorted()` from swift-yyjson
+- New `ExportReport` struct (analogous to `BatchReport` but for a single command): version, command name, config path, timing, success/error, stats, collected warnings
+- New `ReportStats: Encodable` struct with count fields only (colors, icons, images, typography) — analogous to `BatchReport.Stats`, NOT reusing `ExportStats` directly (it contains batch-only fields like `computedNodeHashes`, `granularCacheStats`)
+- Serialize via `JSONCodec.encodePrettySorted()` from swift-yyjson
 
 **Phase 2 — Asset Manifest:**
 
-- New `AssetManifest` struct tracking every generated file: path, action (`created`/`modified`/`unchanged`/`deleted`), optional SHA256 checksum, asset type
+- New `AssetManifest` struct tracking every generated file: path, action (`created`/`modified`/`unchanged`/`deleted`), FNV-1a content checksum, asset type
 - Track file write status in `FileWriter` and attach manifest to `ExportReport`
 - Enables: precise change tracking, PR diff comments, design drift detection
 
@@ -38,6 +39,7 @@ _(none — batch report behavior is unchanged; single commands currently have no
 - `Sources/ExFigCLI/Subcommands/ExportIcons.swift` — add `--report` option
 - `Sources/ExFigCLI/Subcommands/ExportImages.swift` — add `--report` option
 - `Sources/ExFigCLI/Subcommands/ExportTypography.swift` — add `--report` option
-- `Sources/ExFigCLI/Batch/BatchResult.swift` — reuse `ExportStats`
+- `Sources/ExFigCLI/Batch/BatchResult.swift` — reference for `ExportStats` count fields
 - `Sources/ExFigCLI/Output/FileWriter.swift` — track write status for manifest
+- `Sources/ExFigCLI/TerminalUI/TerminalUI.swift` — add warning collection mechanism (currently only prints, does not store)
 - External: `alexey1312/exfig-action` repo (Phase 3)
