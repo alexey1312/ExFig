@@ -84,21 +84,21 @@ pkl eval --format json <file.pkl>   # Package URI requires published package
 
 ## Project Context
 
-| Aspect          | Details                                                                            |
-| --------------- | ---------------------------------------------------------------------------------- |
-| Language        | Swift 6.2, macOS 13.0+                                                             |
-| Package Manager | Swift Package Manager                                                              |
-| CLI Framework   | swift-argument-parser                                                              |
-| Config Format   | PKL (Programmable, Scalable, Safe)                                                 |
-| Templates       | Jinja2 (swift-jinja)                                                               |
-| Required Env    | `FIGMA_PERSONAL_TOKEN`                                                             |
-| Config Files    | `exfig.pkl` (PKL configuration)                                                    |
-| Tooling         | mise (`./bin/mise` self-contained, no global install needed)                       |
-| Platforms       | macOS 13+ (primary), Linux/Ubuntu 22.04 (CI) - see `.claude/rules/linux-compat.md` |
+| Aspect          | Details                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| Language        | Swift 6.2, macOS 13.0+                                                                             |
+| Package Manager | Swift Package Manager                                                                              |
+| CLI Framework   | swift-argument-parser                                                                              |
+| Config Format   | PKL (Programmable, Scalable, Safe)                                                                 |
+| Templates       | Jinja2 (swift-jinja)                                                                               |
+| Required Env    | `FIGMA_PERSONAL_TOKEN`                                                                             |
+| Config Files    | `exfig.pkl` (PKL configuration)                                                                    |
+| Tooling         | mise (`./bin/mise` self-contained, no global install needed)                                       |
+| Platforms       | macOS 13+ (primary), Linux/Ubuntu 22.04, Windows (Swift 6.3) - see `.claude/rules/linux-compat.md` |
 
 ## Architecture
 
-Twelve modules in `Sources/`:
+Thirteen modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
@@ -412,6 +412,21 @@ NooraUI.format(.command("bold"))   // bold/secondary
 NooraUI.formatLink("url", useColors: true)  // underlined primary
 ```
 
+| Tests fail                  | Check `FIGMA_PERSONAL_TOKEN` is set                                                                        |
+| Formatting fails            | Run `./bin/mise run setup` to install tools                                                                |
+| test:filter no matches      | SPM converts hyphens→underscores: use `ExFig_FlutterTests` not `ExFig-FlutterTests`                        |
+| Template errors             | Check Jinja2 syntax and context variables                                                                  |
+| Linux test hangs            | Build first: `swift build --build-tests`, then `swift test --skip-build --parallel`                        |
+| Android pathData long       | Simplify in Figma or use `--strict-path-validation`                                                        |
+| PKL parse error 1           | Check `PklError.message` — actual error is in `.message`, not `.localizedDescription`                      |
+| Test target won't compile   | Broken test files block entire target; use `swift test --filter Target.Class` after `build`                |
+| Test helper JSON decode     | `ContainingFrame` uses default Codable (camelCase: `nodeId`, `pageName`), NOT snake_case                   |
+| Web entry test fails        | Web entry types use `outputDirectory` field, while Android/Flutter use `output`                            |
+| Logger concatenation err    | `Logger.Message` (swift-log) requires interpolation `"\(a) \(b)"`, not concatenation `a + b`               |
+| Deleted variables in output | Filter `VariableValue.deletedButReferenced != true` in variable loaders AND `CodeSyntaxSyncer`             |
+| Jinja trailing `\n`         | `{% if false %}...{% endif %}\n` renders `"\n"`, not `""` — strip whitespace-only partial template results |
+| `Bundle.module` in tests    | SPM test targets without declared resources don't have `Bundle.module` — use `Bundle.main` or temp bundle  |
+
 ## Additional Rules
 
 Contextual documentation is in `.claude/rules/`:
@@ -427,7 +442,7 @@ Contextual documentation is in `.claude/rules/`:
 | `api-reference.md`    | Figma API endpoints, response mapping              |
 | `troubleshooting.md`  | Build/test/PKL/MCP/Penpot problem-solution pairs   |
 | `gotchas.md`          | Swift 6 concurrency, SwiftLint, rate limits        |
-| `linux-compat.md`     | Linux-specific workarounds                         |
+| `linux-compat.md`     | Linux/Windows platform workarounds                 |
 | `testing-workflow.md` | Testing guidelines, commit format                  |
 | `pkl-codegen.md`      | pkl-swift generated types, enum bridging, codegen  |
 | `Sources/*/CLAUDE.md` | Module-specific patterns, modification checklists  |
