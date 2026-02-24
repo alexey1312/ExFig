@@ -209,14 +209,14 @@ environment variable. The export SHALL complete using only the local file.
 The parser SHALL map W3C token types to ExFigCore domain models. Unmapped token types SHALL be skipped with a
 warning message identifying the token name and unsupported type.
 
-| W3C Token Type | ExFigCore Model | `$value` Format                                          |
-| -------------- | --------------- | -------------------------------------------------------- |
-| `color`        | `Color`         | Object: `{colorSpace, components, alpha?, hex?}`         |
-| `typography`   | `TextStyle`     | Object: `{fontFamily, fontSize, fontWeight, lineHeight?}`|
-| `dimension`    | (numeric value) | Object: `{value, unit}` — unit is `"px"` or `"rem"`     |
-| `number`       | (numeric value) | Plain JSON number                                        |
-| `fontFamily`   | (string value)  | String or array of strings                               |
-| `fontWeight`   | (numeric value) | Number (1–1000) or string alias (e.g., "bold")           |
+| W3C Token Type | ExFigCore Model | `$value` Format                                           |
+| -------------- | --------------- | --------------------------------------------------------- |
+| `color`        | `Color`         | Object: `{colorSpace, components, alpha?, hex?}`          |
+| `typography`   | `TextStyle`     | Object: `{fontFamily, fontSize, fontWeight, lineHeight?}` |
+| `dimension`    | (numeric value) | Object: `{value, unit}` — unit is `"px"` or `"rem"`       |
+| `number`       | (numeric value) | Plain JSON number                                         |
+| `fontFamily`   | (string value)  | String or array of strings                                |
+| `fontWeight`   | (numeric value) | Number (1–1000) or string alias (e.g., "bold")            |
 
 #### Scenario: Color token mapped to Color model
 
