@@ -48,14 +48,8 @@ final class TerminalUI: Sendable {
     /// Print a warning message (handles multi-line properly)
     func warning(_ message: String) {
         // Forward to warning collector when active (--report mode)
-        if let collector = WarningCollectorStorage.current {
-            let semaphore = DispatchSemaphore(value: 0)
-            Task {
-                await collector.add(message)
-                semaphore.signal()
-            }
-            semaphore.wait()
-        }
+        // Direct sync call — no semaphore needed (Lock-based collector)
+        WarningCollectorStorage.current?.add(message)
 
         // In batch mode, queue for coordinated output to prevent race conditions
         if let progressView = BatchSharedState.current?.progressView {

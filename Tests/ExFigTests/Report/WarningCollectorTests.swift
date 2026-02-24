@@ -4,44 +4,42 @@ import XCTest
 final class WarningCollectorTests: XCTestCase {
     // MARK: - Empty State
 
-    func testEmptyCollector() async {
+    func testEmptyCollector() {
         let collector = WarningCollector()
-        let warnings = await collector.getAll()
+        let warnings = collector.getAll()
         XCTAssertTrue(warnings.isEmpty)
-        let count = await collector.count
-        XCTAssertEqual(count, 0)
+        XCTAssertEqual(collector.count, 0)
     }
 
     // MARK: - Add Warnings
 
-    func testAddSingleWarning() async {
+    func testAddSingleWarning() {
         let collector = WarningCollector()
-        await collector.add("Test warning")
-        let warnings = await collector.getAll()
+        collector.add("Test warning")
+        let warnings = collector.getAll()
         XCTAssertEqual(warnings, ["Test warning"])
     }
 
-    func testAddMultipleWarnings() async {
+    func testAddMultipleWarnings() {
         let collector = WarningCollector()
-        await collector.add("Warning 1")
-        await collector.add("Warning 2")
-        await collector.add("Warning 3")
+        collector.add("Warning 1")
+        collector.add("Warning 2")
+        collector.add("Warning 3")
 
-        let warnings = await collector.getAll()
+        let warnings = collector.getAll()
         XCTAssertEqual(warnings, ["Warning 1", "Warning 2", "Warning 3"])
-        let count = await collector.count
-        XCTAssertEqual(count, 3)
+        XCTAssertEqual(collector.count, 3)
     }
 
     // MARK: - Ordering
 
-    func testWarningsPreserveOrder() async {
+    func testWarningsPreserveOrder() {
         let collector = WarningCollector()
         for i in 1 ... 5 {
-            await collector.add("Warning \(i)")
+            collector.add("Warning \(i)")
         }
 
-        let warnings = await collector.getAll()
+        let warnings = collector.getAll()
         XCTAssertEqual(warnings, ["Warning 1", "Warning 2", "Warning 3", "Warning 4", "Warning 5"])
     }
 

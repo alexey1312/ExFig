@@ -23,7 +23,7 @@ final class ManifestTrackerTests: XCTestCase {
 
     // MARK: - Created Detection
 
-    func testRecordWriteCreatedAction() async {
+    func testRecordWriteCreatedAction() throws {
         let tracker = ManifestTracker(assetType: "color")
         let filePath = tempDirectory.appendingPathComponent("new_file.swift").path
         let data = Data("let colors = []".utf8)
@@ -31,9 +31,13 @@ final class ManifestTrackerTests: XCTestCase {
         // File does not exist yet
         XCTAssertFalse(FileManager.default.fileExists(atPath: filePath))
 
-        await tracker.recordWrite(path: filePath, data: data)
-        let entries = await tracker.getAll()
+        let preState = tracker.capturePreState(for: filePath)
+        // Simulate write
+        // swiftlint:disable:next force_try
+        try data.write(to: URL(fileURLWithPath: filePath))
+        tracker.recordWrite(path: filePath, data: data, preState: preState)
 
+        let entries = tracker.getAll()
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries[0].action, .created)
         XCTAssertEqual(entries[0].assetType, "color")
@@ -43,24 +47,26 @@ final class ManifestTrackerTests: XCTestCase {
 
     // MARK: - Modified Detection
 
-    func testRecordWriteModifiedAction() async throws {
+    func testRecordWriteModifiedAction() throws {
         let tracker = ManifestTracker(assetType: "icon")
         let filePath = tempDirectory.appendingPathComponent("existing.swift").path
 
         // Create existing file with different content
         try Data("old content".utf8).write(to: URL(fileURLWithPath: filePath))
 
+        let preState = tracker.capturePreState(for: filePath)
         let newData = Data("new content".utf8)
-        await tracker.recordWrite(path: filePath, data: newData)
-        let entries = await tracker.getAll()
+        try newData.write(to: URL(fileURLWithPath: filePath))
+        tracker.recordWrite(path: filePath, data: newData, preState: preState)
 
+        let entries = tracker.getAll()
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries[0].action, .modified)
     }
 
     // MARK: - Unchanged Detection
 
-    func testRecordWriteUnchangedAction() async throws {
+    func testRecordWriteUnchangedAction() throws {
         let tracker = ManifestTracker(assetType: "image")
         let filePath = tempDirectory.appendingPathComponent("same.swift").path
         let content = Data("same content".utf8)
@@ -68,36 +74,54 @@ final class ManifestTrackerTests: XCTestCase {
         // Create existing file with same content
         try content.write(to: URL(fileURLWithPath: filePath))
 
-        await tracker.recordWrite(path: filePath, data: content)
-        let entries = await tracker.getAll()
+        let preState = tracker.capturePreState(for: filePath)
+        try content.write(to: URL(fileURLWithPath: filePath))
+        tracker.recordWrite(path: filePath, data: content, preState: preState)
 
+        let entries = tracker.getAll()
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries[0].action, .unchanged)
     }
 
     // MARK: - Default Asset Type
 
-    func testDefaultAssetType() async {
+    func testDefaultAssetType() {
         let tracker = ManifestTracker(assetType: "typography")
         let filePath = tempDirectory.appendingPathComponent("fonts.swift").path
         let data = Data("fonts".utf8)
 
-        await tracker.recordWrite(path: filePath, data: data)
-        let entries = await tracker.getAll()
+        let preState = tracker.capturePreState(for: filePath)
+        tracker.recordWrite(path: filePath, data: data, preState: preState)
 
+        let entries = tracker.getAll()
         XCTAssertEqual(entries[0].assetType, "typography")
+    }
+
+    // MARK: - Asset Type Override
+
+    func testAssetTypeOverride() {
+        let tracker = ManifestTracker(assetType: "color")
+        let filePath = tempDirectory.appendingPathComponent("icon.svg").path
+        let data = Data("<svg/>".utf8)
+
+        let preState = tracker.capturePreState(for: filePath)
+        tracker.recordWrite(path: filePath, data: data, preState: preState, assetType: "icon")
+
+        let entries = tracker.getAll()
+        XCTAssertEqual(entries[0].assetType, "icon")
     }
 
     // MARK: - Build Manifest
 
-    func testBuildManifest() async {
+    func testBuildManifest() {
         let tracker = ManifestTracker(assetType: "color")
         let filePath = tempDirectory.appendingPathComponent("colors.swift").path
         let data = Data("colors".utf8)
 
-        await tracker.recordWrite(path: filePath, data: data)
-        let manifest = await tracker.buildManifest()
+        let preState = tracker.capturePreState(for: filePath)
+        tracker.recordWrite(path: filePath, data: data, preState: preState)
 
+        let manifest = tracker.buildManifest()
         XCTAssertEqual(manifest.files.count, 1)
     }
 
@@ -116,18 +140,131 @@ final class ManifestTrackerTests: XCTestCase {
 
     // MARK: - Checksum Consistency
 
-    func testChecksumConsistency() async {
+    func testChecksumConsistency() {
         let tracker = ManifestTracker(assetType: "color")
         let data = Data("consistent content".utf8)
 
         let path1 = tempDirectory.appendingPathComponent("file1.swift").path
         let path2 = tempDirectory.appendingPathComponent("file2.swift").path
 
-        await tracker.recordWrite(path: path1, data: data)
-        await tracker.recordWrite(path: path2, data: data)
+        let preState1 = tracker.capturePreState(for: path1)
+        tracker.recordWrite(path: path1, data: data, preState: preState1)
 
-        let entries = await tracker.getAll()
+        let preState2 = tracker.capturePreState(for: path2)
+        tracker.recordWrite(path: path2, data: data, preState: preState2)
+
+        let entries = tracker.getAll()
         XCTAssertEqual(entries[0].checksum, entries[1].checksum)
+    }
+
+    // MARK: - RecordCopy Tests
+
+    func testRecordCopyCreated() throws {
+        let tracker = ManifestTracker(assetType: "image")
+        let sourceURL = tempDirectory.appendingPathComponent("source.png")
+        let destPath = tempDirectory.appendingPathComponent("dest.png").path
+        let content = Data("image data".utf8)
+
+        try content.write(to: sourceURL)
+
+        let preState = tracker.capturePreState(for: destPath)
+        XCTAssertFalse(preState.fileExisted)
+
+        // Simulate copy
+        try FileManager.default.copyItem(at: sourceURL, to: URL(fileURLWithPath: destPath))
+        tracker.recordCopy(path: destPath, sourceURL: sourceURL, preState: preState)
+
+        let entries = tracker.getAll()
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].action, .created)
+        XCTAssertNotNil(entries[0].checksum)
+    }
+
+    func testRecordCopyModified() throws {
+        let tracker = ManifestTracker(assetType: "image")
+        let sourceURL = tempDirectory.appendingPathComponent("source.png")
+        let destPath = tempDirectory.appendingPathComponent("dest.png").path
+
+        // Create existing destination with different content
+        try Data("old image".utf8).write(to: URL(fileURLWithPath: destPath))
+
+        let preState = tracker.capturePreState(for: destPath)
+        XCTAssertTrue(preState.fileExisted)
+
+        // Write new source and copy
+        let newContent = Data("new image".utf8)
+        try newContent.write(to: sourceURL)
+        try FileManager.default.removeItem(atPath: destPath)
+        try FileManager.default.copyItem(at: sourceURL, to: URL(fileURLWithPath: destPath))
+        tracker.recordCopy(path: destPath, sourceURL: sourceURL, preState: preState)
+
+        let entries = tracker.getAll()
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].action, .modified)
+    }
+
+    func testRecordCopyUnchanged() throws {
+        let tracker = ManifestTracker(assetType: "image")
+        let sourceURL = tempDirectory.appendingPathComponent("source.png")
+        let destPath = tempDirectory.appendingPathComponent("dest.png").path
+        let content = Data("same image".utf8)
+
+        // Create both with same content
+        try content.write(to: sourceURL)
+        try content.write(to: URL(fileURLWithPath: destPath))
+
+        let preState = tracker.capturePreState(for: destPath)
+        XCTAssertTrue(preState.fileExisted)
+
+        // Re-copy same content
+        try FileManager.default.removeItem(atPath: destPath)
+        try FileManager.default.copyItem(at: sourceURL, to: URL(fileURLWithPath: destPath))
+        tracker.recordCopy(path: destPath, sourceURL: sourceURL, preState: preState)
+
+        let entries = tracker.getAll()
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].action, .unchanged)
+    }
+
+    func testRecordCopyWithUnreadableSource() {
+        let tracker = ManifestTracker(assetType: "image")
+        let sourceURL = URL(fileURLWithPath: "/nonexistent/source.png")
+        let destPath = tempDirectory.appendingPathComponent("dest.png").path
+
+        let preState = tracker.capturePreState(for: destPath)
+
+        // Destination doesn't exist, source is unreadable — still records entry
+        tracker.recordCopy(path: destPath, sourceURL: sourceURL, preState: preState)
+
+        let entries = tracker.getAll()
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].action, .created)
+        // Checksum is nil when both source and destination are unreadable
+        XCTAssertNil(entries[0].checksum)
+    }
+
+    // MARK: - Two-Phase Prevents Phantom Entries
+
+    func testNoEntryRecordedOnFailedWrite() {
+        let tracker = ManifestTracker(assetType: "color")
+        let filePath = tempDirectory.appendingPathComponent("colors.swift").path
+        let data = Data("colors".utf8)
+
+        // Capture pre-state
+        let preState = tracker.capturePreState(for: filePath)
+
+        // Simulate failed write — don't call recordWrite
+        // Entries should be empty
+        let entries = tracker.getAll()
+        XCTAssertTrue(entries.isEmpty)
+
+        // Now use preState to verify it captured correctly
+        XCTAssertFalse(preState.fileExisted)
+        XCTAssertNil(preState.existingChecksum)
+
+        // If write eventually succeeds, we can still record
+        tracker.recordWrite(path: filePath, data: data, preState: preState)
+        XCTAssertEqual(tracker.getAll().count, 1)
     }
 }
 

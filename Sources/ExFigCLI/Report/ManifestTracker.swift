@@ -1,14 +1,21 @@
+import ExFigCore
 import Foundation
 
 /// Tracks file write operations for asset manifest generation.
 ///
+/// Uses a two-phase API: `capturePreState` before write, `recordWrite`/`recordCopy`
+/// after successful write. This ensures entries are only recorded for files that
+/// were actually written, and action detection (created/modified/unchanged) uses
+/// the correct pre-write filesystem state.
+///
+/// Uses `Lock<[ManifestEntry]>` for thread-safe access without requiring `await`,
+/// eliminating the `DispatchSemaphore` bridge that was needed with the actor version.
 /// Only active when `--report` is specified — zero overhead otherwise.
-/// Set via `ManifestTrackerStorage.current` before export, cleared after.
 ///
 /// Initialized with a default `assetType` since each export command handles
 /// one asset type (colors/icons/images/typography).
-actor ManifestTracker {
-    private var entries: [ManifestEntry] = []
+final class ManifestTracker: Sendable {
+    private let entries = Lock<[ManifestEntry]>([])
 
     /// Default asset type for all recorded entries.
     let defaultAssetType: String
@@ -17,83 +24,97 @@ actor ManifestTracker {
         defaultAssetType = assetType
     }
 
-    /// Record a file write operation.
+    /// Pre-write filesystem state for a file path.
+    struct PreWriteState: Sendable {
+        let fileExisted: Bool
+        let existingChecksum: String?
+    }
+
+    /// Capture filesystem state before writing a file.
     ///
-    /// Determines action by checking whether the file existed before and comparing
-    /// content hashes via `FNV1aHasher.hashToHex()`.
+    /// Must be called BEFORE the file is written to disk, so that existing content
+    /// can be compared for action detection (created vs. modified vs. unchanged).
+    func capturePreState(for path: String) -> PreWriteState {
+        let fileExisted = FileManager.default.fileExists(atPath: path)
+        let existingChecksum: String? = if fileExisted, let existingData = FileManager.default.contents(atPath: path) {
+            FNV1aHasher.hashToHex(existingData)
+        } else {
+            nil
+        }
+        return PreWriteState(fileExisted: fileExisted, existingChecksum: existingChecksum)
+    }
+
+    /// Record a file write operation after successful write.
     ///
     /// - Parameters:
     ///   - path: Absolute path to the written file.
     ///   - data: Content that was written (used for checksum).
+    ///   - preState: Pre-write state captured via `capturePreState(for:)`.
     ///   - assetType: Type of asset. Defaults to tracker's `defaultAssetType`.
-    func recordWrite(path: String, data: Data, assetType: String? = nil) {
+    func recordWrite(path: String, data: Data, preState: PreWriteState, assetType: String? = nil) {
         let assetType = assetType ?? defaultAssetType
         let relativePath = makeRelativePath(path)
         let newChecksum = FNV1aHasher.hashToHex(data)
-        let fileExisted = FileManager.default.fileExists(atPath: path)
 
-        let action: FileAction
-        if !fileExisted {
-            action = .created
-        } else if let existingData = FileManager.default.contents(atPath: path) {
-            let existingChecksum = FNV1aHasher.hashToHex(existingData)
-            action = existingChecksum == newChecksum ? .unchanged : .modified
+        let action: FileAction = if !preState.fileExisted {
+            .created
+        } else if let existingChecksum = preState.existingChecksum {
+            existingChecksum == newChecksum ? .unchanged : .modified
         } else {
-            action = .modified
+            .modified
         }
 
-        entries.append(ManifestEntry(
-            path: relativePath,
-            action: action,
-            checksum: newChecksum,
-            assetType: assetType
-        ))
+        entries.withLock {
+            $0.append(ManifestEntry(
+                path: relativePath,
+                action: action,
+                checksum: newChecksum,
+                assetType: assetType
+            ))
+        }
     }
 
-    /// Record a file copy operation (for files copied from local source).
+    /// Record a file copy operation after successful copy.
     ///
     /// - Parameters:
     ///   - path: Absolute path to the destination file.
-    ///   - sourceURL: URL of the source file being copied.
+    ///   - sourceURL: URL of the source file that was copied.
+    ///   - preState: Pre-write state captured via `capturePreState(for:)`.
     ///   - assetType: Type of asset. Defaults to tracker's `defaultAssetType`.
-    func recordCopy(path: String, sourceURL: URL, assetType: String? = nil) {
+    func recordCopy(path: String, sourceURL: URL, preState: PreWriteState, assetType: String? = nil) {
         let assetType = assetType ?? defaultAssetType
         let relativePath = makeRelativePath(path)
 
-        guard let sourceData = try? Data(contentsOf: sourceURL) else {
-            entries.append(ManifestEntry(
+        // Read copied file from destination (it was just written successfully)
+        let newChecksum: String? = if let destData = FileManager.default.contents(atPath: path) {
+            FNV1aHasher.hashToHex(destData)
+        } else if let sourceData = try? Data(contentsOf: sourceURL) {
+            FNV1aHasher.hashToHex(sourceData)
+        } else {
+            nil
+        }
+
+        let action: FileAction = if !preState.fileExisted {
+            .created
+        } else if let existingChecksum = preState.existingChecksum, let newChecksum {
+            existingChecksum == newChecksum ? .unchanged : .modified
+        } else {
+            .modified
+        }
+
+        entries.withLock {
+            $0.append(ManifestEntry(
                 path: relativePath,
-                action: .created,
-                checksum: nil,
+                action: action,
+                checksum: newChecksum,
                 assetType: assetType
             ))
-            return
         }
-
-        let newChecksum = FNV1aHasher.hashToHex(sourceData)
-        let fileExisted = FileManager.default.fileExists(atPath: path)
-
-        let action: FileAction
-        if !fileExisted {
-            action = .created
-        } else if let existingData = FileManager.default.contents(atPath: path) {
-            let existingChecksum = FNV1aHasher.hashToHex(existingData)
-            action = existingChecksum == newChecksum ? .unchanged : .modified
-        } else {
-            action = .modified
-        }
-
-        entries.append(ManifestEntry(
-            path: relativePath,
-            action: action,
-            checksum: newChecksum,
-            assetType: assetType
-        ))
     }
 
     /// Get all recorded manifest entries.
     func getAll() -> [ManifestEntry] {
-        entries
+        entries.withLock { $0 }
     }
 
     /// Build an `AssetManifest` from recorded entries.
@@ -101,13 +122,13 @@ actor ManifestTracker {
     /// If `previousReportPath` is provided, detects deleted files by comparing
     /// against the previous report's manifest.
     func buildManifest(previousReportPath: String? = nil) -> AssetManifest {
-        var allEntries = entries
+        var allEntries = entries.withLock { $0 }
 
         if let previousPath = previousReportPath,
            let previousData = FileManager.default.contents(atPath: previousPath),
-           let previousReport = try? JSONDecoder().decode(PreviousReportManifest.self, from: previousData)
+           let previousReport = try? JSONCodec.decode(PreviousReportManifest.self, from: previousData)
         {
-            let currentPaths = Set(entries.map(\.path))
+            let currentPaths = Set(allEntries.map(\.path))
             for previousEntry in previousReport.manifest?.files ?? []
                 where !currentPaths.contains(previousEntry.path)
             {

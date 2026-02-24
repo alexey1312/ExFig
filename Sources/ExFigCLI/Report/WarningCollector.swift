@@ -2,7 +2,8 @@ import Foundation
 
 /// Collects warnings emitted during export for inclusion in the report.
 ///
-/// Follows the `SharedThemeAttributesCollector` actor pattern.
+/// Uses `Lock<[String]>` for thread-safe access without requiring `await`,
+/// eliminating the `DispatchSemaphore` bridge that was needed with the actor version.
 /// Active only when `--report` is specified — otherwise `nil` and zero overhead.
 ///
 /// ## Usage
@@ -11,25 +12,25 @@ import Foundation
 /// let collector = WarningCollector()
 /// WarningCollectorStorage.current = collector
 /// // ... run export (TerminalUI.warning() forwards to collector) ...
-/// let warnings = await collector.getAll()
+/// let warnings = collector.getAll()
 /// WarningCollectorStorage.current = nil
 /// ```
-actor WarningCollector {
-    private var warnings: [String] = []
+final class WarningCollector: Sendable {
+    private let storage = Lock<[String]>([])
 
     /// Add a warning message.
     func add(_ message: String) {
-        warnings.append(message)
+        storage.withLock { $0.append(message) }
     }
 
     /// Get all collected warnings.
     func getAll() -> [String] {
-        warnings
+        storage.withLock { $0 }
     }
 
     /// Number of collected warnings.
     var count: Int {
-        warnings.count
+        storage.withLock { $0.count }
     }
 }
 

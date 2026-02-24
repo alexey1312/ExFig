@@ -20,7 +20,7 @@ final class DeletedFileDetectionTests: XCTestCase {
 
     // MARK: - Deleted Detection
 
-    func testDeletedFileDetectedFromPreviousReport() async throws {
+    func testDeletedFileDetectedFromPreviousReport() throws {
         // Use absolute paths in previous report that match what ManifestTracker would generate.
         // ManifestTracker.makeRelativePath() strips CWD prefix, so use paths
         // that don't match CWD to get predictable absolute paths in entries.
@@ -52,9 +52,10 @@ final class DeletedFileDetectionTests: XCTestCase {
 
         // New export only generates Colors.swift (OldColors.swift was removed from Figma)
         let tracker = ManifestTracker(assetType: "color")
-        await tracker.recordWrite(path: colorsPath, data: Data("new colors".utf8))
+        let preState = tracker.capturePreState(for: colorsPath)
+        tracker.recordWrite(path: colorsPath, data: Data("new colors".utf8), preState: preState)
 
-        let manifest = await tracker.buildManifest(previousReportPath: previousReportPath)
+        let manifest = tracker.buildManifest(previousReportPath: previousReportPath)
 
         // Should have 2 entries: Colors.swift (created) + OldColors.swift (deleted)
         XCTAssertEqual(manifest.files.count, 2)
@@ -68,31 +69,36 @@ final class DeletedFileDetectionTests: XCTestCase {
 
     // MARK: - No Previous Report
 
-    func testNoPreviousReportNoDeletedFiles() async {
+    func testNoPreviousReportNoDeletedFiles() {
         let tracker = ManifestTracker(assetType: "icon")
         let filePath = tempDirectory.appendingPathComponent("Icons.swift").path
-        await tracker.recordWrite(path: filePath, data: Data("icons".utf8))
+        let preState = tracker.capturePreState(for: filePath)
+        tracker.recordWrite(path: filePath, data: Data("icons".utf8), preState: preState)
 
-        let manifest = await tracker.buildManifest(previousReportPath: nil)
+        let manifest = tracker.buildManifest(previousReportPath: nil)
         XCTAssertEqual(manifest.files.count, 1)
         XCTAssertTrue(manifest.files.allSatisfy { $0.action != .deleted })
     }
 
     // MARK: - Non-existent Previous Report Path
 
-    func testNonExistentPreviousReportPath() async {
+    func testNonExistentPreviousReportPath() {
         let tracker = ManifestTracker(assetType: "color")
         let filePath = tempDirectory.appendingPathComponent("Colors.swift").path
-        await tracker.recordWrite(path: filePath, data: Data("colors".utf8))
+        let preState = tracker.capturePreState(for: filePath)
+        tracker.recordWrite(path: filePath, data: Data("colors".utf8), preState: preState)
 
-        let manifest = await tracker.buildManifest(previousReportPath: "/nonexistent/report.json")
+        let manifest = tracker.buildManifest(previousReportPath: "/nonexistent/report.json")
         XCTAssertEqual(manifest.files.count, 1)
         XCTAssertTrue(manifest.files.allSatisfy { $0.action != .deleted })
     }
 
     // MARK: - All Files Still Present
 
-    func testAllFilesPresentNoDeletedEntries() async throws {
+    func testAllFilesPresentNoDeletedEntries() throws {
+        // Use absolute paths matching what ManifestTracker produces for temp directory paths.
+        let colorsPath = tempDirectory.appendingPathComponent("Colors.swift").path
+
         let previousReport: [String: Any] = [
             "version": 1,
             "command": "colors",
@@ -105,7 +111,7 @@ final class DeletedFileDetectionTests: XCTestCase {
             "warnings": [] as [String],
             "manifest": [
                 "files": [
-                    ["path": "Colors.swift", "action": "created", "checksum": "abc123", "assetType": "color"],
+                    ["path": colorsPath, "action": "created", "checksum": "abc123", "assetType": "color"],
                 ],
             ] as [String: Any],
         ]
@@ -114,29 +120,21 @@ final class DeletedFileDetectionTests: XCTestCase {
         let previousData = try JSONSerialization.data(withJSONObject: previousReport)
         try previousData.write(to: URL(fileURLWithPath: previousReportPath))
 
-        // New export generates the same file
+        // New export generates the same file path
         let tracker = ManifestTracker(assetType: "color")
-        // Make relative path match by using makeRelativePath logic
-        await tracker.recordWrite(
-            path: tempDirectory.appendingPathComponent("Colors.swift").path,
-            data: Data("colors".utf8)
-        )
+        let preState = tracker.capturePreState(for: colorsPath)
+        tracker.recordWrite(path: colorsPath, data: Data("colors".utf8), preState: preState)
 
-        // Use a path that matches what's in the previous report
-        // Since ManifestTracker uses makeRelativePath, we need to match the relative paths
-        let manifest = await tracker.buildManifest(previousReportPath: previousReportPath)
+        let manifest = tracker.buildManifest(previousReportPath: previousReportPath)
 
-        // The paths need to match for "no deleted" — both use relative paths
-        // Since temp dir paths won't match "Colors.swift", we expect the deleted entry
-        // This test validates behavior when paths DO match
+        // Paths match — no deleted entries
         let deletedFiles = manifest.files.filter { $0.action == .deleted }
-        // If paths differ (temp dir vs relative), deleted entry appears; that's correct behavior
-        XCTAssertTrue(deletedFiles.isEmpty || deletedFiles.allSatisfy { $0.action == .deleted })
+        XCTAssertTrue(deletedFiles.isEmpty, "Expected no deleted entries when all files are still present")
     }
 
     // MARK: - Previous Report Without Manifest
 
-    func testPreviousReportWithoutManifest() async throws {
+    func testPreviousReportWithoutManifest() throws {
         let previousReport: [String: Any] = [
             "version": 1,
             "command": "colors",
@@ -155,9 +153,10 @@ final class DeletedFileDetectionTests: XCTestCase {
 
         let tracker = ManifestTracker(assetType: "color")
         let filePath = tempDirectory.appendingPathComponent("Colors.swift").path
-        await tracker.recordWrite(path: filePath, data: Data("colors".utf8))
+        let preState = tracker.capturePreState(for: filePath)
+        tracker.recordWrite(path: filePath, data: Data("colors".utf8), preState: preState)
 
-        let manifest = await tracker.buildManifest(previousReportPath: previousReportPath)
+        let manifest = tracker.buildManifest(previousReportPath: previousReportPath)
         // No deleted entries when previous report has no manifest
         XCTAssertTrue(manifest.files.allSatisfy { $0.action != .deleted })
     }

@@ -50,51 +50,15 @@ extension ExFigCommand {
                 ui: ui
             )
 
-            let hasReport = report != nil
-            let warningCollector: WarningCollector? = hasReport ? WarningCollector() : nil
-            let manifestTracker: ManifestTracker? = hasReport ? ManifestTracker(assetType: "image") : nil
-            if let collector = warningCollector { WarningCollectorStorage.current = collector }
-            if let tracker = manifestTracker { ManifestTrackerStorage.current = tracker }
-
-            let startTime = Date()
-            var exportCount = 0
-            var exportError: (any Error)?
-
-            do {
-                exportCount = try await performExport(client: client, ui: ui)
-            } catch {
-                exportError = error
-            }
-
-            if let reportPath = report {
-                let endTime = Date()
-                let warnings = await warningCollector?.getAll() ?? []
-                let manifest = await manifestTracker?.buildManifest(previousReportPath: reportPath)
-                WarningCollectorStorage.current = nil
-                ManifestTrackerStorage.current = nil
-
-                let exportReport = ExportReport(
-                    version: ExportReport.currentVersion,
-                    command: "images",
-                    config: options.input ?? "exfig.pkl",
-                    startTime: ISO8601DateFormatter().string(from: startTime),
-                    endTime: ISO8601DateFormatter().string(from: endTime),
-                    duration: endTime.timeIntervalSince(startTime),
-                    success: exportError == nil,
-                    error: exportError?.localizedDescription,
-                    stats: ReportStats(colors: 0, icons: 0, images: exportCount, typography: 0),
-                    warnings: warnings,
-                    manifest: manifest
-                )
-                writeExportReport(exportReport, to: reportPath, ui: ui)
-            } else {
-                WarningCollectorStorage.current = nil
-                ManifestTrackerStorage.current = nil
-            }
-
-            if let error = exportError {
-                throw error
-            }
+            try await withExportReport(
+                command: "images",
+                assetType: "image",
+                reportPath: report,
+                configInput: options.input,
+                ui: ui,
+                buildStats: { ReportStats(colors: 0, icons: 0, images: $0, typography: 0) },
+                export: { try await performExport(client: client, ui: ui) }
+            )
         }
 
         /// Result of images export for batch mode integration.

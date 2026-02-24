@@ -160,34 +160,28 @@ final class FileWriter: Sendable {
 
     private func writeFileData(_ file: FileContents) throws {
         let fileURL = URL(fileURLWithPath: file.destination.url.path)
-
-        // Track file write for manifest (zero overhead when tracker is nil)
-        if let tracker = ManifestTrackerStorage.current {
-            if let data = file.data {
-                let semaphore = DispatchSemaphore(value: 0)
-                Task {
-                    await tracker.recordWrite(path: fileURL.path, data: data)
-                    semaphore.signal()
-                }
-                semaphore.wait()
-            } else if let localFileURL = file.dataFile {
-                let semaphore = DispatchSemaphore(value: 0)
-                Task {
-                    await tracker.recordCopy(path: fileURL.path, sourceURL: localFileURL)
-                    semaphore.signal()
-                }
-                semaphore.wait()
-            }
-        }
+        let tracker = ManifestTrackerStorage.current
 
         if let data = file.data {
+            // Capture pre-state before write (zero overhead when tracker is nil)
+            let preState = tracker?.capturePreState(for: fileURL.path)
             try data.write(to: fileURL, options: .atomic)
+            // Record only after successful write
+            if let tracker, let preState {
+                tracker.recordWrite(path: fileURL.path, data: data, preState: preState)
+            }
         } else if let localFileURL = file.dataFile {
+            // Capture pre-state before write
+            let preState = tracker?.capturePreState(for: fileURL.path)
             // Remove existing file if present (copyItem fails if destination exists)
             if FileManager.default.fileExists(atPath: fileURL.path) {
                 try FileManager.default.removeItem(at: fileURL)
             }
             try FileManager.default.copyItem(at: localFileURL, to: fileURL)
+            // Record only after successful copy
+            if let tracker, let preState {
+                tracker.recordCopy(path: fileURL.path, sourceURL: localFileURL, preState: preState)
+            }
         } else {
             fatalError("FileContents.data is nil. Use FileDownloader to download contents of the file.")
         }
