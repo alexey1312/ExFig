@@ -2,7 +2,7 @@
 import Foundation
 import Logging
 import Resvg
-#if os(Linux)
+#if canImport(FoundationXML)
     import FoundationXML
 #endif
 

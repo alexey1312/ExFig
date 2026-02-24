@@ -257,8 +257,8 @@ Automate design exports in CI/CD with [exfig-action](https://github.com/alexey13
 
 ## Requirements
 
-- **Swift 6.2+** (for building from source)
-- **macOS 13.0+** or **Linux (Ubuntu 22.04)**
+- **Swift 6.2+** (macOS/Linux), **Swift 6.3+** (Windows)
+- **macOS 13.0+**, **Linux (Ubuntu 22.04)**, or **Windows**
 - **[PKL](https://pkl-lang.org/)** - Configuration language (install via `brew install pkl` or `mise use -g pkl`)
 - **Figma Personal Access Token**
 

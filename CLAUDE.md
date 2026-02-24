@@ -106,21 +106,21 @@ pkl eval --format json <file.pkl>   # Package URI requires published package
 
 ## Project Context
 
-| Aspect          | Details                                                                            |
-| --------------- | ---------------------------------------------------------------------------------- |
-| Language        | Swift 6.2, macOS 13.0+                                                             |
-| Package Manager | Swift Package Manager                                                              |
-| CLI Framework   | swift-argument-parser                                                              |
-| Config Format   | PKL (Programmable, Scalable, Safe)                                                 |
-| Templates       | Jinja2 (swift-jinja)                                                               |
-| Required Env    | `FIGMA_PERSONAL_TOKEN`                                                             |
-| Config Files    | `exfig.pkl` (PKL configuration)                                                    |
-| Tooling         | mise (`./bin/mise` self-contained, no global install needed)                       |
-| Platforms       | macOS 13+ (primary), Linux/Ubuntu 22.04 (CI) - see `.claude/rules/linux-compat.md` |
+| Aspect          | Details                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| Language        | Swift 6.2, macOS 13.0+                                                                             |
+| Package Manager | Swift Package Manager                                                                              |
+| CLI Framework   | swift-argument-parser                                                                              |
+| Config Format   | PKL (Programmable, Scalable, Safe)                                                                 |
+| Templates       | Jinja2 (swift-jinja)                                                                               |
+| Required Env    | `FIGMA_PERSONAL_TOKEN`                                                                             |
+| Config Files    | `exfig.pkl` (PKL configuration)                                                                    |
+| Tooling         | mise (`./bin/mise` self-contained, no global install needed)                                       |
+| Platforms       | macOS 13+ (primary), Linux/Ubuntu 22.04, Windows (Swift 6.3) - see `.claude/rules/linux-compat.md` |
 
 ## Architecture
 
-Twelve modules in `Sources/`:
+Thirteen modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
@@ -137,6 +137,7 @@ Twelve modules in `Sources/`:
 | `FlutterExport` | Flutter export (Dart code, SVG/PNG assets)                |
 | `WebExport`     | Web/React export (CSS variables, JSX icons)               |
 | `SVGKit`        | SVG parsing, ImageVector/VectorDrawable generation        |
+| `JinjaSupport`  | Shared Jinja2 template rendering helpers                  |
 
 **Data flow:** CLI -> PKL config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform plugin -> Export module -> File write
 
@@ -326,22 +327,22 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 
 ## Dependencies
 
-| Package               | Version | Purpose                         |
-| --------------------- | ------- | ------------------------------- |
-| swift-argument-parser | 1.5.0+  | CLI framework                   |
-| swift-collections     | 1.2.x   | Ordered collections             |
-| swift-jinja           | 2.0.0+  | Jinja2 template engine          |
-| XcodeProj             | 8.27.0+ | Xcode project manipulation      |
-| swift-log             | 1.6.0+  | Logging                         |
-| Rainbow               | 4.2.0+  | Terminal colors                 |
-| libwebp               | 1.4.1+  | WebP encoding                   |
-| libpng                | 1.6.45+ | PNG decoding                    |
-| swift-custom-dump     | 1.3.0+  | Test assertions                 |
-| Noora                 | 0.54.0+ | Terminal UI design system       |
-| swift-resvg           | 0.45.1  | SVG parsing/rendering           |
-| swift-docc-plugin     | 1.4.5+  | DocC documentation              |
-| swift-yyjson          | 0.5.0+  | High-performance JSON codec     |
-| pkl-swift             | 0.7.2+  | PKL config evaluation & codegen |
+| Package               | Version         | Purpose                                            |
+| --------------------- | --------------- | -------------------------------------------------- |
+| swift-argument-parser | 1.5.0+          | CLI framework                                      |
+| swift-collections     | 1.2.x           | Ordered collections                                |
+| swift-jinja           | 2.0.0+          | Jinja2 template engine                             |
+| XcodeProj             | 8.27.0+         | Xcode project manipulation (macOS/Linux only)      |
+| swift-log             | 1.6.0+          | Logging                                            |
+| Rainbow               | 4.2.0+          | Terminal colors                                    |
+| libwebp               | 1.4.1+          | WebP encoding                                      |
+| libpng                | 1.6.45+         | PNG decoding                                       |
+| swift-custom-dump     | 1.3.0+          | Test assertions                                    |
+| Noora                 | 0.54.0+         | Terminal UI design system                          |
+| swift-resvg           | 0.45.1-swift.15 | SVG parsing/rendering (Windows requires Swift 6.3) |
+| swift-docc-plugin     | 1.4.5+          | DocC documentation                                 |
+| swift-yyjson          | 0.5.0+          | High-performance JSON codec                        |
+| pkl-swift             | 0.7.2+          | PKL config evaluation & codegen                    |
 
 ## Troubleshooting
 
@@ -379,7 +380,7 @@ Contextual documentation is in `.claude/rules/`:
 | `cache-granular.md`   | Experimental granular node-level cache             |
 | `api-reference.md`    | Figma API endpoints, response mapping              |
 | `gotchas.md`          | Swift 6 concurrency, SwiftLint, rate limits        |
-| `linux-compat.md`     | Linux-specific workarounds                         |
+| `linux-compat.md`     | Linux/Windows platform workarounds                 |
 | `testing-workflow.md` | Testing guidelines, commit format                  |
 | `pkl-codegen.md`      | pkl-swift generated types, enum bridging, codegen  |
 | `Sources/*/CLAUDE.md` | Module-specific patterns, modification checklists  |
