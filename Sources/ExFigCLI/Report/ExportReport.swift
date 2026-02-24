@@ -42,6 +42,32 @@ struct ExportReport: Encodable {
     /// Current report schema version.
     static let currentVersion = 1
 
+    init(
+        version: Int = ExportReport.currentVersion,
+        command: String,
+        config: String,
+        startTime: String,
+        endTime: String,
+        duration: TimeInterval,
+        success: Bool,
+        error: String?,
+        stats: ReportStats,
+        warnings: [String],
+        manifest: AssetManifest?
+    ) {
+        self.version = version
+        self.command = command
+        self.config = config
+        self.startTime = startTime
+        self.endTime = endTime
+        self.duration = duration
+        self.success = success
+        self.error = error
+        self.stats = stats
+        self.warnings = warnings
+        self.manifest = manifest
+    }
+
     /// Serializes the report to pretty-printed JSON with sorted keys.
     func jsonData() throws -> Data {
         try JSONCodec.encodePrettySorted(self)
@@ -59,4 +85,20 @@ struct ReportStats: Encodable {
     let typography: Int
 
     static let zero = ReportStats(colors: 0, icons: 0, images: 0, typography: 0)
+
+    static func colors(_ count: Int) -> ReportStats {
+        .init(colors: count, icons: 0, images: 0, typography: 0)
+    }
+
+    static func icons(_ count: Int) -> ReportStats {
+        .init(colors: 0, icons: count, images: 0, typography: 0)
+    }
+
+    static func images(_ count: Int) -> ReportStats {
+        .init(colors: 0, icons: 0, images: count, typography: 0)
+    }
+
+    static func typography(_ count: Int) -> ReportStats {
+        .init(colors: 0, icons: 0, images: 0, typography: count)
+    }
 }

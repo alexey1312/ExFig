@@ -45,7 +45,7 @@ extension ExFigCommand {
                 reportPath: report,
                 configInput: options.input,
                 ui: ui,
-                buildStats: { ReportStats(colors: 0, icons: 0, images: 0, typography: $0) },
+                buildStats: { .typography($0) },
                 export: { try await performExport(client: client, ui: ui) }
             )
         }

@@ -55,4 +55,18 @@ final class WarningCollectorTests: XCTestCase {
         WarningCollectorStorage.current = nil
         XCTAssertNil(WarningCollectorStorage.current)
     }
+
+    // MARK: - TerminalUI Integration
+
+    func testTerminalUIWarningForwardsToCollector() {
+        let collector = WarningCollector()
+        WarningCollectorStorage.current = collector
+        defer { WarningCollectorStorage.current = nil }
+
+        let ui = TerminalUI(outputMode: .quiet)
+        ui.warning("forwarded warning")
+
+        let warnings = collector.getAll()
+        XCTAssertEqual(warnings, ["forwarded warning"])
+    }
 }

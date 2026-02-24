@@ -60,7 +60,7 @@ func withExportReport(
         endTime: formatter.string(from: endTime),
         duration: endTime.timeIntervalSince(startTime),
         success: exportError == nil,
-        error: exportError?.localizedDescription,
+        error: exportError.map { describeExportError($0) },
         stats: buildStats(exportCount),
         warnings: warningCollector.getAll(),
         manifest: manifestTracker.buildManifest(previousReportPath: reportPath)
@@ -73,3 +73,12 @@ func withExportReport(
 }
 
 // swiftlint:enable function_parameter_count
+
+private func describeExportError(_ error: any Error) -> String {
+    if let localized = error as? LocalizedError,
+       let description = localized.errorDescription
+    {
+        return description
+    }
+    return String(describing: error)
+}

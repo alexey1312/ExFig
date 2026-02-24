@@ -14,7 +14,7 @@ struct ManifestEntry: Encodable {
     /// What happened to this file during export.
     let action: FileAction
 
-    /// FNV-1a 64-bit content checksum (16-char hex), `nil` for deleted files.
+    /// FNV-1a 64-bit content checksum (16-char hex), `nil` for deleted files or unreadable content.
     let checksum: String?
 
     /// Type of asset (e.g., "color", "icon", "image", "typography").

@@ -20,8 +20,11 @@ final class ManifestTracker: Sendable {
     /// Default asset type for all recorded entries.
     let defaultAssetType: String
 
+    private let workingDirectory: String
+
     init(assetType: String) {
         defaultAssetType = assetType
+        workingDirectory = FileManager.default.currentDirectoryPath
     }
 
     /// Pre-write filesystem state for a file path.
@@ -35,13 +38,11 @@ final class ManifestTracker: Sendable {
     /// Must be called BEFORE the file is written to disk, so that existing content
     /// can be compared for action detection (created vs. modified vs. unchanged).
     func capturePreState(for path: String) -> PreWriteState {
-        let fileExisted = FileManager.default.fileExists(atPath: path)
-        let existingChecksum: String? = if fileExisted, let existingData = FileManager.default.contents(atPath: path) {
-            FNV1aHasher.hashToHex(existingData)
+        if let existingData = FileManager.default.contents(atPath: path) {
+            PreWriteState(fileExisted: true, existingChecksum: FNV1aHasher.hashToHex(existingData))
         } else {
-            nil
+            PreWriteState(fileExisted: false, existingChecksum: nil)
         }
-        return PreWriteState(fileExisted: fileExisted, existingChecksum: existingChecksum)
     }
 
     /// Record a file write operation after successful write.
@@ -55,14 +56,7 @@ final class ManifestTracker: Sendable {
         let assetType = assetType ?? defaultAssetType
         let relativePath = makeRelativePath(path)
         let newChecksum = FNV1aHasher.hashToHex(data)
-
-        let action: FileAction = if !preState.fileExisted {
-            .created
-        } else if let existingChecksum = preState.existingChecksum {
-            existingChecksum == newChecksum ? .unchanged : .modified
-        } else {
-            .modified
-        }
+        let action = determineAction(preState: preState, newChecksum: newChecksum)
 
         entries.withLock {
             $0.append(ManifestEntry(
@@ -94,13 +88,11 @@ final class ManifestTracker: Sendable {
             nil
         }
 
-        let action: FileAction = if !preState.fileExisted {
-            .created
-        } else if let existingChecksum = preState.existingChecksum, let newChecksum {
-            existingChecksum == newChecksum ? .unchanged : .modified
-        } else {
-            .modified
+        if newChecksum == nil {
+            WarningCollectorStorage.current?.add("Manifest: could not compute checksum for \(relativePath)")
         }
+
+        let action = determineAction(preState: preState, newChecksum: newChecksum)
 
         entries.withLock {
             $0.append(ManifestEntry(
@@ -125,30 +117,46 @@ final class ManifestTracker: Sendable {
         var allEntries = entries.withLock { $0 }
 
         if let previousPath = previousReportPath,
-           let previousData = FileManager.default.contents(atPath: previousPath),
-           let previousReport = try? JSONCodec.decode(PreviousReportManifest.self, from: previousData)
+           let previousData = FileManager.default.contents(atPath: previousPath)
         {
-            let currentPaths = Set(allEntries.map(\.path))
-            for previousEntry in previousReport.manifest?.files ?? []
-                where !currentPaths.contains(previousEntry.path)
-            {
-                allEntries.append(ManifestEntry(
-                    path: previousEntry.path,
-                    action: .deleted,
-                    checksum: nil,
-                    assetType: previousEntry.assetType
-                ))
+            do {
+                let previousReport = try JSONCodec.decode(PreviousReportManifest.self, from: previousData)
+                let currentPaths = Set(allEntries.map(\.path))
+                for previousEntry in previousReport.manifest?.files ?? []
+                    where !currentPaths.contains(previousEntry.path)
+                {
+                    allEntries.append(ManifestEntry(
+                        path: previousEntry.path,
+                        action: .deleted,
+                        checksum: nil,
+                        assetType: previousEntry.assetType
+                    ))
+                }
+            } catch {
+                let message = "Could not read previous report at \(previousPath): "
+                    + "\(error.localizedDescription). Deleted file detection skipped."
+                WarningCollectorStorage.current?.add(message)
             }
         }
 
         return AssetManifest(files: allEntries)
     }
 
-    /// Make path relative to current working directory.
+    /// Determine file action based on pre-write state and new checksum.
+    private func determineAction(preState: PreWriteState, newChecksum: String?) -> FileAction {
+        if !preState.fileExisted {
+            .created
+        } else if let existingChecksum = preState.existingChecksum, let newChecksum {
+            existingChecksum == newChecksum ? .unchanged : .modified
+        } else {
+            .modified
+        }
+    }
+
+    /// Make path relative to working directory captured at init time.
     private func makeRelativePath(_ absolutePath: String) -> String {
-        let cwd = FileManager.default.currentDirectoryPath
-        if absolutePath.hasPrefix(cwd + "/") {
-            return String(absolutePath.dropFirst(cwd.count + 1))
+        if absolutePath.hasPrefix(workingDirectory + "/") {
+            return String(absolutePath.dropFirst(workingDirectory.count + 1))
         }
         return absolutePath
     }

@@ -279,7 +279,7 @@ final class AssetManifestTests: XCTestCase {
             ManifestEntry(path: "Same.swift", action: .unchanged, checksum: "fedcba9876543210", assetType: "image"),
         ])
 
-        let data = try JSONEncoder().encode(manifest)
+        let data = try JSONCodec.encode(manifest)
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let files = json?["files"] as? [[String: Any]]
 
@@ -297,7 +297,7 @@ final class AssetManifestTests: XCTestCase {
 
     func testEmptyManifest() throws {
         let manifest = AssetManifest(files: [])
-        let data = try JSONEncoder().encode(manifest)
+        let data = try JSONCodec.encode(manifest)
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let files = json?["files"] as? [Any]
 
