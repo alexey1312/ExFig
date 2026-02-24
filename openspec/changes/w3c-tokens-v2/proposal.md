@@ -1,27 +1,30 @@
 ## Why
 
-`W3CTokensExporter` exports design tokens in a draft Community Group format, but the W3C Design Tokens Community Group spec reached stable v2025.10 (October 2025). All major competitors (Tokens Studio, Style Dictionary v4, Supernova) are already compliant. Current divergences — non-standard `$value` dicts for color modes, invented `$type: "asset"`, missing `$extensions`, no token aliases, no dimension/number types — limit interoperability and prevent round-trip workflows with other design token tools.
+`W3CTokensExporter` exports design tokens in a draft Community Group format, but the W3C Design Tokens Community Group spec reached stable v2025.10 (October 2025). The v2025.10 spec is composed of three modules: **Format** (token structure, groups, aliases), **Color** (structured color objects with color space support), and **Resolver** (theming, modes, multi-brand). All major competitors (Tokens Studio, Style Dictionary v4, Supernova) are already compliant. Current divergences — hex strings instead of color objects for `$value`, non-standard mode dicts, invented `$type: "asset"`, missing `$extensions`, no token aliases, plain numbers instead of dimension objects, no dimension/number types — limit interoperability and prevent round-trip workflows with other design token tools.
 
 ## What Changes
 
 **Phase 1 — W3C v2025.10 Compliance (export):**
 
-- Refactor color token output: one `$value` per token instead of `{mode: hex}` dict; modes via `$extensions.modes` or separate group files
-- Remove `$type: "asset"` — use custom `$extensions.exfig.assetUrl` instead
-- Add `$extensions` with Figma metadata (`nodeId`, `fileId`, `variableId`)
+- Refactor color token `$value` to v2025.10 Color Module object format (`colorSpace`, `components`, optional `alpha`/`hex`) instead of hex strings
+- Add multi-mode support via `$extensions.com.exfig.modes` (each mode value is a color object)
+- Remove `$type: "asset"` — use custom `$extensions.com.exfig.assetUrl` instead
+- Add `$extensions.com.exfig` with Figma metadata (`nodeId`, `fileId`, `variableId`) using reverse-domain key
 - Add `$description` from Figma variable descriptions
 - Support token aliases (`$value: "{Primitives.Blue.500}"`) for semantic → primitive references
 
 **Phase 2 — Token Types Expansion:**
 
-- Add `dimension` type (spacing, border-radius, sizes) from Figma number variables
-- Add `number` type (opacity, z-index) from Figma number variables
+- Add `dimension` type (spacing, border-radius, sizes) with object `$value` (`{"value": N, "unit": "px"}`)
+- Add `number` type (opacity, z-index) from Figma number variables (plain numeric `$value`)
 - Add `fontFamily`, `fontWeight` types — split from composite typography tokens
+- Decompose typography into sub-tokens with correct v2025.10 types (`fontSize` as dimension object, `lineHeight` as number)
 - New unified `download tokens` subcommand (or expand `download colors --tokens`)
 
 **Phase 3 — Import .tokens.json as Source:**
 
 - Parse W3C DTCG `.tokens.json` files as an alternative source (instead of Figma API)
+- Support v2025.10 group features: `$root` tokens, `$extends` (group inheritance), `$deprecated`
 - New PKL source type `tokensFile` alongside existing `variablesColors`
 - Enables: offline workflows, Tokens Studio / Style Dictionary integration, CI without Figma token
 

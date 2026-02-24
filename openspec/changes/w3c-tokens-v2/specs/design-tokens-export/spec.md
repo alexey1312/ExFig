@@ -4,28 +4,48 @@
 
 ### Requirement: W3C DTCG v2025.10 Color Format
 
-Each color token SHALL have a single `$value` string containing the hex color value. Multi-mode colors SHALL use
-`$extensions.modes` object mapping mode names to hex values. The `$value` field SHALL contain the default mode value.
+Each color token SHALL have a `$value` object conforming to the v2025.10 Color Module: an object with `colorSpace`
+(string), `components` (array of numbers), optional `alpha` (number 0–1, defaults to 1), and optional `hex` (6-digit
+sRGB fallback string). Multi-mode colors SHALL use `$extensions.com.exfig.modes` mapping mode names to color objects.
+The `$value` field SHALL contain the default mode value.
 
 #### Scenario: Single-mode color token export
 
-- **GIVEN** a color named "Background/Primary" with hex value `#ffffff` in light mode only
+- **GIVEN** a color named "Background/Primary" with RGBA (1.0, 1.0, 1.0, 1.0) in light mode only
 - **WHEN** the color is exported in W3C v2025 format
-- **THEN** the output token SHALL have `"$type": "color"` and `"$value": "#ffffff"`
-- **AND** no `$extensions.modes` key SHALL be present
+- **THEN** the output token SHALL have `"$type": "color"` and `"$value"`:
+  ```json
+  { "colorSpace": "srgb", "components": [1, 1, 1], "hex": "#ffffff" }
+  ```
+- **AND** no `$extensions.com.exfig.modes` key SHALL be present
 
 #### Scenario: Multi-mode color token export
 
-- **GIVEN** a color named "Background/Primary" with values `#ffffff` (Light) and `#1a1a1a` (Dark)
+- **GIVEN** a color named "Background/Primary" with values (1,1,1,1) in Light and (0.102,0.102,0.102,1) in Dark
 - **WHEN** the color is exported in W3C v2025 format
-- **THEN** `"$value"` SHALL be `"#ffffff"` (default/first mode)
-- **AND** `"$extensions"` SHALL contain `"modes": {"Light": "#ffffff", "Dark": "#1a1a1a"}`
+- **THEN** `"$value"` SHALL be the default/first mode color object:
+  ```json
+  { "colorSpace": "srgb", "components": [1, 1, 1], "hex": "#ffffff" }
+  ```
+- **AND** `"$extensions.com.exfig"` SHALL contain `"modes"`:
+  ```json
+  {
+    "modes": {
+      "Light": { "colorSpace": "srgb", "components": [1, 1, 1], "hex": "#ffffff" },
+      "Dark": { "colorSpace": "srgb", "components": [0.102, 0.102, 0.102], "hex": "#1a1a1a" }
+    }
+  }
+  ```
 
 #### Scenario: Color with alpha transparency
 
-- **GIVEN** a color with RGBA values (0.2, 0.5, 0.8, 0.5)
+- **GIVEN** a color with RGBA values (0.231, 0.541, 0.800, 0.502)
 - **WHEN** the color is exported in W3C v2025 format
-- **THEN** `"$value"` SHALL be `"#338acc80"` (8-digit hex with alpha)
+- **THEN** `"$value"` SHALL be:
+  ```json
+  { "colorSpace": "srgb", "components": [0.231, 0.541, 0.8], "alpha": 0.502, "hex": "#3b8acc" }
+  ```
+- **AND** the `hex` field SHALL be 6 digits (no alpha in hex per spec), with alpha in the `alpha` field
 
 #### Scenario: Legacy v1 format preserved with flag
 
@@ -36,8 +56,9 @@ Each color token SHALL have a single `$value` string containing the hex color va
 
 ### Requirement: Token Extensions with Figma Metadata
 
-Each token SHALL include `$extensions.exfig` with Figma metadata when the source is a Figma file. The metadata SHALL
-include `variableId` for variable-sourced tokens and `nodeId` plus `fileId` for component-sourced tokens.
+Each token SHALL include `$extensions.com.exfig` with Figma metadata when the source is a Figma file. The metadata
+SHALL include `variableId` for variable-sourced tokens and `nodeId` plus `fileId` for component-sourced tokens. The
+extension key uses reverse-domain notation (`com.exfig`) per the spec recommendation.
 
 #### Scenario: Variable-sourced color token with extensions
 
@@ -45,7 +66,7 @@ include `variableId` for variable-sourced tokens and `nodeId` plus `fileId` for 
 - **WHEN** the color is exported in W3C v2025 format
 - **THEN** `"$extensions"` SHALL contain:
   ```json
-  { "exfig": { "variableId": "VariableID:123:456", "fileId": "abc123" } }
+  { "com.exfig": { "variableId": "VariableID:123:456", "fileId": "abc123" } }
   ```
 
 #### Scenario: Component-sourced asset token with extensions
@@ -54,19 +75,19 @@ include `variableId` for variable-sourced tokens and `nodeId` plus `fileId` for 
 - **WHEN** the asset is exported in W3C v2025 format
 - **THEN** `"$extensions"` SHALL contain:
   ```json
-  { "exfig": { "nodeId": "1:23", "fileId": "def456" } }
+  { "com.exfig": { "nodeId": "1:23", "fileId": "def456" } }
   ```
 
 #### Scenario: Extensions merge with mode data
 
 - **GIVEN** a multi-mode color variable with variableId "VariableID:123:456"
 - **WHEN** exported in W3C v2025 format
-- **THEN** `"$extensions"` SHALL contain both `"modes"` and `"exfig"` keys
+- **THEN** `"$extensions.com.exfig"` SHALL contain both `"modes"` and `"variableId"`/`"fileId"` keys
 
 ### Requirement: Token Descriptions
 
 Tokens with Figma variable descriptions SHALL include a `$description` field. Empty or whitespace-only descriptions
-MUST NOT produce a `$description` field.
+MUST NOT produce a `$description` field. The `$description` value MUST be a plain JSON string per the spec.
 
 #### Scenario: Color with description
 
@@ -95,7 +116,7 @@ The alias path SHALL use dot-separated group names matching the output token hie
 
 - **GIVEN** a semantic variable "Semantic/Primary" aliasing primitive "Primitives/Blue/500" (hex `#3b82f6`)
 - **WHEN** exported in W3C v2025 format
-- **THEN** the primitive token SHALL have `"$value": "#3b82f6"`
+- **THEN** the primitive token SHALL have `"$value"` as a color object with `"hex": "#3b82f6"`
 - **AND** the semantic token SHALL have `"$value": "{Primitives.Blue.500}"`
 
 #### Scenario: Multi-mode semantic color with alias per mode
@@ -105,7 +126,7 @@ The alias path SHALL use dot-separated group names matching the output token hie
   - Dark mode: "Primitives/Gray/900"
 - **WHEN** exported in W3C v2025 format
 - **THEN** `"$value"` SHALL be `"{Primitives.Gray.50}"` (default mode alias)
-- **AND** `"$extensions.modes"` SHALL contain:
+- **AND** `"$extensions.com.exfig.modes"` SHALL contain:
   ```json
   { "Light": "{Primitives.Gray.50}", "Dark": "{Primitives.Gray.900}" }
   ```
@@ -120,17 +141,19 @@ The alias path SHALL use dot-separated group names matching the output token hie
 ### Requirement: No Invented Token Types
 
 The exporter MUST NOT use `$type` values not defined in the W3C DTCG v2025.10 specification. Asset references
-SHALL use `$extensions.exfig.assetUrl` instead of `$type: "asset"`.
+SHALL use `$extensions.com.exfig.assetUrl` instead of `$type: "asset"`.
 
 Valid `$type` values: `color`, `dimension`, `fontFamily`, `fontWeight`, `duration`, `cubicBezier`, `number`,
-`strokeStyle`, `border`, `transition`, `shadow`, `gradient`, `typography`, `fontStyle`.
+`strokeStyle`, `border`, `transition`, `shadow`, `gradient`, `typography`.
+
+Note: `fontStyle` is acknowledged in the spec as "still to be documented" and SHOULD NOT be used until formally defined.
 
 #### Scenario: Asset token exported without invented type
 
 - **GIVEN** an icon component "Icons/Search" with export URL "https://figma.com/images/..."
 - **WHEN** the asset is exported in W3C v2025 format
 - **THEN** the token MUST NOT include `"$type": "asset"`
-- **AND** `"$extensions.exfig.assetUrl"` SHALL contain the export URL
+- **AND** `"$extensions.com.exfig.assetUrl"` SHALL contain the export URL
 
 #### Scenario: Asset token with v1 flag preserves legacy type
 
@@ -140,8 +163,9 @@ Valid `$type` values: `color`, `dimension`, `fontFamily`, `fontWeight`, `duratio
 
 ### Requirement: Dimension Tokens
 
-Figma number variables scoped to spatial properties SHALL export as `$type: "dimension"` with a numeric `$value`.
-The unit context SHALL be stored in `$extensions.exfig.unit` when determinable from Figma scope.
+Figma number variables scoped to spatial properties SHALL export as `$type: "dimension"` with an object `$value`
+containing `value` (number) and `unit` (string: `"px"` or `"rem"`). The unit is part of the value per v2025.10 spec,
+NOT in `$extensions`. Figma variables don't carry unit info, so `"px"` is the default.
 
 Spatial scopes: `WIDTH_HEIGHT`, `GAP`, `CORNER_RADIUS`, `FONT_SIZE`, `LINE_HEIGHT`, `PARAGRAPH_SPACING`,
 `PARAGRAPH_INDENT`.
@@ -150,21 +174,26 @@ Spatial scopes: `WIDTH_HEIGHT`, `GAP`, `CORNER_RADIUS`, `FONT_SIZE`, `LINE_HEIGH
 
 - **GIVEN** a Figma number variable "Spacing/Medium" with value `16` and scope `["GAP"]`
 - **WHEN** the variable is exported in W3C v2025 format
-- **THEN** the token SHALL have `"$type": "dimension"` and `"$value": 16`
-- **AND** `"$extensions.exfig.unit"` SHALL be `"px"`
+- **THEN** the token SHALL have `"$type": "dimension"` and:
+  ```json
+  "$value": { "value": 16, "unit": "px" }
+  ```
 
 #### Scenario: Corner radius variable exported as dimension
 
 - **GIVEN** a Figma number variable "Radius/Large" with value `12` and scope `["CORNER_RADIUS"]`
 - **WHEN** the variable is exported in W3C v2025 format
-- **THEN** the token SHALL have `"$type": "dimension"` and `"$value": 12`
+- **THEN** the token SHALL have `"$type": "dimension"` and:
+  ```json
+  "$value": { "value": 12, "unit": "px" }
+  ```
 
 ### Requirement: Number Tokens
 
-Figma number variables scoped to unitless properties SHALL export as `$type: "number"` with a numeric `$value`.
+Figma number variables scoped to unitless properties SHALL export as `$type: "number"` with a plain numeric `$value`.
 Variables with no scope or unknown scope SHALL default to `$type: "number"`.
 
-Unitless scopes: `OPACITY`, `FONT_WEIGHT`, `LETTER_SPACING`.
+Unitless scopes: `OPACITY`, `FONT_WEIGHT`.
 
 #### Scenario: Opacity variable exported as number
 
@@ -181,18 +210,30 @@ Unitless scopes: `OPACITY`, `FONT_WEIGHT`, `LETTER_SPACING`.
 ### Requirement: Typography Decomposition
 
 Typography tokens SHALL export individual sub-tokens (`fontFamily`, `fontWeight`, `fontSize`, `lineHeight`,
-`letterSpacing`) alongside the composite `typography` token. Sub-tokens SHALL use their respective W3C `$type` values.
+`letterSpacing`) alongside the composite `typography` token. Sub-tokens SHALL use their respective W3C `$type` values
+and correct `$value` formats per v2025.10.
 
 #### Scenario: Text style decomposed into sub-tokens
 
-- **GIVEN** a text style "Heading/H1" with font "Inter", weight 700, size 32, line height 40
+- **GIVEN** a text style "Heading/H1" with font "Inter", weight 700, size 32, line height 1.25
 - **WHEN** the style is exported in W3C v2025 format
 - **THEN** the output SHALL contain:
-  - `"Heading/H1"` with `"$type": "typography"` and composite `$value`
-  - `"Heading/H1/fontFamily"` with `"$type": "fontFamily"` and `"$value": "Inter"`
+  - `"Heading/H1"` with `"$type": "typography"` and composite `$value`:
+    ```json
+    {
+      "fontFamily": ["Inter"],
+      "fontSize": { "value": 32, "unit": "px" },
+      "fontWeight": 700,
+      "lineHeight": 1.25
+    }
+    ```
+  - `"Heading/H1/fontFamily"` with `"$type": "fontFamily"` and `"$value": ["Inter"]`
   - `"Heading/H1/fontWeight"` with `"$type": "fontWeight"` and `"$value": 700`
-  - `"Heading/H1/fontSize"` with `"$type": "dimension"` and `"$value": 32`
-  - `"Heading/H1/lineHeight"` with `"$type": "dimension"` and `"$value": 40`
+  - `"Heading/H1/fontSize"` with `"$type": "dimension"` and `"$value": {"value": 32, "unit": "px"}`
+  - `"Heading/H1/lineHeight"` with `"$type": "number"` and `"$value": 1.25`
+
+Note: `fontFamily` uses array format per v2025.10 (single string or array of strings). `fontSize` is a dimension
+object. `lineHeight` is a plain number (ratio, not px). `fontWeight` is a number (1–1000) or string alias per spec.
 
 #### Scenario: Text style without optional properties
 
