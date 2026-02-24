@@ -3,6 +3,58 @@
 
 import PackageDescription
 
+// MARK: - Conditional Dependencies
+
+var packageDependencies: [Package.Dependency] = [
+    .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
+    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
+    .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
+    .package(url: "https://github.com/huggingface/swift-jinja.git", from: "2.0.0"),
+    .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.0"),
+
+    .package(url: "https://github.com/the-swift-collective/libwebp.git", from: "1.4.1"),
+    .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
+    .package(url: "https://github.com/tuist/Noora", from: "0.54.0"),
+    .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
+    .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.15"),
+    .package(url: "https://github.com/mattt/swift-yyjson", from: "0.5.0"),
+    .package(url: "https://github.com/apple/pkl-swift", from: "0.7.2"),
+]
+
+var exfigCLIDependencies: [Target.Dependency] = [
+    "FigmaAPI",
+    "ExFigCore",
+    "ExFigConfig",
+    "XcodeExport",
+    "AndroidExport",
+    "FlutterExport",
+    "WebExport",
+    "SVGKit",
+    "ExFig-iOS",
+    "ExFig-Android",
+    "ExFig-Flutter",
+    "ExFig-Web",
+    .product(name: "Resvg", package: "swift-resvg"),
+    .product(name: "ArgumentParser", package: "swift-argument-parser"),
+    .product(name: "Logging", package: "swift-log"),
+
+    .product(name: "WebP", package: "libwebp"),
+    .product(name: "LibPNG", package: "libpng"),
+    .product(name: "Noora", package: "Noora"),
+]
+
+// XcodeProj is Apple-only (not available on Windows)
+#if !os(Windows)
+    packageDependencies.append(
+        .package(url: "https://github.com/tuist/XcodeProj.git", from: "8.27.0")
+    )
+    exfigCLIDependencies.append(
+        .product(name: "XcodeProj", package: "XcodeProj")
+    )
+#endif
+
+// MARK: - Package
+
 let package = Package(
     name: "exfig",
     platforms: [
@@ -11,48 +63,12 @@ let package = Package(
     products: [
         .executable(name: "exfig", targets: ["ExFigCLI"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/apple/swift-collections", "1.2.0" ..< "1.3.0"),
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.0"),
-        .package(url: "https://github.com/huggingface/swift-jinja.git", from: "2.0.0"),
-        .package(url: "https://github.com/tuist/XcodeProj.git", from: "8.27.0"),
-        .package(url: "https://github.com/pointfreeco/swift-custom-dump", from: "1.3.0"),
-
-        .package(url: "https://github.com/the-swift-collective/libwebp.git", from: "1.4.1"),
-        .package(url: "https://github.com/the-swift-collective/libpng.git", from: "1.6.45"),
-        .package(url: "https://github.com/tuist/Noora", from: "0.54.0"),
-        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
-        .package(url: "https://github.com/alexey1312/swift-resvg.git", exact: "0.45.1-swift.3"),
-        .package(url: "https://github.com/mattt/swift-yyjson", from: "0.5.0"),
-        .package(url: "https://github.com/apple/pkl-swift", from: "0.7.2"),
-    ],
+    dependencies: packageDependencies,
     targets: [
         // Main target
         .executableTarget(
             name: "ExFigCLI",
-            dependencies: [
-                "FigmaAPI",
-                "ExFigCore",
-                "ExFigConfig",
-                "XcodeExport",
-                "AndroidExport",
-                "FlutterExport",
-                "WebExport",
-                "SVGKit",
-                "ExFig-iOS",
-                "ExFig-Android",
-                "ExFig-Flutter",
-                "ExFig-Web",
-                .product(name: "Resvg", package: "swift-resvg"),
-                .product(name: "XcodeProj", package: "XcodeProj"),
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Logging", package: "swift-log"),
-
-                .product(name: "WebP", package: "libwebp"),
-                .product(name: "LibPNG", package: "libpng"),
-                .product(name: "Noora", package: "Noora"),
-            ],
+            dependencies: exfigCLIDependencies,
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/Schemas/"),
@@ -92,7 +108,8 @@ let package = Package(
             name: "JinjaSupport",
             dependencies: [
                 .product(name: "Jinja", package: "swift-jinja"),
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Exports resources to Xcode project
