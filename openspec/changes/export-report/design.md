@@ -43,9 +43,12 @@ fragile regex (`output.match(/^✓.*- (\d+) /gm)`), which breaks on any CLI outp
 | New ExportReport struct   | Clean separation, tailored | Small duplication of Stats fields     |
 | Generic Report<T> wrapper | Maximum reuse              | Over-engineering for two report types |
 
-**Decision**: New `ExportReport` struct. Reuses `ExportStats` for counts. BatchReport stays private to `Batch.swift`,
-ExportReport is internal to ExFigCLI. Different shapes: BatchReport has `results: [ConfigReport]` array, ExportReport
-has flat `stats` + `manifest` for a single command.
+**Decision**: New `ExportReport` struct with its own `ReportStats: Encodable` containing count fields only
+(colors, icons, images, typography). `ExportStats` from `BatchResult.swift` is NOT Codable and contains
+batch-only fields (`computedNodeHashes`, `granularCacheStats`, `fileVersions`), so direct reuse is not viable.
+This matches the pattern already established by `BatchReport.Stats` which manually maps the same count fields.
+BatchReport stays private to `Batch.swift`, ExportReport is internal to ExFigCLI. Different shapes: BatchReport
+has `results: [ConfigReport]` array, ExportReport has flat `stats` + `manifest` for a single command.
 
 ### Decision 2: `--report <path>` Flag
 
@@ -80,17 +83,21 @@ the option set grows.
 
 ### Decision 4: Warning Collection
 
-**What**: Expose warnings collected by TerminalUI in the report.
+**What**: Collect warnings emitted during export for inclusion in the report.
 
 **Options considered**:
 
-| Option                     | Pros              | Cons                        |
-| -------------------------- | ----------------- | --------------------------- |
-| Expose TerminalUI warnings | Already collected | Couples report to UI layer  |
-| Separate warning collector | Clean separation  | Duplicates collection logic |
+| Option                        | Pros                                     | Cons                                    |
+| ----------------------------- | ---------------------------------------- | --------------------------------------- |
+| Add collection to TerminalUI  | Single point of interception             | Adds state to stateless class           |
+| Separate WarningCollector     | Clean separation, follows actor pattern  | Must wire into export commands          |
+| Intercept at queueLogMessage  | No TerminalUI changes                    | Only works in batch mode                |
 
-**Decision**: TerminalUI already collects warnings via its internal list. Expose collected warnings as `[String]`
-for inclusion in the report. No new collection mechanism needed.
+**Decision**: Create new `WarningCollector` actor following `SharedThemeAttributesCollector` pattern
+(see `Sources/ExFigCLI/Batch/SharedThemeAttributes.swift`). TerminalUI currently does NOT store warnings —
+it only prints/queues them. The collector is injected into export commands when `--report` is specified,
+and `TerminalUI.warning()` is extended to also forward to the active collector. Collected as `[String]`
+(formatted message strings) for inclusion in the report.
 
 ### Decision 5: Asset Manifest with FileWriter Tracking
 
@@ -121,13 +128,23 @@ file write with its action and checksum. Tracking is opt-in -- zero overhead whe
 Detection uses content hash comparison before write. For `deleted`, the system compares against a previous
 report file at the same path (if it exists). This is the only action that requires a previous report.
 
-### Decision 7: SHA256 Checksum
+### Decision 7: Content Checksum
 
-**What**: Compute SHA256 hex digest for each file in the manifest.
+**What**: Compute a content hash for each file in the manifest.
 
-**Rationale**: Enables downstream tools (exfig-action, CI scripts) to detect changes without reading file
-contents. SHA256 is computed from data already in memory during write -- no additional I/O. The checksum
-is only computed when `--report` is specified.
+**Options considered**:
+
+| Option                  | Pros                                    | Cons                                                      |
+| ----------------------- | --------------------------------------- | --------------------------------------------------------- |
+| SHA256 (CryptoKit)      | Industry standard, 64-char hex          | macOS-only; Linux needs `swift-crypto` dependency         |
+| SHA256 (swift-crypto)   | Cross-platform, industry standard       | New dependency                                            |
+| FNV-1a (already in use) | No new deps, fast (~2 GB/s), in codebase | Non-cryptographic, 16-char hex, collision-prone at scale  |
+
+**Decision**: Use `FNV1aHasher.hashToHex()` already available in the codebase (see
+`Sources/ExFigCLI/Cache/FNV1aHasher.swift`). The checksum purpose is change detection, not security —
+same use case as granular cache node hashing. Produces 16-character lowercase hex string. If downstream
+tools later require SHA256, `swift-crypto` can be added as a future enhancement. The checksum is computed
+from data already in memory during write — no additional I/O. Only computed when `--report` is specified.
 
 ### Decision 8: Report Write Failure Isolation
 
@@ -137,12 +154,33 @@ is only computed when `--report` is specified.
 disk full, invalid path), the export results are still valid. The system logs a warning and continues.
 This matches batch mode behavior where report write failure is caught and logged.
 
+### Decision 9: Report Version Field
+
+**What**: Include a `version` integer field in `ExportReport` for forward compatibility.
+
+**Rationale**: As the report schema evolves (e.g., adding manifest in Phase 2), downstream consumers
+(exfig-action) need to know which fields to expect. Starting at `version: 1` for the initial report
+(timing, stats, warnings). Increment when adding breaking changes to the schema structure.
+
+### Decision 10: Export Command Result Capture
+
+**What**: Modify single export commands' `run()` methods to capture export results instead of discarding them.
+
+**Current state**: All four export commands discard results: `_ = try await performExport(...)`. The
+`performExportWithResult()` method exists but is only called in batch mode.
+
+**Decision**: In `run()`, call `performExportWithResult()` (or `performExport()` and capture count)
+to obtain the stats needed for the report. Wrap the export in a do/catch to capture both success
+and failure states. Capture `startTime` before export and `endTime` after.
+
 ## Risks / Trade-offs
 
-| Risk                              | Impact | Mitigation                                        |
-| --------------------------------- | ------ | ------------------------------------------------- |
-| FileWriter tracking overhead      | Low    | Only active when `--report` specified             |
-| SHA256 computation cost           | Low    | Computed from in-memory data during write         |
-| exfig-action Phase 3 dependency   | Medium | Action requires CLI release with `--report` first |
-| Report format evolution           | Low    | Add `version` field to report for forward compat  |
-| `deleted` detection needs history | Low    | Optional -- requires previous report at same path |
+| Risk                              | Impact | Mitigation                                            |
+| --------------------------------- | ------ | ----------------------------------------------------- |
+| FileWriter tracking overhead      | Low    | Only active when `--report` specified                 |
+| FNV-1a collision risk             | Low    | Non-cryptographic but sufficient for change detection |
+| exfig-action Phase 3 dependency   | Medium | Action requires CLI release with `--report` first     |
+| Report format evolution           | Low    | `version` field in report for forward compat          |
+| `deleted` detection needs history | Low    | Optional -- requires previous report at same path     |
+| Warning collector wiring          | Low    | Follow SharedThemeAttributesCollector actor pattern    |
+| run() refactor for result capture | Low    | performExportWithResult() already exists              |

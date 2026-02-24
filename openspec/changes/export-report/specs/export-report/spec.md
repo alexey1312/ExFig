@@ -42,14 +42,15 @@ ExportColors, ExportIcons, ExportImages, and ExportTypography SHALL accept a `--
 
 ### Requirement: ExportReport SHALL contain structured JSON with timing and metadata
 
-The report SHALL contain: `command` (string), `config` (string path to PKL config), `startTime` (ISO8601 string), `endTime` (ISO8601 string), `duration` (number, seconds), `success` (boolean), `error` (string or null on success), `stats` (object), and `warnings` (string array).
+The report SHALL contain: `version` (integer, starting at 1), `command` (string: `"colors"`, `"icons"`, `"images"`, or `"typography"`), `config` (string path to PKL config), `startTime` (ISO8601 string), `endTime` (ISO8601 string), `duration` (number, seconds), `success` (boolean), `error` (string or null on success), `stats` (object), and `warnings` (string array).
 
 #### Scenario: Successful export produces complete report
 
 - **GIVEN** a valid PKL config with iOS colors entries
 - **WHEN** running `exfig colors -i exfig.pkl --report results.json`
 - **AND** the export completes successfully
-- **THEN** the report JSON SHALL contain `"command": "colors"`
+- **THEN** the report JSON SHALL contain `"version": 1`
+- **AND** `"command"` SHALL be `"colors"`
 - **AND** `"config"` SHALL be the path to the PKL config file
 - **AND** `"startTime"` SHALL be an ISO8601 timestamp before `"endTime"`
 - **AND** `"duration"` SHALL be a positive number in seconds
@@ -66,9 +67,9 @@ The report SHALL contain: `command` (string), `config` (string path to PKL confi
 
 ---
 
-### Requirement: Stats object SHALL reuse ExportStats structure
+### Requirement: Stats object SHALL contain asset counts
 
-The `stats` object in the report SHALL include `colors`, `icons`, `images`, and `typography` integer counts matching the existing `ExportStats` structure from `BatchResult.swift`.
+The `stats` object in the report SHALL include `colors`, `icons`, `images`, and `typography` integer counts. This uses a new `ReportStats: Encodable` struct with count fields only (analogous to `BatchReport.Stats`), since `ExportStats` contains non-Codable batch-only fields.
 
 #### Scenario: Colors export populates stats correctly
 
@@ -90,7 +91,7 @@ The `stats` object in the report SHALL include `colors`, `icons`, `images`, and 
 
 ### Requirement: All warnings SHALL be collected in the report
 
-All warnings emitted via TerminalUI during export SHALL be collected and included in the report `warnings` array as strings.
+When `--report` is specified, all warnings emitted via TerminalUI during export SHALL be collected by a `WarningCollector` and included in the report `warnings` array as strings. TerminalUI does not currently store warnings — a new collection mechanism is required.
 
 #### Scenario: Export with warnings includes them in report
 
@@ -153,7 +154,7 @@ When the export itself fails with an error, the report SHALL still be written wi
 
 ### Requirement: Asset manifest SHALL track generated files
 
-When manifest tracking is enabled, the report SHALL include a `manifest` object with a `files` array. Each file entry SHALL contain: `path` (string, relative to working directory), `action` (string enum), `checksum` (SHA256 hex string or null), and `assetType` (string).
+When manifest tracking is enabled, the report SHALL include a `manifest` object with a `files` array. Each file entry SHALL contain: `path` (string, relative to working directory), `action` (string enum), `checksum` (FNV-1a 16-char hex string or null), and `assetType` (string).
 
 #### Scenario: Manifest lists all generated color files
 
@@ -214,16 +215,16 @@ The system SHALL detect and report the following file actions: `created` (file d
 
 ---
 
-### Requirement: SHA256 checksum SHALL be computed for manifest files
+### Requirement: Content checksum SHALL be computed for manifest files
 
-Each file in the manifest SHALL include a `checksum` field containing the SHA256 hex digest of the file content. This enables downstream tools to detect changes without reading file contents.
+Each file in the manifest SHALL include a `checksum` field containing an FNV-1a 64-bit hex digest of the file content (using `FNV1aHasher.hashToHex()` already in the codebase). This enables downstream tools to detect changes without reading file contents. FNV-1a is non-cryptographic but sufficient for change detection — same algorithm used by the granular cache system.
 
-#### Scenario: Written file has SHA256 checksum
+#### Scenario: Written file has FNV-1a checksum
 
 - **GIVEN** an export writes a file with known content
 - **WHEN** the manifest entry is recorded
-- **THEN** `checksum` SHALL be a 64-character lowercase hexadecimal string
-- **AND** the value SHALL match the SHA256 hash of the written file content
+- **THEN** `checksum` SHALL be a 16-character lowercase hexadecimal string
+- **AND** the value SHALL match the FNV-1a hash of the written file content
 
 #### Scenario: Deleted file has null checksum
 
@@ -235,4 +236,29 @@ Each file in the manifest SHALL include a `checksum` field containing the SHA256
 
 - **GIVEN** an export that detects a file is unchanged
 - **WHEN** the manifest entry is recorded
-- **THEN** `checksum` SHALL equal the SHA256 of the existing file content
+- **THEN** `checksum` SHALL equal the FNV-1a hash of the existing file content
+
+---
+
+### Requirement: Report SHALL include version field for forward compatibility
+
+The `version` field SHALL be an integer starting at `1`. It SHALL be incremented when breaking changes are made to the report schema structure.
+
+#### Scenario: Initial report version
+
+- **GIVEN** any export with `--report`
+- **WHEN** the report is written
+- **THEN** `"version"` SHALL be `1`
+
+---
+
+### Requirement: Manifest SHALL handle zero-file exports gracefully
+
+When an export completes successfully but produces no output files, the manifest SHALL be present with an empty `files` array.
+
+#### Scenario: Export produces no files
+
+- **GIVEN** a valid config with no matching assets in Figma
+- **WHEN** the export completes successfully with `--report`
+- **THEN** `manifest.files` SHALL be an empty array `[]`
+- **AND** `stats` SHALL reflect zero counts for the relevant asset type
