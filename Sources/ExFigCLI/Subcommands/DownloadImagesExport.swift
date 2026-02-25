@@ -95,8 +95,10 @@ extension ExFigCommand.Download {
                 try AssetExportHelper.exportW3C(
                     components: components,
                     exportUrls: exportUrls,
+                    fileId: fileId,
                     outputURL: outputURL,
-                    compact: jsonOptions.compact
+                    compact: jsonOptions.compact,
+                    w3cVersion: jsonOptions.w3cVersion
                 )
 
             case .raw:

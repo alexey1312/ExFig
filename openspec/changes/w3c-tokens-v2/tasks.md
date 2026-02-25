@@ -1,20 +1,20 @@
 ## 1. W3C v2025.10 Color Format Compliance
 
-- [ ] 1.1 Refactor `exportColors()` in `W3CTokensExporter.swift`: `$value` as color object (`colorSpace`, `components`, optional `alpha`/`hex`) instead of hex string
-- [ ] 1.2 Implement `colorToObject()` helper: RGBA → `{"colorSpace": "srgb", "components": [r,g,b], "alpha": a, "hex": "#rrggbb"}` (omit alpha when 1.0, hex is always 6-digit)
-- [ ] 1.3 Add `$extensions.com.exfig.modes` object for multi-mode colors (mode name → color object)
-- [ ] 1.4 Omit modes extension when only one mode is present
-- [ ] 1.5 Add `--w3c-version v1|v2025` flag to download commands (default: v2025, v1 preserves current hex string format)
-- [ ] 1.6 Update `W3CTokensExporterTests.swift` for new color object format (colorSpace, components, alpha, hex)
-- [ ] 1.7 Update `DownloadExportHelpers.swift` for new format and version flag
+- [x] 1.1 Refactor `exportColors()` in `W3CTokensExporter.swift`: `$value` as color object (`colorSpace`, `components`, optional `alpha`/`hex`) instead of hex string
+- [x] 1.2 Implement `colorToObject()` helper: RGBA → `{"colorSpace": "srgb", "components": [r,g,b], "alpha": a, "hex": "#rrggbb"}` (omit alpha when 1.0, hex is always 6-digit)
+- [x] 1.3 Add `$extensions.com.exfig.modes` object for multi-mode colors (mode name → color object)
+- [x] 1.4 Omit modes extension when only one mode is present
+- [x] 1.5 Add `--w3c-version v1|v2025` flag to download commands (default: v2025, v1 preserves current hex string format)
+- [x] 1.6 Update `W3CTokensExporterTests.swift` for new color object format (colorSpace, components, alpha, hex)
+- [x] 1.7 Update `DownloadExportHelpers.swift` for new format and version flag
 
 ## 2. Token Extensions & Descriptions
 
-- [ ] 2.1 Add `$extensions.com.exfig` (reverse-domain key) with Figma metadata (variableId, fileId, nodeId) to color tokens
-- [ ] 2.2 Add `$extensions.com.exfig` to asset tokens (nodeId, fileId, assetUrl)
-- [ ] 2.3 Ensure `$extensions.com.exfig` merges mode data and Figma metadata when both present
-- [ ] 2.4 Add `$description` field from Figma variable descriptions (skip empty/whitespace-only)
-- [ ] 2.5 Write tests for extensions and descriptions output
+- [x] 2.1 Add `$extensions.com.exfig` (reverse-domain key) with Figma metadata (variableId, fileId, nodeId) to color tokens
+- [x] 2.2 Add `$extensions.com.exfig` to asset tokens (nodeId, fileId, assetUrl)
+- [x] 2.3 Ensure `$extensions.com.exfig` merges mode data and Figma metadata when both present
+- [x] 2.4 Add `$description` field from Figma variable descriptions (skip empty/whitespace-only)
+- [x] 2.5 Write tests for extensions and descriptions output
 
 ## 3. Token Aliases
 
@@ -26,9 +26,9 @@
 
 ## 4. Remove Invented Types
 
-- [ ] 4.1 Replace `$type: "asset"` with `$extensions.com.exfig.assetUrl` in `exportAssets()`
-- [ ] 4.2 Preserve `$type: "asset"` behavior under `--w3c-version v1`
-- [ ] 4.3 Update asset export tests
+- [x] 4.1 Replace `$type: "asset"` with `$extensions.com.exfig.assetUrl` in `exportAssets()`
+- [x] 4.2 Preserve `$type: "asset"` behavior under `--w3c-version v1`
+- [x] 4.3 Update asset export tests
 
 ## 5. Dimension & Number Token Types (Phase 2)
 
@@ -41,18 +41,18 @@
 
 ## 6. Typography Decomposition (Phase 2)
 
-- [ ] 6.1 Modify `exportTypography()` to emit individual sub-tokens alongside composite
-- [ ] 6.2 Use correct W3C `$type` and `$value` format for each sub-token:
+- [x] 6.1 Modify `exportTypography()` to emit individual sub-tokens alongside composite
+- [x] 6.2 Use correct W3C `$type` and `$value` format for each sub-token:
   - `fontFamily`: `$type: "fontFamily"`, `$value`: array of strings (e.g., `["Inter"]`)
   - `fontWeight`: `$type: "fontWeight"`, `$value`: number (1–1000) or string alias
   - `fontSize`: `$type: "dimension"`, `$value`: object `{"value": N, "unit": "px"}`
   - `lineHeight`: `$type: "number"`, `$value`: plain number (ratio, not px)
   - `letterSpacing`: `$type: "dimension"`, `$value`: object `{"value": N, "unit": "px"}`
-- [ ] 6.3 Convert lineHeight from px to ratio when Figma provides absolute px value (lineHeight / fontSize)
-- [ ] 6.4 Emit fontFamily as array format in composite `$value` (e.g., `["Inter"]` not `"Inter"`)
-- [ ] 6.5 Skip optional sub-tokens (lineHeight, letterSpacing) when not set
-- [ ] 6.6 Preserve composite-only behavior under `--w3c-version v1`
-- [ ] 6.7 Write tests for typography decomposition (verify dimension objects for fontSize, plain number for lineHeight)
+- [x] 6.3 Convert lineHeight from px to ratio when Figma provides absolute px value (lineHeight / fontSize)
+- [x] 6.4 Emit fontFamily as array format in composite `$value` (e.g., `["Inter"]` not `"Inter"`)
+- [x] 6.5 Skip optional sub-tokens (lineHeight, letterSpacing) when not set
+- [x] 6.6 Preserve composite-only behavior under `--w3c-version v1`
+- [x] 6.7 Write tests for typography decomposition (verify dimension objects for fontSize, plain number for lineHeight)
 
 ## 7. Unified Download Command (Phase 2)
 

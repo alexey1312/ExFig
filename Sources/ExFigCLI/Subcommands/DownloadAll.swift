@@ -102,7 +102,8 @@ extension ExFigCommand.Download {
                 try ColorExportHelper.exportW3C(
                     colors: colors,
                     outputURL: outputURL,
-                    compact: jsonOptions.compact
+                    compact: jsonOptions.compact,
+                    w3cVersion: jsonOptions.w3cVersion
                 )
 
             case .raw:
@@ -138,7 +139,8 @@ extension ExFigCommand.Download {
                 try TypographyExportHelper.exportW3C(
                     textStyles: textStyles,
                     outputURL: outputURL,
-                    compact: jsonOptions.compact
+                    compact: jsonOptions.compact,
+                    w3cVersion: jsonOptions.w3cVersion
                 )
 
             case .raw:
@@ -209,8 +211,10 @@ extension ExFigCommand.Download {
                 try AssetExportHelper.exportW3C(
                     components: components,
                     exportUrls: exportUrls,
+                    fileId: fileId,
                     outputURL: outputURL,
-                    compact: jsonOptions.compact
+                    compact: jsonOptions.compact,
+                    w3cVersion: jsonOptions.w3cVersion
                 )
 
             case .raw:
@@ -277,8 +281,10 @@ extension ExFigCommand.Download {
                 try AssetExportHelper.exportW3C(
                     components: components,
                     exportUrls: exportUrls,
+                    fileId: fileId,
                     outputURL: outputURL,
-                    compact: jsonOptions.compact
+                    compact: jsonOptions.compact,
+                    w3cVersion: jsonOptions.w3cVersion
                 )
 
             case .raw:

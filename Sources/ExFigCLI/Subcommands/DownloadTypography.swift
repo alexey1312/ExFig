@@ -58,7 +58,8 @@ extension ExFigCommand.Download {
                 try TypographyExportHelper.exportW3C(
                     textStyles: textStyles,
                     outputURL: outputURL,
-                    compact: jsonOptions.compact
+                    compact: jsonOptions.compact,
+                    w3cVersion: jsonOptions.w3cVersion
                 )
 
             case .raw:
