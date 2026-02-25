@@ -10,6 +10,7 @@ ExFig automates the export of design tokens from Figma to native platform resour
 - **Icons**: Export vector icons as PDF/SVG (iOS), VectorDrawable (Android), or SVG (Flutter)
 - **Images**: Export raster images with multi-scale support for all platforms
 - **Typography**: Export text styles as Swift extensions, XML styles, or Dart constants
+- **Design Tokens**: Export unified W3C DTCG design tokens (colors, typography, dimensions, numbers) as JSON
 
 ## Topics
 

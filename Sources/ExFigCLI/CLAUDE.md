@@ -22,7 +22,7 @@ exfig typography            → ExportTypography
 exfig init                  → GenerateConfigFile
 exfig schemas               → ExtractSchemas
 exfig fetch                 → FetchImages
-exfig download {colors|icons|images|typography|all} → Download (nested)
+exfig download {colors|icons|images|typography|tokens|all} → Download (nested)
 exfig batch                 → Batch
 ```
 
@@ -161,6 +161,10 @@ Converter factories (`WebpConverterFactory`, `HeicConverterFactory`) handle plat
 | `Pipeline/SharedDownloadQueue.swift`     | Cross-config download pipelining actor                             |
 | `Output/FileWriter.swift`                | Sequential and parallel file writing with directory creation       |
 | `Shared/ComponentPreFetcher.swift`       | Pre-fetch components for multi-entry exports                       |
+| `Input/TokensFileSource.swift`           | W3C DTCG .tokens.json parser (local file → ExFigCore models)       |
+| `Output/W3CTokensExporter.swift`         | W3C design token JSON exporter (v1/v2025 formats)                  |
+| `Loaders/NumberVariablesLoader.swift`    | Figma number variables → dimension/number tokens                   |
+| `Subcommands/DownloadTokens.swift`       | Unified `download tokens` subcommand                               |
 
 ## Modification Patterns
 

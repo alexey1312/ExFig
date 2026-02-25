@@ -42,16 +42,18 @@ ExFigCore domain types (NameStyle, ColorsSourceInput, etc.)
 - `Common_NameProcessing` — base protocol (`nameValidateRegexp`, `nameReplaceRegexp`)
 - `Common_VariablesSource` extends `NameProcessing` — colors from Figma Variables API
 - `Common_FrameSource` extends `NameProcessing` — icons/images from Figma frames
+- `Common.TokensFile` — local `.tokens.json` file source (`path` + optional `groupFilter`)
+- `Common_VariablesSource` now includes optional `tokensFile: Common.TokensFile?` field
 - Platform entry types (`iOS.ColorsEntry`, `Android.IconsEntry`, etc.) implement these protocols
 
 ### Key Public API
 
-| Symbol                                                  | Purpose                                                |
-| ------------------------------------------------------- | ------------------------------------------------------ |
-| `PKLEvaluator.evaluate(configPath:)`                    | Async evaluation of .pkl → `ExFig.ModuleImpl`          |
-| `PKLError.configNotFound` / `.evaluationDidNotComplete` | Error cases                                            |
-| `Common.NameStyle.coreNameStyle`                        | Bridge to `ExFigCore.NameStyle` via rawValue match     |
-| `Common_VariablesSource.validatedColorsSourceInput()`   | Validates required fields, returns `ColorsSourceInput` |
+| Symbol                                                  | Purpose                                                                                                                                          |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PKLEvaluator.evaluate(configPath:)`                    | Async evaluation of .pkl → `ExFig.ModuleImpl`                                                                                                    |
+| `PKLError.configNotFound` / `.evaluationDidNotComplete` | Error cases                                                                                                                                      |
+| `Common.NameStyle.coreNameStyle`                        | Bridge to `ExFigCore.NameStyle` via rawValue match                                                                                               |
+| `Common_VariablesSource.validatedColorsSourceInput()`   | Validates required fields, returns `ColorsSourceInput`. When `tokensFile` is set, bypasses Figma field validation and returns local source input |
 
 ### PklError Workaround
 

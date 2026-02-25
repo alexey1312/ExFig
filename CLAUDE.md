@@ -93,6 +93,7 @@ and Flutter projects.
 .build/debug/exfig icons -i exfig.pkl
 .build/debug/exfig batch exfig.pkl            # All resources from unified config (positional arg!)
 .build/debug/exfig fetch -f FILE_ID -r "Frame" -o ./output
+.build/debug/exfig download tokens -o tokens.json  # Unified W3C design tokens
 
 # PKL Validation (validate config templates against schemas)
 pkl eval --format json <file.pkl>   # Package URI requires published package
@@ -120,7 +121,7 @@ pkl eval --format json <file.pkl>   # Package URI requires published package
 
 ## Architecture
 
-Twelve modules in `Sources/`:
+Fourteen modules in `Sources/`:
 
 | Module          | Purpose                                                   |
 | --------------- | --------------------------------------------------------- |
@@ -137,8 +138,10 @@ Twelve modules in `Sources/`:
 | `FlutterExport` | Flutter export (Dart code, SVG/PNG assets)                |
 | `WebExport`     | Web/React export (CSS variables, JSX icons)               |
 | `SVGKit`        | SVG parsing, ImageVector/VectorDrawable generation        |
+| `JinjaSupport`  | Shared Jinja2 template rendering across Export modules    |
 
 **Data flow:** CLI -> PKL config parsing -> FigmaAPI fetch -> ExFigCore processing -> Platform plugin -> Export module -> File write
+**Alt data flow (tokens):** CLI -> local .tokens.json file -> TokensFileSource -> ExFigCore models -> W3C JSON export
 
 **Batch mode:** Single `@TaskLocal` via `BatchSharedState` actor — see `ExFigCLI/CLAUDE.md`.
 

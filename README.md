@@ -32,6 +32,7 @@ Flutter, and React/TypeScript.
 - 📝 Typography with Dynamic Type support (iOS)
 - 🔄 RTL (Right-to-Left) layout support
 - 🎯 Figma Variables support
+- 📁 Local `.tokens.json` file import (no Figma API needed)
 
 ### Platform Support
 
@@ -46,7 +47,7 @@ Flutter, and React/TypeScript.
 ### Export Formats
 
 - 🖼️ PNG, SVG, PDF, JPEG, WebP, HEIC (with quality control)
-- 📊 W3C Design Tokens (JSON export)
+- 📊 W3C Design Tokens (DTCG v2025 format, unified JSON export)
 - ⚡ Quick fetch mode (no config file needed)
 
 ### Performance & Reliability
@@ -218,13 +219,17 @@ mode variants (`--dark-mode-suffix`). Run `exfig fetch --help` for all options.
 
 ### JSON Export (Design Tokens)
 
-Export Figma data as [W3C Design Tokens](https://design-tokens.github.io/community-group/format/):
+Export Figma data as [W3C Design Tokens](https://design-tokens.github.io/community-group/format/) (DTCG v2025 format):
 
 ```bash
 exfig download colors -o tokens/colors.json
 exfig download icons -o tokens/icons.json --asset-format svg
+exfig download tokens -o tokens/design-tokens.json    # Unified W3C tokens (colors + typography + dimensions + numbers)
 exfig download all -o ./tokens/
 ```
+
+Use `--w3c-version v1` for the legacy hex-string format. Colors entries also support `tokensFile` to import from a local
+`.tokens.json` file (e.g., from Tokens Studio) without a Figma token — see [CONFIG.md](CONFIG.md).
 
 ### Version Tracking
 

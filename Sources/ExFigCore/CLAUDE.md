@@ -23,6 +23,8 @@ Exporter.export*(entries, platformConfig, context)
 
 **Context protocols** (`ColorsExportContext`, `IconsExportContext`, etc.) inject all I/O dependencies — Figma loading, downloading, format conversion — so exporters stay pure transform logic.
 
+**Local tokens file support:** `ColorsSourceInput` has optional `tokensFilePath` and `tokensFileGroupFilter` fields. When `tokensFilePath` is set, colors are loaded from a local `.tokens.json` file (W3C Design Tokens v2 format) instead of the Figma API.
+
 ### Domain Models
 
 | Type            | Role                                                                                       |
@@ -33,6 +35,7 @@ Exporter.export*(entries, platformConfig, context)
 | `TextStyle`     | Font, size, line height, letter spacing, text case, dynamic type style                     |
 | `AssetPair<T>`  | Groups up to 4 appearance variants: light, dark, lightHC, darkHC                           |
 | `AssetMetadata` | Figma node/file identifiers for cache and Code Connect                                     |
+| `NumberToken`   | Name, value, tokenType (.dimension/.number), description, Figma IDs                        |
 
 All conform to `Asset` protocol (`name: String`, `platform: Platform?`, `Hashable`, `Sendable`).
 
