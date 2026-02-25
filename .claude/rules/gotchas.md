@@ -138,6 +138,24 @@ func foo(a:, b:, c:, d:, e:, f:) {}
 // swiftlint:enable function_parameter_count
 ```
 
+### multiple_closures_with_trailing_closure
+
+When a function accepts 2+ closure parameters, trailing closure syntax triggers this rule.
+Use explicit argument labels for all closures:
+
+```swift
+// BAD — trailing closure with multiple closures
+withExportReport(buildStats: { ... }) {
+    try await export()
+}
+
+// GOOD — explicit label
+withExportReport(
+    buildStats: { ... },
+    export: { try await export() }
+)
+```
+
 ### void_function_in_ternary False Positive
 
 SwiftLint flags `NooraUI.format()` calls in ternary operators as `void_function_in_ternary` even though they return `String`.
@@ -153,6 +171,26 @@ let icon: String = if useColors {
 let successIcon = useColors ? NooraUI.format(.success("✓")) : "✓"
 let failIcon = useColors ? NooraUI.format(.danger("✗")) : "✗"
 let icon = success ? successIcon : failIcon
+```
+
+### Actor vs Lock for Sync-Only State
+
+When all operations are synchronous (array append, file read), use `Lock<T>` (NSLock wrapper)
+instead of `actor`. Actor requires `await` which forces `DispatchSemaphore` bridges from sync
+contexts — creating deadlock risk. See `WarningCollector`, `ManifestTracker` for the pattern.
+
+```swift
+// BAD — actor with sync-only ops forces semaphore bridge from sync callers
+actor Collector {
+    private var items: [String] = []
+    func add(_ item: String) { items.append(item) }
+}
+
+// GOOD — Lock is sync, no await needed
+final class Collector: Sendable {
+    private let storage = Lock<[String]>([])
+    func add(_ item: String) { storage.withLock { $0.append(item) } }
+}
 ```
 
 ## Test Helpers for Codable Types

@@ -33,6 +33,9 @@ extension ExFigCommand {
         )
         var filter: String?
 
+        @Option(name: .long, help: "Path to write JSON report")
+        var report: String?
+
         func run() async throws {
             ExFigCommand.initializeTerminalUI(
                 verbose: globalOptions.verbose, quiet: globalOptions.quiet
@@ -47,7 +50,15 @@ extension ExFigCommand {
                 ui: ui
             )
 
-            _ = try await performExport(client: client, ui: ui)
+            try await withExportReport(
+                command: "colors",
+                assetType: "color",
+                reportPath: report,
+                configInput: options.input,
+                ui: ui,
+                buildStats: { .colors($0) },
+                export: { try await performExport(client: client, ui: ui) }
+            )
         }
 
         /// Export result for batch mode (includes file versions for deferred cache save).

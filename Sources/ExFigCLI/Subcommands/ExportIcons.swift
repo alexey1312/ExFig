@@ -36,6 +36,9 @@ extension ExFigCommand {
         """)
         var strictPathValidation: Bool = false
 
+        @Option(name: .long, help: "Path to write JSON report")
+        var report: String?
+
         func run() async throws {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             ExFigCommand.checkSchemaVersionIfNeeded()
@@ -48,7 +51,15 @@ extension ExFigCommand {
                 ui: ui
             )
 
-            _ = try await performExport(client: client, ui: ui)
+            try await withExportReport(
+                command: "icons",
+                assetType: "icon",
+                reportPath: report,
+                configInput: options.input,
+                ui: ui,
+                buildStats: { .icons($0) },
+                export: { try await performExport(client: client, ui: ui) }
+            )
         }
 
         /// Result of icons export for batch mode integration.
