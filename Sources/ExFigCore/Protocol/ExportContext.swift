@@ -91,8 +91,14 @@ public protocol ColorsExportContext: ExportContext {
     ) throws -> ColorsProcessResult
 }
 
-/// Input for loading colors from Figma Variables.
+/// Input for loading colors — either from Figma Variables API or a local .tokens.json file.
+///
+/// When `tokensFilePath` is set, the export pipeline reads colors from the local file
+/// (bypassing Figma API). Otherwise, `tokensFileId` + `tokensCollectionName` + `lightModeName`
+/// are used to fetch from Figma Variables.
 public struct ColorsSourceInput: Sendable {
+    public let tokensFilePath: String?
+    public let tokensFileGroupFilter: String?
     public let tokensFileId: String
     public let tokensCollectionName: String
     public let lightModeName: String
@@ -103,7 +109,14 @@ public struct ColorsSourceInput: Sendable {
     public let nameValidateRegexp: String?
     public let nameReplaceRegexp: String?
 
+    /// Whether this source input uses a local tokens file.
+    public var isLocalTokensFile: Bool {
+        tokensFilePath != nil
+    }
+
     public init(
+        tokensFilePath: String? = nil,
+        tokensFileGroupFilter: String? = nil,
         tokensFileId: String,
         tokensCollectionName: String,
         lightModeName: String,
@@ -114,6 +127,8 @@ public struct ColorsSourceInput: Sendable {
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil
     ) {
+        self.tokensFilePath = tokensFilePath
+        self.tokensFileGroupFilter = tokensFileGroupFilter
         self.tokensFileId = tokensFileId
         self.tokensCollectionName = tokensCollectionName
         self.lightModeName = lightModeName

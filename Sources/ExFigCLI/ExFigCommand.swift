@@ -91,6 +91,7 @@ struct ExFigCommand: AsyncParsableCommand {
             ExtractSchemas.self,
             FetchImages.self,
             Download.self,
+            Tokens.self,
             Batch.self,
         ],
         defaultSubcommand: ExportColors.self

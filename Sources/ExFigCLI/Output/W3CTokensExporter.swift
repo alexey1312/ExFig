@@ -1,29 +1,55 @@
+// swiftlint:disable file_length
+
+import ArgumentParser
 import ExFigCore
 import Foundation
+
+/// W3C Design Tokens spec version for export.
+public enum W3CVersion: String, ExpressibleByArgument, CaseIterable, Sendable {
+    /// Legacy format: hex strings, mode dicts, `$type: "asset"`.
+    case v1
+    /// W3C DTCG v2025.10: color objects, `$extensions`, no invented types.
+    case v2025
+}
 
 /// Input structure for asset token export.
 public struct AssetToken: Sendable {
     public let name: String
     public let url: String
     public let description: String?
+    public let nodeId: String?
+    public let fileId: String?
 
-    public init(name: String, url: String, description: String?) {
+    public init(name: String, url: String, description: String?, nodeId: String? = nil, fileId: String? = nil) {
         self.name = name
         self.url = url
         self.description = description
+        self.nodeId = nodeId
+        self.fileId = fileId
     }
 }
 
 /// Exports design tokens in W3C Design Tokens format.
 /// See: https://design-tokens.github.io/community-group/format/
 public struct W3CTokensExporter: Sendable {
-    public init() {}
+    public let version: W3CVersion
+
+    public init(version: W3CVersion = .v2025) {
+        self.version = version
+    }
 
     // MARK: - Color Hex Conversion
 
-    /// Converts RGBA color components (0.0-1.0) to hex string.
-    /// Returns #RRGGBB for opaque colors, #RRGGBBAA for colors with transparency.
-    public func colorToHex(r: Double, g: Double, b: Double, a: Double) -> String {
+    /// Converts RGB color components (0.0-1.0) to 6-digit hex string (#RRGGBB).
+    public func colorToHex(r: Double, g: Double, b: Double) -> String {
+        let red = Int(round(r * 255))
+        let green = Int(round(g * 255))
+        let blue = Int(round(b * 255))
+        return String(format: "#%02x%02x%02x", red, green, blue)
+    }
+
+    /// Legacy hex conversion with alpha in the string (#RRGGBBAA for transparent colors).
+    public func colorToHexLegacy(r: Double, g: Double, b: Double, a: Double) -> String {
         let red = Int(round(r * 255))
         let green = Int(round(g * 255))
         let blue = Int(round(b * 255))
@@ -34,6 +60,29 @@ public struct W3CTokensExporter: Sendable {
             let alpha = Int(round(a * 255))
             return String(format: "#%02x%02x%02x%02x", red, green, blue, alpha)
         }
+    }
+
+    // MARK: - Color Object (v2025.10)
+
+    /// Converts RGBA color to a v2025.10 Color Module object.
+    ///
+    /// Format: `{"colorSpace": "srgb", "components": [r,g,b], "hex": "#rrggbb"}`
+    /// Alpha is included as a separate field only when != 1.0.
+    public func colorToObject(r: Double, g: Double, b: Double, a: Double) -> [String: Any] {
+        var obj: [String: Any] = [
+            "colorSpace": "srgb",
+            "components": [r, g, b],
+            "hex": colorToHex(r: r, g: g, b: b),
+        ]
+        if a < 1.0 {
+            obj["alpha"] = a
+        }
+        return obj
+    }
+
+    /// Converts an ExFigCore Color to a v2025.10 color object.
+    public func colorToObject(_ color: Color) -> [String: Any] {
+        colorToObject(r: color.red, g: color.green, b: color.blue, a: color.alpha)
     }
 
     // MARK: - Name Hierarchy
@@ -51,32 +100,356 @@ public struct W3CTokensExporter: Sendable {
     /// - Parameters:
     ///   - colorsByMode: Dictionary mapping mode names (e.g., "Light", "Dark") to arrays of colors
     ///   - descriptions: Optional dictionary mapping color names to descriptions
+    ///   - metadata: Optional Figma metadata per color (variableId, fileId)
+    ///   - aliases: Per-color per-mode alias paths (mode key → referenced variable name)
+    ///   - modeKeyToName: Mapping from internal mode keys to display names
     /// - Returns: Nested dictionary structure representing W3C tokens
     public func exportColors(
         colorsByMode: [String: [Color]],
-        descriptions: [String: String] = [:]
+        descriptions: [String: String] = [:],
+        metadata: [String: ColorTokenMetadata] = [:],
+        aliases: [String: [String: String]] = [:],
+        modeKeyToName: [String: String] = [:]
     ) -> [String: Any] {
-        // Group colors by name across all modes
-        var colorValues: [String: [String: String]] = [:] // name -> mode -> hex
+        switch version {
+        case .v1:
+            exportColorsV1(colorsByMode: colorsByMode, descriptions: descriptions)
+        case .v2025:
+            exportColorsV2025(
+                colorsByMode: colorsByMode,
+                descriptions: descriptions,
+                metadata: metadata,
+                aliases: aliases,
+                modeKeyToName: modeKeyToName
+            )
+        }
+    }
+
+    // MARK: - Typography Export
+
+    /// Exports text styles to W3C Design Tokens format.
+    public func exportTypography(textStyles: [TextStyle]) -> [String: Any] {
+        switch version {
+        case .v1:
+            exportTypographyV1(textStyles: textStyles)
+        case .v2025:
+            exportTypographyV2025(textStyles: textStyles)
+        }
+    }
+
+    // MARK: - Assets Export
+
+    /// Exports assets (icons, images) to W3C Design Tokens format.
+    public func exportAssets(assets: [AssetToken]) -> [String: Any] {
+        switch version {
+        case .v1:
+            exportAssetsV1(assets: assets)
+        case .v2025:
+            exportAssetsV2025(assets: assets)
+        }
+    }
+
+    // MARK: - Dimensions Export
+
+    /// Exports dimension tokens to W3C Design Tokens format.
+    /// Dimension `$value` is an object: `{"value": N, "unit": "px"}`.
+    public func exportDimensions(tokens: [NumberToken]) -> [String: Any] {
+        var result: [String: Any] = [:]
+        for token in tokens {
+            let path = nameToHierarchy(token.name)
+            var tokenValue: [String: Any] = [
+                "$type": "dimension",
+                "$value": ["value": token.value, "unit": "px"],
+            ]
+            if let description = token.description {
+                tokenValue["$description"] = description
+            }
+            var exfigExt: [String: Any] = [:]
+            if let variableId = token.variableId { exfigExt["variableId"] = variableId }
+            if let fileId = token.fileId { exfigExt["fileId"] = fileId }
+            if !exfigExt.isEmpty {
+                tokenValue["$extensions"] = ["com.exfig": exfigExt]
+            }
+            insertToken(into: &result, path: path, value: tokenValue)
+        }
+        return result
+    }
+
+    // MARK: - Numbers Export
+
+    /// Exports number tokens to W3C Design Tokens format.
+    /// Number `$value` is a plain JSON number.
+    public func exportNumbers(tokens: [NumberToken]) -> [String: Any] {
+        var result: [String: Any] = [:]
+        for token in tokens {
+            let path = nameToHierarchy(token.name)
+            var tokenValue: [String: Any] = [
+                "$type": "number",
+                "$value": token.value,
+            ]
+            if let description = token.description {
+                tokenValue["$description"] = description
+            }
+            var exfigExt: [String: Any] = [:]
+            if let variableId = token.variableId { exfigExt["variableId"] = variableId }
+            if let fileId = token.fileId { exfigExt["fileId"] = fileId }
+            if !exfigExt.isEmpty {
+                tokenValue["$extensions"] = ["com.exfig": exfigExt]
+            }
+            insertToken(into: &result, path: path, value: tokenValue)
+        }
+        return result
+    }
+
+    // MARK: - JSON Serialization
+
+    /// Serializes tokens to JSON data.
+    public func serializeToJSON(_ tokens: [String: Any], compact: Bool) throws -> Data {
+        let options: JSONSerialization.WritingOptions = compact
+            ? [.sortedKeys]
+            : [.prettyPrinted, .sortedKeys]
+
+        return try JSONSerialization.data(withJSONObject: tokens, options: options)
+    }
+}
+
+// MARK: - Figma Metadata
+
+/// Figma metadata for a color token.
+public struct ColorTokenMetadata: Sendable {
+    public let variableId: String?
+    public let fileId: String?
+
+    public init(variableId: String? = nil, fileId: String? = nil) {
+        self.variableId = variableId
+        self.fileId = fileId
+    }
+}
+
+// MARK: - V2025 Implementation
+
+extension W3CTokensExporter {
+    private func exportColorsV2025(
+        colorsByMode: [String: [Color]],
+        descriptions: [String: String],
+        metadata: [String: ColorTokenMetadata],
+        aliases: [String: [String: String]] = [:],
+        modeKeyToName: [String: String] = [:]
+    ) -> [String: Any] {
+        let nameToKey = Dictionary(uniqueKeysWithValues: modeKeyToName.map { ($0.value, $0.key) })
+
+        var colorsByName: [String: [(mode: String, color: Color)]] = [:]
+        for (modeName, colors) in colorsByMode {
+            for color in colors {
+                colorsByName[color.name, default: []].append((modeName, color))
+            }
+        }
+
+        var tokens: [String: Any] = [:]
+
+        for (name, modeColors) in colorsByName {
+            let path = nameToHierarchy(name)
+            let colorAliases = aliases[name] ?? [:]
+            let sortedModeColors = sortByModeOrder(modeColors)
+            guard let defaultEntry = sortedModeColors.first else { continue }
+            let defaultModeKey = nameToKey[defaultEntry.mode] ?? "light"
+
+            var tokenValue: [String: Any] = ["$type": "color"]
+            tokenValue["$value"] = colorValueOrAlias(
+                color: defaultEntry.color, aliasPath: colorAliases[defaultModeKey]
+            )
+
+            if let description = descriptions[name], !description.trimmingCharacters(in: .whitespaces).isEmpty {
+                tokenValue["$description"] = description
+            }
+
+            let exfigExtension = buildExfigExtension(
+                modeColors: modeColors, colorAliases: colorAliases,
+                nameToKey: nameToKey, metadata: metadata[name]
+            )
+            if !exfigExtension.isEmpty {
+                tokenValue["$extensions"] = ["com.exfig": exfigExtension]
+            }
+
+            insertToken(into: &tokens, path: path, value: tokenValue)
+        }
+
+        return tokens
+    }
+
+    private func sortByModeOrder(_ modeColors: [(mode: String, color: Color)]) -> [(mode: String, color: Color)] {
+        let modeOrder = ["Light", "Dark", "Contrast Light", "Contrast Dark"]
+        return modeColors.sorted { a, b in
+            let ai = modeOrder.firstIndex(of: a.mode) ?? modeOrder.count
+            let bi = modeOrder.firstIndex(of: b.mode) ?? modeOrder.count
+            return ai < bi
+        }
+    }
+
+    private func colorValueOrAlias(color: Color, aliasPath: String?) -> Any {
+        if let aliasPath {
+            return "{\(Self.toW3CPath(aliasPath))}"
+        }
+        return colorToObject(color)
+    }
+
+    private func buildExfigExtension(
+        modeColors: [(mode: String, color: Color)],
+        colorAliases: [String: String],
+        nameToKey: [String: String],
+        metadata: ColorTokenMetadata?
+    ) -> [String: Any] {
+        var ext: [String: Any] = [:]
+
+        if modeColors.count > 1 {
+            var modes: [String: Any] = [:]
+            for (modeName, color) in modeColors {
+                let modeKey = nameToKey[modeName] ?? "light"
+                modes[modeName] = colorValueOrAlias(color: color, aliasPath: colorAliases[modeKey])
+            }
+            ext["modes"] = modes
+        }
+
+        if let meta = metadata {
+            if let variableId = meta.variableId { ext["variableId"] = variableId }
+            if let fileId = meta.fileId { ext["fileId"] = fileId }
+        }
+
+        return ext
+    }
+
+    /// Converts a Figma variable path (slash-separated) to W3C alias path (dot-separated).
+    static func toW3CPath(_ figmaPath: String) -> String {
+        figmaPath.replacingOccurrences(of: "/", with: ".")
+    }
+
+    private func exportTypographyV2025(textStyles: [TextStyle]) -> [String: Any] {
+        var tokens: [String: Any] = [:]
+
+        for style in textStyles {
+            let path = nameToHierarchy(style.name)
+            var tokenValue: [String: Any] = ["$type": "typography"]
+
+            // Composite $value uses v2025 formats
+            var value: [String: Any] = [
+                "fontFamily": [style.fontName],
+                "fontSize": ["value": style.fontSize, "unit": "px"],
+            ]
+
+            if let lineHeight = style.lineHeight {
+                // Convert px to ratio when fontSize is available
+                let ratio = lineHeight / style.fontSize
+                value["lineHeight"] = ratio
+            }
+
+            if style.letterSpacing != 0 {
+                value["letterSpacing"] = ["value": style.letterSpacing, "unit": "px"]
+            }
+
+            switch style.textCase {
+            case .uppercased:
+                value["textTransform"] = "uppercase"
+            case .lowercased:
+                value["textTransform"] = "lowercase"
+            case .original:
+                break
+            }
+
+            tokenValue["$value"] = value
+            insertToken(into: &tokens, path: path, value: tokenValue)
+
+            // Sub-tokens
+
+            // fontFamily
+            let fontFamilyToken: [String: Any] = [
+                "$type": "fontFamily",
+                "$value": [style.fontName],
+            ]
+            insertToken(into: &tokens, path: path + ["fontFamily"], value: fontFamilyToken)
+
+            // fontSize
+            let fontSizeToken: [String: Any] = [
+                "$type": "dimension",
+                "$value": ["value": style.fontSize, "unit": "px"],
+            ]
+            insertToken(into: &tokens, path: path + ["fontSize"], value: fontSizeToken)
+
+            // lineHeight (only if set)
+            if let lineHeight = style.lineHeight {
+                let ratio = lineHeight / style.fontSize
+                let lineHeightToken: [String: Any] = [
+                    "$type": "number",
+                    "$value": ratio,
+                ]
+                insertToken(into: &tokens, path: path + ["lineHeight"], value: lineHeightToken)
+            }
+
+            // letterSpacing (only if non-zero)
+            if style.letterSpacing != 0 {
+                let letterSpacingToken: [String: Any] = [
+                    "$type": "dimension",
+                    "$value": ["value": style.letterSpacing, "unit": "px"],
+                ]
+                insertToken(into: &tokens, path: path + ["letterSpacing"], value: letterSpacingToken)
+            }
+        }
+
+        return tokens
+    }
+
+    private func exportAssetsV2025(assets: [AssetToken]) -> [String: Any] {
+        var tokens: [String: Any] = [:]
+
+        for asset in assets {
+            let path = nameToHierarchy(asset.name)
+            var tokenValue: [String: Any] = [:]
+
+            if let description = asset.description, !description.isEmpty {
+                tokenValue["$description"] = description
+            }
+
+            // No $type — asset is not a W3C type. Use $extensions.
+            var exfigExtension: [String: Any] = ["assetUrl": asset.url]
+            if let nodeId = asset.nodeId {
+                exfigExtension["nodeId"] = nodeId
+            }
+            if let fileId = asset.fileId {
+                exfigExtension["fileId"] = fileId
+            }
+
+            tokenValue["$extensions"] = ["com.exfig": exfigExtension]
+
+            insertToken(into: &tokens, path: path, value: tokenValue)
+        }
+
+        return tokens
+    }
+}
+
+// MARK: - V1 Implementation (Legacy)
+
+extension W3CTokensExporter {
+    private func exportColorsV1(
+        colorsByMode: [String: [Color]],
+        descriptions: [String: String]
+    ) -> [String: Any] {
+        var colorValues: [String: [String: String]] = [:]
 
         for (modeName, colors) in colorsByMode {
             for color in colors {
-                let hex = colorToHex(r: color.red, g: color.green, b: color.blue, a: color.alpha)
+                let hex = colorToHexLegacy(r: color.red, g: color.green, b: color.blue, a: color.alpha)
                 colorValues[color.name, default: [:]][modeName] = hex
             }
         }
 
-        // Build nested token structure
         var tokens: [String: Any] = [:]
 
         for (name, modeValues) in colorValues {
             let path = nameToHierarchy(name)
             var tokenValue: [String: Any] = [
                 "$type": "color",
+                "$value": modeValues,
             ]
-
-            // Always use dict format for consistency (mode name -> hex value)
-            tokenValue["$value"] = modeValues
 
             if let description = descriptions[name], !description.isEmpty {
                 tokenValue["$description"] = description
@@ -88,20 +461,12 @@ public struct W3CTokensExporter: Sendable {
         return tokens
     }
 
-    // MARK: - Typography Export
-
-    /// Exports text styles to W3C Design Tokens format.
-    ///
-    /// - Parameter textStyles: Array of text styles to export
-    /// - Returns: Nested dictionary structure representing W3C tokens
-    public func exportTypography(textStyles: [TextStyle]) -> [String: Any] {
+    private func exportTypographyV1(textStyles: [TextStyle]) -> [String: Any] {
         var tokens: [String: Any] = [:]
 
         for style in textStyles {
             let path = nameToHierarchy(style.name)
-            var tokenValue: [String: Any] = [
-                "$type": "typography",
-            ]
+            var tokenValue: [String: Any] = ["$type": "typography"]
 
             var value: [String: Any] = [
                 "fontFamily": style.fontName,
@@ -132,13 +497,7 @@ public struct W3CTokensExporter: Sendable {
         return tokens
     }
 
-    // MARK: - Assets Export
-
-    /// Exports assets (icons, images) to W3C Design Tokens format.
-    ///
-    /// - Parameter assets: Array of asset tokens to export
-    /// - Returns: Nested dictionary structure representing W3C tokens
-    public func exportAssets(assets: [AssetToken]) -> [String: Any] {
+    private func exportAssetsV1(assets: [AssetToken]) -> [String: Any] {
         var tokens: [String: Any] = [:]
 
         for asset in assets {
@@ -157,25 +516,57 @@ public struct W3CTokensExporter: Sendable {
 
         return tokens
     }
+}
 
-    // MARK: - JSON Serialization
+// MARK: - Export from TokensFileSource
 
-    /// Serializes tokens to JSON data.
-    ///
-    /// - Parameters:
-    ///   - tokens: Token dictionary to serialize
-    ///   - compact: If true, outputs minified JSON; otherwise pretty-printed
-    /// - Returns: JSON data
-    public func serializeToJSON(_ tokens: [String: Any], compact: Bool) throws -> Data {
-        let options: JSONSerialization.WritingOptions = compact
-            ? [.sortedKeys]
-            : [.prettyPrinted, .sortedKeys]
+extension W3CTokensExporter {
+    /// Exports all token types from a resolved `TokensFileSource` into a merged W3C dictionary.
+    func exportAll(from source: TokensFileSource) -> [String: Any] {
+        var allTokens: [String: Any] = [:]
 
-        return try JSONSerialization.data(withJSONObject: tokens, options: options)
+        let colors = source.toColors()
+        if !colors.isEmpty {
+            Self.mergeTokens(from: exportColors(colorsByMode: ["Default": colors]), into: &allTokens)
+        }
+        let textStyles = source.toTextStyles()
+        if !textStyles.isEmpty {
+            Self.mergeTokens(from: exportTypography(textStyles: textStyles), into: &allTokens)
+        }
+        let dimensions = source.toDimensionTokens()
+        if !dimensions.isEmpty {
+            Self.mergeTokens(from: exportDimensions(tokens: dimensions), into: &allTokens)
+        }
+        let numbers = source.toNumberTokens()
+        if !numbers.isEmpty {
+            Self.mergeTokens(from: exportNumbers(tokens: numbers), into: &allTokens)
+        }
+        return allTokens
     }
+}
 
-    // MARK: - Private Helpers
+// MARK: - Token Merging
 
+extension W3CTokensExporter {
+    /// Deep-merges source dictionary into target, preserving existing keys.
+    static func mergeTokens(from source: [String: Any], into target: inout [String: Any]) {
+        for (key, value) in source {
+            if let sourceDict = value as? [String: Any],
+               let targetDict = target[key] as? [String: Any]
+            {
+                var merged = targetDict
+                mergeTokens(from: sourceDict, into: &merged)
+                target[key] = merged
+            } else {
+                target[key] = value
+            }
+        }
+    }
+}
+
+// MARK: - Private Helpers
+
+extension W3CTokensExporter {
     private func insertToken(into dict: inout [String: Any], path: [String], value: [String: Any]) {
         guard !path.isEmpty else { return }
 
@@ -189,3 +580,5 @@ public struct W3CTokensExporter: Sendable {
         }
     }
 }
+
+// swiftlint:enable file_length

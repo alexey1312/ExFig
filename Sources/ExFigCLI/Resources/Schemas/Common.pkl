@@ -30,6 +30,18 @@ class WebpOptions {
   quality: Int(isBetween(0, 100))?
 }
 
+// MARK: - Tokens File Source
+
+/// Local W3C DTCG .tokens.json file source.
+/// When set on a colors entry, bypasses Figma API and reads tokens from a local file.
+class TokensFile {
+  /// Path to the .tokens.json file.
+  path: String(!isEmpty)
+
+  /// Optional dot-path prefix to filter tokens (e.g., "Brand.Colors").
+  groupFilter: String?
+}
+
 // MARK: - Cache
 
 /// Cache configuration for tracking Figma file versions.
@@ -58,6 +70,9 @@ open class NameProcessing {
 /// Used for colors that come from Figma Variables API.
 /// All fields are optional to support legacy format where source comes from common.variablesColors.
 open class VariablesSource extends NameProcessing {
+  /// Local .tokens.json file source (bypasses Figma API when set).
+  tokensFile: TokensFile?
+
   /// Figma file ID containing the variables.
   tokensFileId: String?
 

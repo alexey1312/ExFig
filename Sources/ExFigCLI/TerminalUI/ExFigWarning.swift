@@ -93,4 +93,16 @@ enum ExFigWarning: Sendable, Equatable {
 
     /// A color token references a deleted-but-referenced variable via alias.
     case deletedVariableAlias(tokenName: String, referencedName: String)
+
+    /// A number variable alias could not be resolved.
+    case unresolvedNumberAlias(tokenName: String)
+
+    /// A number variable alias chain exceeded maximum depth (likely circular).
+    case depthExceededNumberAlias(tokenName: String)
+
+    /// A color variable alias chain exceeded maximum depth (likely circular).
+    case circularColorAlias(tokenName: String)
+
+    /// A `download tokens` section was skipped because config is missing.
+    case downloadTokensSectionSkipped(section: String)
 }

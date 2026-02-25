@@ -18,7 +18,9 @@ struct ExFigWarningFormatter {
              .preFetchComponentsPartialFailure, .preFetchNodesPartialFailure,
              .granularCacheWithoutCache, .themeAttributesFileNotFound,
              .themeAttributesMarkerNotFound, .themeAttributesNameCollision,
-             .heicUnavailableFallingBackToPng, .deletedVariableAlias:
+             .heicUnavailableFallingBackToPng, .deletedVariableAlias,
+             .unresolvedNumberAlias, .depthExceededNumberAlias,
+             .circularColorAlias, .downloadTokensSectionSkipped:
             formatCompact(warning)
 
         // Multiline format warnings
@@ -91,6 +93,18 @@ struct ExFigWarningFormatter {
 
         case let .deletedVariableAlias(tokenName, referencedName):
             "Skipped deleted variable alias: token=\(tokenName), referenced=\(referencedName)"
+
+        case let .unresolvedNumberAlias(tokenName):
+            "Could not resolve number variable alias: token=\(tokenName)"
+
+        case let .depthExceededNumberAlias(tokenName):
+            "Number alias chain exceeded max depth (likely circular): token=\(tokenName)"
+
+        case let .circularColorAlias(tokenName):
+            "Color alias chain exceeded max depth (likely circular): token=\(tokenName)"
+
+        case let .downloadTokensSectionSkipped(section):
+            "Token section skipped (not configured): section=\(section)"
 
         // Multiline cases handled in main format() method
         case .noAssetsFound, .invalidConfigsSkipped, .webIconsMissingSVGData, .webIconsConversionFailed:

@@ -203,6 +203,9 @@ exfig download colors -o debug/colors.json --format raw
 # Export icons with SVG URLs
 exfig download icons -o tokens/icons.json --asset-format svg
 
+# Export unified design tokens (colors + typography + dimensions + numbers)
+exfig download tokens -o tokens/design-tokens.json
+
 # Export all token types
 exfig download all -o ./tokens/
 ```
@@ -211,21 +214,23 @@ exfig download all -o ./tokens/
 
 | Subcommand   | Description                     |
 | ------------ | ------------------------------- |
-| `colors`     | Export colors as JSON           |
-| `icons`      | Export icon metadata with URLs  |
-| `images`     | Export image metadata with URLs |
-| `typography` | Export text styles as JSON      |
-| `all`        | Export all types to a directory |
+| `colors`     | Export colors as JSON                                              |
+| `icons`      | Export icon metadata with URLs                                     |
+| `images`     | Export image metadata with URLs                                    |
+| `typography` | Export text styles as JSON                                         |
+| `tokens`     | Export unified design tokens (colors, typography, dimensions, numbers) |
+| `all`        | Export all types to a directory                                    |
 
 ### Download Options
 
 | Option           | Short | Description                      | Default |
 | ---------------- | ----- | -------------------------------- | ------- |
-| `--output`       | `-o`  | Output file path (required)      | -       |
+| `--output`       | `-o`  | Output file path                 | varies  |
 | `--format`       | `-f`  | Output format: w3c, raw          | w3c     |
 | `--compact`      | -     | Output minified JSON             | false   |
 | `--asset-format` | -     | Image format: svg, png, pdf, jpg | svg     |
 | `--scale`        | -     | Scale for raster formats         | 3       |
+| `--w3c-version`  | -     | W3C format version: v1, v2025   | v2025   |
 
 ## Quick Fetch
 

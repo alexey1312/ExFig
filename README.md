@@ -5,7 +5,7 @@
 [![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
 [![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
 [![Docs](https://github.com/alexey1312/ExFig/actions/workflows/deploy-docc.yml/badge.svg)](https://alexey1312.github.io/ExFig/documentation/exfig)
-![Coverage](https://img.shields.io/badge/coverage-49.36%25-yellow)
+![Coverage](https://img.shields.io/badge/coverage-50.65%25-yellow)
 [![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and
@@ -32,6 +32,7 @@ Flutter, and React/TypeScript.
 - 📝 Typography with Dynamic Type support (iOS)
 - 🔄 RTL (Right-to-Left) layout support
 - 🎯 Figma Variables support
+- 📁 Local `.tokens.json` file import (no Figma API needed)
 
 ### Platform Support
 
@@ -46,7 +47,7 @@ Flutter, and React/TypeScript.
 ### Export Formats
 
 - 🖼️ PNG, SVG, PDF, JPEG, WebP, HEIC (with quality control)
-- 📊 W3C Design Tokens (JSON export)
+- 📊 W3C Design Tokens (DTCG v2025 format, unified JSON export)
 - ⚡ Quick fetch mode (no config file needed)
 
 ### Performance & Reliability
@@ -216,15 +217,25 @@ exfig fetch -f FILE_ID -r "Images" -o ./images --format webp --webp-quality 90
 Supports all formats (PNG, SVG, PDF, JPEG, WebP), filtering (`--filter`), name conversion (`--name-style`), and dark
 mode variants (`--dark-mode-suffix`). Run `exfig fetch --help` for all options.
 
-### JSON Export (Design Tokens)
+### Design Tokens
 
-Export Figma data as [W3C Design Tokens](https://design-tokens.github.io/community-group/format/):
+Export Figma data as [W3C Design Tokens](https://design-tokens.github.io/community-group/format/) (DTCG v2025 format):
 
 ```bash
+# Export from Figma API
 exfig download colors -o tokens/colors.json
 exfig download icons -o tokens/icons.json --asset-format svg
+exfig download tokens -o tokens/design-tokens.json    # Unified (colors + typography + dimensions + numbers)
 exfig download all -o ./tokens/
+
+# Work with local .tokens.json files (no Figma token needed)
+exfig tokens info ./tokens.json                        # Inspect token file
+exfig tokens convert ./tokens.json -o out.json         # Re-export (filter/transform)
+exfig tokens convert ./tokens.json --group "Brand" --type color -o brand-colors.json
 ```
+
+Use `--w3c-version v1` for the legacy hex-string format. Colors entries also support `tokensFile` to import from a local
+`.tokens.json` file (e.g., from Tokens Studio) without a Figma token — see [CONFIG.md](CONFIG.md).
 
 ### Version Tracking
 

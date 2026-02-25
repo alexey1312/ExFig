@@ -103,6 +103,33 @@ common = new Common.CommonConfig {
 }
 ```
 
+### Tokens File Source
+
+Use a local W3C DTCG `.tokens.json` file instead of the Figma Variables API:
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/iOS.pkl"
+
+ios = new iOS.iOSConfig {
+  colors = new iOS.ColorsEntry {
+    // Load colors from a local .tokens.json file
+    tokensFile = new Common.TokensFile {
+      // Path to the .tokens.json file
+      path = "./design-tokens/colors.tokens.json"
+
+      // Optional: filter to specific token group
+      groupFilter = "Brand.Colors"
+    }
+
+    assetsFolder = "Colors"
+    nameStyle = "camelCase"
+  }
+}
+```
+
+> When `tokensFile` is set, ExFig reads color tokens from the local file and does not require `FIGMA_PERSONAL_TOKEN` or Figma Variables configuration (`tokensFileId`, `tokensCollectionName`, `lightModeName`).
+
 ### Icons
 
 ```pkl

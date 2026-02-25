@@ -37,15 +37,23 @@ enum AssetExportHelper {
     static func exportW3C(
         components: [NodeId: Component],
         exportUrls: [NodeId: String],
+        fileId: String? = nil,
         outputURL: URL,
-        compact: Bool
+        compact: Bool,
+        w3cVersion: W3CVersion = .v2025
     ) throws {
         let assets = components.compactMap { nodeId, component -> AssetToken? in
             guard let url = exportUrls[nodeId] else { return nil }
-            return AssetToken(name: component.name, url: url, description: component.description)
+            return AssetToken(
+                name: component.name,
+                url: url,
+                description: component.description,
+                nodeId: component.nodeId,
+                fileId: fileId
+            )
         }
 
-        let exporter = W3CTokensExporter()
+        let exporter = W3CTokensExporter(version: w3cVersion)
         let tokens = exporter.exportAssets(assets: assets)
         let jsonData = try exporter.serializeToJSON(tokens, compact: compact)
 
@@ -160,17 +168,34 @@ enum ColorExportHelper {
         )
     }
 
+    /// Mode key to display name mapping used by buildColorsByMode.
+    static let modeKeyToName: [String: String] = [
+        "light": "Light",
+        "dark": "Dark",
+        "lightHC": "Contrast Light",
+        "darkHC": "Contrast Dark",
+    ]
+
     /// Exports colors to W3C format and writes to file.
     static func exportW3C(
         colors: ColorsLoaderOutput,
         descriptions: [String: String] = [:],
+        metadata: [String: ColorTokenMetadata] = [:],
+        aliases: ColorsVariablesLoader.ColorAliases = [:],
         outputURL: URL,
-        compact: Bool
+        compact: Bool,
+        w3cVersion: W3CVersion = .v2025
     ) throws {
         let colorsByMode = buildColorsByMode(from: colors)
 
-        let exporter = W3CTokensExporter()
-        let tokens = exporter.exportColors(colorsByMode: colorsByMode, descriptions: descriptions)
+        let exporter = W3CTokensExporter(version: w3cVersion)
+        let tokens = exporter.exportColors(
+            colorsByMode: colorsByMode,
+            descriptions: descriptions,
+            metadata: metadata,
+            aliases: aliases,
+            modeKeyToName: modeKeyToName
+        )
         let jsonData = try exporter.serializeToJSON(tokens, compact: compact)
 
         try jsonData.write(to: outputURL)
@@ -207,9 +232,10 @@ enum TypographyExportHelper {
     static func exportW3C(
         textStyles: [TextStyle],
         outputURL: URL,
-        compact: Bool
+        compact: Bool,
+        w3cVersion: W3CVersion = .v2025
     ) throws {
-        let exporter = W3CTokensExporter()
+        let exporter = W3CTokensExporter(version: w3cVersion)
         let tokens = exporter.exportTypography(textStyles: textStyles)
         let jsonData = try exporter.serializeToJSON(tokens, compact: compact)
 

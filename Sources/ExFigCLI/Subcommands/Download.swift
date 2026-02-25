@@ -24,6 +24,9 @@ public struct JSONExportOptions: ParsableArguments {
     @Option(name: .shortAndLong, help: "Output format: w3c (default) or raw")
     public var format: JSONExportFormat = .w3c
 
+    @Option(name: .long, help: "W3C spec version: v2025 (default) or v1 (legacy hex format)")
+    public var w3cVersion: W3CVersion = .v2025
+
     @Flag(name: .long, help: "Output minified JSON")
     public var compact: Bool = false
 
@@ -57,6 +60,7 @@ extension ExFigCommand {
                 DownloadTypography.self,
                 DownloadIcons.self,
                 DownloadImages.self,
+                DownloadTokens.self,
                 DownloadAll.self,
             ]
         )
@@ -173,7 +177,9 @@ extension ExFigCommand.Download {
                         filter: filterValue
                     )
                     let output = try await loader.load()
-                    return ColorsVariablesLoader.LoadResult(output: output, warnings: [])
+                    return ColorsVariablesLoader.LoadResult(
+                        output: output, warnings: [], aliases: [:], descriptions: [:], metadata: [:]
+                    )
                 }
             }
 
@@ -183,8 +189,12 @@ extension ExFigCommand.Download {
 
             try ColorExportHelper.exportW3C(
                 colors: colorsResult.output,
+                descriptions: colorsResult.descriptions,
+                metadata: colorsResult.metadata,
+                aliases: colorsResult.aliases,
                 outputURL: outputURL,
-                compact: jsonOptions.compact
+                compact: jsonOptions.compact,
+                w3cVersion: jsonOptions.w3cVersion
             )
         }
 
