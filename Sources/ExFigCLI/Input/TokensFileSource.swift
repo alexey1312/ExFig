@@ -40,7 +40,7 @@ struct ParsedToken {
     let value: ParsedTokenValue
     let description: String?
     let deprecated: DeprecatedValue?
-    let extensions: [String: Any]?
+    let extensions: JSONValue?
 
     /// `$deprecated` can be boolean or string.
     enum DeprecatedValue {
@@ -58,7 +58,7 @@ enum ParsedTokenValue {
     case typography(TypographyValue)
     case alias(String)
     case string(String)
-    case unknown(Any)
+    case unknown
 
     struct ColorValue {
         let colorSpace: String
@@ -113,7 +113,13 @@ struct TokensFileSource {
 
     /// Parse JSON data as a W3C DTCG token document.
     static func parse(data: Data) throws -> TokensFileSource {
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        let json: JSONValue
+        do {
+            json = try JSONCodec.parseValue(from: data)
+        } catch {
+            throw TokensFileError.malformedJSON("\(error)")
+        }
+        guard json.object != nil else {
             throw TokensFileError.malformedJSON("Root must be a JSON object")
         }
         var source = TokensFileSource()
@@ -124,11 +130,11 @@ struct TokensFileSource {
     // MARK: - Group Parsing (Task 8.2)
 
     private mutating func parseGroup(
-        json: [String: Any],
+        json: JSONValue,
         path: [String],
         inheritedType: String?
     ) {
-        let groupType = (json["$type"] as? String) ?? inheritedType
+        let groupType = json["$type"]?.string ?? inheritedType
         let groupDeprecated = parseDeprecated(json["$deprecated"])
 
         // Handle $extends (Task 8.9)
@@ -141,21 +147,22 @@ struct TokensFileSource {
             parseToken(json: json, path: path, inheritedType: groupType, groupDeprecated: groupDeprecated)
         }
 
-        if let rootValue = json["$root"] as? [String: Any], rootValue["$value"] != nil {
+        if let rootValue = json["$root"], rootValue["$value"] != nil {
             let rootPath = path + ["$root"]
             parseToken(json: rootValue, path: rootPath, inheritedType: groupType, groupDeprecated: groupDeprecated)
         }
 
         // Iterate non-$ keys as child groups or tokens
-        for (key, value) in json where !key.hasPrefix("$") {
-            guard let child = value as? [String: Any] else { continue }
+        guard let obj = json.object else { return }
+        for (key, value) in obj where !key.hasPrefix("$") {
+            guard value.object != nil else { continue }
 
             let childPath = path + [key]
 
-            if child["$value"] != nil {
-                parseToken(json: child, path: childPath, inheritedType: groupType, groupDeprecated: groupDeprecated)
+            if value["$value"] != nil {
+                parseToken(json: value, path: childPath, inheritedType: groupType, groupDeprecated: groupDeprecated)
             } else {
-                parseGroup(json: child, path: childPath, inheritedType: groupType)
+                parseGroup(json: value, path: childPath, inheritedType: groupType)
             }
         }
     }
@@ -163,14 +170,14 @@ struct TokensFileSource {
     // MARK: - Token Parsing
 
     private mutating func parseToken(
-        json: [String: Any],
+        json: JSONValue,
         path: [String],
         inheritedType: String?,
         groupDeprecated: ParsedToken.DeprecatedValue?
     ) {
         let tokenPath = path.joined(separator: ".")
-        let type = (json["$type"] as? String) ?? inheritedType
-        let description = json["$description"] as? String
+        let type = json["$type"]?.string ?? inheritedType
+        let description = json["$description"]?.string
         let deprecated = parseDeprecated(json["$deprecated"]) ?? groupDeprecated
 
         // Check for unsupported types (Task 8.14)
@@ -186,23 +193,21 @@ struct TokensFileSource {
 
         let value = parseValue(rawValue, type: type, tokenPath: tokenPath)
 
-        let extensions: [String: Any]? = json["$extensions"] as? [String: Any]
-
         tokens[tokenPath] = ParsedToken(
             path: tokenPath,
             type: type,
             value: value,
             description: description,
             deprecated: deprecated,
-            extensions: extensions
+            extensions: json["$extensions"]
         )
     }
 
     // MARK: - Value Parsing
 
-    private mutating func parseValue(_ rawValue: Any, type: String?, tokenPath: String) -> ParsedTokenValue {
+    private mutating func parseValue(_ rawValue: JSONValue, type: String?, tokenPath: String) -> ParsedTokenValue {
         // Alias reference: string starting with "{"
-        if let str = rawValue as? String, str.hasPrefix("{"), str.hasSuffix("}") {
+        if let str = rawValue.string, str.hasPrefix("{"), str.hasSuffix("}") {
             let reference = String(str.dropFirst().dropLast())
             return .alias(reference)
         }
@@ -223,53 +228,51 @@ struct TokensFileSource {
         }
     }
 
-    private mutating func parseNumberValue(_ rawValue: Any, tokenPath: String) -> ParsedTokenValue {
-        if let num = rawValue as? Double { return .number(num) }
-        if let num = rawValue as? Int { return .number(Double(num)) }
+    private mutating func parseNumberValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
+        if let num = rawValue.number { return .number(num) }
         warnings.append("Expected number value at \(tokenPath)")
-        return .unknown(rawValue)
+        return .unknown
     }
 
-    private mutating func inferValueType(_ rawValue: Any, tokenPath: String) -> ParsedTokenValue {
-        if let dict = rawValue as? [String: Any], dict["colorSpace"] != nil {
+    private mutating func inferValueType(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
+        if rawValue["colorSpace"] != nil {
             return parseColorValue(rawValue, tokenPath: tokenPath)
         }
-        if let dict = rawValue as? [String: Any], dict["value"] != nil, dict["unit"] != nil {
+        if rawValue["value"] != nil, rawValue["unit"] != nil {
             return parseDimensionValue(rawValue, tokenPath: tokenPath)
         }
-        if let num = rawValue as? Double { return .number(num) }
-        if let num = rawValue as? Int { return .number(Double(num)) }
-        if let str = rawValue as? String { return .string(str) }
-        return .unknown(rawValue)
+        if let num = rawValue.number { return .number(num) }
+        if let str = rawValue.string { return .string(str) }
+        return .unknown
     }
 
     // MARK: - Color Parsing (Task 8.3)
 
-    private mutating func parseColorValue(_ rawValue: Any, tokenPath: String) -> ParsedTokenValue {
-        guard let dict = rawValue as? [String: Any] else {
+    private mutating func parseColorValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
+        guard rawValue.object != nil else {
             // Legacy hex string fallback
-            if let hex = rawValue as? String {
+            if let hex = rawValue.string {
                 if let color = hexToColorValue(hex) { return .color(color) }
             }
             warnings.append("Invalid color value at \(tokenPath)")
-            return .unknown(rawValue)
+            return .unknown
         }
 
-        guard let colorSpace = dict["colorSpace"] as? String else {
+        guard let colorSpace = rawValue["colorSpace"]?.string else {
             warnings.append("Missing colorSpace at \(tokenPath)")
-            return .unknown(rawValue)
+            return .unknown
         }
 
-        guard let components = dict["components"] as? [Any],
+        guard let components = rawValue["components"]?.array,
               components.count >= 3
         else {
             warnings.append("Invalid components at \(tokenPath)")
-            return .unknown(rawValue)
+            return .unknown
         }
 
-        let rgb = components.prefix(3).map { ($0 as? Double) ?? (($0 as? Int).map(Double.init) ?? 0) }
-        let alpha = (dict["alpha"] as? Double) ?? 1.0
-        let hex = dict["hex"] as? String
+        let rgb = components.prefix(3).map { $0.number ?? 0 }
+        let alpha = rawValue["alpha"]?.number ?? 1.0
+        let hex = rawValue["hex"]?.string
 
         // Task 8.11: non-sRGB color space warning
         if colorSpace != "srgb" {
@@ -313,25 +316,20 @@ struct TokensFileSource {
 
     // MARK: - Dimension Parsing (Task 8.4)
 
-    private mutating func parseDimensionValue(_ rawValue: Any, tokenPath: String) -> ParsedTokenValue {
-        guard let dict = rawValue as? [String: Any] else {
+    private mutating func parseDimensionValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
+        guard rawValue.object != nil else {
             warnings.append("Dimension $value must be an object at \(tokenPath)")
-            return .unknown(rawValue)
+            return .unknown
         }
 
-        let numericValue: Double
-        if let v = dict["value"] as? Double {
-            numericValue = v
-        } else if let v = dict["value"] as? Int {
-            numericValue = Double(v)
-        } else {
+        guard let numericValue = rawValue["value"]?.number else {
             warnings.append("Missing numeric 'value' in dimension at \(tokenPath)")
-            return .unknown(rawValue)
+            return .unknown
         }
 
-        guard let unit = dict["unit"] as? String else {
+        guard let unit = rawValue["unit"]?.string else {
             warnings.append("Missing 'unit' in dimension at \(tokenPath)")
-            return .unknown(rawValue)
+            return .unknown
         }
 
         return .dimension(ParsedTokenValue.DimensionValue(value: numericValue, unit: unit))
@@ -339,43 +337,41 @@ struct TokensFileSource {
 
     // MARK: - Typography Parsing (Task 8.5)
 
-    private mutating func parseTypographyValue(_ rawValue: Any, tokenPath: String) -> ParsedTokenValue {
-        guard let dict = rawValue as? [String: Any] else {
+    private mutating func parseTypographyValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
+        guard rawValue.object != nil else {
             warnings.append("Typography $value must be an object at \(tokenPath)")
-            return .unknown(rawValue)
+            return .unknown
         }
 
-        let fontFamily: [String] = if let arr = dict["fontFamily"] as? [String] {
-            arr
-        } else if let str = dict["fontFamily"] as? String {
+        let fontFamily: [String] = if let arr = rawValue["fontFamily"]?.array {
+            arr.compactMap(\.string)
+        } else if let str = rawValue["fontFamily"]?.string {
             [str]
         } else {
             []
         }
 
         var fontSize: ParsedTokenValue.DimensionValue?
-        if let fsDict = dict["fontSize"] as? [String: Any],
-           let v = (fsDict["value"] as? Double) ?? (fsDict["value"] as? Int).map(Double.init),
-           let u = fsDict["unit"] as? String
+        if let fsObj = rawValue["fontSize"],
+           let v = fsObj["value"]?.number,
+           let u = fsObj["unit"]?.string
         {
             fontSize = ParsedTokenValue.DimensionValue(value: v, unit: u)
         }
 
         var fontWeight: Double?
-        if let w = dict["fontWeight"] as? Double {
+        if let w = rawValue["fontWeight"]?.number {
             fontWeight = w
-        } else if let w = dict["fontWeight"] as? Int {
-            fontWeight = Double(w)
-        } else if let w = dict["fontWeight"] as? String {
+        } else if let w = rawValue["fontWeight"]?.string {
             fontWeight = Self.fontWeightFromString(w)
         }
 
-        let lineHeight = (dict["lineHeight"] as? Double) ?? (dict["lineHeight"] as? Int).map(Double.init)
+        let lineHeight = rawValue["lineHeight"]?.number
 
         var letterSpacing: ParsedTokenValue.DimensionValue?
-        if let lsDict = dict["letterSpacing"] as? [String: Any],
-           let v = (lsDict["value"] as? Double) ?? (lsDict["value"] as? Int).map(Double.init),
-           let u = lsDict["unit"] as? String
+        if let lsObj = rawValue["letterSpacing"],
+           let v = lsObj["value"]?.number,
+           let u = lsObj["unit"]?.string
         {
             letterSpacing = ParsedTokenValue.DimensionValue(value: v, unit: u)
         }
@@ -391,11 +387,11 @@ struct TokensFileSource {
 
     // MARK: - Font Family Parsing
 
-    private mutating func parseFontFamilyValue(_ rawValue: Any, tokenPath: String) -> ParsedTokenValue {
-        if let arr = rawValue as? [String] { return .fontFamily(arr) }
-        if let str = rawValue as? String { return .fontFamily([str]) }
+    private mutating func parseFontFamilyValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
+        if let arr = rawValue.array { return .fontFamily(arr.compactMap(\.string)) }
+        if let str = rawValue.string { return .fontFamily([str]) }
         warnings.append("Invalid fontFamily value at \(tokenPath)")
-        return .unknown(rawValue)
+        return .unknown
     }
 
     // MARK: - Font Weight Mapping (Task 8.12)
@@ -419,10 +415,10 @@ struct TokensFileSource {
 
     // MARK: - $deprecated Parsing (Task 8.10)
 
-    private func parseDeprecated(_ value: Any?) -> ParsedToken.DeprecatedValue? {
+    private func parseDeprecated(_ value: JSONValue?) -> ParsedToken.DeprecatedValue? {
         guard let value else { return nil }
-        if let bool = value as? Bool { return .flag(bool) }
-        if let str = value as? String { return .message(str) }
+        if let bool = value.bool { return .flag(bool) }
+        if let str = value.string { return .message(str) }
         return nil
     }
 }

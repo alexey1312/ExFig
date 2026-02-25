@@ -1,11 +1,30 @@
 import Foundation
 import YYJSON
 
+/// DOM value for untyped JSON access via subscripts.
+public typealias JSONValue = YYJSONValue
+
+/// DOM object for key-value iteration.
+public typealias JSONObject = YYJSONObject
+
+/// DOM array for indexed/sequential access.
+public typealias JSONArray = YYJSONArray
+
 /// Centralized JSON codec based on YYJSON.
 ///
 /// High-performance replacement for Foundation JSON on all platforms.
 /// Use instead of direct JSONEncoder/JSONDecoder calls.
 public enum JSONCodec {
+    // MARK: - DOM Parsing
+
+    /// Parse JSON data into a DOM value for untyped access.
+    ///
+    /// Use when the JSON structure is too dynamic for Codable.
+    /// Access values via subscripts: `value["key"]?.string`, `.number`, `.array`.
+    public static func parseValue(from data: Data) throws -> JSONValue {
+        try JSONValue(data: data)
+    }
+
     // MARK: - Convenience Methods
 
     /// Encode value to JSON data.
