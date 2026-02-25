@@ -32,12 +32,12 @@
 
 ## 5. Dimension & Number Token Types (Phase 2)
 
-- [ ] 5.1 Extend `ColorsVariablesLoader` (or create `DesignTokensLoader`) to load Figma number variables with scopes
-- [ ] 5.2 Implement scope-to-type mapping: spatial scopes → `dimension`, unitless scopes → `number`
-- [ ] 5.3 Add `exportDimensions()` method: `$value` as object `{"value": N, "unit": "px"}` (default unit "px")
-- [ ] 5.4 Add `exportNumbers()` method: `$value` as plain JSON number
-- [ ] 5.5 Map `FONT_WEIGHT` scope to `number` type (not dimension)
-- [ ] 5.6 Write tests for dimension and number token export (verify object format for dimension, plain number for number)
+- [x] 5.1 Extend `ColorsVariablesLoader` (or create `DesignTokensLoader`) to load Figma number variables with scopes
+- [x] 5.2 Implement scope-to-type mapping: spatial scopes → `dimension`, unitless scopes → `number`
+- [x] 5.3 Add `exportDimensions()` method: `$value` as object `{"value": N, "unit": "px"}` (default unit "px")
+- [x] 5.4 Add `exportNumbers()` method: `$value` as plain JSON number
+- [x] 5.5 Map `FONT_WEIGHT` scope to `number` type (not dimension)
+- [x] 5.6 Write tests for dimension and number token export (verify object format for dimension, plain number for number)
 
 ## 6. Typography Decomposition (Phase 2)
 

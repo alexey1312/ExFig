@@ -757,4 +757,131 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertEqual(W3CTokensExporter.toW3CPath("Primitives/Blue/500"), "Primitives.Blue.500")
         XCTAssertEqual(W3CTokensExporter.toW3CPath("simple"), "simple")
     }
+
+    // MARK: - Dimension Token Export (Task 5.3)
+
+    func testExportDimensionToken() {
+        let exporter = W3CTokensExporter(version: .v2025)
+        let token = NumberToken(
+            name: "Spacing/Medium",
+            value: 16,
+            tokenType: .dimension,
+            description: "Medium spacing",
+            variableId: "VariableID:1:10",
+            fileId: "abc123"
+        )
+
+        let result = exporter.exportDimensions(tokens: [token])
+
+        let spacing = result["Spacing"] as? [String: Any]
+        let medium = spacing?["Medium"] as? [String: Any]
+        XCTAssertNotNil(medium)
+        XCTAssertEqual(medium?["$type"] as? String, "dimension")
+        XCTAssertEqual(medium?["$description"] as? String, "Medium spacing")
+
+        let value = medium?["$value"] as? [String: Any]
+        XCTAssertEqual(value?["value"] as? Double, 16)
+        XCTAssertEqual(value?["unit"] as? String, "px")
+
+        let extensions = medium?["$extensions"] as? [String: Any]
+        let exfig = extensions?["com.exfig"] as? [String: Any]
+        XCTAssertEqual(exfig?["variableId"] as? String, "VariableID:1:10")
+        XCTAssertEqual(exfig?["fileId"] as? String, "abc123")
+    }
+
+    func testExportDimensionTokenNoDescription() {
+        let exporter = W3CTokensExporter(version: .v2025)
+        let token = NumberToken(
+            name: "Radius/Small",
+            value: 4,
+            tokenType: .dimension,
+            description: nil,
+            variableId: "VariableID:1:11",
+            fileId: "abc123"
+        )
+
+        let result = exporter.exportDimensions(tokens: [token])
+        let radius = result["Radius"] as? [String: Any]
+        let small = radius?["Small"] as? [String: Any]
+        XCTAssertNil(small?["$description"])
+
+        let value = small?["$value"] as? [String: Any]
+        XCTAssertEqual(value?["value"] as? Double, 4)
+        XCTAssertEqual(value?["unit"] as? String, "px")
+    }
+
+    // MARK: - Number Token Export (Task 5.4)
+
+    func testExportNumberToken() {
+        let exporter = W3CTokensExporter(version: .v2025)
+        let token = NumberToken(
+            name: "Font/Weight/Bold",
+            value: 700,
+            tokenType: .number,
+            description: "Bold weight",
+            variableId: "VariableID:1:20",
+            fileId: "abc123"
+        )
+
+        let result = exporter.exportNumbers(tokens: [token])
+
+        let font = result["Font"] as? [String: Any]
+        let weight = font?["Weight"] as? [String: Any]
+        let bold = weight?["Bold"] as? [String: Any]
+        XCTAssertNotNil(bold)
+        XCTAssertEqual(bold?["$type"] as? String, "number")
+        XCTAssertEqual(bold?["$value"] as? Double, 700)
+        XCTAssertEqual(bold?["$description"] as? String, "Bold weight")
+    }
+
+    func testExportNumberTokenOpacity() {
+        let exporter = W3CTokensExporter(version: .v2025)
+        let token = NumberToken(
+            name: "Opacity/Disabled",
+            value: 0.5,
+            tokenType: .number,
+            description: nil,
+            variableId: "VariableID:1:21",
+            fileId: "abc123"
+        )
+
+        let result = exporter.exportNumbers(tokens: [token])
+        let opacity = result["Opacity"] as? [String: Any]
+        let disabled = opacity?["Disabled"] as? [String: Any]
+        XCTAssertEqual(disabled?["$type"] as? String, "number")
+        XCTAssertEqual(disabled?["$value"] as? Double, 0.5)
+        XCTAssertNil(disabled?["$description"])
+    }
+
+    // MARK: - Scope to Token Type Mapping (Tasks 5.2, 5.5)
+
+    func testScopesMappingDimension() {
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["WIDTH_HEIGHT"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["GAP"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["CORNER_RADIUS"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["FONT_SIZE"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["LINE_HEIGHT"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["LETTER_SPACING"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["STROKE_FLOAT"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["ALL_SCOPES"]), .dimension)
+    }
+
+    func testScopesMappingNumber() {
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["OPACITY"]), .number)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["FONT_WEIGHT"]), .number)
+    }
+
+    func testScopesMappingEmptyDefaultsToNumber() {
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType([]), .number)
+    }
+
+    func testScopesMappingMixedDimensionWins() {
+        // If any scope is dimension, the type is dimension
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["FONT_WEIGHT", "WIDTH_HEIGHT"]), .dimension)
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["OPACITY", "GAP"]), .dimension)
+    }
+
+    func testScopesMappingUnknownDefaultsToNumber() {
+        XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["UNKNOWN_SCOPE"]), .number)
+    }
 }

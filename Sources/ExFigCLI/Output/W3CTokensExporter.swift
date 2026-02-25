@@ -150,6 +150,54 @@ public struct W3CTokensExporter: Sendable {
         }
     }
 
+    // MARK: - Dimensions Export
+
+    /// Exports dimension tokens to W3C Design Tokens format.
+    /// Dimension `$value` is an object: `{"value": N, "unit": "px"}`.
+    public func exportDimensions(tokens: [NumberToken]) -> [String: Any] {
+        var result: [String: Any] = [:]
+        for token in tokens {
+            let path = nameToHierarchy(token.name)
+            var tokenValue: [String: Any] = [
+                "$type": "dimension",
+                "$value": ["value": token.value, "unit": "px"],
+            ]
+            if let description = token.description {
+                tokenValue["$description"] = description
+            }
+            tokenValue["$extensions"] = ["com.exfig": [
+                "variableId": token.variableId,
+                "fileId": token.fileId,
+            ]]
+            insertToken(into: &result, path: path, value: tokenValue)
+        }
+        return result
+    }
+
+    // MARK: - Numbers Export
+
+    /// Exports number tokens to W3C Design Tokens format.
+    /// Number `$value` is a plain JSON number.
+    public func exportNumbers(tokens: [NumberToken]) -> [String: Any] {
+        var result: [String: Any] = [:]
+        for token in tokens {
+            let path = nameToHierarchy(token.name)
+            var tokenValue: [String: Any] = [
+                "$type": "number",
+                "$value": token.value,
+            ]
+            if let description = token.description {
+                tokenValue["$description"] = description
+            }
+            tokenValue["$extensions"] = ["com.exfig": [
+                "variableId": token.variableId,
+                "fileId": token.fileId,
+            ]]
+            insertToken(into: &result, path: path, value: tokenValue)
+        }
+        return result
+    }
+
     // MARK: - JSON Serialization
 
     /// Serializes tokens to JSON data.

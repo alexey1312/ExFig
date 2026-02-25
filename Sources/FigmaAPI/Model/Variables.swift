@@ -63,6 +63,8 @@ public struct VariableValue: Codable, Sendable {
     public var id: String
     public var name: String
     public var variableCollectionId: String
+    public var resolvedType: String?
+    public var scopes: [String]?
     public var valuesByMode: [String: ValuesByMode]
     public var description: String
     public var deletedButReferenced: Bool?

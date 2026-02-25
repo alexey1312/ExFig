@@ -93,4 +93,7 @@ enum ExFigWarning: Sendable, Equatable {
 
     /// A color token references a deleted-but-referenced variable via alias.
     case deletedVariableAlias(tokenName: String, referencedName: String)
+
+    /// A number variable alias could not be resolved.
+    case unresolvedNumberAlias(tokenName: String)
 }
