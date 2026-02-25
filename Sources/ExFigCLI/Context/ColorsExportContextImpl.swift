@@ -57,6 +57,13 @@ struct ColorsExportContextImpl: ColorsExportContext {
 
     func loadColors(from source: ColorsSourceInput) async throws -> ColorsLoadOutput {
         if let tokensFilePath = source.tokensFilePath {
+            // Warn if mode-related fields are configured but will be ignored
+            if source.darkModeName != nil || source.lightHCModeName != nil || source.darkHCModeName != nil {
+                ui.warning(
+                    "Local tokens file provides single-mode colors only"
+                        + " — darkModeName/lightHCModeName/darkHCModeName will be ignored"
+                )
+            }
             return try loadColorsFromTokensFile(path: tokensFilePath, groupFilter: source.tokensFileGroupFilter)
         }
         return try await loadColorsFromFigma(source: source)

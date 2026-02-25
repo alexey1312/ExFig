@@ -179,8 +179,14 @@ final class ColorsVariablesLoader: Sendable {
         filter: String?,
         meta: VariablesEndpoint.Content,
         warnings: inout [ExFigWarning],
-        aliases: inout ColorAliases
+        aliases: inout ColorAliases,
+        depth: Int = 0
     ) {
+        guard depth < 10 else {
+            warnings.append(.circularColorAlias(tokenName: variable.name))
+            return
+        }
+
         if case let .color(color) = mode, doesColorMatchFilter(from: variable) {
             colorsArray.append(createColor(from: variable, color: color))
         } else if case let .variableAlias(variableAlias) = mode,
@@ -209,7 +215,8 @@ final class ColorsVariablesLoader: Sendable {
                 filter: filter,
                 meta: meta,
                 warnings: &warnings,
-                aliases: &aliases
+                aliases: &aliases,
+                depth: depth + 1
             )
         }
     }

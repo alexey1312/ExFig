@@ -921,12 +921,12 @@ final class W3CTokensExporterTests: XCTestCase {
             ),
         ])
 
-        // Merge all into unified output
+        // Merge all into unified output using production mergeTokens
         var unified: [String: Any] = [:]
-        deepMerge(from: colorTokens, into: &unified)
-        deepMerge(from: typographyTokens, into: &unified)
-        deepMerge(from: dimensionTokens, into: &unified)
-        deepMerge(from: numberTokens, into: &unified)
+        ExFigCommand.Download.DownloadTokens.mergeTokens(from: colorTokens, into: &unified)
+        ExFigCommand.Download.DownloadTokens.mergeTokens(from: typographyTokens, into: &unified)
+        ExFigCommand.Download.DownloadTokens.mergeTokens(from: dimensionTokens, into: &unified)
+        ExFigCommand.Download.DownloadTokens.mergeTokens(from: numberTokens, into: &unified)
 
         // Verify all token types present
         let brand = unified["Brand"] as? [String: Any]
@@ -948,21 +948,5 @@ final class W3CTokensExporterTests: XCTestCase {
         // Verify serialization succeeds
         let jsonData = try exporter.serializeToJSON(unified, compact: false)
         XCTAssertGreaterThan(jsonData.count, 0)
-    }
-
-    // MARK: - Helpers
-
-    private func deepMerge(from source: [String: Any], into target: inout [String: Any]) {
-        for (key, value) in source {
-            if let sourceDict = value as? [String: Any],
-               let targetDict = target[key] as? [String: Any]
-            {
-                var merged = targetDict
-                deepMerge(from: sourceDict, into: &merged)
-                target[key] = merged
-            } else {
-                target[key] = value
-            }
-        }
     }
 }

@@ -86,12 +86,16 @@ enum ParsedTokenValue {
 /// Parses W3C DTCG .tokens.json files into typed token models.
 ///
 /// Supports nested groups, `$type` inheritance, alias resolution,
-/// `$root`, `$extends`, and `$deprecated`.
+/// `$root`, and `$deprecated`.
+///
+/// Note: `$extends` is not currently implemented (requires cross-file merge).
 struct TokensFileSource {
     /// All parsed tokens indexed by dot-path (e.g., "Brand.Primary").
     private(set) var tokens: [String: ParsedToken] = [:]
     /// Warnings emitted during parsing (unsupported types, non-sRGB colors).
     private(set) var warnings: [String] = []
+    /// Whether `resolveAliases()` has been called.
+    private(set) var isResolved = false
 
     /// Unsupported W3C token types that emit warnings.
     private static let unsupportedTypes: Set<String> = [
@@ -127,7 +131,7 @@ struct TokensFileSource {
         return source
     }
 
-    // MARK: - Group Parsing (Task 8.2)
+    // MARK: - Group Parsing
 
     private mutating func parseGroup(
         json: JSONValue,
@@ -137,11 +141,15 @@ struct TokensFileSource {
         let groupType = json["$type"]?.string ?? inheritedType
         let groupDeprecated = parseDeprecated(json["$deprecated"])
 
-        // Handle $extends (Task 8.9)
-        // $extends is noted but actual merge requires the full document —
-        // we store it as metadata for post-processing.
+        // $extends is not currently implemented — requires cross-file merge.
+        if json["$extends"] != nil {
+            warnings
+                .append(
+                    "$extends is not yet supported at \(path.joined(separator: ".")) — referenced tokens may be missing"
+                )
+        }
 
-        // Handle $root token (Task 8.8)
+        // Handle group-as-token (group that also has its own $value)
         if json["$value"] != nil, !path.isEmpty {
             // This group itself is also a token (rare but valid)
             parseToken(json: json, path: path, inheritedType: groupType, groupDeprecated: groupDeprecated)
@@ -180,7 +188,7 @@ struct TokensFileSource {
         let description = json["$description"]?.string
         let deprecated = parseDeprecated(json["$deprecated"]) ?? groupDeprecated
 
-        // Check for unsupported types (Task 8.14)
+        // Check for unsupported types
         if let type, Self.unsupportedTypes.contains(type) {
             warnings.append("Unsupported token type '\(type)' at \(tokenPath) — skipped")
             return
@@ -246,7 +254,7 @@ struct TokensFileSource {
         return .unknown
     }
 
-    // MARK: - Color Parsing (Task 8.3)
+    // MARK: - Color Parsing
 
     private mutating func parseColorValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
         guard rawValue.object != nil else {
@@ -270,11 +278,19 @@ struct TokensFileSource {
             return .unknown
         }
 
-        let rgb = components.prefix(3).map { $0.number ?? 0 }
+        var rgb: [Double] = []
+        for (i, comp) in components.prefix(3).enumerated() {
+            if let num = comp.number {
+                rgb.append(num)
+            } else {
+                warnings.append("Non-numeric color component at index \(i) in \(tokenPath), defaulting to 0")
+                rgb.append(0)
+            }
+        }
         let alpha = rawValue["alpha"]?.number ?? 1.0
         let hex = rawValue["hex"]?.string
 
-        // Task 8.11: non-sRGB color space warning
+        // non-sRGB color space warning
         if colorSpace != "srgb" {
             warnings.append("Non-sRGB color space '\(colorSpace)' at \(tokenPath) — values used as-is")
         }
@@ -314,7 +330,7 @@ struct TokensFileSource {
         return ParsedTokenValue.ColorValue(colorSpace: "srgb", components: [r, g, b], alpha: a, hex: hex)
     }
 
-    // MARK: - Dimension Parsing (Task 8.4)
+    // MARK: - Dimension Parsing
 
     private mutating func parseDimensionValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
         guard rawValue.object != nil else {
@@ -335,7 +351,7 @@ struct TokensFileSource {
         return .dimension(ParsedTokenValue.DimensionValue(value: numericValue, unit: unit))
     }
 
-    // MARK: - Typography Parsing (Task 8.5)
+    // MARK: - Typography Parsing
 
     private mutating func parseTypographyValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
         guard rawValue.object != nil else {
@@ -343,12 +359,17 @@ struct TokensFileSource {
             return .unknown
         }
 
-        let fontFamily: [String] = if let arr = rawValue["fontFamily"]?.array {
-            arr.compactMap(\.string)
+        var fontFamily: [String] = []
+        if let arr = rawValue["fontFamily"]?.array {
+            fontFamily = arr.compactMap(\.string)
+            if fontFamily.count != arr.count {
+                let dropped = arr.count - fontFamily.count
+                warnings.append(
+                    "fontFamily array at \(tokenPath) contains \(dropped) non-string entries that were dropped"
+                )
+            }
         } else if let str = rawValue["fontFamily"]?.string {
-            [str]
-        } else {
-            []
+            fontFamily = [str]
         }
 
         var fontSize: ParsedTokenValue.DimensionValue?
@@ -388,13 +409,22 @@ struct TokensFileSource {
     // MARK: - Font Family Parsing
 
     private mutating func parseFontFamilyValue(_ rawValue: JSONValue, tokenPath: String) -> ParsedTokenValue {
-        if let arr = rawValue.array { return .fontFamily(arr.compactMap(\.string)) }
+        if let arr = rawValue.array {
+            let families = arr.compactMap(\.string)
+            if families.count != arr.count {
+                let dropped = arr.count - families.count
+                warnings.append(
+                    "fontFamily array at \(tokenPath) contains \(dropped) non-string entries that were dropped"
+                )
+            }
+            return .fontFamily(families)
+        }
         if let str = rawValue.string { return .fontFamily([str]) }
         warnings.append("Invalid fontFamily value at \(tokenPath)")
         return .unknown
     }
 
-    // MARK: - Font Weight Mapping (Task 8.12)
+    // MARK: - Font Weight Mapping
 
     private static let fontWeightMap: [String: Double] = [
         "thin": 100, "hairline": 100,
@@ -413,17 +443,18 @@ struct TokensFileSource {
         fontWeightMap[name.lowercased()]
     }
 
-    // MARK: - $deprecated Parsing (Task 8.10)
+    // MARK: - $deprecated Parsing
 
-    private func parseDeprecated(_ value: JSONValue?) -> ParsedToken.DeprecatedValue? {
+    private mutating func parseDeprecated(_ value: JSONValue?) -> ParsedToken.DeprecatedValue? {
         guard let value else { return nil }
         if let bool = value.bool { return .flag(bool) }
         if let str = value.string { return .message(str) }
+        warnings.append("Unexpected $deprecated value type (expected boolean or string)")
         return nil
     }
 }
 
-// MARK: - Alias Resolution (Task 8.7)
+// MARK: - Alias Resolution
 
 extension TokensFileSource {
     /// Resolves all aliases in the parsed tokens, detecting circular references.
@@ -434,6 +465,22 @@ extension TokensFileSource {
         for path in tokens.keys {
             try resolveAlias(path: path, resolved: &resolved, resolving: &resolving, chain: [])
         }
+
+        // Warn about aliases resolved to .unknown values
+        let unknownAfterResolve = tokens.filter {
+            if case .unknown = $0.value.value { return true }
+            return false
+        }
+        if !unknownAfterResolve.isEmpty {
+            let names = unknownAfterResolve.keys.sorted().prefix(5).joined(separator: ", ")
+            let more = unknownAfterResolve.count > 5 ? ", +\(unknownAfterResolve.count - 5) more" : ""
+            let count = unknownAfterResolve.count
+            warnings.append(
+                "\(count) token(s) have unparseable values and will be excluded from export: \(names)\(more)"
+            )
+        }
+
+        isResolved = true
     }
 
     private mutating func resolveAlias(
@@ -481,12 +528,14 @@ extension TokensFileSource {
     }
 }
 
-// MARK: - Model Mapping (Task 8.6)
+// MARK: - Model Mapping
 
 extension TokensFileSource {
     /// Converts parsed color tokens to ExFigCore Color models.
+    /// - Precondition: `resolveAliases()` must be called first.
     func toColors() -> [Color] {
-        tokens.compactMap { path, token -> Color? in
+        assert(isResolved, "resolveAliases() must be called before toColors()")
+        return tokens.compactMap { path, token -> Color? in
             guard case let .color(colorValue) = token.value else { return nil }
             guard colorValue.components.count >= 3 else { return nil }
 
@@ -502,15 +551,20 @@ extension TokensFileSource {
     }
 
     /// Converts parsed typography tokens to ExFigCore TextStyle models.
+    /// - Precondition: `resolveAliases()` must be called first.
     func toTextStyles() -> [TextStyle] {
-        tokens.compactMap { path, token -> TextStyle? in
+        assert(isResolved, "resolveAliases() must be called before toTextStyles()")
+        return tokens.compactMap { path, token -> TextStyle? in
             guard case let .typography(typo) = token.value else { return nil }
             guard !typo.fontFamily.isEmpty else { return nil }
+
+            // Default to 16px when fontSize is omitted (common in partial typography tokens)
+            let fontSize = typo.fontSize?.value ?? 16
 
             return TextStyle(
                 name: path.replacingOccurrences(of: ".", with: "/"),
                 fontName: typo.fontFamily[0],
-                fontSize: typo.fontSize?.value ?? 16,
+                fontSize: fontSize,
                 fontStyle: nil,
                 lineHeight: typo.lineHeight,
                 letterSpacing: typo.letterSpacing?.value ?? 0,
@@ -520,8 +574,10 @@ extension TokensFileSource {
     }
 
     /// Converts parsed dimension tokens to NumberToken models.
+    /// - Precondition: `resolveAliases()` must be called first.
     func toDimensionTokens() -> [NumberToken] {
-        tokens.compactMap { path, token -> NumberToken? in
+        assert(isResolved, "resolveAliases() must be called before toDimensionTokens()")
+        return tokens.compactMap { path, token -> NumberToken? in
             guard case let .dimension(dim) = token.value else { return nil }
 
             return NumberToken(
@@ -529,15 +585,17 @@ extension TokensFileSource {
                 value: dim.value,
                 tokenType: .dimension,
                 description: token.description,
-                variableId: "",
-                fileId: ""
+                variableId: nil,
+                fileId: nil
             )
         }
     }
 
     /// Converts parsed number tokens to NumberToken models.
+    /// - Precondition: `resolveAliases()` must be called first.
     func toNumberTokens() -> [NumberToken] {
-        tokens.compactMap { path, token -> NumberToken? in
+        assert(isResolved, "resolveAliases() must be called before toNumberTokens()")
+        return tokens.compactMap { path, token -> NumberToken? in
             guard case let .number(num) = token.value else { return nil }
 
             return NumberToken(
@@ -545,8 +603,8 @@ extension TokensFileSource {
                 value: num,
                 tokenType: .number,
                 description: token.description,
-                variableId: "",
-                fileId: ""
+                variableId: nil,
+                fileId: nil
             )
         }
     }

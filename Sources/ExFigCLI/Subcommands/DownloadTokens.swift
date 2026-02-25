@@ -46,9 +46,28 @@ extension ExFigCommand.Download {
             let exporter = W3CTokensExporter(version: jsonOptions.w3cVersion)
 
             var allTokens: [String: Any] = [:]
-            try await exportColors(client: client, exporter: exporter, into: &allTokens, ui: ui)
-            try await exportTypography(client: client, exporter: exporter, into: &allTokens, ui: ui)
-            try await exportNumbers(client: client, exporter: exporter, into: &allTokens, ui: ui)
+
+            if options.params.common?.variablesColors != nil {
+                try await exportColors(client: client, exporter: exporter, into: &allTokens, ui: ui)
+            } else {
+                ui.warning(.downloadTokensSectionSkipped(section: "colors"))
+            }
+
+            if options.params.figma != nil {
+                try await exportTypography(client: client, exporter: exporter, into: &allTokens, ui: ui)
+            } else {
+                ui.warning(.downloadTokensSectionSkipped(section: "typography"))
+            }
+
+            if options.params.common?.variablesColors != nil {
+                try await exportNumbers(client: client, exporter: exporter, into: &allTokens, ui: ui)
+            } else {
+                ui.warning(.downloadTokensSectionSkipped(section: "numbers"))
+            }
+
+            if allTokens.isEmpty {
+                throw ExFigError.custom(errorString: "No token sections configured for export. Check your config file.")
+            }
 
             let jsonData = try exporter.serializeToJSON(allTokens, compact: jsonOptions.compact)
             try jsonData.write(to: outputURL)
@@ -60,7 +79,9 @@ extension ExFigCommand.Download {
             client: Client, exporter: W3CTokensExporter,
             into allTokens: inout [String: Any], ui: TerminalUI
         ) async throws {
-            guard let variableParams = options.params.common?.variablesColors else { return }
+            guard let variableParams = options.params.common?.variablesColors else {
+                return
+            }
 
             let colorsResult = try await ui.withSpinner("Fetching colors...") {
                 let loader = ColorsVariablesLoader(client: client, variableParams: variableParams, filter: nil)
@@ -86,7 +107,9 @@ extension ExFigCommand.Download {
             client: Client, exporter: W3CTokensExporter,
             into allTokens: inout [String: Any], ui: TerminalUI
         ) async throws {
-            guard let figmaParams = options.params.figma else { return }
+            guard let figmaParams = options.params.figma else {
+                return
+            }
 
             let textStyles = try await ui.withSpinner("Fetching text styles...") {
                 let loader = TextStylesLoader(client: client, params: figmaParams)
@@ -100,7 +123,9 @@ extension ExFigCommand.Download {
             client: Client, exporter: W3CTokensExporter,
             into allTokens: inout [String: Any], ui: TerminalUI
         ) async throws {
-            guard let variableParams = options.params.common?.variablesColors else { return }
+            guard let variableParams = options.params.common?.variablesColors else {
+                return
+            }
 
             let result = try await ui.withSpinner("Fetching number variables...") {
                 let loader = NumberVariablesLoader(

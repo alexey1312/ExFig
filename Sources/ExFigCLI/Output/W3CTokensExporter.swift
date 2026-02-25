@@ -40,8 +40,7 @@ public struct W3CTokensExporter: Sendable {
 
     // MARK: - Color Hex Conversion
 
-    /// Converts RGBA color components (0.0-1.0) to 6-digit hex string (#RRGGBB).
-    /// Alpha is NOT encoded in the hex string (per v2025.10 spec: hex is always 6 digits).
+    /// Converts RGB color components (0.0-1.0) to 6-digit hex string (#RRGGBB).
     public func colorToHex(r: Double, g: Double, b: Double) -> String {
         let red = Int(round(r * 255))
         let green = Int(round(g * 255))
@@ -165,10 +164,12 @@ public struct W3CTokensExporter: Sendable {
             if let description = token.description {
                 tokenValue["$description"] = description
             }
-            tokenValue["$extensions"] = ["com.exfig": [
-                "variableId": token.variableId,
-                "fileId": token.fileId,
-            ]]
+            var exfigExt: [String: Any] = [:]
+            if let variableId = token.variableId { exfigExt["variableId"] = variableId }
+            if let fileId = token.fileId { exfigExt["fileId"] = fileId }
+            if !exfigExt.isEmpty {
+                tokenValue["$extensions"] = ["com.exfig": exfigExt]
+            }
             insertToken(into: &result, path: path, value: tokenValue)
         }
         return result
@@ -189,10 +190,12 @@ public struct W3CTokensExporter: Sendable {
             if let description = token.description {
                 tokenValue["$description"] = description
             }
-            tokenValue["$extensions"] = ["com.exfig": [
-                "variableId": token.variableId,
-                "fileId": token.fileId,
-            ]]
+            var exfigExt: [String: Any] = [:]
+            if let variableId = token.variableId { exfigExt["variableId"] = variableId }
+            if let fileId = token.fileId { exfigExt["fileId"] = fileId }
+            if !exfigExt.isEmpty {
+                tokenValue["$extensions"] = ["com.exfig": exfigExt]
+            }
             insertToken(into: &result, path: path, value: tokenValue)
         }
         return result
@@ -248,7 +251,7 @@ extension W3CTokensExporter {
             let path = nameToHierarchy(name)
             let colorAliases = aliases[name] ?? [:]
             let sortedModeColors = sortByModeOrder(modeColors)
-            let defaultEntry = sortedModeColors[0]
+            guard let defaultEntry = sortedModeColors.first else { continue }
             let defaultModeKey = nameToKey[defaultEntry.mode] ?? "light"
 
             var tokenValue: [String: Any] = ["$type": "color"]
@@ -356,21 +359,20 @@ extension W3CTokensExporter {
             insertToken(into: &tokens, path: path, value: tokenValue)
 
             // Sub-tokens
-            let basePath = path
 
             // fontFamily
             let fontFamilyToken: [String: Any] = [
                 "$type": "fontFamily",
                 "$value": [style.fontName],
             ]
-            insertToken(into: &tokens, path: basePath + ["fontFamily"], value: fontFamilyToken)
+            insertToken(into: &tokens, path: path + ["fontFamily"], value: fontFamilyToken)
 
             // fontSize
             let fontSizeToken: [String: Any] = [
                 "$type": "dimension",
                 "$value": ["value": style.fontSize, "unit": "px"],
             ]
-            insertToken(into: &tokens, path: basePath + ["fontSize"], value: fontSizeToken)
+            insertToken(into: &tokens, path: path + ["fontSize"], value: fontSizeToken)
 
             // lineHeight (only if set)
             if let lineHeight = style.lineHeight {
@@ -379,7 +381,7 @@ extension W3CTokensExporter {
                     "$type": "number",
                     "$value": ratio,
                 ]
-                insertToken(into: &tokens, path: basePath + ["lineHeight"], value: lineHeightToken)
+                insertToken(into: &tokens, path: path + ["lineHeight"], value: lineHeightToken)
             }
 
             // letterSpacing (only if non-zero)
@@ -388,7 +390,7 @@ extension W3CTokensExporter {
                     "$type": "dimension",
                     "$value": ["value": style.letterSpacing, "unit": "px"],
                 ]
-                insertToken(into: &tokens, path: basePath + ["letterSpacing"], value: letterSpacingToken)
+                insertToken(into: &tokens, path: path + ["letterSpacing"], value: letterSpacingToken)
             }
         }
 
@@ -519,7 +521,7 @@ extension W3CTokensExporter {
 // MARK: - Private Helpers
 
 extension W3CTokensExporter {
-    func insertToken(into dict: inout [String: Any], path: [String], value: [String: Any]) {
+    private func insertToken(into dict: inout [String: Any], path: [String], value: [String: Any]) {
         guard !path.isEmpty else { return }
 
         if path.count == 1 {
@@ -532,3 +534,5 @@ extension W3CTokensExporter {
         }
     }
 }
+
+// swiftlint:enable file_length

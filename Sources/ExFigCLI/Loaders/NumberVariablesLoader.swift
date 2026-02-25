@@ -15,8 +15,8 @@ public struct NumberToken: Sendable {
     public let value: Double
     public let tokenType: NumberTokenType
     public let description: String?
-    public let variableId: String
-    public let fileId: String
+    public let variableId: String?
+    public let fileId: String?
 }
 
 /// Loads FLOAT variables from Figma and classifies them as `dimension` or `number`
@@ -96,8 +96,16 @@ final class NumberVariablesLoader: Sendable {
     ) -> NumberToken? {
         guard let modeValue = variable.valuesByMode[modeId] else { return nil }
 
-        guard let resolvedValue = resolveValue(modeValue, meta: meta, modeId: modeId) else {
+        let result = resolveValue(modeValue, meta: meta, modeId: modeId)
+        let resolvedValue: Double
+        switch result {
+        case let .resolved(value):
+            resolvedValue = value
+        case .unresolved:
             warnings.append(.unresolvedNumberAlias(tokenName: variable.name))
+            return nil
+        case .depthExceeded:
+            warnings.append(.depthExceededNumberAlias(tokenName: variable.name))
             return nil
         }
 
@@ -112,14 +120,23 @@ final class NumberVariablesLoader: Sendable {
         )
     }
 
-    private func resolveValue(_ value: ValuesByMode, meta: VariablesMeta, modeId: String) -> Double? {
+    /// Result of resolving a number variable value.
+    private enum ResolveResult {
+        case resolved(Double)
+        case unresolved
+        case depthExceeded
+    }
+
+    private func resolveValue(
+        _ value: ValuesByMode, meta: VariablesMeta, modeId: String
+    ) -> ResolveResult {
         switch value {
         case let .number(num):
-            num
+            .resolved(num)
         case let .variableAlias(alias):
             resolveNumberAlias(alias: alias, meta: meta, modeId: modeId)
         default:
-            nil
+            .unresolved
         }
     }
 
@@ -128,29 +145,29 @@ final class NumberVariablesLoader: Sendable {
         meta: VariablesMeta,
         modeId: String,
         depth: Int = 0
-    ) -> Double? {
-        guard depth < 10 else { return nil }
-        guard let variable = meta.variables[alias.id] else { return nil }
-        guard variable.deletedButReferenced != true else { return nil }
+    ) -> ResolveResult {
+        guard depth < 10 else { return .depthExceeded }
+        guard let variable = meta.variables[alias.id] else { return .unresolved }
+        guard variable.deletedButReferenced != true else { return .unresolved }
 
         let collection = meta.variableCollections[variable.variableCollectionId]
         let resolvedModeId = collection?.modes.first(where: { $0.name == "Value" })?.modeId
             ?? collection?.defaultModeId
             ?? modeId
 
-        guard let value = variable.valuesByMode[resolvedModeId] else { return nil }
+        guard let value = variable.valuesByMode[resolvedModeId] else { return .unresolved }
 
         switch value {
         case let .number(num):
-            return num
+            return .resolved(num)
         case let .variableAlias(nextAlias):
             return resolveNumberAlias(alias: nextAlias, meta: meta, modeId: modeId, depth: depth + 1)
         default:
-            return nil
+            return .unresolved
         }
     }
 
-    // MARK: - Scope to Token Type Mapping (Tasks 5.2, 5.5)
+    // MARK: - Scope to Token Type Mapping
 
     /// Figma scopes that indicate a spatial/dimensional value (needs "px" unit).
     private static let dimensionScopes: Set<String> = [
@@ -176,20 +193,10 @@ final class NumberVariablesLoader: Sendable {
     /// Maps Figma variable scopes to W3C token type.
     ///
     /// If any scope is in `dimensionScopes`, the variable is a `dimension`.
-    /// If scopes contain only `numberScopes` entries, it's a `number`.
-    /// Empty or unknown scopes default to `number`.
+    /// Otherwise (number scopes, empty, or unknown) defaults to `number`.
     static func scopesToTokenType(_ scopes: [String]) -> NumberTokenType {
-        guard !scopes.isEmpty else { return .number }
-
-        // Check for explicit number-only scopes first
-        let hasNumberScope = scopes.contains(where: { numberScopes.contains($0) })
-        let hasDimensionScope = scopes.contains(where: { dimensionScopes.contains($0) })
-
-        if hasDimensionScope {
+        if scopes.contains(where: { dimensionScopes.contains($0) }) {
             return .dimension
-        }
-        if hasNumberScope {
-            return .number
         }
         return .number
     }

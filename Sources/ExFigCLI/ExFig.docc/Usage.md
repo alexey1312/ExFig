@@ -225,7 +225,7 @@ exfig download all -o ./tokens/
 
 | Option           | Short | Description                      | Default |
 | ---------------- | ----- | -------------------------------- | ------- |
-| `--output`       | `-o`  | Output file path (required)      | -       |
+| `--output`       | `-o`  | Output file path                 | varies  |
 | `--format`       | `-f`  | Output format: w3c, raw          | w3c     |
 | `--compact`      | -     | Output minified JSON             | false   |
 | `--asset-format` | -     | Image format: svg, png, pdf, jpg | svg     |

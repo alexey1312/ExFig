@@ -35,7 +35,6 @@ Exporter.export*(entries, platformConfig, context)
 | `TextStyle`     | Font, size, line height, letter spacing, text case, dynamic type style                     |
 | `AssetPair<T>`  | Groups up to 4 appearance variants: light, dark, lightHC, darkHC                           |
 | `AssetMetadata` | Figma node/file identifiers for cache and Code Connect                                     |
-| `NumberToken`   | Name, value, tokenType (.dimension/.number), description, Figma IDs                        |
 
 All conform to `Asset` protocol (`name: String`, `platform: Platform?`, `Hashable`, `Sendable`).
 
