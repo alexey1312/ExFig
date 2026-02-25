@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.2] - 2026-02-25
+
+### Bug Fixes
+
+- Validate and correct export-report proposal against codebase  by @alexey1312 in [#61](https://github.com/alexey1312/ExFig/pull/61)
+
+- **spec**: Align w3c-tokens-v2 proposal with DTCG v2025.10 specification  by @alexey1312 in [#62](https://github.com/alexey1312/ExFig/pull/62)
+
+- Warning by @alexey1312
+
+
+### Documentation
+
+- Add OpenSpec proposals for W3C tokens v2 and export report by @alexey1312
+
+
+### Features
+
+- **cli**: Add --report flag for structured JSON export reports  by @alexey1312 in [#66](https://github.com/alexey1312/ExFig/pull/66)
+
+- Add concurrency by @alexey1312
+
+
+### Miscellaneous Tasks
+
+- Migrate Homebrew tap from homebrew-exfig to homebrew-tap by @alexey1312
+
+
+### Styling
+
+- Fix markdown table alignment in openspec design docs  by @alexey1312 in [#65](https://github.com/alexey1312/ExFig/pull/65)
+
+
 ## [2.5.1] - 2026-02-23
 
 ### Bug Fixes
