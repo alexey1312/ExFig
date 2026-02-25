@@ -150,17 +150,7 @@ extension ExFigCommand.Download {
 
         /// Deep-merges source dictionary into target, preserving existing keys.
         static func mergeTokens(from source: [String: Any], into target: inout [String: Any]) {
-            for (key, value) in source {
-                if let sourceDict = value as? [String: Any],
-                   let targetDict = target[key] as? [String: Any]
-                {
-                    var merged = targetDict
-                    mergeTokens(from: sourceDict, into: &merged)
-                    target[key] = merged
-                } else {
-                    target[key] = value
-                }
-            }
+            W3CTokensExporter.mergeTokens(from: source, into: &target)
         }
     }
 }

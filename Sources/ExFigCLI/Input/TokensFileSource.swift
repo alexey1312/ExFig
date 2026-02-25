@@ -96,6 +96,8 @@ struct TokensFileSource {
     private(set) var warnings: [String] = []
     /// Whether `resolveAliases()` has been called.
     private(set) var isResolved = false
+    /// Number of aliases that were resolved during `resolveAliases()`.
+    private(set) var resolvedAliasCount = 0
 
     /// Unsupported W3C token types that emit warnings.
     private static let unsupportedTypes: Set<String> = [
@@ -462,6 +464,12 @@ extension TokensFileSource {
         var resolved: Set<String> = []
         var resolving: Set<String> = []
 
+        // Count aliases before resolution
+        resolvedAliasCount = tokens.values.filter {
+            if case .alias = $0.value { return true }
+            return false
+        }.count
+
         for path in tokens.keys {
             try resolveAlias(path: path, resolved: &resolved, resolving: &resolving, chain: [])
         }
@@ -607,6 +615,48 @@ extension TokensFileSource {
                 fileId: nil
             )
         }
+    }
+}
+
+// MARK: - Filtering & Statistics
+
+extension TokensFileSource {
+    /// Creates a new source containing only tokens whose path starts with the given group prefix.
+    func filteredByGroup(_ group: String) -> TokensFileSource {
+        let prefix = group + "."
+        var copy = self
+        copy.tokens = tokens.filter { $0.key.hasPrefix(prefix) || $0.key == group }
+        return copy
+    }
+
+    /// Creates a new source containing only tokens matching the given type string(s).
+    func filteredByTypes(_ types: Set<String>) -> TokensFileSource {
+        var copy = self
+        copy.tokens = tokens.filter { _, token in
+            guard let type = token.type else { return false }
+            return types.contains(type)
+        }
+        return copy
+    }
+
+    /// Returns token counts grouped by type, sorted descending by count.
+    func tokenCountsByType() -> [(type: String, count: Int)] {
+        var counts: [String: Int] = [:]
+        for (_, token) in tokens {
+            let type = token.type ?? "unknown"
+            counts[type, default: 0] += 1
+        }
+        return counts.sorted { $0.value > $1.value }.map { (type: $0.key, count: $0.value) }
+    }
+
+    /// Returns top-level group names with their total token counts, sorted descending.
+    func topLevelGroups() -> [(name: String, count: Int)] {
+        var groups: [String: Int] = [:]
+        for path in tokens.keys {
+            let firstComponent = path.split(separator: ".").first.map(String.init) ?? path
+            groups[firstComponent, default: 0] += 1
+        }
+        return groups.sorted { $0.value > $1.value }.map { (name: $0.key, count: $0.value) }
     }
 }
 

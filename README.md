@@ -217,15 +217,21 @@ exfig fetch -f FILE_ID -r "Images" -o ./images --format webp --webp-quality 90
 Supports all formats (PNG, SVG, PDF, JPEG, WebP), filtering (`--filter`), name conversion (`--name-style`), and dark
 mode variants (`--dark-mode-suffix`). Run `exfig fetch --help` for all options.
 
-### JSON Export (Design Tokens)
+### Design Tokens
 
 Export Figma data as [W3C Design Tokens](https://design-tokens.github.io/community-group/format/) (DTCG v2025 format):
 
 ```bash
+# Export from Figma API
 exfig download colors -o tokens/colors.json
 exfig download icons -o tokens/icons.json --asset-format svg
-exfig download tokens -o tokens/design-tokens.json    # Unified W3C tokens (colors + typography + dimensions + numbers)
+exfig download tokens -o tokens/design-tokens.json    # Unified (colors + typography + dimensions + numbers)
 exfig download all -o ./tokens/
+
+# Work with local .tokens.json files (no Figma token needed)
+exfig tokens info ./tokens.json                        # Inspect token file
+exfig tokens convert ./tokens.json -o out.json         # Re-export (filter/transform)
+exfig tokens convert ./tokens.json --group "Brand" --type color -o brand-colors.json
 ```
 
 Use `--w3c-version v1` for the legacy hex-string format. Colors entries also support `tokensFile` to import from a local
