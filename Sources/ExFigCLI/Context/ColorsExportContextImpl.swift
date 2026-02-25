@@ -56,6 +56,31 @@ struct ColorsExportContextImpl: ColorsExportContext {
     // MARK: - ColorsExportContext
 
     func loadColors(from source: ColorsSourceInput) async throws -> ColorsLoadOutput {
+        if let tokensFilePath = source.tokensFilePath {
+            return try loadColorsFromTokensFile(path: tokensFilePath, groupFilter: source.tokensFileGroupFilter)
+        }
+        return try await loadColorsFromFigma(source: source)
+    }
+
+    private func loadColorsFromTokensFile(path: String, groupFilter: String?) throws -> ColorsLoadOutput {
+        var source = try TokensFileSource.parse(fileAt: path)
+        try source.resolveAliases()
+
+        for warning in source.warnings {
+            ui.warning(warning)
+        }
+
+        var colors = source.toColors()
+
+        if let groupFilter {
+            let prefix = groupFilter.replacingOccurrences(of: ".", with: "/") + "/"
+            colors = colors.filter { $0.name.hasPrefix(prefix) }
+        }
+
+        return ColorsLoadOutput(light: colors)
+    }
+
+    private func loadColorsFromFigma(source: ColorsSourceInput) async throws -> ColorsLoadOutput {
         let variableParams = Common.VariablesColors(
             tokensFileId: source.tokensFileId,
             tokensCollectionName: source.tokensCollectionName,

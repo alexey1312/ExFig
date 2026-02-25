@@ -80,9 +80,9 @@
 
 ## 9. PKL Schema & Config Integration (Phase 3)
 
-- [ ] 9.1 Add `Common.TokensFile` class to `Sources/ExFigCLI/Resources/Schemas/Common.pkl` with `path` and optional `groupFilter`
-- [ ] 9.2 Run `./bin/mise run codegen:pkl` to regenerate Swift types
-- [ ] 9.3 Add bridging in platform entry files for new `tokensFile` source type
-- [ ] 9.4 Integrate `TokensFileSource` into export pipeline (bypass Figma API when tokensFile source used)
-- [ ] 9.5 Write tests for PKL config with tokensFile source (with and without groupFilter)
-- [ ] 9.6 Write integration test: export colors from .tokens.json without FIGMA_PERSONAL_TOKEN
+- [x] 9.1 Add `Common.TokensFile` class to `Sources/ExFigCLI/Resources/Schemas/Common.pkl` with `path` and optional `groupFilter`
+- [x] 9.2 Run `./bin/mise run codegen:pkl` to regenerate Swift types
+- [x] 9.3 Add bridging in platform entry files for new `tokensFile` source type
+- [x] 9.4 Integrate `TokensFileSource` into export pipeline (bypass Figma API when tokensFile source used)
+- [x] 9.5 Write tests for PKL config with tokensFile source (with and without groupFilter)
+- [x] 9.6 Write integration test: export colors from .tokens.json without FIGMA_PERSONAL_TOKEN

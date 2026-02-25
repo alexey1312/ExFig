@@ -35,6 +35,9 @@ extension Web {
         /// JSON filename for color data. Default: colors.json
         public var jsonFileName: String?
 
+        /// Local .tokens.json file source (bypasses Figma API when set).
+        public var tokensFile: Common.TokensFile?
+
         /// Figma file ID containing the variables.
         public var tokensFileId: String?
 
@@ -69,6 +72,7 @@ extension Web {
             cssFileName: String?,
             tsFileName: String?,
             jsonFileName: String?,
+            tokensFile: Common.TokensFile?,
             tokensFileId: String?,
             tokensCollectionName: String?,
             lightModeName: String?,
@@ -85,6 +89,7 @@ extension Web {
             self.cssFileName = cssFileName
             self.tsFileName = tsFileName
             self.jsonFileName = jsonFileName
+            self.tokensFile = tokensFile
             self.tokensFileId = tokensFileId
             self.tokensCollectionName = tokensCollectionName
             self.lightModeName = lightModeName

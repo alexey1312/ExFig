@@ -576,6 +576,106 @@ final class TokensFileSourceTests: XCTestCase {
             XCTFail("Expected typography value")
         }
     }
+
+    // MARK: - Integration: Export Colors from .tokens.json (Task 9.6)
+
+    func testExportColorsFromLocalTokensFile() throws {
+        // Create a temporary .tokens.json file
+        let json = """
+        {
+            "Brand": {
+                "$type": "color",
+                "Primary": {
+                    "$value": {
+                        "colorSpace": "srgb",
+                        "components": [0.2, 0.4, 0.8],
+                        "alpha": 1.0,
+                        "hex": "#3366CC"
+                    },
+                    "$description": "Brand primary color"
+                },
+                "Secondary": {
+                    "$value": {
+                        "colorSpace": "srgb",
+                        "components": [0.8, 0.2, 0.4],
+                        "alpha": 0.9
+                    }
+                }
+            },
+            "Semantic": {
+                "$type": "color",
+                "Background": {
+                    "$value": "{Brand.Primary}"
+                }
+            }
+        }
+        """
+
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempFile = tempDir.appendingPathComponent("test-colors-\(UUID().uuidString).tokens.json")
+        try Data(json.utf8).write(to: tempFile)
+        defer { try? FileManager.default.removeItem(at: tempFile) }
+
+        // Parse and resolve aliases — no Figma API needed
+        var source = try TokensFileSource.parse(fileAt: tempFile.path)
+        try source.resolveAliases()
+
+        // Convert to ExFigCore Color models
+        let colors = source.toColors()
+
+        XCTAssertEqual(colors.count, 3)
+
+        let primary = try XCTUnwrap(colors.first(where: { $0.name == "Brand/Primary" }))
+        XCTAssertEqual(primary.red, 0.2, accuracy: 0.001)
+        XCTAssertEqual(primary.green, 0.4, accuracy: 0.001)
+        XCTAssertEqual(primary.blue, 0.8, accuracy: 0.001)
+        XCTAssertEqual(primary.alpha, 1.0)
+
+        let secondary = try XCTUnwrap(colors.first(where: { $0.name == "Brand/Secondary" }))
+        XCTAssertEqual(secondary.alpha, 0.9, accuracy: 0.001)
+
+        // Alias resolved to Brand.Primary's color value
+        let background = try XCTUnwrap(colors.first(where: { $0.name == "Semantic/Background" }))
+        XCTAssertEqual(background.red, 0.2, accuracy: 0.001)
+        XCTAssertEqual(background.green, 0.4, accuracy: 0.001)
+        XCTAssertEqual(background.blue, 0.8, accuracy: 0.001)
+    }
+
+    func testExportColorsWithGroupFilter() throws {
+        let json = """
+        {
+            "Brand": {
+                "$type": "color",
+                "Primary": {
+                    "$value": { "colorSpace": "srgb", "components": [1, 0, 0] }
+                }
+            },
+            "System": {
+                "$type": "color",
+                "Error": {
+                    "$value": { "colorSpace": "srgb", "components": [0.8, 0, 0] }
+                }
+            }
+        }
+        """
+
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempFile = tempDir.appendingPathComponent("test-filter-\(UUID().uuidString).tokens.json")
+        try Data(json.utf8).write(to: tempFile)
+        defer { try? FileManager.default.removeItem(at: tempFile) }
+
+        var source = try TokensFileSource.parse(fileAt: tempFile.path)
+        try source.resolveAliases()
+
+        let allColors = source.toColors()
+        XCTAssertEqual(allColors.count, 2)
+
+        // Apply group filter — only "Brand" group
+        let prefix = "Brand".replacingOccurrences(of: ".", with: "/") + "/"
+        let filtered = allColors.filter { $0.name.hasPrefix(prefix) }
+        XCTAssertEqual(filtered.count, 1)
+        XCTAssertEqual(filtered.first?.name, "Brand/Primary")
+    }
 }
 
 // swiftlint:enable file_length type_body_length

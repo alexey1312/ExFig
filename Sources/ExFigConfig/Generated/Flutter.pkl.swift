@@ -32,6 +32,9 @@ extension Flutter {
         /// Class name for generated colors.
         public var className: String?
 
+        /// Local .tokens.json file source (bypasses Figma API when set).
+        public var tokensFile: Common.TokensFile?
+
         /// Figma file ID containing the variables.
         public var tokensFileId: String?
 
@@ -63,6 +66,7 @@ extension Flutter {
             templatesPath: String?,
             output: String?,
             className: String?,
+            tokensFile: Common.TokensFile?,
             tokensFileId: String?,
             tokensCollectionName: String?,
             lightModeName: String?,
@@ -76,6 +80,7 @@ extension Flutter {
             self.templatesPath = templatesPath
             self.output = output
             self.className = className
+            self.tokensFile = tokensFile
             self.tokensFileId = tokensFileId
             self.tokensCollectionName = tokensCollectionName
             self.lightModeName = lightModeName

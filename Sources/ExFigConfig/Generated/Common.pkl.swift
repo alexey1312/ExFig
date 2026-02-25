@@ -4,6 +4,8 @@ import PklSwift
 public enum Common {}
 
 public protocol Common_VariablesSource: Common_NameProcessing {
+    var tokensFile: Common.TokensFile? { get }
+
     var tokensFileId: String? { get }
 
     var tokensCollectionName: String? { get }
@@ -74,6 +76,9 @@ extension Common {
     public struct VariablesSourceImpl: VariablesSource {
         public static let registeredIdentifier: String = "Common#VariablesSource"
 
+        /// Local .tokens.json file source (bypasses Figma API when set).
+        public var tokensFile: TokensFile?
+
         /// Figma file ID containing the variables.
         public var tokensFileId: String?
 
@@ -102,6 +107,7 @@ extension Common {
         public var nameReplaceRegexp: String?
 
         public init(
+            tokensFile: TokensFile?,
             tokensFileId: String?,
             tokensCollectionName: String?,
             lightModeName: String?,
@@ -112,6 +118,7 @@ extension Common {
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
+            self.tokensFile = tokensFile
             self.tokensFileId = tokensFileId
             self.tokensCollectionName = tokensCollectionName
             self.lightModeName = lightModeName
@@ -124,21 +131,20 @@ extension Common {
         }
     }
 
-    public typealias NameProcessing = Common_NameProcessing
+    /// Local W3C DTCG .tokens.json file source.
+    /// When set on a colors entry, bypasses Figma API and reads tokens from a local file.
+    public struct TokensFile: PklRegisteredType, Decodable, Hashable, Sendable {
+        public static let registeredIdentifier: String = "Common#TokensFile"
 
-    /// Name validation and transformation configuration.
-    public struct NameProcessingImpl: NameProcessing {
-        public static let registeredIdentifier: String = "Common#NameProcessing"
+        /// Path to the .tokens.json file.
+        public var path: String
 
-        /// Regex pattern for validating/capturing names.
-        public var nameValidateRegexp: String?
+        /// Optional dot-path prefix to filter tokens (e.g., "Brand.Colors").
+        public var groupFilter: String?
 
-        /// Replacement pattern using captured groups.
-        public var nameReplaceRegexp: String?
-
-        public init(nameValidateRegexp: String?, nameReplaceRegexp: String?) {
-            self.nameValidateRegexp = nameValidateRegexp
-            self.nameReplaceRegexp = nameReplaceRegexp
+        public init(path: String, groupFilter: String?) {
+            self.path = path
+            self.groupFilter = groupFilter
         }
     }
 
@@ -178,6 +184,24 @@ extension Common {
         public init(enabled: Bool?, path: String?) {
             self.enabled = enabled
             self.path = path
+        }
+    }
+
+    public typealias NameProcessing = Common_NameProcessing
+
+    /// Name validation and transformation configuration.
+    public struct NameProcessingImpl: NameProcessing {
+        public static let registeredIdentifier: String = "Common#NameProcessing"
+
+        /// Regex pattern for validating/capturing names.
+        public var nameValidateRegexp: String?
+
+        /// Replacement pattern using captured groups.
+        public var nameReplaceRegexp: String?
+
+        public init(nameValidateRegexp: String?, nameReplaceRegexp: String?) {
+            self.nameValidateRegexp = nameValidateRegexp
+            self.nameReplaceRegexp = nameReplaceRegexp
         }
     }
 

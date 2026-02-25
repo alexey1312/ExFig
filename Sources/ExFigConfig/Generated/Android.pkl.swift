@@ -99,6 +99,9 @@ extension Android {
         /// Theme attributes configuration.
         public var themeAttributes: ThemeAttributes?
 
+        /// Local .tokens.json file source (bypasses Figma API when set).
+        public var tokensFile: Common.TokensFile?
+
         /// Figma file ID containing the variables.
         public var tokensFileId: String?
 
@@ -135,6 +138,7 @@ extension Android {
             composePackageName: String?,
             colorKotlin: String?,
             themeAttributes: ThemeAttributes?,
+            tokensFile: Common.TokensFile?,
             tokensFileId: String?,
             tokensCollectionName: String?,
             lightModeName: String?,
@@ -153,6 +157,7 @@ extension Android {
             self.composePackageName = composePackageName
             self.colorKotlin = colorKotlin
             self.themeAttributes = themeAttributes
+            self.tokensFile = tokensFile
             self.tokensFileId = tokensFileId
             self.tokensCollectionName = tokensCollectionName
             self.lightModeName = lightModeName

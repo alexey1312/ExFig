@@ -86,6 +86,9 @@ extension iOS {
         /// Example: "Color.{name}" → "Color.backgroundAccent"
         public var codeSyntaxTemplate: String?
 
+        /// Local .tokens.json file source (bypasses Figma API when set).
+        public var tokensFile: Common.TokensFile?
+
         /// Figma file ID containing the variables.
         public var tokensFileId: String?
 
@@ -124,6 +127,7 @@ extension iOS {
             templatesPath: String?,
             syncCodeSyntax: Bool?,
             codeSyntaxTemplate: String?,
+            tokensFile: Common.TokensFile?,
             tokensFileId: String?,
             tokensCollectionName: String?,
             lightModeName: String?,
@@ -144,6 +148,7 @@ extension iOS {
             self.templatesPath = templatesPath
             self.syncCodeSyntax = syncCodeSyntax
             self.codeSyntaxTemplate = codeSyntaxTemplate
+            self.tokensFile = tokensFile
             self.tokensFileId = tokensFileId
             self.tokensCollectionName = tokensCollectionName
             self.lightModeName = lightModeName
