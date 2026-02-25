@@ -129,3 +129,28 @@ jobs:
       - name: Run tests
         # Build tests separately to avoid hangs from concurrent build + test execution
         run: swift test --skip-build --parallel 2>&1 | xcsift
+
+  build-windows:
+    name: Build (Windows)
+    runs-on: windows-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Swift
+        uses: compnerd/gha-setup-swift@v0.3.0
+        with:
+          branch: swift-6.3-branch
+          tag: 6.3-DEVELOPMENT-SNAPSHOT-2026-02-21-a
+
+      - name: Swift version
+        run: swift --version
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build (Debug)
+        run: swift build
+
+      - name: Build (Release)
+        run: swift build -c release

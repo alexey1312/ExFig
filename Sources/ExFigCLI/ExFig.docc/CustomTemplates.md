@@ -335,6 +335,7 @@ images: [{ componentName: "HeroBanner", fileName: "hero_banner" }]
 {% endif %}
 ```
 
+
 ## Jinja2 Syntax Reference
 
 ### Variables
