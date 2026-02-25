@@ -58,40 +58,7 @@ extension ExFigCommand.Tokens {
 
             // Export
             let exporter = W3CTokensExporter(version: w3cVersion)
-            var allTokens: [String: Any] = [:]
-
-            let colors = source.toColors()
-            if !colors.isEmpty {
-                let colorsByMode = ["Default": colors]
-                let colorTokens = exporter.exportColors(colorsByMode: colorsByMode)
-                W3CTokensExporter.mergeTokens(from: colorTokens, into: &allTokens)
-            }
-
-            let textStyles = source.toTextStyles()
-            if !textStyles.isEmpty {
-                W3CTokensExporter.mergeTokens(
-                    from: exporter.exportTypography(textStyles: textStyles),
-                    into: &allTokens
-                )
-            }
-
-            let dimensions = source.toDimensionTokens()
-            if !dimensions.isEmpty {
-                W3CTokensExporter.mergeTokens(
-                    from: exporter.exportDimensions(tokens: dimensions),
-                    into: &allTokens
-                )
-            }
-
-            let numbers = source.toNumberTokens()
-            if !numbers.isEmpty {
-                W3CTokensExporter.mergeTokens(
-                    from: exporter.exportNumbers(tokens: numbers),
-                    into: &allTokens
-                )
-            }
-
-            // Serialize
+            let allTokens = exporter.exportAll(from: source)
             let jsonData = try exporter.serializeToJSON(allTokens, compact: compact)
 
             if let outputPath = output {
@@ -99,9 +66,8 @@ extension ExFigCommand.Tokens {
                 try jsonData.write(to: outputURL)
                 ui.success("Exported \(source.tokens.count) tokens to \(outputPath)")
             } else {
-                if let jsonString = String(data: jsonData, encoding: .utf8) {
-                    print(jsonString)
-                }
+                FileHandle.standardOutput.write(jsonData)
+                FileHandle.standardOutput.write(Data("\n".utf8))
             }
         }
     }

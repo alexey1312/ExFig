@@ -160,9 +160,9 @@ final class TokensInfoTests: XCTestCase {
         """.utf8
 
         var source = try TokensFileSource.parse(data: Data(json))
-        XCTAssertEqual(source.resolvedAliasCount, 0) // not resolved yet
+        XCTAssertEqual(source.aliasCount, 0) // not resolved yet
         try source.resolveAliases()
-        XCTAssertEqual(source.resolvedAliasCount, 2)
+        XCTAssertEqual(source.aliasCount, 2)
     }
 
     func testEmptyFile() throws {

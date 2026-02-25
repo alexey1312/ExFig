@@ -96,8 +96,8 @@ struct TokensFileSource {
     private(set) var warnings: [String] = []
     /// Whether `resolveAliases()` has been called.
     private(set) var isResolved = false
-    /// Number of aliases that were resolved during `resolveAliases()`.
-    private(set) var resolvedAliasCount = 0
+    /// Number of alias tokens found during `resolveAliases()`.
+    private(set) var aliasCount = 0
 
     /// Unsupported W3C token types that emit warnings.
     private static let unsupportedTypes: Set<String> = [
@@ -465,7 +465,7 @@ extension TokensFileSource {
         var resolving: Set<String> = []
 
         // Count aliases before resolution
-        resolvedAliasCount = tokens.values.filter {
+        aliasCount = tokens.values.filter {
             if case .alias = $0.value { return true }
             return false
         }.count
@@ -656,7 +656,8 @@ extension TokensFileSource {
             let firstComponent = path.split(separator: ".").first.map(String.init) ?? path
             groups[firstComponent, default: 0] += 1
         }
-        return groups.sorted { $0.value > $1.value }.map { (name: $0.key, count: $0.value) }
+        return groups.sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
+            .map { (name: $0.key, count: $0.value) }
     }
 }
 

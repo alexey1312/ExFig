@@ -4,40 +4,6 @@ import Foundation
 import XCTest
 
 final class TokensConvertTests: XCTestCase {
-    /// Exports all token types from a resolved source and returns merged W3C dict.
-    private func exportAllTokens(
-        from source: TokensFileSource,
-        version: W3CVersion = .v2025
-    ) throws -> [String: Any] {
-        let exporter = W3CTokensExporter(version: version)
-        var allTokens: [String: Any] = [:]
-
-        let colors = source.toColors()
-        if !colors.isEmpty {
-            let colorTokens = exporter.exportColors(colorsByMode: ["Default": colors])
-            W3CTokensExporter.mergeTokens(from: colorTokens, into: &allTokens)
-        }
-        let textStyles = source.toTextStyles()
-        if !textStyles.isEmpty {
-            W3CTokensExporter.mergeTokens(
-                from: exporter.exportTypography(textStyles: textStyles), into: &allTokens
-            )
-        }
-        let dimensions = source.toDimensionTokens()
-        if !dimensions.isEmpty {
-            W3CTokensExporter.mergeTokens(
-                from: exporter.exportDimensions(tokens: dimensions), into: &allTokens
-            )
-        }
-        let numbers = source.toNumberTokens()
-        if !numbers.isEmpty {
-            W3CTokensExporter.mergeTokens(
-                from: exporter.exportNumbers(tokens: numbers), into: &allTokens
-            )
-        }
-        return allTokens
-    }
-
     // MARK: - Full Re-Export
 
     func testFullReExportProducesValidW3CJSON() throws {
@@ -64,7 +30,7 @@ final class TokensConvertTests: XCTestCase {
         var source = try TokensFileSource.parse(data: Data(json))
         try source.resolveAliases()
 
-        let allTokens = try exportAllTokens(from: source)
+        let allTokens = W3CTokensExporter(version: .v2025).exportAll(from: source)
         let exporter = W3CTokensExporter(version: .v2025)
         let jsonData = try exporter.serializeToJSON(allTokens, compact: false)
         let parsed = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
@@ -157,6 +123,41 @@ final class TokensConvertTests: XCTestCase {
         XCTAssertNotNil(filtered.tokens["Primary"])
         XCTAssertNotNil(filtered.tokens["Small"])
         XCTAssertNil(filtered.tokens["Weight"])
+    }
+
+    // MARK: - Combined Filters
+
+    func testGroupAndTypeFilterCombined() throws {
+        let json = """
+        {
+            "Brand": {
+                "Primary": {
+                    "$type": "color",
+                    "$value": { "colorSpace": "srgb", "components": [1, 0, 0] }
+                },
+                "Radius": {
+                    "$type": "dimension",
+                    "$value": { "value": 8, "unit": "px" }
+                }
+            },
+            "System": {
+                "Error": {
+                    "$type": "color",
+                    "$value": { "colorSpace": "srgb", "components": [0.8, 0, 0] }
+                }
+            }
+        }
+        """.utf8
+
+        var source = try TokensFileSource.parse(data: Data(json))
+        try source.resolveAliases()
+
+        // Group filter first, then type filter — should only get Brand colors
+        let filtered = source.filteredByGroup("Brand").filteredByTypes(["color"])
+        XCTAssertEqual(filtered.tokens.count, 1)
+        XCTAssertNotNil(filtered.tokens["Brand.Primary"])
+        XCTAssertNil(filtered.tokens["Brand.Radius"])
+        XCTAssertNil(filtered.tokens["System.Error"])
     }
 
     // MARK: - W3C Version

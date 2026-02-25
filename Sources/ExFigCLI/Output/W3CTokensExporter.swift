@@ -518,6 +518,33 @@ extension W3CTokensExporter {
     }
 }
 
+// MARK: - Export from TokensFileSource
+
+extension W3CTokensExporter {
+    /// Exports all token types from a resolved `TokensFileSource` into a merged W3C dictionary.
+    func exportAll(from source: TokensFileSource) -> [String: Any] {
+        var allTokens: [String: Any] = [:]
+
+        let colors = source.toColors()
+        if !colors.isEmpty {
+            Self.mergeTokens(from: exportColors(colorsByMode: ["Default": colors]), into: &allTokens)
+        }
+        let textStyles = source.toTextStyles()
+        if !textStyles.isEmpty {
+            Self.mergeTokens(from: exportTypography(textStyles: textStyles), into: &allTokens)
+        }
+        let dimensions = source.toDimensionTokens()
+        if !dimensions.isEmpty {
+            Self.mergeTokens(from: exportDimensions(tokens: dimensions), into: &allTokens)
+        }
+        let numbers = source.toNumberTokens()
+        if !numbers.isEmpty {
+            Self.mergeTokens(from: exportNumbers(tokens: numbers), into: &allTokens)
+        }
+        return allTokens
+    }
+}
+
 // MARK: - Token Merging
 
 extension W3CTokensExporter {

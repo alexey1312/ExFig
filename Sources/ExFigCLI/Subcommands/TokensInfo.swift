@@ -1,4 +1,5 @@
 import ArgumentParser
+import ExFigCore
 import Foundation
 
 extension ExFigCommand.Tokens {
@@ -62,9 +63,9 @@ extension ExFigCommand.Tokens {
                 }
             }
 
-            if source.resolvedAliasCount > 0 {
+            if source.aliasCount > 0 {
                 ui.info("")
-                ui.info("Aliases: \(source.resolvedAliasCount) resolved")
+                ui.info("Aliases: \(source.aliasCount) resolved")
             }
 
             if !source.warnings.isEmpty {
@@ -78,35 +79,30 @@ extension ExFigCommand.Tokens {
         // MARK: - JSON Output
 
         private func printJSON(source: TokensFileSource) throws {
-            let countsByType = source.tokenCountsByType()
-            let groups = source.topLevelGroups()
-
-            var result: [String: Any] = [
-                "file": file,
-                "totalTokens": source.tokens.count,
-                "aliases": source.resolvedAliasCount,
-                "warnings": source.warnings,
-            ]
-
-            var typeCounts: [String: Int] = [:]
-            for entry in countsByType {
-                typeCounts[entry.type] = entry.count
-            }
-            result["types"] = typeCounts
-
-            var groupCounts: [String: Int] = [:]
-            for group in groups {
-                groupCounts[group.name] = group.count
-            }
-            result["groups"] = groupCounts
-
-            let jsonData = try JSONSerialization.data(
-                withJSONObject: result,
-                options: [.prettyPrinted, .sortedKeys]
+            let report = TokensInfoReport(
+                file: file,
+                totalTokens: source.tokens.count,
+                aliases: source.aliasCount,
+                types: Dictionary(
+                    uniqueKeysWithValues: source.tokenCountsByType().map { ($0.type, $0.count) }
+                ),
+                groups: Dictionary(
+                    uniqueKeysWithValues: source.topLevelGroups().map { ($0.name, $0.count) }
+                ),
+                warnings: source.warnings
             )
-            if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print(jsonString)
-            }
+            let jsonData = try JSONCodec.encodePrettySorted(report)
+            FileHandle.standardOutput.write(jsonData)
+            FileHandle.standardOutput.write(Data("\n".utf8))
         }
     }
+}
+
+private struct TokensInfoReport: Codable {
+    let file: String
+    let totalTokens: Int
+    let aliases: Int
+    let types: [String: Int]
+    let groups: [String: Int]
+    let warnings: [String]
 }
