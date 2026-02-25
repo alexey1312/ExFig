@@ -92,7 +92,8 @@ let package = Package(
             name: "JinjaSupport",
             dependencies: [
                 .product(name: "Jinja", package: "swift-jinja"),
-            ]
+            ],
+            exclude: ["CLAUDE.md", "AGENTS.md"]
         ),
 
         // Exports resources to Xcode project
