@@ -17,9 +17,16 @@ final class ColorsVariablesLoader: Sendable {
         self.filter = filter
     }
 
+    /// Per-color-per-mode alias paths: colorName → mode key → referenced variable name.
+    /// Mode keys: "light", "dark", "lightHC", "darkHC".
+    typealias ColorAliases = [String: [String: String]]
+
     struct LoadResult: Sendable {
         let output: ColorsLoaderOutput
         let warnings: [ExFigWarning]
+        let aliases: ColorAliases
+        let descriptions: [String: String]
+        let metadata: [String: ColorTokenMetadata]
     }
 
     func load() async throws -> LoadResult {
@@ -33,18 +40,44 @@ final class ColorsVariablesLoader: Sendable {
         guard let tokenCollection = meta.variableCollections.first(where: { $0.value.name == tokensCollectionName })
         else { throw ExFigError.custom(errorString: "tokensCollectionName not found") }
 
+        let modeIds = extractModeIds(from: tokenCollection.value)
+
+        var descriptions: [String: String] = [:]
+        var tokenMetadata: [String: ColorTokenMetadata] = [:]
+
         let variables: [Variable] = tokenCollection.value.variableIds.compactMap { tokenId in
             guard let variableMeta = meta.variables[tokenId] else { return nil }
             guard variableMeta.deletedButReferenced != true else { return nil }
-            return mapVariableMetaToVariable(
-                variableMeta: variableMeta,
-                modeIds: extractModeIds(from: tokenCollection.value)
+
+            // Collect description and metadata
+            let desc = variableMeta.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !desc.isEmpty {
+                descriptions[variableMeta.name] = desc
+            }
+            tokenMetadata[variableMeta.name] = ColorTokenMetadata(
+                variableId: variableMeta.id,
+                fileId: tokensFileId
             )
+
+            return mapVariableMetaToVariable(variableMeta: variableMeta, modeIds: modeIds)
         }
 
         var warnings: [ExFigWarning] = []
-        let output = mapVariablesToColorOutput(variables: variables, meta: meta, warnings: &warnings)
-        return LoadResult(output: output, warnings: warnings)
+        var aliases: ColorAliases = [:]
+        let output = mapVariablesToColorOutput(
+            variables: variables,
+            meta: meta,
+            warnings: &warnings,
+            aliases: &aliases
+        )
+
+        return LoadResult(
+            output: output,
+            warnings: warnings,
+            aliases: aliases,
+            descriptions: descriptions,
+            metadata: tokenMetadata
+        )
     }
 
     private func loadVariables(fileId: String) async throws -> VariablesEndpoint.Content {
@@ -84,10 +117,13 @@ final class ColorsVariablesLoader: Sendable {
         return Variable(name: variableMeta.name, description: variableMeta.description, valuesByMode: values)
     }
 
+    // swiftlint:disable function_parameter_count
+
     private func mapVariablesToColorOutput(
         variables: [Variable],
         meta: VariablesEndpoint.Content,
-        warnings: inout [ExFigWarning]
+        warnings: inout [ExFigWarning],
+        aliases: inout ColorAliases
     ) -> ColorsLoaderOutput {
         var colorOutput = Colors()
         for variable in variables {
@@ -95,46 +131,55 @@ final class ColorsVariablesLoader: Sendable {
                 variable: variable,
                 mode: variable.valuesByMode.light,
                 colorsArray: &colorOutput.lightColors,
+                modeKey: "light",
                 filter: filter,
                 meta: meta,
-                warnings: &warnings
+                warnings: &warnings,
+                aliases: &aliases
             )
             handleColorMode(
                 variable: variable,
                 mode: variable.valuesByMode.dark,
                 colorsArray: &colorOutput.darkColors,
+                modeKey: "dark",
                 filter: filter,
                 meta: meta,
-                warnings: &warnings
+                warnings: &warnings,
+                aliases: &aliases
             )
             handleColorMode(
                 variable: variable,
                 mode: variable.valuesByMode.lightHC,
                 colorsArray: &colorOutput.lightHCColors,
+                modeKey: "lightHC",
                 filter: filter,
                 meta: meta,
-                warnings: &warnings
+                warnings: &warnings,
+                aliases: &aliases
             )
             handleColorMode(
                 variable: variable,
                 mode: variable.valuesByMode.darkHC,
                 colorsArray: &colorOutput.darkHCColors,
+                modeKey: "darkHC",
                 filter: filter,
                 meta: meta,
-                warnings: &warnings
+                warnings: &warnings,
+                aliases: &aliases
             )
         }
         return (colorOutput.lightColors, colorOutput.darkColors, colorOutput.lightHCColors, colorOutput.darkHCColors)
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func handleColorMode(
         variable: Variable,
         mode: ValuesByMode?,
         colorsArray: inout [Color],
+        modeKey: String,
         filter: String?,
         meta: VariablesEndpoint.Content,
-        warnings: inout [ExFigWarning]
+        warnings: inout [ExFigWarning],
+        aliases: inout ColorAliases
     ) {
         if case let .color(color) = mode, doesColorMatchFilter(from: variable) {
             colorsArray.append(createColor(from: variable, color: color))
@@ -149,6 +194,10 @@ final class ColorsVariablesLoader: Sendable {
                 ))
                 return
             }
+
+            // Record the alias path (referenced variable name)
+            aliases[variable.name, default: [:]][modeKey] = variableMeta.name
+
             let modeId = variableCollectionId.modes.first(where: {
                 $0.name == variableParams?.primitivesModeName
             })?.modeId ?? variableCollectionId.defaultModeId
@@ -156,12 +205,16 @@ final class ColorsVariablesLoader: Sendable {
                 variable: variable,
                 mode: variableMeta.valuesByMode[modeId],
                 colorsArray: &colorsArray,
+                modeKey: modeKey,
                 filter: filter,
                 meta: meta,
-                warnings: &warnings
+                warnings: &warnings,
+                aliases: &aliases
             )
         }
     }
+
+    // swiftlint:enable function_parameter_count
 
     private func doesColorMatchFilter(from variable: Variable) -> Bool {
         guard let filter else { return true }

@@ -168,11 +168,20 @@ enum ColorExportHelper {
         )
     }
 
+    /// Mode key to display name mapping used by buildColorsByMode.
+    static let modeKeyToName: [String: String] = [
+        "light": "Light",
+        "dark": "Dark",
+        "lightHC": "Contrast Light",
+        "darkHC": "Contrast Dark",
+    ]
+
     /// Exports colors to W3C format and writes to file.
     static func exportW3C(
         colors: ColorsLoaderOutput,
         descriptions: [String: String] = [:],
         metadata: [String: ColorTokenMetadata] = [:],
+        aliases: ColorsVariablesLoader.ColorAliases = [:],
         outputURL: URL,
         compact: Bool,
         w3cVersion: W3CVersion = .v2025
@@ -183,7 +192,9 @@ enum ColorExportHelper {
         let tokens = exporter.exportColors(
             colorsByMode: colorsByMode,
             descriptions: descriptions,
-            metadata: metadata
+            metadata: metadata,
+            aliases: aliases,
+            modeKeyToName: modeKeyToName
         )
         let jsonData = try exporter.serializeToJSON(tokens, compact: compact)
 

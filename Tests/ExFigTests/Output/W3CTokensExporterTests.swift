@@ -620,4 +620,141 @@ final class W3CTokensExporterTests: XCTestCase {
         XCTAssertNotNil(button["Plus"])
         XCTAssertNotNil(button["Minus"])
     }
+
+    // MARK: - Token Aliases
+
+    func testExportColorsWithAliasV2025() {
+        let exporter = W3CTokensExporter(version: .v2025)
+
+        // Primitive color (resolved)
+        let colorsByMode: [String: [ExFigCore.Color]] = [
+            "Light": [
+                Color(name: "Primitives/Blue/500", red: 0.231, green: 0.510, blue: 0.965, alpha: 1.0),
+                Color(name: "Semantic/Primary", red: 0.231, green: 0.510, blue: 0.965, alpha: 1.0),
+            ],
+        ]
+
+        // Semantic/Primary aliases Primitives/Blue/500
+        let aliases: [String: [String: String]] = [
+            "Semantic/Primary": ["light": "Primitives/Blue/500"],
+        ]
+        let modeKeyToName = ["light": "Light"]
+
+        let tokens = exporter.exportColors(
+            colorsByMode: colorsByMode,
+            aliases: aliases,
+            modeKeyToName: modeKeyToName
+        )
+
+        // Primitive should have a color object
+        guard let primitives = tokens["Primitives"] as? [String: Any],
+              let blue = primitives["Blue"] as? [String: Any],
+              let b500 = blue["500"] as? [String: Any]
+        else {
+            XCTFail("Expected Primitives/Blue/500")
+            return
+        }
+        XCTAssertTrue(b500["$value"] is [String: Any], "Primitive should have color object $value")
+
+        // Semantic should have an alias reference
+        guard let semantic = tokens["Semantic"] as? [String: Any],
+              let primary = semantic["Primary"] as? [String: Any]
+        else {
+            XCTFail("Expected Semantic/Primary")
+            return
+        }
+        XCTAssertEqual(primary["$value"] as? String, "{Primitives.Blue.500}")
+    }
+
+    func testExportColorsMultiModeAliasV2025() {
+        let exporter = W3CTokensExporter(version: .v2025)
+        let colorsByMode: [String: [ExFigCore.Color]] = [
+            "Light": [
+                Color(name: "Primitives/Gray/50", red: 0.98, green: 0.98, blue: 0.98, alpha: 1.0),
+                Color(name: "Primitives/Gray/900", red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0),
+                Color(name: "Background/Surface", red: 0.98, green: 0.98, blue: 0.98, alpha: 1.0),
+            ],
+            "Dark": [
+                Color(name: "Primitives/Gray/50", red: 0.98, green: 0.98, blue: 0.98, alpha: 1.0),
+                Color(name: "Primitives/Gray/900", red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0),
+                Color(name: "Background/Surface", red: 0.1, green: 0.1, blue: 0.1, alpha: 1.0),
+            ],
+        ]
+
+        let aliases: [String: [String: String]] = [
+            "Background/Surface": [
+                "light": "Primitives/Gray/50",
+                "dark": "Primitives/Gray/900",
+            ],
+        ]
+        let modeKeyToName = ["light": "Light", "dark": "Dark"]
+
+        let tokens = exporter.exportColors(
+            colorsByMode: colorsByMode,
+            aliases: aliases,
+            modeKeyToName: modeKeyToName
+        )
+
+        guard let background = tokens["Background"] as? [String: Any],
+              let surface = background["Surface"] as? [String: Any]
+        else {
+            XCTFail("Expected Background/Surface")
+            return
+        }
+
+        // $value should be the default mode alias
+        XCTAssertEqual(surface["$value"] as? String, "{Primitives.Gray.50}")
+
+        // $extensions.com.exfig.modes should contain per-mode aliases
+        guard let extensions = surface["$extensions"] as? [String: Any],
+              let comExfig = extensions["com.exfig"] as? [String: Any],
+              let modes = comExfig["modes"] as? [String: Any]
+        else {
+            XCTFail("Expected $extensions.com.exfig.modes")
+            return
+        }
+        XCTAssertEqual(modes["Light"] as? String, "{Primitives.Gray.50}")
+        XCTAssertEqual(modes["Dark"] as? String, "{Primitives.Gray.900}")
+    }
+
+    func testExportColorsAliasDisabledInV1() {
+        let exporter = W3CTokensExporter(version: .v1)
+        let colorsByMode: [String: [ExFigCore.Color]] = [
+            "Light": [
+                Color(name: "Semantic/Primary", red: 0.231, green: 0.510, blue: 0.965, alpha: 1.0),
+            ],
+        ]
+
+        // Even with aliases, v1 should output resolved hex values
+        let aliases: [String: [String: String]] = [
+            "Semantic/Primary": ["light": "Primitives/Blue/500"],
+        ]
+
+        let tokens = exporter.exportColors(
+            colorsByMode: colorsByMode,
+            aliases: aliases,
+            modeKeyToName: ["light": "Light"]
+        )
+
+        guard let semantic = tokens["Semantic"] as? [String: Any],
+              let primary = semantic["Primary"] as? [String: Any]
+        else {
+            XCTFail("Expected Semantic/Primary")
+            return
+        }
+
+        // V1 should have hex dict, not alias reference
+        guard let value = primary["$value"] as? [String: String] else {
+            XCTFail("Expected $value to be mode→hex dictionary (v1)")
+            return
+        }
+        XCTAssertNotNil(value["Light"], "V1 should have hex value, not alias")
+    }
+
+    // MARK: - W3C Path Conversion
+
+    func testToW3CPath() {
+        XCTAssertEqual(W3CTokensExporter.toW3CPath("Primitives/Blue/500"), "Primitives.Blue.500")
+        XCTAssertEqual(W3CTokensExporter.toW3CPath("simple"), "simple")
+    }
 }

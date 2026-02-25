@@ -102,11 +102,15 @@ public struct W3CTokensExporter: Sendable {
     ///   - colorsByMode: Dictionary mapping mode names (e.g., "Light", "Dark") to arrays of colors
     ///   - descriptions: Optional dictionary mapping color names to descriptions
     ///   - metadata: Optional Figma metadata per color (variableId, fileId)
+    ///   - aliases: Per-color per-mode alias paths (mode key → referenced variable name)
+    ///   - modeKeyToName: Mapping from internal mode keys to display names
     /// - Returns: Nested dictionary structure representing W3C tokens
     public func exportColors(
         colorsByMode: [String: [Color]],
         descriptions: [String: String] = [:],
-        metadata: [String: ColorTokenMetadata] = [:]
+        metadata: [String: ColorTokenMetadata] = [:],
+        aliases: [String: [String: String]] = [:],
+        modeKeyToName: [String: String] = [:]
     ) -> [String: Any] {
         switch version {
         case .v1:
@@ -115,7 +119,9 @@ public struct W3CTokensExporter: Sendable {
             exportColorsV2025(
                 colorsByMode: colorsByMode,
                 descriptions: descriptions,
-                metadata: metadata
+                metadata: metadata,
+                aliases: aliases,
+                modeKeyToName: modeKeyToName
             )
         }
     }
@@ -175,11 +181,13 @@ extension W3CTokensExporter {
     private func exportColorsV2025(
         colorsByMode: [String: [Color]],
         descriptions: [String: String],
-        metadata: [String: ColorTokenMetadata]
+        metadata: [String: ColorTokenMetadata],
+        aliases: [String: [String: String]] = [:],
+        modeKeyToName: [String: String] = [:]
     ) -> [String: Any] {
-        // Group colors by name across all modes: name -> [(modeName, Color)]
-        var colorsByName: [String: [(mode: String, color: Color)]] = [:]
+        let nameToKey = Dictionary(uniqueKeysWithValues: modeKeyToName.map { ($0.value, $0.key) })
 
+        var colorsByName: [String: [(mode: String, color: Color)]] = [:]
         for (modeName, colors) in colorsByMode {
             for color in colors {
                 colorsByName[color.name, default: []].append((modeName, color))
@@ -190,39 +198,24 @@ extension W3CTokensExporter {
 
         for (name, modeColors) in colorsByName {
             let path = nameToHierarchy(name)
+            let colorAliases = aliases[name] ?? [:]
+            let sortedModeColors = sortByModeOrder(modeColors)
+            let defaultEntry = sortedModeColors[0]
+            let defaultModeKey = nameToKey[defaultEntry.mode] ?? "light"
+
             var tokenValue: [String: Any] = ["$type": "color"]
+            tokenValue["$value"] = colorValueOrAlias(
+                color: defaultEntry.color, aliasPath: colorAliases[defaultModeKey]
+            )
 
-            // $value is the default (first) mode as a color object
-            let defaultColor = modeColors[0].color
-            tokenValue["$value"] = colorToObject(defaultColor)
-
-            // $description
             if let description = descriptions[name], !description.trimmingCharacters(in: .whitespaces).isEmpty {
                 tokenValue["$description"] = description
             }
 
-            // $extensions.com.exfig
-            var exfigExtension: [String: Any] = [:]
-
-            // Modes (only when >1 mode)
-            if modeColors.count > 1 {
-                var modes: [String: Any] = [:]
-                for (modeName, color) in modeColors {
-                    modes[modeName] = colorToObject(color)
-                }
-                exfigExtension["modes"] = modes
-            }
-
-            // Figma metadata
-            if let meta = metadata[name] {
-                if let variableId = meta.variableId {
-                    exfigExtension["variableId"] = variableId
-                }
-                if let fileId = meta.fileId {
-                    exfigExtension["fileId"] = fileId
-                }
-            }
-
+            let exfigExtension = buildExfigExtension(
+                modeColors: modeColors, colorAliases: colorAliases,
+                nameToKey: nameToKey, metadata: metadata[name]
+            )
             if !exfigExtension.isEmpty {
                 tokenValue["$extensions"] = ["com.exfig": exfigExtension]
             }
@@ -231,6 +224,52 @@ extension W3CTokensExporter {
         }
 
         return tokens
+    }
+
+    private func sortByModeOrder(_ modeColors: [(mode: String, color: Color)]) -> [(mode: String, color: Color)] {
+        let modeOrder = ["Light", "Dark", "Contrast Light", "Contrast Dark"]
+        return modeColors.sorted { a, b in
+            let ai = modeOrder.firstIndex(of: a.mode) ?? modeOrder.count
+            let bi = modeOrder.firstIndex(of: b.mode) ?? modeOrder.count
+            return ai < bi
+        }
+    }
+
+    private func colorValueOrAlias(color: Color, aliasPath: String?) -> Any {
+        if let aliasPath {
+            return "{\(Self.toW3CPath(aliasPath))}"
+        }
+        return colorToObject(color)
+    }
+
+    private func buildExfigExtension(
+        modeColors: [(mode: String, color: Color)],
+        colorAliases: [String: String],
+        nameToKey: [String: String],
+        metadata: ColorTokenMetadata?
+    ) -> [String: Any] {
+        var ext: [String: Any] = [:]
+
+        if modeColors.count > 1 {
+            var modes: [String: Any] = [:]
+            for (modeName, color) in modeColors {
+                let modeKey = nameToKey[modeName] ?? "light"
+                modes[modeName] = colorValueOrAlias(color: color, aliasPath: colorAliases[modeKey])
+            }
+            ext["modes"] = modes
+        }
+
+        if let meta = metadata {
+            if let variableId = meta.variableId { ext["variableId"] = variableId }
+            if let fileId = meta.fileId { ext["fileId"] = fileId }
+        }
+
+        return ext
+    }
+
+    /// Converts a Figma variable path (slash-separated) to W3C alias path (dot-separated).
+    static func toW3CPath(_ figmaPath: String) -> String {
+        figmaPath.replacingOccurrences(of: "/", with: ".")
     }
 
     private func exportTypographyV2025(textStyles: [TextStyle]) -> [String: Any] {

@@ -176,7 +176,9 @@ extension ExFigCommand.Download {
                         filter: filterValue
                     )
                     let output = try await loader.load()
-                    return ColorsVariablesLoader.LoadResult(output: output, warnings: [])
+                    return ColorsVariablesLoader.LoadResult(
+                        output: output, warnings: [], aliases: [:], descriptions: [:], metadata: [:]
+                    )
                 }
             }
 
@@ -186,6 +188,9 @@ extension ExFigCommand.Download {
 
             try ColorExportHelper.exportW3C(
                 colors: colorsResult.output,
+                descriptions: colorsResult.descriptions,
+                metadata: colorsResult.metadata,
+                aliases: colorsResult.aliases,
                 outputURL: outputURL,
                 compact: jsonOptions.compact,
                 w3cVersion: jsonOptions.w3cVersion

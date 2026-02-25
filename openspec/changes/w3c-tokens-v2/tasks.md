@@ -18,11 +18,11 @@
 
 ## 3. Token Aliases
 
-- [ ] 3.1 Extend `ColorsVariablesLoader` to propagate alias paths alongside resolved values (new field on Color or wrapper type)
-- [ ] 3.2 Implement `"{Group.Token}"` alias syntax in `W3CTokensExporter.exportColors()` for semantic tokens
-- [ ] 3.3 Support per-mode aliases in `$extensions.com.exfig.modes` (each mode value can be an alias string)
-- [ ] 3.4 Disable alias output when `--w3c-version v1` is specified
-- [ ] 3.5 Write tests for alias output (direct alias, multi-mode aliases, v1 flag)
+- [x] 3.1 Extend `ColorsVariablesLoader` to propagate alias paths alongside resolved values (new field on Color or wrapper type)
+- [x] 3.2 Implement `"{Group.Token}"` alias syntax in `W3CTokensExporter.exportColors()` for semantic tokens
+- [x] 3.3 Support per-mode aliases in `$extensions.com.exfig.modes` (each mode value can be an alias string)
+- [x] 3.4 Disable alias output when `--w3c-version v1` is specified
+- [x] 3.5 Write tests for alias output (direct alias, multi-mode aliases, v1 flag)
 
 ## 4. Remove Invented Types
 
