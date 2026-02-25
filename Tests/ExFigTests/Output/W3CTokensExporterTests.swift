@@ -884,4 +884,85 @@ final class W3CTokensExporterTests: XCTestCase {
     func testScopesMappingUnknownDefaultsToNumber() {
         XCTAssertEqual(NumberVariablesLoader.scopesToTokenType(["UNKNOWN_SCOPE"]), .number)
     }
+
+    // MARK: - Unified Token Export (Task 7.3)
+
+    func testUnifiedTokenExportMergesAllTypes() throws {
+        let exporter = W3CTokensExporter(version: .v2025)
+
+        // Build color tokens
+        let colors: [String: [Color]] = [
+            "Light": [Color(name: "Brand/Primary", platform: nil, red: 0.2, green: 0.4, blue: 0.9, alpha: 1.0)],
+        ]
+        let colorTokens = exporter.exportColors(colorsByMode: colors)
+
+        // Build typography tokens
+        let textStyles = [TextStyle(
+            name: "Heading/H1", fontName: "Inter", fontSize: 32,
+            fontStyle: nil, lineHeight: 40, letterSpacing: 0, textCase: .original
+        )]
+        let typographyTokens = exporter.exportTypography(textStyles: textStyles)
+
+        // Build dimension tokens
+        let dimensionTokens = exporter.exportDimensions(tokens: [
+            NumberToken(
+                name: "Spacing/Medium",
+                value: 16, tokenType: .dimension,
+                description: nil, variableId: "v1", fileId: "f1"
+            ),
+        ])
+
+        // Build number tokens
+        let numberTokens = exporter.exportNumbers(tokens: [
+            NumberToken(
+                name: "Opacity/Disabled",
+                value: 0.5, tokenType: .number,
+                description: nil, variableId: "v2", fileId: "f1"
+            ),
+        ])
+
+        // Merge all into unified output
+        var unified: [String: Any] = [:]
+        deepMerge(from: colorTokens, into: &unified)
+        deepMerge(from: typographyTokens, into: &unified)
+        deepMerge(from: dimensionTokens, into: &unified)
+        deepMerge(from: numberTokens, into: &unified)
+
+        // Verify all token types present
+        let brand = unified["Brand"] as? [String: Any]
+        let primary = brand?["Primary"] as? [String: Any]
+        XCTAssertEqual(primary?["$type"] as? String, "color")
+
+        let heading = unified["Heading"] as? [String: Any]
+        let h1 = heading?["H1"] as? [String: Any]
+        XCTAssertEqual(h1?["$type"] as? String, "typography")
+
+        let spacing = unified["Spacing"] as? [String: Any]
+        let medium = spacing?["Medium"] as? [String: Any]
+        XCTAssertEqual(medium?["$type"] as? String, "dimension")
+
+        let opacity = unified["Opacity"] as? [String: Any]
+        let disabled = opacity?["Disabled"] as? [String: Any]
+        XCTAssertEqual(disabled?["$type"] as? String, "number")
+
+        // Verify serialization succeeds
+        let jsonData = try exporter.serializeToJSON(unified, compact: false)
+        XCTAssertGreaterThan(jsonData.count, 0)
+    }
+
+    // MARK: - Helpers
+
+    private func deepMerge(from source: [String: Any], into target: inout [String: Any]) {
+        for (key, value) in source {
+            if let sourceDict = value as? [String: Any],
+               let targetDict = target[key] as? [String: Any]
+            {
+                var merged = targetDict
+                deepMerge(from: sourceDict, into: &merged)
+                target[key] = merged
+            } else {
+                target[key] = value
+            }
+        }
+    }
 }

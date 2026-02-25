@@ -56,9 +56,9 @@
 
 ## 7. Unified Download Command (Phase 2)
 
-- [ ] 7.1 Add `download tokens` subcommand (or expand existing `download colors --tokens`) for unified export
-- [ ] 7.2 Wire dimension + number + typography export into unified command
-- [ ] 7.3 Write integration test for unified token export
+- [x] 7.1 Add `download tokens` subcommand (or expand existing `download colors --tokens`) for unified export
+- [x] 7.2 Wire dimension + number + typography export into unified command
+- [x] 7.3 Write integration test for unified token export
 
 ## 8. TokensFileSource Parser (Phase 3)
 

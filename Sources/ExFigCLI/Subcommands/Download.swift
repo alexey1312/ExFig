@@ -60,6 +60,7 @@ extension ExFigCommand {
                 DownloadTypography.self,
                 DownloadIcons.self,
                 DownloadImages.self,
+                DownloadTokens.self,
                 DownloadAll.self,
             ]
         )
