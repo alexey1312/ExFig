@@ -62,21 +62,21 @@
 
 ## 8. TokensFileSource Parser (Phase 3)
 
-- [ ] 8.1 Create `TokensFileSource.swift` with W3C DTCG JSON parser using JSONCodec (swift-yyjson)
-- [ ] 8.2 Implement nested group parsing with `$type` inheritance from parent groups
-- [ ] 8.3 Parse color `$value` objects: extract colorSpace, components, alpha, hex → convert to ExFigCore `Color`
-- [ ] 8.4 Parse dimension `$value` objects: extract value and unit
-- [ ] 8.5 Parse typography composite `$value`: fontFamily (string or array), fontSize (dimension object), fontWeight (number or string alias), lineHeight (number)
-- [ ] 8.6 Implement W3C token type → ExFigCore model mapping (color→Color, typography→TextStyle)
-- [ ] 8.7 Implement alias resolution with circular reference detection
-- [ ] 8.8 Support `$root` tokens within groups (referenced as `{group.$root}`)
-- [ ] 8.9 Support `$extends` group inheritance (deep merge from referenced group)
-- [ ] 8.10 Support `$deprecated` on tokens and groups (boolean or string, preserved as metadata)
-- [ ] 8.11 Handle non-sRGB color spaces: convert to sRGB or warn about gamut clipping
-- [ ] 8.12 Map fontWeight string aliases to numeric values ("bold"→700, "normal"→400, etc.)
-- [ ] 8.13 Implement validation: missing $value, invalid color object structure, invalid dimension object, malformed JSON
-- [ ] 8.14 Emit warnings for unsupported token types (cubicBezier, gradient, strokeStyle, border, transition, shadow, duration)
-- [ ] 8.15 Write comprehensive parser tests (flat tokens, nested groups, aliases, $root, $extends, validation errors)
+- [x] 8.1 Create `TokensFileSource.swift` with W3C DTCG JSON parser using JSONCodec (swift-yyjson)
+- [x] 8.2 Implement nested group parsing with `$type` inheritance from parent groups
+- [x] 8.3 Parse color `$value` objects: extract colorSpace, components, alpha, hex → convert to ExFigCore `Color`
+- [x] 8.4 Parse dimension `$value` objects: extract value and unit
+- [x] 8.5 Parse typography composite `$value`: fontFamily (string or array), fontSize (dimension object), fontWeight (number or string alias), lineHeight (number)
+- [x] 8.6 Implement W3C token type → ExFigCore model mapping (color→Color, typography→TextStyle)
+- [x] 8.7 Implement alias resolution with circular reference detection
+- [x] 8.8 Support `$root` tokens within groups (referenced as `{group.$root}`)
+- [x] 8.9 Support `$extends` group inheritance (deep merge from referenced group)
+- [x] 8.10 Support `$deprecated` on tokens and groups (boolean or string, preserved as metadata)
+- [x] 8.11 Handle non-sRGB color spaces: convert to sRGB or warn about gamut clipping
+- [x] 8.12 Map fontWeight string aliases to numeric values ("bold"→700, "normal"→400, etc.)
+- [x] 8.13 Implement validation: missing $value, invalid color object structure, invalid dimension object, malformed JSON
+- [x] 8.14 Emit warnings for unsupported token types (cubicBezier, gradient, strokeStyle, border, transition, shadow, duration)
+- [x] 8.15 Write comprehensive parser tests (flat tokens, nested groups, aliases, $root, $extends, validation errors)
 
 ## 9. PKL Schema & Config Integration (Phase 3)
 
