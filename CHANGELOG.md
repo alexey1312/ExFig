@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-02-25
+
+### Features
+
+- W3C DTCG v2025.10 design tokens compliance  by @alexey1312 in [#67](https://github.com/alexey1312/ExFig/pull/67)
+
+
 ## [2.5.2] - 2026-02-25
 
 ### Bug Fixes
