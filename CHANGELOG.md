@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.7.0] - 2026-02-28
+
+### Features
+
+- Migrate to pkl-swift 0.8.0 + Pkl 0.31  by @alexey1312 in [#68](https://github.com/alexey1312/ExFig/pull/68)
+
+
 ## [2.6.0] - 2026-02-25
 
 ### Features
