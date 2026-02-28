@@ -352,13 +352,15 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | swift-resvg           | 0.45.1  | SVG parsing/rendering           |
 | swift-docc-plugin     | 1.4.5+  | DocC documentation              |
 | swift-yyjson          | 0.5.0+  | High-performance JSON codec     |
-| pkl-swift             | 0.7.2+  | PKL config evaluation & codegen |
+| pkl-swift             | 0.8.0+  | PKL config evaluation & codegen |
 
 ## Troubleshooting
 
 | Problem                     | Solution                                                                                                     |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| pkl-gen-swift not found     | Build from SPM: `swift build --product pkl-gen-swift`, then `.build/debug/pkl-gen-swift`                     |
+| codegen:pkl gen.pkl error   | gen.pkl `read?` bug: needs `--generator-settings` + `--project-dir` flags (see mise.toml)                    |
+| xcsift "signal code 5"      | False positive when piping `swift test` through xcsift; run `swift test` directly to verify                  |
+| PKL tests need Pkl 0.31+    | Schemas use `isNotEmpty`; run tests via `./bin/mise exec -- swift test` to get correct Pkl in PATH           |
 | PKL FrameSource change      | Update ALL entry init calls in tests (EnumBridgingTests, IconsLoaderConfigTests)                             |
 | Build fails                 | `swift package clean && swift build`                                                                         |
 | Tests fail                  | Check `FIGMA_PERSONAL_TOKEN` is set                                                                          |
