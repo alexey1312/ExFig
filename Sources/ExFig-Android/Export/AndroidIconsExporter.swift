@@ -172,8 +172,8 @@ private extension AndroidIconsExporter {
         context: some IconsExportContext
     ) throws -> FileContents? {
         guard let url = entry.codeConnectKotlinURL else { return nil }
-        guard let packageName = entry.composePackageName else {
-            context.warning("Code Connect skipped: 'composePackageName' is required")
+        guard let packageName = entry.effectiveCodeConnectPackageName else {
+            context.warning("Code Connect skipped: 'codeConnectPackageName' or 'composePackageName' is required")
             return nil
         }
         guard let resourcePackage = platformConfig.resourcePackage else {

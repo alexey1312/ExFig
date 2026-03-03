@@ -120,6 +120,11 @@ class IconsEntry extends Common.FrameSource {
   /// If true, exit with error when pathData exceeds 32,767 bytes.
   strictPathValidation: Boolean?
 
+  /// Package name for Figma Code Connect Kotlin file.
+  /// Overrides composePackageName for Code Connect only.
+  /// Use this to generate .figma.kt without triggering Icons.kt.
+  codeConnectPackageName: String?
+
   /// Path to generate Figma Code Connect Kotlin file for Jetpack Compose.
   codeConnectKotlin: String?
 }

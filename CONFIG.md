@@ -636,6 +636,7 @@ icons = new Android.IconsEntry {
   composePackageName = "com.example"
   // composeFormat = "resourceReference"
   // composeExtensionTarget = "com.example.app.ui.AppIcons"
+  // codeConnectPackageName = "com.example"
   // codeConnectKotlin = "./main/src/java/com/example/Icons.figma.kt"
   // nameStyle = "snake_case"
   // pathPrecision = 4
@@ -643,16 +644,17 @@ icons = new Android.IconsEntry {
 }
 ```
 
-| Field                    | Type                 | Required | Description                                                 |
-| ------------------------ | -------------------- | -------- | ----------------------------------------------------------- |
-| `output`                 | `String`             | Yes      | Output directory for vector drawables (relative to mainRes) |
-| `composePackageName`     | `String?`            | No       | Package for Compose icon code                               |
-| `composeFormat`          | `ComposeIconFormat?` | No       | `"resourceReference"` (default) or `"imageVector"`          |
-| `composeExtensionTarget` | `String?`            | No       | Extension target for ImageVector                            |
-| `nameStyle`              | `NameStyle?`         | No       | Name style for generated names                              |
-| `pathPrecision`          | `Int(1-6)?`          | No       | Coordinate precision for pathData (default: 4)              |
-| `strictPathValidation`   | `Boolean?`           | No       | Error on pathData > 32,767 bytes (default: false)           |
-| `codeConnectKotlin`      | `String?`            | No       | Path to generate Figma Code Connect Kotlin file             |
+| Field                    | Type                 | Required | Description                                                        |
+| ------------------------ | -------------------- | -------- | ------------------------------------------------------------------ |
+| `output`                 | `String`             | Yes      | Output directory for vector drawables (relative to mainRes)        |
+| `composePackageName`     | `String?`            | No       | Package for Compose icon code (also used as Code Connect fallback) |
+| `composeFormat`          | `ComposeIconFormat?` | No       | `"resourceReference"` (default) or `"imageVector"`                 |
+| `composeExtensionTarget` | `String?`            | No       | Extension target for ImageVector                                   |
+| `nameStyle`              | `NameStyle?`         | No       | Name style for generated names                                     |
+| `pathPrecision`          | `Int(1-6)?`          | No       | Coordinate precision for pathData (default: 4)                     |
+| `strictPathValidation`   | `Boolean?`           | No       | Error on pathData > 32,767 bytes (default: false)                  |
+| `codeConnectPackageName` | `String?`            | No       | Package for Code Connect only (overrides `composePackageName`)     |
+| `codeConnectKotlin`      | `String?`            | No       | Path to generate Figma Code Connect Kotlin file                    |
 
 **Inherited from `FrameSource`:** `figmaFrameName`, `figmaPageName`, `figmaFileId`, `rtlProperty`, `nameValidateRegexp`, `nameReplaceRegexp`.
 

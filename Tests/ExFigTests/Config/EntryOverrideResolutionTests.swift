@@ -118,6 +118,37 @@ final class AndroidEntryOverrideResolutionTests: XCTestCase {
         XCTAssertEqual(resolved, fallback)
     }
 
+    // MARK: - effectiveCodeConnectPackageName
+
+    func testIconsEntry_bothPackageNames_prefersCodeConnect() throws {
+        let entry = try makeAndroidIconsEntry(
+            composePackageName: "com.compose",
+            codeConnectPackageName: "com.codeconnect"
+        )
+
+        XCTAssertEqual(entry.effectiveCodeConnectPackageName, "com.codeconnect")
+    }
+
+    func testIconsEntry_onlyComposePackageName_fallsBack() throws {
+        let entry = try makeAndroidIconsEntry(composePackageName: "com.compose")
+
+        XCTAssertEqual(entry.effectiveCodeConnectPackageName, "com.compose")
+    }
+
+    func testIconsEntry_onlyCodeConnectPackageName_returnsIt() throws {
+        let entry = try makeAndroidIconsEntry(codeConnectPackageName: "com.codeconnect")
+
+        XCTAssertEqual(entry.effectiveCodeConnectPackageName, "com.codeconnect")
+    }
+
+    func testIconsEntry_bothNil_returnsNil() throws {
+        let entry = try makeAndroidIconsEntry()
+
+        XCTAssertNil(entry.effectiveCodeConnectPackageName)
+    }
+
+    // MARK: - ImagesEntry mainRes
+
     func testImagesEntry_mainResOverride_resolvesEntryValue() throws {
         let entry = try makeAndroidImagesEntry(mainRes: "/images/res")
         let fallback = URL(fileURLWithPath: "/default/res")
@@ -129,10 +160,16 @@ final class AndroidEntryOverrideResolutionTests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func makeAndroidIconsEntry(mainRes: String? = nil) throws -> AndroidIconsEntry {
+    private func makeAndroidIconsEntry(
+        mainRes: String? = nil,
+        composePackageName: String? = nil,
+        codeConnectPackageName: String? = nil
+    ) throws -> AndroidIconsEntry {
         var fields = [String]()
         fields.append("\"output\": \"drawable\"")
         if let mainRes { fields.append("\"mainRes\": \"\(mainRes)\"") }
+        if let composePackageName { fields.append("\"composePackageName\": \"\(composePackageName)\"") }
+        if let codeConnectPackageName { fields.append("\"codeConnectPackageName\": \"\(codeConnectPackageName)\"") }
         let json = "{ \(fields.joined(separator: ", ")) }"
         return try JSONDecoder().decode(AndroidIconsEntry.self, from: Data(json.utf8))
     }

@@ -127,6 +127,9 @@ android = new Android.AndroidConfig {
     // composeFormat = "resourceReference"
     // [optional] Extension target package for Compose icons
     // composeExtensionTarget = "androidx.compose.ui.graphics.vector.ImageVector"
+    // [optional] Package name for Code Connect only (overrides composePackageName for .figma.kt).
+    // Use this to generate Code Connect without triggering Icons.kt generation.
+    // codeConnectPackageName = "com.example"
     // [optional] Path to generate Figma Code Connect Kotlin file for Jetpack Compose
     // codeConnectKotlin = "./main/src/java/com/example/Icons.figma.kt"
   }

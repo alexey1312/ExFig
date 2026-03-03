@@ -235,6 +235,11 @@ extension Android {
         /// If true, exit with error when pathData exceeds 32,767 bytes.
         public var strictPathValidation: Bool?
 
+        /// Package name for Figma Code Connect Kotlin file.
+        /// Overrides composePackageName for Code Connect only.
+        /// Use this to generate .figma.kt without triggering Icons.kt.
+        public var codeConnectPackageName: String?
+
         /// Path to generate Figma Code Connect Kotlin file for Jetpack Compose.
         public var codeConnectKotlin: String?
 
@@ -274,6 +279,7 @@ extension Android {
             nameStyle: Common.NameStyle?,
             pathPrecision: Int?,
             strictPathValidation: Bool?,
+            codeConnectPackageName: String?,
             codeConnectKotlin: String?,
             figmaFrameName: String?,
             figmaPageName: String?,
@@ -291,6 +297,7 @@ extension Android {
             self.nameStyle = nameStyle
             self.pathPrecision = pathPrecision
             self.strictPathValidation = strictPathValidation
+            self.codeConnectPackageName = codeConnectPackageName
             self.codeConnectKotlin = codeConnectKotlin
             self.figmaFrameName = figmaFrameName
             self.figmaPageName = figmaPageName

@@ -33,6 +33,11 @@ public extension Android.IconsEntry {
         return nameStyle.coreNameStyle
     }
 
+    /// Effective package name for Code Connect: prefers `codeConnectPackageName`, falls back to `composePackageName`.
+    var effectiveCodeConnectPackageName: String? {
+        codeConnectPackageName ?? composePackageName
+    }
+
     /// URL for Code Connect Kotlin file output.
     var codeConnectKotlinURL: URL? {
         codeConnectKotlin.map { URL(fileURLWithPath: $0) }

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Features
+
+- **android**: Add `codeConnectPackageName` to decouple Code Connect from Compose Extension generation
+
 ## [2.7.0] - 2026-02-28
 
 ### Features
