@@ -60,11 +60,12 @@ final class AndroidCodeConnectExporterTests: XCTestCase {
         XCTAssertTrue(code.contains("import com.figma.code.connect.FigmaConnect"))
         XCTAssertTrue(code.contains("import \(Self.resourcePackage).R"))
         XCTAssertTrue(code.contains("@FigmaConnect(url = \"https://www.figma.com/design/abc123?node-id=12016-2218\")"))
-        XCTAssertTrue(code.contains("fun Asset_ic_home()"))
+        XCTAssertTrue(code.contains("class Asset_ic_home {"))
         XCTAssertTrue(code.contains("R.drawable.ic_home"))
         XCTAssertTrue(code.contains("@FigmaConnect(url = \"https://www.figma.com/design/abc123?node-id=12016-2219\")"))
-        XCTAssertTrue(code.contains("fun Asset_ic_settings()"))
+        XCTAssertTrue(code.contains("class Asset_ic_settings {"))
         XCTAssertTrue(code.contains("R.drawable.ic_settings"))
+        XCTAssertTrue(code.contains("fun Example()"))
         XCTAssertTrue(code.contains("import androidx.compose.material.Icon"))
     }
 

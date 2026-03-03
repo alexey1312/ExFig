@@ -11,12 +11,14 @@ import {{ xmlResourcePackage }}.R
 
 {% for asset in assets %}
 @FigmaConnect(url = "{{ asset.figmaUrl }}")
-@Composable
-fun {{ asset.className }}() {
-    Icon(
-        painter = painterResource(id = R.drawable.{{ asset.resourceName }}),
-        contentDescription = null
-    )
+class {{ asset.className }} {
+    @Composable
+    fun Example() {
+        Icon(
+            painter = painterResource(id = R.drawable.{{ asset.resourceName }}),
+            contentDescription = null
+        )
+    }
 }
 
 {% endfor %}
