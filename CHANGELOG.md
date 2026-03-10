@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.8.0] - 2026-03-10
+
+### Features
+
+- **ios**: Add assetsFolderProvidesNamespace for iOS colors by @alexey1312
+
+
 ## [2.7.2] - 2026-03-03
 
 ### Refactor
