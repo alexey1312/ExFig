@@ -1,0 +1,334 @@
+// Usage specification for ExFig CLI
+// https://usage.jdx.dev/spec/
+//
+// Generate completions: usage generate completion bash exfig -f exfig.usage.kdl
+// Generate docs:        usage generate markdown -f exfig.usage.kdl
+
+name "ExFig"
+bin "exfig"
+version "v2.8.0"
+about "Exports resources from Figma to iOS, Android, Flutter, and Web projects"
+
+// =============================================================================
+// Global flags
+// =============================================================================
+
+flag "-v --verbose" help="Show detailed output including debug information" global=#true
+flag "-q --quiet" help="Show only errors, suppress progress output" global=#true
+
+// =============================================================================
+// colors (default subcommand)
+// =============================================================================
+
+cmd "colors" help="Exports colors from Figma" {
+    long_help "Exports light and dark color palette from Figma to Xcode / Android Studio project. Requires FIGMA_PERSONAL_TOKEN environment variable."
+
+    flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+    flag "--cache" help="Enable version tracking cache (skip export if unchanged)" negate="--no-cache"
+    flag "--force" help="Force export and update cache (ignore cached version)"
+    flag "--cache-path <path>" help="Custom path to cache file (default: .exfig-cache.json)"
+    flag "--experimental-granular-cache" help="[EXPERIMENTAL] Enable per-node hash tracking for granular cache invalidation" hide=#true
+    flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+    flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+    flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+    flag "--report <path>" help="Path to write JSON report"
+
+    arg "[filter]" help="Name of colors to export (e.g., 'background/default' for one, 'background/default, background/secondary' for several, 'background/*' for all from folder)"
+}
+
+// =============================================================================
+// icons
+// =============================================================================
+
+cmd "icons" help="Exports icons from Figma" {
+    long_help "Exports icons from Figma to Xcode / Android Studio project. Requires FIGMA_PERSONAL_TOKEN environment variable."
+
+    flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+    flag "--cache" help="Enable version tracking cache (skip export if unchanged)" negate="--no-cache"
+    flag "--force" help="Force export and update cache (ignore cached version)"
+    flag "--cache-path <path>" help="Custom path to cache file (default: .exfig-cache.json)"
+    flag "--experimental-granular-cache" help="[EXPERIMENTAL] Enable per-node hash tracking for granular cache invalidation" hide=#true
+    flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+    flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+    flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+    flag "--fail-fast" help="Stop on first error without retrying"
+    flag "--resume" help="Continue from checkpoint after interruption"
+    flag "--concurrent-downloads <n>" help="Maximum concurrent CDN downloads" default="20"
+    flag "--strict-path-validation" help="Exit with error if any Android icon pathData exceeds 32,767 bytes (AAPT limit)"
+    flag "--report <path>" help="Path to write JSON report"
+
+    arg "[filter]" help="Name of icons to export (e.g., 'ic/24/edit' for one, 'ic/24/edit, ic/16/notification' for several, 'ic/16/*' for all of size 16 pt)"
+}
+
+// =============================================================================
+// images
+// =============================================================================
+
+cmd "images" help="Exports images from Figma" {
+    long_help "Exports images from Figma to Xcode / Android Studio project. Requires FIGMA_PERSONAL_TOKEN environment variable."
+
+    flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+    flag "--cache" help="Enable version tracking cache (skip export if unchanged)" negate="--no-cache"
+    flag "--force" help="Force export and update cache (ignore cached version)"
+    flag "--cache-path <path>" help="Custom path to cache file (default: .exfig-cache.json)"
+    flag "--experimental-granular-cache" help="[EXPERIMENTAL] Enable per-node hash tracking for granular cache invalidation" hide=#true
+    flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+    flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+    flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+    flag "--fail-fast" help="Stop on first error without retrying"
+    flag "--resume" help="Continue from checkpoint after interruption"
+    flag "--concurrent-downloads <n>" help="Maximum concurrent CDN downloads" default="20"
+    flag "--report <path>" help="Path to write JSON report"
+
+    arg "[filter]" help="Name of images to export (e.g., 'img/login' for one, 'img/onboarding/1, img/onboarding/2' for several, 'img/onboarding/*' for all from group)"
+}
+
+// =============================================================================
+// typography
+// =============================================================================
+
+cmd "typography" help="Exports typography from Figma" {
+    alias "text-styles"
+    long_help "Exports font styles from Figma to Xcode. Requires FIGMA_PERSONAL_TOKEN environment variable."
+
+    flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+    flag "--cache" help="Enable version tracking cache (skip export if unchanged)" negate="--no-cache"
+    flag "--force" help="Force export and update cache (ignore cached version)"
+    flag "--cache-path <path>" help="Custom path to cache file (default: .exfig-cache.json)"
+    flag "--experimental-granular-cache" help="[EXPERIMENTAL] Enable per-node hash tracking for granular cache invalidation" hide=#true
+    flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+    flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+    flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+    flag "--report <path>" help="Path to write JSON report"
+}
+
+// =============================================================================
+// init
+// =============================================================================
+
+cmd "init" help="Generates config file" {
+    long_help "Generates exfig.pkl config file in the current directory."
+
+    flag "-p --platform <platform>" help="Platform: ios, android, flutter, or web" required=#true {
+        choices "ios" "android" "flutter" "web"
+    }
+}
+
+// =============================================================================
+// schemas
+// =============================================================================
+
+cmd "schemas" help="Extracts PKL schemas to local directory" {
+    long_help "Extracts PKL schema files used for config validation and IDE support. Schemas are extracted to .exfig/schemas/ by default."
+
+    flag "-o --output <dir>" help="Output directory for schemas." default=".exfig/schemas"
+    flag "-f --force" help="Overwrite existing schema files."
+}
+
+// =============================================================================
+// fetch
+// =============================================================================
+
+cmd "fetch" help="Downloads images from Figma without config file" {
+    long_help "Downloads images from a specific Figma frame to a local directory. All parameters are passed via command-line arguments. Requires FIGMA_PERSONAL_TOKEN environment variable."
+
+    flag "-f --file-id <id>" help="Figma file ID (from the URL: figma.com/file/<FILE_ID>/...)" required=#true
+    flag "-r --frame <name>" help="Name of the Figma frame containing images" required=#true
+    flag "-p --page <name>" help="Filter by Figma page name."
+    flag "-o --output <dir>" help="Output directory for downloaded images" required=#true
+    flag "--format <fmt>" help="Image format" default="png" {
+        choices "png" "svg" "jpg" "pdf" "webp"
+    }
+    flag "--scale <n>" help="Scale factor (0.01-4.0). Default: 3 for PNG, ignored for vector formats"
+    flag "--filter <pattern>" help="Filter pattern (e.g., 'icon/*' or 'logo, banner')"
+    flag "--name-style <style>" help="Name style" {
+        choices "camelCase" "snake_case" "PascalCase" "kebab-case" "SCREAMING_SNAKE_CASE"
+    }
+    flag "--name-validate-regexp <pattern>" help="RegExp pattern for name validation"
+    flag "--name-replace-regexp <pattern>" help="RegExp pattern for name replacement (supports $1, $2, etc.)"
+    flag "--dark-mode-suffix <suffix>" help="Suffix for dark mode variants (e.g., '_dark')"
+    flag "--webp-encoding <type>" help="WebP encoding" default="lossy" {
+        choices "lossy" "lossless"
+    }
+    flag "--webp-quality <n>" help="WebP quality (0-100). Only for lossy encoding" default="80"
+    flag "--timeout <seconds>" help="Figma API request timeout in seconds" default="30"
+    flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+    flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+    flag "--fail-fast" help="Stop on first error without retrying"
+    flag "--resume" help="Continue from checkpoint after interruption"
+    flag "--concurrent-downloads <n>" help="Maximum concurrent CDN downloads" default="20"
+}
+
+// =============================================================================
+// download
+// =============================================================================
+
+cmd "download" help="Downloads Figma data as JSON" {
+    long_help "Downloads design data from Figma and exports it as JSON. Supports W3C Design Tokens format (default) or raw Figma API responses."
+
+    // --- download colors ---
+    cmd "colors" help="Downloads colors from Figma as JSON" {
+        flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+        flag "-o --output <path>" help="Output file path"
+        flag "-f --format <fmt>" help="Output format" default="w3c" {
+            choices "w3c" "raw"
+        }
+        flag "--w3c-version <ver>" help="W3C spec version" default="v2025" {
+            choices "v2025" "v1"
+        }
+        flag "--compact" help="Output minified JSON"
+        flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+        flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+        flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+
+        arg "[filter]" help="Filter colors by name pattern (e.g., 'background/*')"
+    }
+
+    // --- download typography ---
+    cmd "typography" help="Downloads typography from Figma as JSON" {
+        flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+        flag "-o --output <path>" help="Output file path"
+        flag "-f --format <fmt>" help="Output format" default="w3c" {
+            choices "w3c" "raw"
+        }
+        flag "--w3c-version <ver>" help="W3C spec version" default="v2025" {
+            choices "v2025" "v1"
+        }
+        flag "--compact" help="Output minified JSON"
+        flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+        flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+        flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+    }
+
+    // --- download icons ---
+    cmd "icons" help="Downloads icons from Figma as JSON" {
+        flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+        flag "-o --output <path>" help="Output file path"
+        flag "-f --format <fmt>" help="Output format" default="w3c" {
+            choices "w3c" "raw"
+        }
+        flag "--w3c-version <ver>" help="W3C spec version" default="v2025" {
+            choices "v2025" "v1"
+        }
+        flag "--compact" help="Output minified JSON"
+        flag "--asset-format <fmt>" help="Asset format" default="png" {
+            choices "svg" "png" "pdf" "jpg"
+        }
+        flag "--scale <n>" help="Scale for raster formats (1-4)" default="3"
+        flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+        flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+        flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+        flag "--frame-name <name>" help="Figma frame name containing icons (default: from config or 'Icons')"
+        flag "-p --page <name>" help="Filter by Figma page name."
+
+        arg "[filter]" help="Filter icons by name pattern (e.g., 'navigation/*')"
+    }
+
+    // --- download images ---
+    cmd "images" help="Downloads images from Figma as JSON" {
+        flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+        flag "-o --output <path>" help="Output file path"
+        flag "-f --format <fmt>" help="Output format" default="w3c" {
+            choices "w3c" "raw"
+        }
+        flag "--w3c-version <ver>" help="W3C spec version" default="v2025" {
+            choices "v2025" "v1"
+        }
+        flag "--compact" help="Output minified JSON"
+        flag "--asset-format <fmt>" help="Asset format" default="png" {
+            choices "svg" "png" "pdf" "jpg"
+        }
+        flag "--scale <n>" help="Scale for raster formats (1-4)" default="3"
+        flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+        flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+        flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+        flag "--frame-name <name>" help="Figma frame name containing images (default: from config or 'Illustrations')"
+
+        arg "[filter]" help="Filter images by name pattern (e.g., 'hero/*')"
+    }
+
+    // --- download tokens ---
+    cmd "tokens" help="Downloads unified design tokens from Figma as W3C JSON" {
+        flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+        flag "-o --output <path>" help="Output file path"
+        flag "-f --format <fmt>" help="Output format" default="w3c" {
+            choices "w3c" "raw"
+        }
+        flag "--w3c-version <ver>" help="W3C spec version" default="v2025" {
+            choices "v2025" "v1"
+        }
+        flag "--compact" help="Output minified JSON"
+        flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+        flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+        flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+    }
+
+    // --- download all ---
+    cmd "all" help="Downloads all design tokens from Figma as JSON" {
+        flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+        flag "-o --output <path>" help="Output file path"
+        flag "-f --format <fmt>" help="Output format" default="w3c" {
+            choices "w3c" "raw"
+        }
+        flag "--w3c-version <ver>" help="W3C spec version" default="v2025" {
+            choices "v2025" "v1"
+        }
+        flag "--compact" help="Output minified JSON"
+        flag "--asset-format <fmt>" help="Asset format" default="png" {
+            choices "svg" "png" "pdf" "jpg"
+        }
+        flag "--scale <n>" help="Scale for raster formats (1-4)" default="3"
+        flag "--icons-frame-name <name>" help="Figma frame name for icons (default: from config or 'Icons')"
+        flag "--images-frame-name <name>" help="Figma frame name for images (default: from config or 'Illustrations')"
+    }
+}
+
+// =============================================================================
+// tokens
+// =============================================================================
+
+cmd "tokens" help="Work with local .tokens.json files (no config or Figma token needed)" {
+
+    // --- tokens info (default) ---
+    cmd "info" help="Inspect a .tokens.json file (types, groups, warnings)" {
+        flag "--json" help="Output machine-readable JSON"
+
+        arg "<file>" help="Path to the .tokens.json file"
+    }
+
+    // --- tokens convert ---
+    cmd "convert" help="Filter and re-export a .tokens.json file as W3C JSON" {
+        flag "-o --output <path>" help="Output file path (default: stdout)"
+        flag "--group <prefix>" help="Filter by group path prefix (e.g., 'Brand.Colors')"
+        flag "--type <type>" help="Filter by token type(s): color, dimension, number, typography" var=#true
+        flag "--w3c-version <ver>" help="W3C spec version" default="v2025" {
+            choices "v2025" "v1"
+        }
+        flag "--compact" help="Output minified JSON"
+
+        arg "<file>" help="Path to the .tokens.json file"
+    }
+}
+
+// =============================================================================
+// batch
+// =============================================================================
+
+cmd "batch" help="Process multiple config files in parallel" {
+    long_help "Process multiple ExFig configuration files in a single command with shared rate limiting. When a directory is specified, only config files directly in that directory are processed. Requires FIGMA_PERSONAL_TOKEN environment variable."
+
+    flag "--parallel <n>" help="Maximum configs to process in parallel" default="3"
+    flag "--fail-fast" help="Stop processing on first error"
+    flag "--rate-limit <n>" help="Figma API requests per minute" default="10"
+    flag "--max-retries <n>" help="Maximum retry attempts for failed requests" default="4"
+    flag "--resume" help="Resume from previous checkpoint if available"
+    flag "--report <path>" help="Path to write JSON report"
+    flag "--cache" help="Enable version tracking cache (skip export if unchanged)" negate="--no-cache"
+    flag "--force" help="Force export and update cache (ignore cached version)"
+    flag "--cache-path <path>" help="Custom path to cache file (default: .exfig-cache.json)"
+    flag "--experimental-granular-cache" help="[EXPERIMENTAL] Enable per-node hash tracking for granular cache invalidation" hide=#true
+    flag "--concurrent-downloads <n>" help="Maximum concurrent CDN downloads" default="20"
+    flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+
+    arg "<paths>..." help="Config files or directory to process"
+}
