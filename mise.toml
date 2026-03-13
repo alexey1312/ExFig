@@ -52,6 +52,9 @@ git-cliff = "2.10.1" # Changelog generation
 # --- Configuration ---
 pkl = "0.31.0" # Configuration language (for hk.pkl)
 
+# --- CLI Spec ---
+usage = "latest" # CLI spec → shell completions, docs, man pages
+
 # --- Search ---
 "github:alexey1312/swift-index" = { version = "latest", os = [
   "macos",
@@ -214,3 +217,23 @@ echo "✓ Generated $(ls -1 "$OUTPUT_DIR"/*.pkl.swift | wc -l | tr -d ' ') files
 [tasks.coverage]
 description = "Run tests, show coverage report, and update README badge"
 run = "./Scripts/coverage.sh --run-tests --update-badge"
+
+# =============================================================================
+# Shell Completions & CLI Docs (via Usage spec)
+# =============================================================================
+
+[tasks."completions:bash"]
+description = "Generate bash completions from usage spec"
+run = "usage generate completion bash exfig -f exfig.usage.kdl"
+
+[tasks."completions:zsh"]
+description = "Generate zsh completions from usage spec"
+run = "usage generate completion zsh exfig -f exfig.usage.kdl"
+
+[tasks."completions:fish"]
+description = "Generate fish completions from usage spec"
+run = "usage generate completion fish exfig -f exfig.usage.kdl"
+
+[tasks."docs:cli-reference"]
+description = "Generate CLI reference docs from usage spec"
+run = "usage generate markdown -f exfig.usage.kdl --out-file docs/cli-reference.md"

@@ -87,6 +87,12 @@ and Flutter projects.
 ./bin/mise run clean                # Clean build artifacts
 ./bin/mise run clean:all            # Clean build + derived data
 
+# Shell Completions & CLI Docs (via Usage spec)
+./bin/mise run completions:bash     # Generate bash completions
+./bin/mise run completions:zsh      # Generate zsh completions
+./bin/mise run completions:fish     # Generate fish completions
+./bin/mise run docs:cli-reference   # Generate CLI reference docs
+
 # Run CLI
 .build/debug/exfig --help
 .build/debug/exfig colors -i exfig.pkl
@@ -278,6 +284,8 @@ Changing `load()` return type affects:
 ### Adding a CLI Command
 
 See `ExFigCLI/CLAUDE.md` (Adding a New Subcommand).
+
+**Important:** When adding/changing CLI flags or subcommands, update `exfig.usage.kdl` (Usage spec) to keep shell completions and docs in sync.
 
 ### Adding a Figma API Endpoint
 
