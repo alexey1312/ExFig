@@ -30,7 +30,7 @@ final class RedirectGuardDelegateTests: XCTestCase {
         delegate.urlSession(
             URLSession.shared,
             task: task,
-            willPerformHTTPRedirection: HTTPURLResponse(),
+            willPerformHTTPRedirection: makeResponse(),
             newRequest: redirect
         ) { resultRequest in
             XCTAssertEqual(resultRequest?.value(forHTTPHeaderField: "X-Figma-Token"), "secret")
@@ -54,7 +54,7 @@ final class RedirectGuardDelegateTests: XCTestCase {
         delegate.urlSession(
             URLSession.shared,
             task: task,
-            willPerformHTTPRedirection: HTTPURLResponse(),
+            willPerformHTTPRedirection: makeResponse(),
             newRequest: redirect
         ) { resultRequest in
             XCTAssertNil(resultRequest?.value(forHTTPHeaderField: "X-Figma-Token"))
@@ -78,7 +78,7 @@ final class RedirectGuardDelegateTests: XCTestCase {
         delegate.urlSession(
             URLSession.shared,
             task: task,
-            willPerformHTTPRedirection: HTTPURLResponse(),
+            willPerformHTTPRedirection: makeResponse(),
             newRequest: redirect
         ) { resultRequest in
             XCTAssertNil(resultRequest?.value(forHTTPHeaderField: "Authorization"))
@@ -103,7 +103,7 @@ final class RedirectGuardDelegateTests: XCTestCase {
         delegate.urlSession(
             URLSession.shared,
             task: task,
-            willPerformHTTPRedirection: HTTPURLResponse(),
+            willPerformHTTPRedirection: makeResponse(),
             newRequest: redirect
         ) { resultRequest in
             XCTAssertNil(resultRequest?.value(forHTTPHeaderField: "X-Figma-Token"))
@@ -122,7 +122,7 @@ final class RedirectGuardDelegateTests: XCTestCase {
         delegate.urlSession(
             URLSession.shared,
             task: task,
-            willPerformHTTPRedirection: HTTPURLResponse(),
+            willPerformHTTPRedirection: makeResponse(),
             newRequest: redirect
         ) { resultRequest in
             XCTAssertNil(resultRequest?.value(forHTTPHeaderField: "X-Figma-Token"))
@@ -145,6 +145,17 @@ final class RedirectGuardDelegateTests: XCTestCase {
 
     private func makeMockTask(originalRequest: URLRequest?) -> URLSessionTask {
         MockURLSessionTask(originalRequest: originalRequest)
+    }
+
+    // Cross-platform HTTPURLResponse factory (Linux lacks the no-arg init).
+    // swiftlint:disable:next force_unwrapping
+    private func makeResponse() -> HTTPURLResponse {
+        HTTPURLResponse(
+            url: URL(string: "https://api.figma.com")!,
+            statusCode: 302,
+            httpVersion: nil,
+            headerFields: nil
+        )!
     }
 }
 
