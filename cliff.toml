@@ -2,7 +2,7 @@
 # https://git-cliff.org/docs/configuration
 
 [remote.github]
-owner = "alexey1312"
+owner = "DesignPipe"
 repo = "ExFig"
 
 [changelog]
@@ -26,7 +26,7 @@ body = """
         - {% if commit.scope %}**{{ commit.scope }}**: {% endif %}\
             {{ commit.message | upper_first }}\
             {% if commit.remote.username %} by @{{ commit.remote.username }}{% endif %}\
-            {% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/alexey1312/ExFig/pull/{{ commit.remote.pr_number }}){% endif %}
+            {% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/DesignPipe/exfig/pull/{{ commit.remote.pr_number }}){% endif %}
     {% endfor %}
 {% endfor %}\n
 """

@@ -11,7 +11,7 @@ typealias JobProgressCallback = @Sendable (Int, Int) async -> Void
 /// Actor that coordinates file downloads across multiple configs in batch mode.
 /// Downloads are processed in parallel with configurable concurrency.
 actor SharedDownloadQueue {
-    private let logger = Logger(label: "com.alexey1312.exfig.shared-download-queue")
+    private let logger = Logger(label: "com.designpipe.exfig.shared-download-queue")
     private let session: URLSession
     private let maxConcurrentDownloads: Int
 

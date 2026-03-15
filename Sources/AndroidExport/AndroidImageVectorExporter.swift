@@ -50,7 +50,7 @@ public final class AndroidImageVectorExporter: Sendable {
     private let outputDirectory: URL
     private let config: Config
     private let validator = PathDataValidator()
-    private let logger = Logger(label: "com.alexey1312.exfig.imagevector-exporter")
+    private let logger = Logger(label: "com.designpipe.exfig.imagevector-exporter")
 
     public init(outputDirectory: URL, config: Config) {
         self.outputDirectory = outputDirectory

@@ -26,8 +26,6 @@ legacy_version_file = false
 [hooks]
 enter = """
 git config core.hooksPath .githooks 2>/dev/null || true
-# Auto-index on directory entry (incremental, background)
-[ -f .swiftindex.toml ] && swiftindex index . &>/dev/null &
 """
 
 # =============================================================================
@@ -55,10 +53,6 @@ pkl = "0.31.0" # Configuration language (for hk.pkl)
 # --- CLI Spec ---
 usage = "2.18.2" # CLI spec → shell completions, docs, man pages
 
-# --- Search ---
-"github:alexey1312/swift-index" = { version = "latest", os = [
-  "macos",
-] } # Semantic code search (MLX, Swift-optimized)
 
 # =============================================================================
 # Tasks

@@ -12,7 +12,7 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to: **alexey1312@users.noreply.github.com**
+Instead, please report them via email to: **akakoulin.dev@gmail.com**
 
 Include the following information in your report:
 

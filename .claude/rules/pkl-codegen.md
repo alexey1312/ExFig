@@ -54,7 +54,7 @@ URL bridging lives in `Sources/ExFigCLI/Input/PKLConfigCompat.swift` and platfor
 ## PKL Package Versioning
 
 Consumer configs reference published package URIs:
-`package://github.com/alexey1312/ExFig/releases/download/v2.0.0-beta.5/exfig@2.0.0-beta.5#/ExFig.pkl`
+`package://github.com/DesignPipe/exfig/releases/download/v2.0.0-beta.5/exfig@2.0.0-beta.5#/ExFig.pkl`
 Schema changes (defaults, constraints, new fields) only take effect after publishing a new release.
 Don't remove fields from consumer configs until the package version with those defaults is published.
 

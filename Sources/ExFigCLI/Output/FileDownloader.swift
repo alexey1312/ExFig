@@ -26,7 +26,7 @@ func validateDownloadURL(_ url: URL) throws {
 }
 
 final class FileDownloader: Sendable {
-    private let logger = Logger(label: "com.alexey1312.exfig.file-downloader")
+    private let logger = Logger(label: "com.designpipe.exfig.file-downloader")
     private let session: URLSession
 
     /// Default concurrent downloads for CDN (S3/Cloudflare can handle high concurrency)

@@ -51,7 +51,7 @@ struct FileVersionPreFetcher: Sendable {
     let client: Client
     let ui: TerminalUI
 
-    private let logger = Logger(label: "com.alexey1312.exfig.file-version-prefetcher")
+    private let logger = Logger(label: "com.designpipe.exfig.file-version-prefetcher")
 
     // MARK: - Static Factory
 

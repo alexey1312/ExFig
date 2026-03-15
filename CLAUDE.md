@@ -27,32 +27,6 @@ When adding lists of items (modules, commands, files, etc.), always use TOON tab
 
 This applies to: Swift packages, CLI tools (mise, hk, swiftlint, etc.), Figma API, and any third-party dependency.
 
-## swiftindex — Semantic Code Search
-
-**Use swiftindex for ALL code search.** Local, private, Swift-optimized with MLX embeddings.
-
-```bash
-# Semantic search (conceptual queries)
-./bin/mise exec -- swiftindex search "iOS colors export" Sources
-
-# Exact symbol search (semantic_weight=0.0)
-./bin/mise exec -- swiftindex search --semantic-weight 0.0 "FigmaClient"
-```
-
-**Query formulation tips:**
-
-| Question Type    | Bad Query    | Good Query                                     |
-| ---------------- | ------------ | ---------------------------------------------- |
-| Find file/struct | "iOS config" | "iOS colors icons images configuration struct" |
-| Find flow        | "export"     | "how images are exported to xcassets"          |
-| Find handler     | "error"      | "where errors from Figma API are handled"      |
-
-**Workflow:**
-
-1. Start with swiftindex for any search — replaces Glob + Grep + Read
-2. Use `--semantic-weight 0.0` for exact symbol lookup
-3. Fall back to Grep/Glob only for regex patterns or non-Swift files
-
 # CLAUDE.md
 
 Agent instructions for ExFig - a CLI tool that exports colors, typography, icons, and images from Figma to iOS, Android,
@@ -104,11 +78,6 @@ and Flutter projects.
 # PKL Validation (validate config templates against schemas)
 pkl eval --format json <file.pkl>   # Package URI requires published package
 # For local validation, replace package:// URIs with local Schemas/ paths
-
-# Search (swiftindex) — use for ANY code search
-./bin/mise exec -- swiftindex search "iOS config struct colors icons" Sources
-./bin/mise exec -- swiftindex search "how images exported to xcassets" Sources
-./bin/mise exec -- swiftindex search --semantic-weight 0.0 "FigmaClient"  # exact symbol
 ```
 
 ## Project Context

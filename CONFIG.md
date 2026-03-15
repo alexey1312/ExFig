@@ -19,11 +19,11 @@ statements.
 Alternatively, you can reference schemas directly via the published PKL package URI (no local extraction needed):
 
 ```pkl
-amends "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/ExFig.pkl"
+amends "package://github.com/DesignPipe/exfig/releases/download/v2.0.0/exfig@2.0.0#/ExFig.pkl"
 
-import "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/iOS.pkl"
-import "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/Figma.pkl"
-import "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/Common.pkl"
+import "package://github.com/DesignPipe/exfig/releases/download/v2.0.0/exfig@2.0.0#/iOS.pkl"
+import "package://github.com/DesignPipe/exfig/releases/download/v2.0.0/exfig@2.0.0#/Figma.pkl"
+import "package://github.com/DesignPipe/exfig/releases/download/v2.0.0/exfig@2.0.0#/Common.pkl"
 ```
 
 Replace `2.0.0` with your ExFig version. Using local schemas (`exfig schemas`) is recommended for faster evaluation

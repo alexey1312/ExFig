@@ -9,7 +9,7 @@ public struct LatestReleaseEndpoint: BaseEndpoint {
     public init() {}
 
     public func makeRequest(baseURL: URL) -> URLRequest {
-        let url = baseURL.appendingPathComponent("repos/alexey1312/ExFig/releases/latest")
+        let url = baseURL.appendingPathComponent("repos/DesignPipe/exfig/releases/latest")
         return URLRequest(url: url)
     }
 }

@@ -17,7 +17,7 @@ func checkForUpdate(logger: Logger) async {
             let border = "──────────────────────────────────────────────────────────────"
             let p = { (s: String) in NooraUI.format(.primary(s)) }
             let url = NooraUI.formatLink(
-                "https://github.com/alexey1312/ExFig/releases",
+                "https://github.com/DesignPipe/exfig/releases",
                 useColors: true
             )
 
@@ -40,7 +40,7 @@ func checkForUpdate(logger: Logger) async {
             ----------------------------------------------------------------------------
             exfig \(latestVersion) is available. You are on \(ExFigCommand.version).
             You should use the latest version.
-            To update, visit https://github.com/alexey1312/ExFig/releases
+            To update, visit https://github.com/DesignPipe/exfig/releases
             ----------------------------------------------------------------------------
             """)
         }

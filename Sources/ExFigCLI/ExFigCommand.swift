@@ -66,7 +66,7 @@ struct ExFigCommand: AsyncParsableCommand {
 
     static let svgFileConverter = NativeVectorDrawableConverter()
     static let fileWriter = FileWriter()
-    static let logger = Logger(label: "com.alexey1312.exfig")
+    static let logger = Logger(label: "com.designpipe.exfig")
 
     /// Shared terminal UI instance (initialized by subcommands)
     nonisolated(unsafe) static var terminalUI: TerminalUI!

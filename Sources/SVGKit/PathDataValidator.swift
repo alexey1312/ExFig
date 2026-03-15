@@ -51,7 +51,7 @@ public struct PathDataValidator: Sendable {
     /// StringPool.cpp uses signed 16-bit integer for string length
     public static let criticalThreshold = 32767
 
-    private let logger = Logger(label: "com.alexey1312.exfig.path-validator")
+    private let logger = Logger(label: "com.designpipe.exfig.path-validator")
 
     public init() {}
 

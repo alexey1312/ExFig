@@ -1,12 +1,10 @@
 # ExFig
 
-[![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/alexey1312/ExFig)
-[![Swift-versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Falexey1312%2FExFig%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/alexey1312/ExFig)
-[![CI](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/ci.yml)
-[![Release](https://github.com/alexey1312/ExFig/actions/workflows/release.yml/badge.svg)](https://github.com/alexey1312/ExFig/actions/workflows/release.yml)
-[![Docs](https://github.com/alexey1312/ExFig/actions/workflows/deploy-docc.yml/badge.svg)](https://alexey1312.github.io/ExFig/documentation/exfig)
+[![CI](https://github.com/DesignPipe/exfig/actions/workflows/ci.yml/badge.svg)](https://github.com/DesignPipe/exfig/actions/workflows/ci.yml)
+[![Release](https://github.com/DesignPipe/exfig/actions/workflows/release.yml/badge.svg)](https://github.com/DesignPipe/exfig/actions/workflows/release.yml)
+[![Docs](https://github.com/DesignPipe/exfig/actions/workflows/deploy-docc.yml/badge.svg)](https://DesignPipe.github.io/exfig/documentation/exfig)
 ![Coverage](https://img.shields.io/badge/coverage-50.65%25-yellow)
-[![License](https://img.shields.io/github/license/alexey1312/ExFig.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/DesignPipe/exfig.svg)](LICENSE)
 
 Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and
 Web (React/TypeScript) projects.
@@ -62,7 +60,7 @@ Flutter, and React/TypeScript.
 ### Developer Experience
 
 - 🤖 CI/CD ready (quiet mode, exit codes, JSON reports)
-- 🔄 [GitHub Action](https://github.com/alexey1312/exfig-action) for automated exports
+- 🔄 [GitHub Action](https://github.com/DesignPipe/exfig-action) for automated exports
 - 📊 Rich progress indicators with ETA
 - 🔇 Verbose, normal, and quiet output modes
 - 🚀 Swift 6 / Strict Concurrency
@@ -78,13 +76,13 @@ Flutter, and React/TypeScript.
 
 ```bash
 # Using Homebrew (recommended)
-brew install alexey1312/tap/exfig
+brew install designpipe/tap/exfig
 
 # Using Mint
-mint install alexey1312/ExFig
+mint install DesignPipe/exfig
 
 # Using mise
-mise use -g github:alexey1312/ExFig
+mise use -g github:DesignPipe/exfig
 ```
 
 ### 2. Set Figma Token
@@ -203,7 +201,7 @@ exfig batch ./configs/ --report results.json  # JSON report
 ```
 
 Supports `--fail-fast`, `--resume` (checkpoint/resume), and `--cache` (version tracking). See
-[documentation](https://alexey1312.github.io/ExFig/documentation/exfig/usage) for all options.
+[documentation](https://DesignPipe.github.io/exfig/documentation/exfig/usage) for all options.
 
 ### Quick Fetch (No Config File)
 
@@ -256,10 +254,10 @@ checkpoint/resume for interrupted exports. Configurable via `--max-retries`, `--
 
 ## GitHub Action
 
-Automate design exports in CI/CD with [exfig-action](https://github.com/alexey1312/exfig-action):
+Automate design exports in CI/CD with [exfig-action](https://github.com/DesignPipe/exfig-action):
 
 ```yaml
-- uses: alexey1312/exfig-action@v1
+- uses: DesignPipe/exfig-action@v1
   with:
     figma_token: ${{ secrets.FIGMA_TOKEN }}
     command: icons
@@ -276,7 +274,7 @@ Automate design exports in CI/CD with [exfig-action](https://github.com/alexey13
 ## Documentation
 
 Complete documentation is available at
-**[alexey1312.github.io/ExFig](https://alexey1312.github.io/ExFig/documentation/exfig)** - including getting started
+**[DesignPipe.github.io/exfig](https://DesignPipe.github.io/exfig/documentation/exfig)** - including getting started
 guides, platform-specific export details, design requirements, and custom templates.
 
 See [CONFIG.md](CONFIG.md) for the full configuration reference.
@@ -284,7 +282,7 @@ See [CONFIG.md](CONFIG.md) for the full configuration reference.
 ## Contributing
 
 We welcome contributions! See the
-[Development Guide](https://alexey1312.github.io/ExFig/documentation/exfig/development) for setup, testing, and code
+[Development Guide](https://DesignPipe.github.io/exfig/documentation/exfig/development) for setup, testing, and code
 style guidelines.
 
 ## License
@@ -293,8 +291,8 @@ ExFig is available under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-**[Read the full documentation](https://alexey1312.github.io/ExFig/documentation/exfig)** |
-[Report an issue](https://github.com/alexey1312/ExFig/issues) |
+**[Read the full documentation](https://DesignPipe.github.io/exfig/documentation/exfig)** |
+[Report an issue](https://github.com/DesignPipe/exfig/issues) |
 [Figma API](https://www.figma.com/developers/api)
 
 ---

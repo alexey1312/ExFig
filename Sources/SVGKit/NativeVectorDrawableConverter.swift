@@ -41,7 +41,7 @@ public struct NativeVectorDrawableConverter: Sendable {
     private let maxConcurrent: Int
     private let validatePathData: Bool
     private let strictPathValidation: Bool
-    private let logger = Logger(label: "com.alexey1312.exfig.native-vector-drawable-converter")
+    private let logger = Logger(label: "com.designpipe.exfig.native-vector-drawable-converter")
     private let validator = PathDataValidator()
 
     /// - Parameters:

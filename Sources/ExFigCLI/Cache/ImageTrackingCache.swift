@@ -71,7 +71,7 @@ struct CachedFileInfo: Codable, Sendable {
 // MARK: - Cache Persistence
 
 extension ImageTrackingCache {
-    private static let logger = Logger(label: "com.alexey1312.exfig.image-tracking-cache")
+    private static let logger = Logger(label: "com.designpipe.exfig.image-tracking-cache")
 
     /// Loads cache from a file at the specified path.
     /// Returns an empty cache if file doesn't exist or is invalid.

@@ -18,7 +18,7 @@ your development environment and contributing to the project.
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/alexey1312/ExFig.git
+git clone https://github.com/DesignPipe/exfig.git
 cd ExFig
 ```
 

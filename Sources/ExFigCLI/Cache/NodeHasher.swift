@@ -14,7 +14,7 @@ import Logging
 /// - Recursive hashing includes all children
 /// - Float normalization handled at property creation time
 enum NodeHasher {
-    private static let logger = Logger(label: "com.alexey1312.exfig.node-hasher")
+    private static let logger = Logger(label: "com.designpipe.exfig.node-hasher")
 
     /// Computes a stable hash for the given node properties.
     ///

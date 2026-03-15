@@ -27,7 +27,7 @@ extension ExFig {
     ///
     /// Usage:
     /// ```pkl
-    /// amends "package://github.com/alexey1312/ExFig/releases/download/v2.0.0/exfig@2.0.0#/ExFig.pkl"
+    /// amends "package://github.com/DesignPipe/exfig/releases/download/v2.0.0/exfig@2.0.0#/ExFig.pkl"
     ///
     /// figma {
     ///   lightFileId = "xxx"

@@ -238,18 +238,18 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
-          curl -sL "https://github.com/alexey1312/ExFig/releases/download/v${VERSION}/exfig-macos.zip" -o exfig-macos.zip
+          curl -sL "https://github.com/DesignPipe/exfig/releases/download/v${VERSION}/exfig-macos.zip" -o exfig-macos.zip
           MACOS_SHA=$(sha256sum exfig-macos.zip | cut -d' ' -f1)
           echo "macos=${MACOS_SHA}" >> "$GITHUB_OUTPUT"
 
-          curl -sL "https://github.com/alexey1312/ExFig/releases/download/v${VERSION}/exfig-linux-x64.tar.gz" -o exfig-linux.tar.gz
+          curl -sL "https://github.com/DesignPipe/exfig/releases/download/v${VERSION}/exfig-linux-x64.tar.gz" -o exfig-linux.tar.gz
           LINUX_SHA=$(sha256sum exfig-linux.tar.gz | cut -d' ' -f1)
           echo "linux=${LINUX_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout Homebrew tap
         uses: actions/checkout@v6
         with:
-          repository: alexey1312/homebrew-tap
+          repository: DesignPipe/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: homebrew-tap
 
