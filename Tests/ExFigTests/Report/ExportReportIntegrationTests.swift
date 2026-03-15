@@ -93,7 +93,8 @@ final class ExportReportIntegrationTests: XCTestCase {
 
     func testReportWriteFailureDoesNotThrow() {
         let ui = TerminalUI(outputMode: .quiet)
-        let invalidPath = "/nonexistent/directory/report.json"
+        // /dev/null is a character device, not a directory — createDirectory fails even as root
+        let invalidPath = "/dev/null/report.json"
 
         let report = ExportReport(
             version: ExportReport.currentVersion,
