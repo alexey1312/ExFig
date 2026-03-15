@@ -1,0 +1,2860 @@
+# ExFig
+
+> Command-line utility to export colors, typography, icons, and images from Figma
+> to Xcode, Android Studio, Flutter, and Web (React/TypeScript) projects.
+> Supports Dark Mode, SwiftUI, UIKit, Jetpack Compose, Flutter, and React/TypeScript.
+> Configuration via PKL. Jinja2 templates for custom code generation.
+
+## Documentation
+
+### README
+
+# ExFig
+
+
+Command-line utility to export colors, typography, icons, and images from Figma to Xcode, Android Studio, Flutter, and
+Web (React/TypeScript) projects.
+
+Automatically sync your design system from Figma to code with support for Dark Mode, SwiftUI, UIKit, Jetpack Compose,
+Flutter, and React/TypeScript.
+
+## Why ExFig?
+
+- **Eliminate manual export**: Figma doesn't natively export colors and images to Xcode/Android Studio
+- **Keep design and code in sync**: Automate updates to your component library
+- **Save time**: No more manual color palette management or icon exports
+
+## Features
+
+### Design Assets
+
+- ✨ Export light & dark color palettes
+- 🎨 High contrast color support (iOS)
+- 🖼️ Icons and images with Dark Mode variants
+- 📄 PDF vector icons (resolution-independent, iOS)
+- 🖥️ iPad-specific asset variants
+- 📝 Typography with Dynamic Type support (iOS)
+- 🔄 RTL (Right-to-Left) layout support
+- 🎯 Figma Variables support
+- 📁 Local `.tokens.json` file import (no Figma API needed)
+
+### Platform Support
+
+- 📱 SwiftUI and UIKit (iOS/macOS)
+- 🔗 Figma Code Connect integration (iOS, Android)
+- 🤖 Jetpack Compose and XML resources (Android)
+- ⚠️ Android pathData validation (errors on 32,767 bytes AAPT limit)
+- 🦋 Flutter / Dart
+- 🌐 React / TypeScript (CSS variables, TSX components)
+- 🔧 Customizable code templates (Jinja2)
+
+### Export Formats
+
+- 🖼️ PNG, SVG, PDF, JPEG, WebP, HEIC (with quality control)
+- 📊 W3C Design Tokens (DTCG v2025 format, unified JSON export)
+- ⚡ Quick fetch mode (no config file needed)
+
+### Performance & Reliability
+
+- ⚡ Parallel downloads & writes
+- 📦 Batch processing with shared rate limiting
+- 🔁 Automatic retries with exponential backoff
+- 💾 Checkpoint/resume for interrupted exports
+- 🕐 Version tracking (skip unchanged files)
+- 🧬 Granular cache (per-node change detection, experimental)
+
+### Developer Experience
+
+- 🤖 CI/CD ready (quiet mode, exit codes, JSON reports)
+- 🔄 [GitHub Action](https://github.com/DesignPipe/exfig-action) for automated exports
+- 📊 Rich progress indicators with ETA
+- 🔇 Verbose, normal, and quiet output modes
+- 🚀 Swift 6 / Strict Concurrency
+
+> **Note:** Exporting icons and images requires a Figma Professional/Organization plan (uses Shareable Team Libraries).
+
+> **Tip:** For optimal PNG sizes, use oxipng (`github:shssoichiro/oxipng` via `mise use -g`) to compress exported PNG
+> files after export.
+
+## Quick Start
+
+### 1. Install ExFig
+
+```bash
+# Using Homebrew (recommended)
+brew install designpipe/tap/exfig
+
+# Using Mint
+mint install DesignPipe/exfig
+
+# Using mise
+mise use -g github:DesignPipe/exfig
+```
+
+### 2. Set Figma Token
+
+```bash
+export FIGMA_PERSONAL_TOKEN=your_token_here
+```
+
+Get your token from [Figma's developer settings](https://www.figma.com/developers/api#access-tokens). For secure token
+storage, consider using [fnox](https://github.com/jdx/fnox) instead of plain `export`.
+
+### 3. Generate Configuration
+
+```bash
+exfig init -p ios       # or: android, flutter, web
+```
+
+### 4. Configure File IDs
+
+Edit `exfig.pkl` and add your Figma file IDs:
+
+```pkl
+figma {
+  lightFileId = "YOUR_FIGMA_FILE_ID"
+}
+```
+
+### 5. Export Resources
+
+```bash
+# Export individual resource types
+exfig colors             # Export colors
+exfig icons              # Export icons
+exfig images             # Export images
+exfig typography         # Export typography
+
+# Export everything at once with batch
+exfig batch exfig.pkl    # All resource types from single config
+```
+
+See [Configuration Reference](CONFIG.md) for all available options.
+
+## What Gets Generated
+
+### iOS
+
+```
+YourProject/
+├── Assets.xcassets/
+│   ├── Colors/              # Color sets with Light/Dark variants
+│   ├── Icons/               # PDF/SVG vector icons
+│   └── Images/              # PNG images with @1x, @2x, @3x
+└── Sources/
+    ├── UIColor+extension.swift      # Type-safe color access
+    ├── Color+extension.swift        # SwiftUI colors
+    ├── UIImage+extension.swift      # Image access
+    ├── UIFont+extension.swift       # Typography
+    └── Labels/                      # Pre-configured UILabel classes
+```
+
+### Android
+
+```
+app/src/main/
+├── res/
+│   ├── values/
+│   │   ├── colors.xml               # Color definitions
+│   │   └── typography.xml           # Text styles
+│   ├── values-night/
+│   │   └── colors.xml               # Dark mode colors
+│   ├── drawable/                    # Vector icons/images
+│   └── drawable-xxxhdpi/            # Raster images (multiple DPIs)
+└── java/.../ui/exfig/
+    ├── Colors.kt                    # Compose colors
+    ├── Icons.kt                     # Compose icons
+    └── Typography.kt                # Compose text styles
+```
+
+### Flutter
+
+```
+flutter_project/
+├── assets/
+│   ├── icons/
+│   │   ├── ic_add.svg               # Light icons
+│   │   └── ic_add_dark.svg          # Dark icons
+│   └── images/
+│       ├── logo.png                 # 1x scale
+│       ├── 2.0x/logo.png            # 2x scale
+│       └── 3.0x/logo.png            # 3x scale
+└── lib/
+    └── generated/
+        ├── colors.dart              # Color constants
+        ├── icons.dart               # Icon path constants
+        └── images.dart              # Image path constants
+```
+
+## Advanced Features
+
+### Batch Processing
+
+Export all resource types (colors, icons, images, typography) from a single unified config:
+
+```bash
+exfig batch exfig.pkl                         # All resources from one config
+exfig batch exfig.pkl --cache                 # With version tracking
+```
+
+Process multiple configuration files in parallel with shared rate limiting:
+
+```bash
+exfig batch ./configs/                        # All configs in directory
+exfig batch ios.pkl android.pkl flutter.pkl   # Specific files
+exfig batch ./configs/ --parallel 5           # Custom parallelism
+exfig batch ./configs/ --report results.json  # JSON report
+```
+
+Supports `--fail-fast`, `--resume` (checkpoint/resume), and `--cache` (version tracking). See
+[documentation](https://DesignPipe.github.io/exfig/documentation/exfig/usage) for all options.
+
+### Quick Fetch (No Config File)
+
+Download assets directly without a configuration file:
+
+```bash
+exfig fetch -f FILE_ID -r "Icons" -o ./icons --format svg
+exfig fetch -f FILE_ID -r "Images" -o ./images --format webp --webp-quality 90
+```
+
+Supports all formats (PNG, SVG, PDF, JPEG, WebP), filtering (`--filter`), name conversion (`--name-style`), and dark
+mode variants (`--dark-mode-suffix`). Run `exfig fetch --help` for all options.
+
+### Design Tokens
+
+Export Figma data as [W3C Design Tokens](https://design-tokens.github.io/community-group/format/) (DTCG v2025 format):
+
+```bash
+# Export from Figma API
+exfig download colors -o tokens/colors.json
+exfig download icons -o tokens/icons.json --asset-format svg
+exfig download tokens -o tokens/design-tokens.json    # Unified (colors + typography + dimensions + numbers)
+exfig download all -o ./tokens/
+
+# Work with local .tokens.json files (no Figma token needed)
+exfig tokens info ./tokens.json                        # Inspect token file
+exfig tokens convert ./tokens.json -o out.json         # Re-export (filter/transform)
+exfig tokens convert ./tokens.json --group "Brand" --type color -o brand-colors.json
+```
+
+Use `--w3c-version v1` for the legacy hex-string format. Colors entries also support `tokensFile` to import from a local
+`.tokens.json` file (e.g., from Tokens Studio) without a Figma token — see [CONFIG.md](CONFIG.md).
+
+### Version Tracking
+
+Skip unchanged exports using Figma file version tracking:
+
+```bash
+exfig colors --cache                                    # Enable version tracking
+exfig icons --cache --experimental-granular-cache       # Per-node change detection
+```
+
+Configure in `exfig.pkl` via `common.cache` or use CLI flags. See [CONFIG.md](CONFIG.md) for details.
+
+### Fault Tolerance
+
+All commands include automatic retries with exponential backoff, rate limit handling (respects `Retry-After`), and
+checkpoint/resume for interrupted exports. Configurable via `--max-retries`, `--rate-limit`, `--fail-fast`, and
+`--resume`.
+
+## GitHub Action
+
+Automate design exports in CI/CD with [exfig-action](https://github.com/DesignPipe/exfig-action):
+
+```yaml
+- uses: DesignPipe/exfig-action@v1
+  with:
+    figma_token: ${{ secrets.FIGMA_TOKEN }}
+    command: icons
+    cache: true
+```
+
+## Requirements
+
+- **Swift 6.2+** (for building from source)
+- **macOS 13.0+** or **Linux (Ubuntu 22.04)**
+- **[PKL](https://pkl-lang.org/)** - Configuration language (install via `brew install pkl` or `mise use -g pkl`)
+- **Figma Personal Access Token**
+
+## Documentation
+
+Complete documentation is available at
+**[DesignPipe.github.io/exfig](https://DesignPipe.github.io/exfig/documentation/exfig)** - including getting started
+guides, platform-specific export details, design requirements, and custom templates.
+
+See [CONFIG.md](CONFIG.md) for the full configuration reference.
+
+## Contributing
+
+We welcome contributions! See the
+[Development Guide](https://DesignPipe.github.io/exfig/documentation/exfig/development) for setup, testing, and code
+style guidelines.
+
+## License
+
+ExFig is available under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+**[Read the full documentation](https://DesignPipe.github.io/exfig/documentation/exfig)** |
+[Report an issue](https://github.com/DesignPipe/exfig/issues) |
+[Figma API](https://www.figma.com/developers/api)
+
+---
+
+<sub>Originally inspired by [figma-export](https://github.com/RedMadRobot/figma-export).</sub>
+
+### Getting Started
+
+# Getting Started
+
+Install ExFig and configure your first export.
+
+## Overview
+
+ExFig is a command-line tool that exports design resources from Figma to iOS, Android, and Flutter projects.
+
+## Requirements
+
+- macOS 13.0 or later (or Linux Ubuntu 22.04)
+- Figma account with file access
+- Figma Personal Access Token
+
+## Installation
+
+### Using Homebrew (Recommended)
+
+```bash
+brew install designpipe/tap/exfig
+```
+
+### Using Mint
+
+```bash
+mint install DesignPipe/exfig
+```
+
+### Using Mise
+
+```bash
+mise use -g github:DesignPipe/exfig
+```
+
+### From Source
+
+```bash
+git clone https://github.com/DesignPipe/exfig.git
+cd ExFig
+swift build -c release
+cp .build/release/exfig /usr/local/bin/
+```
+
+### Download Binary
+
+Download the latest release from [GitHub Releases](https://github.com/DesignPipe/exfig/releases).
+
+## Figma Access Token
+
+ExFig requires a Figma Personal Access Token to access the Figma API.
+
+### Create a Token
+
+1. Open [Figma Account Settings](https://www.figma.com/settings)
+2. Scroll to **Personal access tokens**
+3. Click **Create a new personal access token**
+4. Give it a descriptive name (e.g., "ExFig CLI")
+5. Copy the generated token
+
+### Set the Token
+
+Set the `FIGMA_PERSONAL_TOKEN` environment variable:
+
+```bash
+# Add to ~/.zshrc or ~/.bashrc
+export FIGMA_PERSONAL_TOKEN="your-token-here"
+```
+
+Or pass it directly to commands:
+
+```bash
+FIGMA_PERSONAL_TOKEN="your-token" exfig colors
+```
+
+## Quick Start
+
+### 1. Initialize Configuration
+
+Generate a starter configuration file for your platform:
+
+```bash
+# For iOS projects
+exfig init --platform ios
+
+# For Android projects
+exfig init --platform android
+
+# For Flutter projects
+exfig init --platform flutter
+```
+
+This creates an `exfig.pkl` file in your current directory.
+
+### 2. Get Your Figma File ID
+
+The file ID is in the Figma URL:
+
+```
+https://www.figma.com/file/ABC123xyz/My-Design-System
+                          ^^^^^^^^^^^
+                          This is your file ID
+```
+
+### 3. Configure exfig.pkl
+
+Edit the generated `exfig.pkl`:
+
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
+
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/iOS.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID_HERE"
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  xcassetsPath = "./Resources/Assets.xcassets"
+  // ... other iOS settings
+}
+```
+
+### 4. Export Resources
+
+```bash
+# Export individual resource types
+exfig colors
+exfig icons
+exfig images
+exfig typography
+
+# Or export everything at once with batch
+exfig batch exfig.pkl
+```
+
+> Note: Individual commands use the `-i` flag for custom config paths (`exfig colors -i path.pkl`),
+> while `batch` takes paths as positional arguments (`exfig batch path.pkl`).
+
+## What's Next
+
+- Usage - Learn about all CLI commands and options
+- Configuration - Full configuration reference
+- DesignRequirements - How to structure your Figma files
+- iOS - iOS-specific export guide
+- Android - Android-specific export guide
+- Flutter - Flutter-specific export guide
+
+### Usage
+
+# Usage
+
+Command-line interface reference and common usage patterns.
+
+## Overview
+
+ExFig provides commands for exporting colors, icons, images, and typography from Figma to native platform resources.
+
+## Basic Commands
+
+```bash
+# Export colors
+exfig colors
+
+# Export icons
+exfig icons
+
+# Export images
+exfig images
+
+# Export typography
+exfig typography
+```
+
+## Configuration File
+
+By default, ExFig looks for `exfig.pkl` in the current directory. Specify a different location:
+
+```bash
+exfig colors -i path/to/exfig.pkl
+exfig colors --input path/to/exfig.pkl
+```
+
+## Filtering Exports
+
+Export specific items by name:
+
+### Single Item
+
+```bash
+exfig icons "ic/24/edit"
+```
+
+### Multiple Items
+
+Separate names with commas:
+
+```bash
+exfig icons "ic/24/edit, ic/16/notification"
+```
+
+### Wildcard Patterns
+
+Use `*` to match multiple items:
+
+```bash
+# Export all icons starting with "ic/24/videoplayer/"
+exfig icons "ic/24/videoplayer/*"
+
+# Export all colors starting with "common/"
+exfig colors "common/*"
+
+# Export all typography styles starting with "heading/"
+exfig typography "heading/*"
+```
+
+> Note: Wildcard patterns don't work on Linux systems.
+
+## Version Tracking
+
+Skip unchanged exports with version tracking:
+
+### Enable via CLI
+
+```bash
+# Enable version tracking
+exfig colors --cache
+exfig icons --cache
+
+# Disable version tracking
+exfig icons --no-cache
+
+# Force export and update cache
+exfig icons --force
+
+# Custom cache file path
+exfig icons --cache-path ./custom-cache.json
+```
+
+> Note: The version changes when a Figma library is **published**, not on every auto-save.
+
+## Fault Tolerance
+
+All commands support fault tolerance options:
+
+### Basic Options
+
+```bash
+# Custom retry count (default: 4)
+exfig colors --max-retries 6
+
+# Custom rate limit (default: 10 req/min)
+exfig icons --rate-limit 20
+```
+
+### Extended Options
+
+Commands that download many files (`icons`, `images`, `fetch`) support additional options:
+
+```bash
+# Stop on first error
+exfig icons --fail-fast
+
+# Resume from checkpoint after interruption
+exfig images --resume
+
+# Increase concurrent downloads (default: 20)
+exfig icons --concurrent-downloads 50
+```
+
+| Option                   | Description                            | Commands             |
+| ------------------------ | -------------------------------------- | -------------------- |
+| `--max-retries`          | Maximum retry attempts (default: 4)    | All                  |
+| `--rate-limit`           | API requests per minute (default: 10)  | All                  |
+| `--fail-fast`            | Stop immediately on error              | icons, images, fetch |
+| `--resume`               | Continue from checkpoint               | icons, images, fetch |
+| `--concurrent-downloads` | Concurrent CDN downloads (default: 20) | icons, images, fetch |
+
+### Checkpoint System
+
+Long-running exports create checkpoints for resumption:
+
+```bash
+# Resume interrupted export
+exfig icons --resume
+
+# Checkpoints stored in: .exfig-checkpoint.json
+# Checkpoints expire after 24 hours
+# Successful completion deletes the checkpoint
+```
+
+## Batch Processing
+
+Export all resource types from a single unified config:
+
+```bash
+# Export colors, icons, images, typography from one config
+exfig batch exfig.pkl
+
+# With version tracking
+exfig batch exfig.pkl --cache
+
+# With rate limiting
+exfig batch exfig.pkl --cache --rate-limit 25
+```
+
+Process multiple configuration files in parallel:
+
+```bash
+# Process all configs in a directory
+exfig batch ./configs/
+
+# Process specific config files
+exfig batch ios-app.pkl android-app.pkl flutter-app.pkl
+
+# With custom parallelism (default: 3)
+exfig batch ./configs/ --parallel 5
+
+# Stop on first error
+exfig batch ./configs/ --fail-fast
+
+# Generate JSON report
+exfig batch ./configs/ --report batch-results.json
+
+# Resume from checkpoint
+exfig batch ./configs/ --resume
+```
+
+> Note: The `batch` command takes config paths as **positional arguments**, not via `-i` flag.
+
+| Option          | Description                     | Default |
+| --------------- | ------------------------------- | ------- |
+| `--parallel`    | Maximum concurrent configs      | 3       |
+| `--fail-fast`   | Stop processing on first error  | false   |
+| `--rate-limit`  | Figma API requests per minute   | 10      |
+| `--max-retries` | Maximum retry attempts          | 4       |
+| `--resume`      | Resume from previous checkpoint | false   |
+| `--report`      | Path to write JSON report       | -       |
+
+> Note: Directory scanning is non-recursive. Use shell globbing for nested configs: `./configs/*/*.pkl`
+
+## JSON Export (Design Tokens)
+
+Export Figma data as JSON for design token pipelines:
+
+```bash
+# Export colors as W3C Design Tokens
+exfig download colors -o tokens/colors.json
+
+# Export raw Figma API response
+exfig download colors -o debug/colors.json --format raw
+
+# Export icons with SVG URLs
+exfig download icons -o tokens/icons.json --asset-format svg
+
+# Export unified design tokens (colors + typography + dimensions + numbers)
+exfig download tokens -o tokens/design-tokens.json
+
+# Export all token types
+exfig download all -o ./tokens/
+```
+
+### Download Subcommands
+
+| Subcommand   | Description                     |
+| ------------ | ------------------------------- |
+| `colors`     | Export colors as JSON                                              |
+| `icons`      | Export icon metadata with URLs                                     |
+| `images`     | Export image metadata with URLs                                    |
+| `typography` | Export text styles as JSON                                         |
+| `tokens`     | Export unified design tokens (colors, typography, dimensions, numbers) |
+| `all`        | Export all types to a directory                                    |
+
+### Download Options
+
+| Option           | Short | Description                      | Default |
+| ---------------- | ----- | -------------------------------- | ------- |
+| `--output`       | `-o`  | Output file path                 | varies  |
+| `--format`       | `-f`  | Output format: w3c, raw          | w3c     |
+| `--compact`      | -     | Output minified JSON             | false   |
+| `--asset-format` | -     | Image format: svg, png, pdf, jpg | svg     |
+| `--scale`        | -     | Scale for raster formats         | 3       |
+| `--w3c-version`  | -     | W3C format version: v1, v2025   | v2025   |
+
+## Quick Fetch
+
+Download images without a configuration file:
+
+```bash
+# Download PNG images at 3x scale
+exfig fetch --file-id YOUR_FILE_ID --frame "Illustrations" --output ./images
+
+# Using short options
+exfig fetch -f YOUR_FILE_ID -r "Icons" -o ./icons
+```
+
+### Format Options
+
+```bash
+# SVG (vector)
+exfig fetch -f abc123 -r "Icons" -o ./icons --format svg
+
+# PDF (vector)
+exfig fetch -f abc123 -r "Icons" -o ./icons --format pdf
+
+# JPG
+exfig fetch -f abc123 -r "Photos" -o ./photos --format jpg
+
+# WebP with quality
+exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
+
+# WebP lossless
+exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-encoding lossless
+```
+
+### Scale Options
+
+```bash
+# PNG at 2x scale
+exfig fetch -f abc123 -r "Images" -o ./images --scale 2
+
+# Note: Scale is ignored for vector formats (SVG, PDF)
+```
+
+### Filtering and Naming
+
+```bash
+# Filter specific images
+exfig fetch -f abc123 -r "Images" -o ./images --filter "logo/*"
+
+# Convert names to camelCase
+exfig fetch -f abc123 -r "Images" -o ./images --name-style camelCase
+
+# Custom regex replacement
+exfig fetch -f abc123 -r "Images" -o ./images \
+  --name-validate-regexp "^icon/(.*)$" \
+  --name-replace-regexp "ic_$1"
+```
+
+### All Fetch Options
+
+| Option               | Short | Description                            | Default |
+| -------------------- | ----- | -------------------------------------- | ------- |
+| `--file-id`          | `-f`  | Figma file ID (required)               | -       |
+| `--frame`            | `-r`  | Figma frame name (required)            | -       |
+| `--output`           | `-o`  | Output directory (required)            | -       |
+| `--format`           | -     | Image format: png, svg, jpg, pdf, webp | png     |
+| `--scale`            | -     | Scale factor (0.01-4.0)                | 3       |
+| `--filter`           | -     | Filter pattern                         | -       |
+| `--name-style`       | -     | Name style                             | -       |
+| `--dark-mode-suffix` | -     | Suffix for dark variants               | -       |
+| `--webp-encoding`    | -     | WebP encoding: lossy, lossless         | lossy   |
+| `--webp-quality`     | -     | WebP quality (0-100)                   | 80      |
+
+## Help and Version
+
+```bash
+# Show help
+exfig --help
+exfig colors --help
+
+# Show version
+exfig --version
+```
+
+## See Also
+
+- Configuration
+- DesignRequirements
+- iOS
+- Android
+- Flutter
+
+### Configuration
+
+# Configuration
+
+Complete reference for exfig.pkl configuration options.
+
+## Overview
+
+ExFig uses a PKL configuration file (typically `exfig.pkl`) to define export settings. PKL (Programmable, Scalable, Safe)
+provides type-safe configuration with IDE support. This document covers all available options.
+
+## Configuration File
+
+By default, ExFig looks for `exfig.pkl` in the current directory.
+
+Specify a custom path with the `-i` flag:
+
+```bash
+exfig colors -i path/to/config.pkl
+```
+
+## Unified Config with Batch
+
+A single `exfig.pkl` can contain all resource types. Use `batch` to export everything at once:
+
+```bash
+# Export all resource types from a single config
+exfig batch exfig.pkl
+
+# With version tracking
+exfig batch exfig.pkl --cache
+```
+
+> Note: The `batch` command takes config paths as **positional arguments** (not via `-i` flag).
+
+## Figma Section
+
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  // Figma file ID for light mode assets.
+  // Required for icons, images, and typography export.
+  // Optional when using only variablesColors (or multi-entry colors) for colors export.
+  lightFileId = "ABC123xyz"
+
+  // Optional: Separate file for dark mode assets
+  darkFileId = "DEF456abc"
+
+  // Optional: API request timeout in seconds (default: 30)
+  timeout = 60
+}
+```
+
+## Common Section
+
+Shared settings across all platforms.
+
+### Colors
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    // Frame name containing color styles (default: null, uses all styles)
+    figmaFrameName = "Colors"
+
+    // Regex to validate color names
+    nameValidateRegexp = "^[a-z][a-zA-Z0-9]*$"
+
+    // Regex replacement for color names
+    nameReplaceRegexp = "$1"
+
+    // Extract light and dark mode colors from a single file
+    useSingleFile = false
+
+    // Suffix for dark mode variants (when useSingleFile is true)
+    darkModeSuffix = "_dark"
+  }
+}
+```
+
+### Variables Colors
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  // Use variablesColors instead of colors to export colors from Figma Variables.
+  // Cannot be used together with colors.
+  variablesColors = new Common.VariablesColors {
+    // Identifier of the file containing variables
+    tokensFileId = "ABC123xyz"
+
+    // Variables collection name
+    tokensCollectionName = "Colors"
+
+    // Name of the column containing light color variables
+    lightModeName = "Light"
+
+    // Name of the column containing dark color variables
+    darkModeName = "Dark"
+  }
+}
+```
+
+### Tokens File Source
+
+Use a local W3C DTCG `.tokens.json` file instead of the Figma Variables API:
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/iOS.pkl"
+
+ios = new iOS.iOSConfig {
+  colors = new iOS.ColorsEntry {
+    // Load colors from a local .tokens.json file
+    tokensFile = new Common.TokensFile {
+      // Path to the .tokens.json file
+      path = "./design-tokens/colors.tokens.json"
+
+      // Optional: filter to specific token group
+      groupFilter = "Brand.Colors"
+    }
+
+    assetsFolder = "Colors"
+    nameStyle = "camelCase"
+  }
+}
+```
+
+> When `tokensFile` is set, ExFig reads color tokens from the local file and does not require `FIGMA_PERSONAL_TOKEN` or Figma Variables configuration (`tokensFileId`, `tokensCollectionName`, `lightModeName`).
+
+### Icons
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    // Default frame name for icon components (can be overridden per-entry)
+    figmaFrameName = "Icons"
+
+    // Regex to validate icon names
+    nameValidateRegexp = "^ic/.*$"
+
+    // Regex replacement for icon names
+    nameReplaceRegexp = "ic_$1"
+
+    // Use single file for light/dark (default: false)
+    useSingleFile = false
+
+    // Suffix for dark mode variants (when useSingleFile is true)
+    darkModeSuffix = "_dark"
+  }
+}
+```
+
+### Images
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  images = new Common.Images {
+    // Frame name containing image components
+    figmaFrameName = "Illustrations"
+
+    // Regex to validate image names
+    nameValidateRegexp = "^img_.*$"
+
+    // Regex replacement for image names
+    nameReplaceRegexp = "$1"
+
+    // Use single file for light/dark (default: false)
+    useSingleFile = false
+
+    // Suffix for dark mode variants (when useSingleFile is true)
+    darkModeSuffix = "_dark"
+  }
+}
+```
+
+### Typography
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  typography = new Common.Typography {
+    // Regex to validate style names
+    nameValidateRegexp = "^[a-z].*$"
+  }
+}
+```
+
+## iOS Section
+
+```pkl
+import ".exfig/schemas/iOS.pkl"
+
+ios = new iOS.iOSConfig {
+  // Path to Xcode project
+  xcodeprojPath = "./MyApp.xcodeproj"
+
+  // Target name for adding generated files
+  target = "MyApp"
+
+  // Path to Assets.xcassets
+  xcassetsPath = "./Resources/Assets.xcassets"
+
+  // Colors
+  colors = new iOS.ColorsEntry {
+    // Use color assets in xcassets
+    useColorAssets = true
+
+    // Folder in xcassets for colors
+    assetsFolder = "Colors"
+
+    // Naming style: camelCase, snake_case, PascalCase, kebab-case, SCREAMING_SNAKE_CASE
+    nameStyle = "camelCase"
+
+    // Group colors in subfolders by prefix
+    groupUsingNamespace = true
+
+    // UIKit extension output path
+    colorSwift = "./Sources/Generated/UIColor+Colors.swift"
+
+    // SwiftUI extension output path
+    swiftuiColorSwift = "./Sources/Generated/Color+Colors.swift"
+  }
+
+  // Icons
+  icons = new iOS.IconsEntry {
+    // Folder in xcassets for icons
+    assetsFolder = "Icons"
+
+    // Naming style
+    nameStyle = "camelCase"
+
+    // Icon format: pdf or svg
+    format = "pdf"
+
+    // Preserve vector data
+    preservesVectorRepresentation = new Listing {
+      "ic24TabBarMain"
+      "ic24TabBarEvents"
+    }
+
+    // UIKit extension output path
+    imageSwift = "./Sources/Generated/UIImage+Icons.swift"
+
+    // SwiftUI extension output path
+    swiftUIImageSwift = "./Sources/Generated/Image+Icons.swift"
+  }
+
+  // Images
+  images = new iOS.ImagesEntry {
+    // Folder in xcassets for images
+    assetsFolder = "Images"
+
+    // Naming style
+    nameStyle = "camelCase"
+
+    // Scales to export (default: [1, 2, 3])
+    scales = new Listing { 1; 2; 3 }
+
+    // UIKit extension output path
+    imageSwift = "./Sources/Generated/UIImage+Images.swift"
+
+    // SwiftUI extension output path
+    swiftUIImageSwift = "./Sources/Generated/Image+Images.swift"
+  }
+
+  // Typography
+  typography = new iOS.Typography {
+    // Generate labels with predefined styles
+    generateLabels = true
+
+    // Font extension output path
+    fontSwift = "./Sources/Generated/UIFont+Typography.swift"
+
+    // SwiftUI font extension output path
+    swiftUIFontSwift = "./Sources/Generated/Font+Typography.swift"
+
+    // UIKit label extension output path
+    labelStyleSwift = "./Sources/Generated/UILabel+Typography.swift"
+
+    // Typography name style
+    nameStyle = "camelCase"
+  }
+}
+```
+
+## Android Section
+
+```pkl
+import ".exfig/schemas/Android.pkl"
+
+android = new Android.AndroidConfig {
+  // Path to main res directory
+  mainRes = "./app/src/main/res"
+
+  // Package for R class references
+  resourcePackage = "com.example.app"
+
+  // Path to main source directory (for Compose)
+  mainSrc = "./app/src/main/java"
+
+  // Colors
+  colors = new Android.ColorsEntry {
+    // Output filename
+    xmlOutputFileName = "colors.xml"
+
+    // Jetpack Compose package name
+    composePackageName = "com.example.app.ui.theme"
+  }
+
+  // Icons
+  icons = new Android.IconsEntry {
+    // Output directory (relative to mainRes)
+    output = "exfig-icons"
+
+    // Jetpack Compose package name
+    composePackageName = "com.example.app.ui.icons"
+  }
+
+  // Images
+  images = new Android.ImagesEntry {
+    // Output directory (relative to mainRes)
+    output = "exfig-images"
+
+    // Image format: svg, png, or webp
+    format = "webp"
+
+    // WebP encoding options
+    webpOptions = new Common.WebpOptions {
+      encoding = "lossy"
+      quality = 90
+    }
+
+    // Density scales (default: [1, 1.5, 2, 3, 4])
+    scales = new Listing { 1; 1.5; 2; 3; 4 }
+  }
+
+  // Typography
+  typography = new Android.Typography {
+    // Naming style
+    nameStyle = "snake_case"
+
+    // Jetpack Compose package name
+    composePackageName = "com.example.app.ui.typography"
+  }
+}
+```
+
+## Flutter Section
+
+```pkl
+import ".exfig/schemas/Flutter.pkl"
+
+flutter = new Flutter.FlutterConfig {
+  // Output directory for generated Dart files
+  output = "lib/generated"
+
+  // Colors
+  colors = new Flutter.ColorsEntry {
+    // Output filename
+    output = "colors.dart"
+
+    // Class name for colors
+    className = "AppColors"
+  }
+
+  // Icons
+  icons = new Flutter.IconsEntry {
+    // Output directory for SVG files
+    output = "assets/icons"
+
+    // Dart file output
+    dartFile = "icons.dart"
+
+    // Class name for icons
+    className = "AppIcons"
+  }
+
+  // Images
+  images = new Flutter.ImagesEntry {
+    // Output directory for images
+    output = "assets/images"
+
+    // Dart file output
+    dartFile = "images.dart"
+
+    // Class name for images
+    className = "AppImages"
+
+    // Image format: svg, png, or webp
+    format = "png"
+
+    // Scales to export (default: [1, 2, 3])
+    scales = new Listing { 1; 2; 3 }
+  }
+}
+```
+
+## Example Configurations
+
+### iOS Project
+
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
+
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/iOS.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "ABC123"
+  darkFileId = "DEF456"
+}
+
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    figmaFrameName = "Colors"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Illustrations"
+  }
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "./Resources/Assets.xcassets"
+
+  colors = new iOS.ColorsEntry {
+    assetsFolder = "Colors"
+    colorSwift = "./Sources/UIColor+Colors.swift"
+    swiftuiColorSwift = "./Sources/Color+Colors.swift"
+  }
+
+  icons = new iOS.IconsEntry {
+    assetsFolder = "Icons"
+    format = "pdf"
+    imageSwift = "./Sources/UIImage+Icons.swift"
+  }
+}
+```
+
+### Android Project
+
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
+
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/Android.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "ABC123"
+}
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+}
+
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
+  mainSrc = "./app/src/main/java"
+  resourcePackage = "com.example.app"
+
+  colors = new Android.ColorsEntry {
+    xmlOutputFileName = "colors.xml"
+    composePackageName = "com.example.app.ui"
+  }
+
+  icons = new Android.IconsEntry {
+    output = "exfig-icons"
+    composePackageName = "com.example.app.ui"
+  }
+}
+```
+
+### Multi-Platform Project
+
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
+
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/iOS.pkl"
+import ".exfig/schemas/Android.pkl"
+import ".exfig/schemas/Flutter.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "ABC123"
+  darkFileId = "DEF456"
+}
+
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    figmaFrameName = "Colors"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Images"
+  }
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./ios/MyApp.xcodeproj"
+  xcassetsPath = "./ios/Resources/Assets.xcassets"
+  colors = new iOS.ColorsEntry {
+    assetsFolder = "Colors"
+  }
+}
+
+android = new Android.AndroidConfig {
+  mainRes = "./android/app/src/main/res"
+  colors = new Android.ColorsEntry {
+    xmlOutputFileName = "colors.xml"
+  }
+}
+
+flutter = new Flutter.FlutterConfig {
+  output = "lib/generated"
+  colors = new Flutter.ColorsEntry {
+    output = "colors.dart"
+  }
+}
+```
+
+## See Also
+
+- Usage
+- DesignRequirements
+
+### Design Requirements
+
+# Design Requirements
+
+How to structure your Figma files for optimal export with ExFig.
+
+## Overview
+
+ExFig extracts design resources from Figma files based on specific naming conventions and organizational structures.
+This guide explains how to set up your Figma files for seamless export.
+
+## General Principles
+
+### Frame Organization
+
+ExFig looks for resources in specific frames. Configure frame names in your `exfig.pkl`:
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    figmaFrameName = "Colors"
+  }
+  icons = new Common.Icons {
+    figmaFrameName = "Icons"
+  }
+  images = new Common.Images {
+    figmaFrameName = "Illustrations"
+  }
+  typography = new Common.Typography {
+    figmaFrameName = "Typography"
+  }
+}
+```
+
+### Naming Conventions
+
+Use consistent naming patterns for all resources. ExFig supports regex validation:
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    nameValidateRegexp = "^ic/[0-9]+/[a-z_]+$"  // e.g., ic/24/arrow_right
+  }
+}
+```
+
+## Colors
+
+### Using Color Styles
+
+Create color styles in Figma with descriptive names:
+
+```
+Colors frame
+├── primary
+├── secondary
+├── background/primary
+├── background/secondary
+├── text/primary
+├── text/secondary
+└── border/default
+```
+
+### Using Figma Variables
+
+For Figma Variables API support:
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  variablesColors = new Common.VariablesColors {
+    tokensFileId = "ABC123xyz"
+    tokensCollectionName = "Colors"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+  }
+}
+```
+
+Variable structure in Figma:
+
+```
+Colors collection
+├── Mode: Light
+│   ├── primary: #007AFF
+│   ├── background: #FFFFFF
+│   └── text: #000000
+└── Mode: Dark
+    ├── primary: #0A84FF
+    ├── background: #000000
+    └── text: #FFFFFF
+```
+
+### Naming Guidelines
+
+- Use lowercase with optional separators: `/`, `-`, `_`
+- Group related colors with prefixes: `text/primary`, `background/card`
+- Avoid special characters except separators
+
+## Icons
+
+### Component Structure
+
+Icons must be **components** (not plain frames):
+
+```
+Icons frame
+├── ic/24/arrow-right     (component)
+├── ic/24/arrow-left      (component)
+├── ic/16/close           (component)
+├── ic/16/check           (component)
+└── ic/32/menu            (component)
+```
+
+### Size Conventions
+
+Organize icons by size:
+
+```
+Icons frame
+├── ic/16/...   (16pt icons)
+├── ic/24/...   (24pt icons)
+├── ic/32/...   (32pt icons)
+└── ic/48/...   (48pt icons)
+```
+
+### Vector Requirements
+
+For optimal vector export:
+
+1. **Use strokes carefully**: Convert strokes to outlines for complex icons
+2. **Flatten boolean operations**: Flatten complex boolean operations before export
+3. **Remove hidden layers**: Delete unused or hidden elements
+4. **Use consistent viewBox**: Keep viewBox dimensions consistent within size groups
+
+### Dark Mode Icons
+
+Two approaches for dark mode support:
+
+**Separate files:**
+
+```pkl
+import ".exfig/schemas/Figma.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "abc123"
+  darkFileId = "def456"
+}
+```
+
+Create matching component names in both files.
+
+**Single file with suffix:**
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    useSingleFile = true
+    darkModeSuffix = "_dark"
+  }
+}
+```
+
+```
+Icons frame
+├── ic/24/arrow-right
+├── ic/24/arrow-right_dark
+├── ic/24/close
+└── ic/24/close_dark
+```
+
+## Images
+
+### Component Structure
+
+Images must be **components**:
+
+```
+Illustrations frame
+├── img-empty-state       (component)
+├── img-onboarding-1      (component)
+├── img-onboarding-2      (component)
+└── img-hero-banner       (component)
+```
+
+### Size Recommendations
+
+Design at the largest needed scale:
+
+- **iOS**: Design at @3x, ExFig generates @1x, @2x, @3x
+- **Android**: Design at xxxhdpi (4x), ExFig generates all densities
+- **Flutter**: Design at 3x, ExFig generates 1x, 2x, 3x
+
+### Multi-Idiom Support (iOS)
+
+Use suffixes for device-specific variants:
+
+```
+Illustrations frame
+├── img-hero~iphone       (iPhone variant)
+├── img-hero~ipad         (iPad variant)
+├── img-hero~mac          (Mac variant)
+└── img-sidebar~ipad
+```
+
+### Dark Mode Images
+
+Same approaches as icons:
+
+**Separate files** or **suffix-based**:
+
+```
+Illustrations frame
+├── img-empty-state
+├── img-empty-state_dark
+├── img-hero
+└── img-hero_dark
+```
+
+## Typography
+
+### Text Style Structure
+
+Create text styles with hierarchical names:
+
+```
+Typography frame
+├── heading/h1
+├── heading/h2
+├── heading/h3
+├── body/regular
+├── body/bold
+├── caption/regular
+└── caption/small
+```
+
+### Required Properties
+
+Each text style should define:
+
+- **Font family**: e.g., "SF Pro Text"
+- **Font weight**: e.g., Regular, Bold, Semibold
+- **Font size**: in pixels
+- **Line height**: in pixels or percentage
+- **Letter spacing**: in pixels or percentage
+
+### Font Mapping
+
+Map Figma fonts to platform fonts in your config:
+
+```pkl
+import ".exfig/schemas/iOS.pkl"
+import ".exfig/schemas/Android.pkl"
+
+ios = new iOS.iOSConfig {
+  typography = new iOS.Typography {
+    // fontMapping configured via custom templates
+  }
+}
+
+android = new Android.AndroidConfig {
+  typography = new Android.Typography {
+    // fontMapping configured via custom templates
+  }
+}
+```
+
+## Validation Regex Patterns
+
+### Common Patterns
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  colors = new Common.Colors {
+    // Allow: primary, text/primary, background_card
+    nameValidateRegexp = "^[a-z][a-z0-9_/]*$"
+  }
+
+  icons = new Common.Icons {
+    // Require: ic/SIZE/name format
+    nameValidateRegexp = "^ic/[0-9]+/[a-z][a-z0-9_-]*$"
+  }
+
+  images = new Common.Images {
+    // Require: img- prefix
+    nameValidateRegexp = "^img-[a-z][a-z0-9_-]*$"
+  }
+}
+```
+
+### Transform Patterns
+
+Transform names during export:
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+
+common = new Common.CommonConfig {
+  icons = new Common.Icons {
+    nameValidateRegexp = "^ic/([0-9]+)/(.+)$"
+    nameReplaceRegexp = "ic$1_$2"  // ic/24/arrow -> ic24_arrow
+  }
+}
+```
+
+## File Organization Tips
+
+### Recommended Figma Structure
+
+```
+Design System
+├── Colors
+│   ├── Primary palette
+│   ├── Secondary palette
+│   ├── Semantic colors
+│   └── Dark mode colors
+├── Icons
+│   ├── 16pt icons
+│   ├── 24pt icons
+│   └── 32pt icons
+├── Illustrations
+│   ├── Empty states
+│   ├── Onboarding
+│   └── Marketing
+└── Typography
+    ├── Headings
+    ├── Body text
+    └── Captions
+```
+
+### Light and Dark Mode Files
+
+For complex theming, use separate files:
+
+- `Design-System-Light.fig`: Light mode resources
+- `Design-System-Dark.fig`: Dark mode resources
+
+Ensure component names match exactly between files.
+
+## Troubleshooting
+
+### Resources Not Found
+
+- Verify frame names match `figmaFrameName` in config
+- Check that resources are **components**, not plain frames
+- Ensure names pass validation regex
+
+### Missing Dark Mode
+
+- Verify `darkFileId` is set correctly
+- Check component names match between light and dark files
+- For single-file mode, verify suffix is correct
+
+### Export Quality Issues
+
+- Design at highest needed resolution
+- Use vector graphics when possible
+- Avoid raster effects in vector icons
+- Flatten complex boolean operations
+
+## See Also
+
+- Configuration
+- iOS
+- Android
+- Flutter
+
+### Custom Templates
+
+# Custom Templates
+
+Customize generated code using Jinja2 templates.
+
+## Overview
+
+ExFig uses [Jinja2](https://github.com/huggingface/swift-jinja) templates to generate platform-specific code. You can customize the
+output by providing your own templates.
+
+## Setting Up Custom Templates
+
+### 1. Create Templates Directory
+
+```bash
+mkdir -p ./templates
+```
+
+### 2. Configure Template Path
+
+```pkl
+import ".exfig/schemas/iOS.pkl"
+import ".exfig/schemas/Android.pkl"
+import ".exfig/schemas/Flutter.pkl"
+import ".exfig/schemas/Web.pkl"
+
+ios = new iOS.iOSConfig {
+  templatesPath = "./templates"
+}
+
+android = new Android.AndroidConfig {
+  templatesPath = "./templates"
+}
+
+flutter = new Flutter.FlutterConfig {
+  templatesPath = "./templates"
+}
+
+web = new Web.WebConfig {
+  templatesPath = "./templates"
+}
+```
+
+### 3. Copy Default Templates
+
+Copy the default templates from ExFig source to use as a starting point. Templates are located in:
+
+- `Sources/XcodeExport/Resources/` - iOS templates
+- `Sources/AndroidExport/Resources/` - Android templates
+- `Sources/FlutterExport/Resources/` - Flutter templates
+- `Sources/WebExport/Resources/` - Web templates
+
+## iOS Templates
+
+### Available Templates
+
+| Template                              | Output            | Description               |
+| ------------------------------------- | ----------------- | ------------------------- |
+| `UIColor+extension.swift.jinja`       | UIColor extension | UIKit color definitions   |
+| `Color+extension.swift.jinja`         | Color extension   | SwiftUI color definitions |
+| `UIImage+extension.swift.jinja`       | UIImage extension | UIKit image accessors     |
+| `Image+extension.swift.jinja`         | Image extension   | SwiftUI image accessors   |
+| `UIFont+extension.swift.jinja`        | UIFont extension  | UIKit font definitions    |
+| `Font+extension.swift.jinja`          | Font extension    | SwiftUI font definitions  |
+| `Label.swift.jinja`                   | Label class       | UIKit label styles        |
+| `LabelStyle.swift.jinja`             | LabelStyle enum   | Label style definitions   |
+| `LabelStyle+extension.swift.jinja`   | LabelStyle ext.   | LabelStyle factory methods |
+| `CodeConnect.figma.swift.jinja`      | Code Connect      | Figma Code Connect (debug) |
+| `header.jinja`                        | File header       | Common header comment     |
+
+> Note: Files ending in `.jinja.include` (e.g., `Bundle+extension.swift.jinja.include`) are partial templates — they are pre-rendered into context variables (like `bundleExtension`) and included in the main template output. You typically don't need to customize these.
+
+### Context Variables (Colors)
+
+```swift
+// Available in color templates
+colors: [
+    {
+        name: "primaryBlue",           // Formatted name
+        originalName: "primary/blue",  // Original Figma name
+        red: 0.0,                       // RGB components (0-1)
+        green: 0.478,
+        blue: 1.0,
+        alpha: 1.0,
+        hex: "#007AFF"                  // Hex string
+    }
+]
+darkColors: [...]  // Same structure for dark mode
+```
+
+### Context Variables (Icons)
+
+```swift
+// Available in icon templates
+icons: [
+    {
+        name: "icArrowRight",          // Formatted name
+        originalName: "ic/24/arrow-right"
+    }
+]
+```
+
+### Context Variables (Typography)
+
+```swift
+// Available in typography templates
+textStyles: [
+    {
+        name: "bodyRegular",
+        fontFamily: "Inter",
+        fontWeight: "regular",         // regular, medium, semibold, bold
+        fontWeightValue: 400,          // Numeric weight
+        fontSize: 16.0,
+        lineHeight: 24.0,              // nil if not set
+        letterSpacing: 0.0
+    }
+]
+```
+
+### Example: Custom UIColor Template
+
+```jinja
+{{ header }}
+
+import UIKit
+
+public extension UIColor {
+    {% for color in colors %}
+    /// {{ color.originalName }}
+    static let {{ color.name }} = UIColor(
+        red: {{ color.red }},
+        green: {{ color.green }},
+        blue: {{ color.blue }},
+        alpha: {{ color.alpha }}
+    )
+    {% endfor %}
+}
+```
+
+## Android Templates
+
+### Available Templates
+
+| Template               | Output         | Description               |
+| ---------------------- | -------------- | ------------------------- |
+| `colors.xml.jinja`     | colors.xml     | XML color resources       |
+| `Colors.kt.jinja`      | Colors.kt      | Compose color definitions |
+| `typography.xml.jinja`  | typography.xml | XML text styles           |
+| `Typography.kt.jinja`  | Typography.kt  | Compose typography        |
+| `Icons.kt.jinja`       | Icons.kt       | Compose icon composables  |
+| `CodeConnect.figma.kt.jinja` | Code Connect | Figma Code Connect (debug) |
+| `header.jinja`         | File header    | Common header comment     |
+
+### Context Variables (Colors)
+
+```kotlin
+// Available in color templates
+colors: [
+    {
+        name: "primary_blue",          // snake_case name
+        hex: "#007AFF",                // With alpha: "#FF007AFF"
+        hexARGB: "FF007AFF"            // ARGB without #
+    }
+]
+```
+
+### Context Variables (Typography)
+
+```kotlin
+// Available in typography templates
+textStyles: [
+    {
+        name: "body_regular",
+        fontFamily: "inter",           // Lowercase
+        fontWeightName: "Normal",      // FontWeight constant name
+        fontSize: 16,                  // In sp
+        lineHeight: 24,                // In sp, nil if not set
+        letterSpacing: 0.0             // In em
+    }
+]
+```
+
+### Example: Custom Colors.kt Template
+
+```jinja
+{{ header }}
+
+package {{ packageName }}
+
+import androidx.compose.ui.graphics.Color
+
+object AppColors {
+    {% for color in colors %}
+    val {{ color.name }} = Color(0x{{ color.hexARGB }})
+    {% endfor %}
+}
+
+object AppColorsDark {
+    {% for color in darkColors %}
+    val {{ color.name }} = Color(0x{{ color.hexARGB }})
+    {% endfor %}
+}
+```
+
+## Flutter Templates
+
+### Available Templates
+
+| Template            | Output      | Description           |
+| ------------------- | ----------- | --------------------- |
+| `colors.dart.jinja` | colors.dart | Dart color constants  |
+| `icons.dart.jinja`  | icons.dart  | Dart icon paths       |
+| `images.dart.jinja` | images.dart | Dart image paths      |
+| `header.jinja`      | File header | Common header comment |
+
+### Context Variables
+
+```dart
+// Available in Flutter templates
+colors: [
+    {
+        name: "primaryBlue",
+        hex: "0xFF007AFF"              // Dart Color format
+    }
+]
+
+icons: [
+    {
+        name: "icArrowRight",
+        path: "assets/icons/ic_arrow_right.svg"
+    }
+]
+
+images: [
+    {
+        name: "imgHero",
+        path: "assets/images/img_hero.png"
+    }
+]
+```
+
+### Example: Custom colors.dart Template
+
+```jinja
+{{ header }}
+
+import 'package:flutter/material.dart';
+
+class {{ className }} {
+  {{ className }}._();
+
+  {% for color in colors %}
+  /// {{ color.originalName }}
+  static const Color {{ color.name }} = Color({{ color.hex }});
+  {% endfor %}
+}
+
+class {{ className }}Dark {
+  {{ className }}Dark._();
+
+  {% for color in darkColors %}
+  static const Color {{ color.name }} = Color({{ color.hex }});
+  {% endfor %}
+}
+```
+
+## Web Templates
+
+### Available Templates
+
+| Template              | Output          | Description                        |
+| --------------------- | --------------- | ---------------------------------- |
+| `theme.css.jinja`     | theme.css       | CSS custom properties (light/dark) |
+| `variables.ts.jinja`  | variables.ts    | TypeScript CSS variable references |
+| `theme.json.jinja`    | theme.json      | JSON theme tokens                  |
+| `Icon.tsx.jinja`      | Icon component  | React SVG icon component           |
+| `types.ts.jinja`      | types.ts        | TypeScript type definitions        |
+| `IconIndex.ts.jinja`  | index.ts        | Icon barrel exports                |
+| `Image.tsx.jinja`     | Image component | React image component              |
+| `ImageIndex.ts.jinja` | index.ts        | Image barrel exports               |
+| `header.jinja`        | File header     | Common header comment              |
+
+### Context Variables (Colors)
+
+```typescript
+// variables.ts context
+colors: [{ camelName: "primaryBlue", cssName: "primary-blue" }]
+
+// theme.css / theme.json context
+lightColors: [{ cssName: "primary-blue", value: "#007AFF" }]
+darkColors: [{ cssName: "primary-blue", value: "#0A84FF" }]
+hasDarkColors: true
+```
+
+### Context Variables (Icons)
+
+```typescript
+// Icon.tsx context (per component)
+componentName: "ArrowRight"
+viewBox: "0 0 24 24"
+svgContent: "<path ...>"
+
+// IconIndex.ts context
+icons: [{ componentName: "ArrowRight", fileName: "arrow_right" }]
+```
+
+### Context Variables (Images)
+
+```typescript
+// Image.tsx context (per component)
+componentName: "HeroBanner"
+name: "hero_banner"
+assetPath: "assets/images/hero_banner.png"
+
+// ImageIndex.ts context
+images: [{ componentName: "HeroBanner", fileName: "hero_banner" }]
+```
+
+### Example: Custom theme.css Template
+
+```jinja
+:root {
+  {% for color in lightColors %}
+  --{{ color.cssName }}: {{ color.value }};
+  {% endfor %}
+}
+
+{% if hasDarkColors %}
+@media (prefers-color-scheme: dark) {
+  :root {
+    {% for color in darkColors %}
+    --{{ color.cssName }}: {{ color.value }};
+    {% endfor %}
+  }
+}
+{% endif %}
+```
+
+## Jinja2 Syntax Reference
+
+### Variables
+
+```jinja
+{{ variableName }}
+{{ object.property }}
+```
+
+### Loops
+
+```jinja
+{% for item in items %}
+{{ item.name }}
+{% endfor %}
+```
+
+### Loop Variables
+
+```jinja
+{% for item in items %}
+{{ loop.index }}        {# 1-based index #}
+{{ loop.index0 }}       {# 0-based index #}
+{{ loop.first }}        {# true on first iteration #}
+{{ loop.last }}         {# true on last iteration #}
+{% endfor %}
+```
+
+### Conditionals
+
+```jinja
+{% if condition %}
+...
+{% elif otherCondition %}
+...
+{% else %}
+...
+{% endif %}
+```
+
+### Filters
+
+```jinja
+{{ name | upper }}
+{{ name | lower }}
+{{ name | capitalize }}
+```
+
+> Note: Name transformation filters (camelCase, snake_case, etc.) are not needed — name formatting is applied before template rendering, so variable values arrive pre-formatted.
+
+### Comments
+
+```jinja
+{# This is a comment #}
+```
+
+## Best Practices
+
+1. **Start from defaults**: Copy default templates as a starting point
+2. **Use context variables**: Common data (like headers) is provided as pre-rendered context variables
+3. **Validate output**: Test generated code compiles correctly
+4. **Document changes**: Add comments explaining customizations
+5. **Version control**: Keep templates in your repository
+6. **Pre-formatted names**: Name formatting (camelCase, snake_case, etc.) is done before template rendering — use names as-is
+
+## See Also
+
+- Configuration
+- iOS
+- Android
+- Flutter
+- [swift-jinja Documentation](https://github.com/huggingface/swift-jinja)
+
+## Platform Guides
+
+### iOS Platform Guide
+
+# iOS Export
+
+Export Figma resources to Xcode projects with Assets catalogs and Swift extensions.
+
+## Overview
+
+ExFig exports design resources from Figma to iOS projects:
+
+- **Colors**: Color Sets in Assets.xcassets with UIColor/Color extensions
+- **Icons**: PDF or SVG icons in Image Sets with UIImage/Image extensions
+- **Images**: Multi-scale PNG or HEIC images with UIImage/Image extensions
+- **Typography**: UIFont/Font extensions with text style configurations
+
+## Quick Start
+
+### 1. Generate Configuration
+
+```bash
+exfig init --platform ios
+```
+
+### 2. Configure Your Project
+
+Edit `exfig.pkl`:
+
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
+
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/iOS.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID"
+  darkFileId = "YOUR_DARK_FILE_ID"  // Optional
+}
+
+ios = new iOS.iOSConfig {
+  xcodeprojPath = "./MyApp.xcodeproj"
+  target = "MyApp"
+  xcassetsPath = "./Resources/Assets.xcassets"
+
+  colors = new iOS.ColorsEntry {
+    assetsFolder = "Colors"
+    colorSwift = "./Sources/UIColor+Colors.swift"
+    swiftuiColorSwift = "./Sources/Color+Colors.swift"
+  }
+
+  icons = new iOS.IconsEntry {
+    assetsFolder = "Icons"
+    format = "pdf"
+    imageSwift = "./Sources/UIImage+Icons.swift"
+    swiftUIImageSwift = "./Sources/Image+Icons.swift"
+  }
+
+  images = new iOS.ImagesEntry {
+    assetsFolder = "Images"
+    scales = new Listing { 1; 2; 3 }
+    imageSwift = "./Sources/UIImage+Images.swift"
+  }
+
+  typography = new iOS.Typography {
+    fontSwift = "./Sources/UIFont+Typography.swift"
+    swiftUIFontSwift = "./Sources/Font+Typography.swift"
+  }
+}
+```
+
+### 3. Export Resources
+
+```bash
+exfig colors
+exfig icons
+exfig images
+exfig typography
+```
+
+## Generated Output
+
+### Colors
+
+**Assets.xcassets/Colors/**
+
+```
+Colors/
+├── primary.colorset/
+│   └── Contents.json
+├── secondary.colorset/
+│   └── Contents.json
+└── background/
+    ├── primary.colorset/
+    └── secondary.colorset/
+```
+
+**UIColor+Colors.swift**
+
+```swift
+import UIKit
+
+extension UIColor {
+    static var primary: UIColor {
+        UIColor(named: "primary")!
+    }
+    static var backgroundPrimary: UIColor {
+        UIColor(named: "background/primary")!
+    }
+}
+```
+
+**Color+Colors.swift**
+
+```swift
+import SwiftUI
+
+extension Color {
+    static var primary: Color {
+        Color("primary")
+    }
+    static var backgroundPrimary: Color {
+        Color("background/primary")
+    }
+}
+```
+
+### Icons
+
+**Assets.xcassets/Icons/**
+
+```
+Icons/
+├── icArrowRight.imageset/
+│   ├── icArrowRight.pdf
+│   └── Contents.json
+└── icClose.imageset/
+    ├── icClose.pdf
+    └── Contents.json
+```
+
+### Images
+
+**Assets.xcassets/Images/**
+
+```
+Images/
+├── imgHero.imageset/
+│   ├── imgHero.png       # @1x
+│   ├── imgHero@2x.png    # @2x
+│   ├── imgHero@3x.png    # @3x
+│   └── Contents.json
+```
+
+## Usage in Code
+
+### UIKit
+
+```swift
+// Colors
+view.backgroundColor = .primary
+label.textColor = .textPrimary
+
+// Icons
+let icon = UIImage.icArrowRight
+button.setImage(.icClose, for: .normal)
+
+// Images
+imageView.image = .imgHero
+
+// Typography
+label.font = .bodyRegular()
+titleLabel.font = .headingH1()
+```
+
+### SwiftUI
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        VStack {
+            // Colors
+            Rectangle()
+                .fill(Color.primary)
+
+            // Icons
+            Image.icArrowRight
+                .renderingMode(.template)
+                .foregroundColor(.textPrimary)
+
+            // Images
+            Image.imgHero
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+
+            // Typography
+            Text("Hello")
+                .font(.bodyRegular)
+        }
+    }
+}
+```
+
+## Topics
+
+### Resources
+
+- iOSColors
+- iOSIcons
+- iOSImages
+- iOSTypography
+
+## See Also
+
+- Configuration
+- DesignRequirements
+
+### Android Platform Guide
+
+# Android Export
+
+Export Figma resources to Android projects with XML resources and Jetpack Compose code.
+
+## Overview
+
+ExFig exports design resources from Figma to Android projects:
+
+- **Colors**: XML color resources and Compose Color constants
+- **Icons**: VectorDrawable XML files and Compose Icon composables
+- **Images**: Multi-density PNG/WebP images
+- **Typography**: XML text styles and Compose Typography definitions
+
+## Quick Start
+
+### 1. Generate Configuration
+
+```bash
+exfig init --platform android
+```
+
+### 2. Configure Your Project
+
+Edit `exfig.pkl`:
+
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
+
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Android.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID"
+  darkFileId = "YOUR_DARK_FILE_ID"  // Optional
+}
+
+android = new Android.AndroidConfig {
+  mainRes = "./app/src/main/res"
+  mainSrc = "./app/src/main/java"
+  resourcePackage = "com.example.app"
+
+  colors = new Android.ColorsEntry {
+    xmlOutputFileName = "colors.xml"
+    composePackageName = "com.example.app.ui.theme"
+  }
+
+  icons = new Android.IconsEntry {
+    output = "exfig-icons"
+    composePackageName = "com.example.app.ui.icons"
+  }
+
+  images = new Android.ImagesEntry {
+    output = "exfig-images"
+    format = "webp"
+    scales = new Listing { 1; 1.5; 2; 3; 4 }
+  }
+
+  typography = new Android.Typography {
+    nameStyle = "camelCase"
+    composePackageName = "com.example.app.ui.theme"
+  }
+}
+```
+
+### 3. Configure build.gradle
+
+Add generated resource directories:
+
+```gradle
+android {
+    sourceSets {
+        main {
+            res.srcDirs += "src/main/res/exfig-icons"
+            res.srcDirs += "src/main/res/exfig-images"
+        }
+    }
+}
+```
+
+### 4. Export Resources
+
+```bash
+exfig colors
+exfig icons
+exfig images
+exfig typography
+```
+
+## Generated Output
+
+### Colors
+
+**res/values/colors.xml**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#FF007AFF</color>
+    <color name="secondary">#FF5856D6</color>
+    <color name="background_primary">#FFFFFFFF</color>
+    <color name="text_primary">#FF000000</color>
+</resources>
+```
+
+**res/values-night/colors.xml**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#FF0A84FF</color>
+    <color name="secondary">#FF5E5CE6</color>
+    <color name="background_primary">#FF000000</color>
+    <color name="text_primary">#FFFFFFFF</color>
+</resources>
+```
+
+**Colors.kt (Compose)**
+
+```kotlin
+package com.example.app.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+object AppColors {
+    val Primary = Color(0xFF007AFF)
+    val Secondary = Color(0xFF5856D6)
+    val BackgroundPrimary = Color(0xFFFFFFFF)
+    val TextPrimary = Color(0xFF000000)
+}
+
+object AppColorsDark {
+    val Primary = Color(0xFF0A84FF)
+    val Secondary = Color(0xFF5E5CE6)
+    val BackgroundPrimary = Color(0xFF000000)
+    val TextPrimary = Color(0xFFFFFFFF)
+}
+```
+
+### Icons
+
+**exfig-icons/drawable/ic_arrow_right.xml**
+
+```xml
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M8,4 L16,12 L8,20"/>
+</vector>
+```
+
+### Images
+
+```
+exfig-images/
+├── drawable-mdpi/
+│   └── img_hero.webp        # @1x (160 dpi)
+├── drawable-hdpi/
+│   └── img_hero.webp        # @1.5x (240 dpi)
+├── drawable-xhdpi/
+│   └── img_hero.webp        # @2x (320 dpi)
+├── drawable-xxhdpi/
+│   └── img_hero.webp        # @3x (480 dpi)
+└── drawable-xxxhdpi/
+    └── img_hero.webp        # @4x (640 dpi)
+```
+
+## Usage in Code
+
+### XML Views
+
+```xml
+<!-- Colors -->
+<TextView
+    android:textColor="@color/text_primary"
+    android:background="@color/background_primary"/>
+
+<!-- Icons -->
+<ImageView
+    android:src="@drawable/ic_arrow_right"
+    android:tint="@color/primary"/>
+
+<!-- Images -->
+<ImageView
+    android:src="@drawable/img_hero"
+    android:scaleType="centerCrop"/>
+```
+
+### Jetpack Compose
+
+```kotlin
+@Composable
+fun MyScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AppColors.BackgroundPrimary)
+    ) {
+        Text(
+            text = "Hello",
+            color = AppColors.TextPrimary,
+            style = AppTypography.HeadingH1
+        )
+
+        Icon(
+            painter = painterResource(R.drawable.ic_arrow_right),
+            contentDescription = null,
+            tint = AppColors.Primary
+        )
+
+        Image(
+            painter = painterResource(R.drawable.img_hero),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+```
+
+## Topics
+
+### Resources
+
+- AndroidColors
+- AndroidIcons
+- AndroidImages
+- AndroidTypography
+
+## See Also
+
+- Configuration
+- DesignRequirements
+
+### Flutter Platform Guide
+
+# Flutter Export
+
+Export Figma resources to Flutter projects with Dart code and asset files.
+
+## Overview
+
+ExFig exports design resources from Figma to Flutter projects:
+
+- **Colors**: Dart constants with `Color(0xAARRGGBB)` format
+- **Icons**: SVG icons with optional dark mode variants
+- **Images**: Multi-scale images (1x, 2x, 3x) in PNG, SVG, or WebP format
+
+> Note: Typography export is not currently supported for Flutter.
+
+## Quick Start
+
+### 1. Generate Configuration
+
+```bash
+exfig init --platform flutter
+```
+
+### 2. Configure Your Project
+
+Edit `exfig.pkl`:
+
+```pkl
+amends ".exfig/schemas/ExFig.pkl"
+
+import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Flutter.pkl"
+
+figma = new Figma.FigmaConfig {
+  lightFileId = "YOUR_FILE_ID"
+  darkFileId = "YOUR_DARK_FILE_ID"  // optional
+}
+
+flutter = new Flutter.FlutterConfig {
+  output = "lib/generated"
+
+  colors = new Flutter.ColorsEntry {
+    output = "colors.dart"
+    className = "AppColors"
+  }
+
+  icons = new Flutter.IconsEntry {
+    output = "assets/icons"
+    dartFile = "icons.dart"
+    className = "AppIcons"
+  }
+
+  images = new Flutter.ImagesEntry {
+    output = "assets/images"
+    dartFile = "images.dart"
+    className = "AppImages"
+    format = "png"
+    scales = new Listing { 1; 2; 3 }
+  }
+}
+```
+
+### 3. Export Resources
+
+```bash
+# Export colors
+exfig colors
+
+# Export icons
+exfig icons
+
+# Export images
+exfig images
+```
+
+## Generated Output
+
+### Colors
+
+**lib/generated/colors.dart**
+
+```dart
+// Do not edit this file!
+// Generated by ExFig
+
+import 'package:flutter/material.dart';
+
+class AppColors {
+  AppColors._();
+  static const Color primary = Color(0xFF007AFF);
+  static const Color secondary = Color(0xFF5856D6);
+  static const Color background = Color(0xFFFFFFFF);
+  static const Color textPrimary = Color(0xFF000000);
+}
+
+class AppColorsDark {
+  AppColorsDark._();
+  static const Color primary = Color(0xFF0A84FF);
+  static const Color secondary = Color(0xFF5E5CE6);
+  static const Color background = Color(0xFF000000);
+  static const Color textPrimary = Color(0xFFFFFFFF);
+}
+```
+
+### Icons
+
+**File structure:**
+
+```
+assets/
+└── icons/
+    ├── ic_add.svg
+    ├── ic_add_dark.svg
+    ├── ic_settings.svg
+    └── ic_settings_dark.svg
+
+lib/
+└── generated/
+    └── icons.dart
+```
+
+**icons.dart:**
+
+```dart
+// Do not edit this file!
+// Generated by ExFig
+
+class AppIcons {
+  AppIcons._();
+  static const String icAdd = 'assets/icons/ic_add.svg';
+  static const String icAddDark = 'assets/icons/ic_add_dark.svg';
+  static const String icSettings = 'assets/icons/ic_settings.svg';
+}
+```
+
+### Images
+
+**File structure:**
+
+```
+assets/
+└── images/
+    ├── logo.png           # 1x scale
+    ├── 2.0x/
+    │   └── logo.png       # 2x scale
+    └── 3.0x/
+        └── logo.png       # 3x scale
+
+lib/
+└── generated/
+    └── images.dart
+```
+
+**images.dart:**
+
+```dart
+// Do not edit this file!
+// Generated by ExFig
+
+class AppImages {
+  AppImages._();
+  static const String logo = 'assets/images/logo.png';
+  static const String hero = 'assets/images/hero.png';
+  static const String heroDark = 'assets/images/hero_dark.png';
+}
+```
+
+## Usage in Flutter
+
+### Using Colors
+
+```dart
+import 'package:your_app/generated/colors.dart';
+
+Container(
+  color: AppColors.primary,
+  // For dark mode:
+  // color: AppColorsDark.primary,
+)
+```
+
+### Using Icons with flutter_svg
+
+```dart
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:your_app/generated/icons.dart';
+
+SvgPicture.asset(
+  AppIcons.icSettings,
+  width: 24,
+  height: 24,
+)
+```
+
+### Using Images
+
+```dart
+import 'package:your_app/generated/images.dart';
+
+Image.asset(
+  AppImages.logo,
+  width: 200,
+)
+```
+
+## pubspec.yaml Configuration
+
+Register your assets in `pubspec.yaml`:
+
+```yaml
+flutter:
+  assets:
+    - assets/icons/
+    - assets/images/
+    - assets/images/2.0x/
+    - assets/images/3.0x/
+```
+
+## Configuration Reference
+
+### flutter
+
+| Option          | Type   | Required | Default | Description                             |
+| --------------- | ------ | -------- | ------- | --------------------------------------- |
+| `output`        | String | Yes      | -       | Path to output directory for Dart files |
+| `templatesPath` | String | No       | -       | Path to custom Jinja2 templates        |
+
+### flutter.colors
+
+| Option      | Type   | Required | Default       | Description          |
+| ----------- | ------ | -------- | ------------- | -------------------- |
+| `output`    | String | No       | `colors.dart` | Output filename      |
+| `className` | String | No       | `AppColors`   | Generated class name |
+
+### flutter.icons
+
+| Option      | Type   | Required | Default      | Description                        |
+| ----------- | ------ | -------- | ------------ | ---------------------------------- |
+| `output`    | String | Yes      | -            | Path for SVG asset files           |
+| `dartFile`  | String | No       | `icons.dart` | Output filename for Dart constants |
+| `className` | String | No       | `AppIcons`   | Generated class name               |
+
+### flutter.images
+
+| Option                 | Type   | Required | Default       | Description                           |
+| ---------------------- | ------ | -------- | ------------- | ------------------------------------- |
+| `output`               | String | Yes      | -             | Path for image asset files            |
+| `dartFile`             | String | No       | `images.dart` | Output filename for Dart constants    |
+| `className`            | String | No       | `AppImages`   | Generated class name                  |
+| `format`               | String | No       | `png`         | Image format: `svg`, `png`, or `webp` |
+| `scales`               | Array  | No       | `[1, 2, 3]`   | Asset scales to generate              |
+| `webpOptions.encoding` | String | No       | -             | WebP encoding: `lossy` or `lossless`  |
+| `webpOptions.quality`  | Number | No       | -             | Quality (0-100) for lossy encoding    |
+
+## Tips
+
+1. **Use WebP** for smaller image sizes
+2. **Use SVG** for icons to reduce bundle size
+3. **Only include necessary scales**: `[2, 3]` for most modern devices
+4. **Post-export optimization** for PNG format:
+   ```bash
+   oxipng -o max -Z ./assets/images/**/*.png
+   ```
+
+## Troubleshooting
+
+### WebP encoding quality not specified
+
+When using `format = "webp"` with `encoding = "lossy"`, you must specify a quality value:
+
+```pkl
+flutter = new Flutter.FlutterConfig {
+  images = new Flutter.ImagesEntry {
+    format = "webp"
+    // webpOptions configured via Common.WebpOptions
+  }
+}
+```
+
+For lossless encoding, quality is not required.
+
+## See Also
+
+- Configuration
+- DesignRequirements
+- CustomTemplates
+

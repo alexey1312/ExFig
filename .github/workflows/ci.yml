@@ -35,6 +35,9 @@ jobs:
       - name: Lint (SwiftLint)
         run: mise run lint
 
+      - name: Check llms.txt files are up to date
+        run: bash Scripts/generate-llms.sh && git diff --exit-code llms.txt llms-full.txt
+
   build-macos:
     name: Build & Test (macOS)
     runs-on: macos-15

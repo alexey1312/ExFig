@@ -231,3 +231,9 @@ run = "usage generate completion fish exfig -f exfig.usage.kdl"
 [tasks."docs:cli-reference"]
 description = "Generate CLI reference docs from usage spec"
 run = "usage generate markdown -f exfig.usage.kdl --out-file docs/cli-reference.md"
+
+[tasks."generate:llms"]
+description = "Generate llms.txt and llms-full.txt from documentation sources"
+run = "bash Scripts/generate-llms.sh"
+sources = ["README.md", "Sources/ExFigCLI/ExFig.docc/**/*.md", "docs/*.md", "CONFIG.md"]
+outputs = ["llms.txt", "llms-full.txt"]

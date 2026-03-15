@@ -57,6 +57,7 @@ and Flutter projects.
 
 # Maintenance
 ./bin/mise run codegen:pkl         # Regenerate Swift types from PKL schemas
+./bin/mise run generate:llms       # Generate llms.txt + llms-full.txt
 ./bin/mise run setup                # Install required tools
 ./bin/mise run clean                # Clean build artifacts
 ./bin/mise run clean:all            # Clean build + derived data
@@ -352,6 +353,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Web entry test fails        | Web entry types use `outputDirectory` field, while Android/Flutter use `output`                              |
 | Logger concatenation err    | `Logger.Message` (swift-log) requires interpolation `"\(a) \(b)"`, not concatenation `a + b`                 |
 | Deleted variables in output | Filter `VariableValue.deletedButReferenced != true` in variable loaders AND `CodeSyntaxSyncer`               |
+| mise "sources up-to-date"   | mise caches tasks with `sources`/`outputs` — run script directly via `bash` when debugging                   |
 | Jinja trailing `\n`         | `{% if false %}...{% endif %}\n` renders `"\n"`, not `""` — strip whitespace-only partial template results   |
 | `Bundle.module` in tests    | SPM test targets without declared resources don't have `Bundle.module` — use `Bundle.main` or temp bundle    |
 | SwiftLint trailing closure  | When function takes 2+ closures, use explicit label for last closure (`export: { ... }`) not trailing syntax |

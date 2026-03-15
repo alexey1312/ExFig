@@ -1,0 +1,46 @@
+# ExFig
+
+> Command-line utility to export colors, typography, icons, and images from Figma
+> to Xcode, Android Studio, Flutter, and Web (React/TypeScript) projects.
+> Supports Dark Mode, SwiftUI, UIKit, Jetpack Compose, Flutter, and React/TypeScript.
+> Configuration via PKL. Jinja2 templates for custom code generation.
+
+## Documentation
+
+- [README](https://github.com/DesignPipe/exfig/blob/main/README.md): Project overview, features, and quick start
+- [Getting Started](https://designpipe.github.io/exfig/documentation/exfigcli/gettingstarted): Installation, Figma token setup, first export
+- [Usage](https://designpipe.github.io/exfig/documentation/exfigcli/usage): CLI commands: colors, icons, images, batch, fetch, download
+- [Configuration](https://designpipe.github.io/exfig/documentation/exfigcli/configuration): PKL config format, platform entries, variables
+- [Design Requirements](https://designpipe.github.io/exfig/documentation/exfigcli/designrequirements): Figma file structure for colors, icons, images
+- [Custom Templates](https://designpipe.github.io/exfig/documentation/exfigcli/customtemplates): Jinja2 templates for custom code generation
+
+## Platform Guides
+
+- [iOS Platform Guide](https://designpipe.github.io/exfig/documentation/exfigcli/ios): xcassets, SwiftUI, UIKit, PDF vectors, HEIC
+- [Android Platform Guide](https://designpipe.github.io/exfig/documentation/exfigcli/android): XML resources, Compose, Vector Drawables, WebP
+- [Flutter Platform Guide](https://designpipe.github.io/exfig/documentation/exfigcli/flutter): Dart code generation, SVG/PNG assets
+
+## Platform Details
+
+- [iOS Colors](https://designpipe.github.io/exfig/documentation/exfigcli/ioscolors): Color sets, SwiftUI extensions, UIKit
+- [iOS Icons](https://designpipe.github.io/exfig/documentation/exfigcli/iosicons): PDF/SVG icons, xcassets, Swift extensions
+- [iOS Images](https://designpipe.github.io/exfig/documentation/exfigcli/iosimages): Raster images, HEIC, Dark Mode variants
+- [iOS Typography](https://designpipe.github.io/exfig/documentation/exfigcli/iostypography): Text styles, Dynamic Type, SwiftUI fonts
+- [Android Colors](https://designpipe.github.io/exfig/documentation/exfigcli/androidcolors): XML colors, Compose theme, Material You
+- [Android Icons](https://designpipe.github.io/exfig/documentation/exfigcli/androidicons): Vector Drawables, Compose ImageVector
+- [Android Images](https://designpipe.github.io/exfig/documentation/exfigcli/androidimages): WebP, drawable resources, density variants
+- [Android Typography](https://designpipe.github.io/exfig/documentation/exfigcli/androidtypography): XML text styles, Compose typography
+
+## Reference
+
+- [PKL Configuration Guide](https://github.com/DesignPipe/exfig/blob/main/docs/PKL.md): In-depth PKL language guide for ExFig configs
+- [Full Configuration Reference](https://github.com/DesignPipe/exfig/blob/main/CONFIG.md): Complete field-by-field config reference (all platforms)
+- [Architecture](https://github.com/DesignPipe/exfig/blob/main/docs/ARCHITECTURE.md): Internal module structure and data flow
+
+## Optional
+
+- [Migration Guide (v1 → v2)](https://github.com/DesignPipe/exfig/blob/main/MIGRATION.md): Breaking changes and upgrade steps
+- [Migration from FigmaExport](https://github.com/DesignPipe/exfig/blob/main/MIGRATION_FROM_FIGMA_EXPORT.md): Guide for FigmaExport users switching to ExFig
+- [Changelog](https://github.com/DesignPipe/exfig/blob/main/CHANGELOG.md): Version history and release notes
+- [Contributing](https://github.com/DesignPipe/exfig/blob/main/CONTRIBUTING.md): How to contribute to ExFig
+- [Development Guide](https://designpipe.github.io/exfig/documentation/exfigcli/development): Building from source, running tests, project setup
