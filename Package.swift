@@ -27,7 +27,7 @@ let package = Package(
         .package(url: "https://github.com/mattt/swift-yyjson", from: "0.5.0"),
         .package(url: "https://github.com/apple/pkl-swift", from: "0.8.0"),
         .package(url: "https://github.com/DesignPipe/swift-svgkit.git", from: "0.1.0"),
-        .package(url: "https://github.com/DesignPipe/swift-figma-api.git", from: "0.1.0"),
+        .package(url: "https://github.com/DesignPipe/swift-figma-api.git", from: "0.2.0"),
     ],
     targets: [
         // Main target

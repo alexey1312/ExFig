@@ -325,7 +325,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | libpng                | 1.6.45+ | PNG decoding                                       |
 | swift-custom-dump     | 1.3.0+  | Test assertions                                    |
 | Noora                 | 0.54.0+ | Terminal UI design system                          |
-| swift-figma-api       | 0.1.0+  | Figma REST API client (async/await, rate limiting) |
+| swift-figma-api       | 0.2.0+  | Figma REST API client (async/await, rate limiting) |
 | swift-svgkit          | 0.1.0+  | SVG parsing, ImageVector/VectorDrawable generation |
 | swift-resvg           | 0.45.1  | SVG parsing/rendering                              |
 | swift-docc-plugin     | 1.4.5+  | DocC documentation                                 |

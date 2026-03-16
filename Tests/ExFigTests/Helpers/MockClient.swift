@@ -57,8 +57,7 @@ public final class MockClient: Client, @unchecked Sendable {
 
     public func request<T: Endpoint>(_ endpoint: T) async throws -> T.Content {
         let key = String(describing: type(of: endpoint))
-        // swiftlint:disable:next force_unwrapping
-        let baseURL = URL(string: "https://api.figma.com/v1/")!
+        let baseURL = FigmaClient.baseURL
         let request = try endpoint.makeRequest(baseURL: baseURL)
 
         // Record timestamp and get delay (thread-safe)
