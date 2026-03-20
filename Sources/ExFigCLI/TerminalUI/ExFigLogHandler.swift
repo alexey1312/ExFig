@@ -73,12 +73,7 @@ struct ExFigLogHandler: LogHandler {
             formattedMessage = formatMessage(level: level, message: message)
         }
 
-        if outputMode == .mcp {
-            // In MCP mode, write directly to stderr to avoid corrupting JSON-RPC on stdout
-            FileHandle.standardError.write(Data("\(formattedMessage)\n".utf8))
-        } else {
-            TerminalOutputManager.shared.print(formattedMessage)
-        }
+        TerminalOutputManager.shared.print(formattedMessage)
     }
 
     // swiftlint:disable:next cyclomatic_complexity

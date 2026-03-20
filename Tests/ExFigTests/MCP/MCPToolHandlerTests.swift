@@ -5,6 +5,13 @@ import Testing
 
 @Suite("MCP Tool Handlers")
 struct MCPToolHandlerTests {
+    // MARK: - Fixtures Path
+
+    private static let fixturesPath = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .appendingPathComponent("Fixtures/PKL")
+
     // MARK: - Validate Tool
 
     @Test("validate returns error for missing config")
@@ -35,6 +42,26 @@ struct MCPToolHandlerTests {
         #expect(result.isError == true)
         if case let .text(text) = result.content.first {
             #expect(text.contains("exfig.pkl"))
+        }
+    }
+
+    @Test("validate returns summary for valid config")
+    func validateValidConfig() async {
+        let configPath = Self.fixturesPath.appendingPathComponent("valid-config.pkl").path
+
+        let params = CallTool.Parameters(
+            name: "exfig_validate",
+            arguments: ["config_path": .string(configPath)]
+        )
+
+        let result = await MCPToolHandlers.handle(params: params, state: MCPServerState())
+
+        #expect(result.isError != true)
+
+        if case let .text(text) = result.content.first {
+            #expect(text.contains("\"valid\""))
+            #expect(text.contains("config_path"))
+            #expect(text.contains("ios"))
         }
     }
 
@@ -156,13 +183,18 @@ struct MCPToolHandlerTests {
 
     @Test("inspect returns error for missing resource_type")
     func inspectMissingResourceType() async {
+        let configPath = Self.fixturesPath.appendingPathComponent("valid-config.pkl").path
+
         let params = CallTool.Parameters(
             name: "exfig_inspect",
-            arguments: ["config_path": .string("exfig.pkl")]
+            arguments: ["config_path": .string(configPath)]
         )
 
         let result = await MCPToolHandlers.handle(params: params, state: MCPServerState())
 
         #expect(result.isError == true)
+        if case let .text(text) = result.content.first {
+            #expect(text.contains("resource_type"))
+        }
     }
 }

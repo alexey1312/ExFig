@@ -184,6 +184,10 @@ reserved for MCP JSON-RPC protocol.
 
 **Name collision:** Both `FigmaAPI` and `MCP` export `Client` — always use `FigmaAPI.Client` in MCP/ files.
 
+**Keepalive:** `withCheckedContinuation { _ in }` — suspends indefinitely without hacks (no `Task.sleep(365 days)`).
+
+**Tool handler order:** Validate input parameters BEFORE expensive operations (PKL eval, API client creation).
+
 ## Modification Patterns
 
 ### Adding a New Subcommand

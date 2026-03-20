@@ -1,5 +1,5 @@
 {
-  "originHash" : "a0cb4c9b9d35100ddf3cadac9fbb07c73dafc4f69ecbf83c7172e848e1b2ee43",
+  "originHash" : "4a819b3065360bf98b89befa8fb35fa89db17992c9cce7813c9b1eb3c57b8221",
   "pins" : [
     {
       "identity" : "aexml",
@@ -222,7 +222,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/DesignPipe/swift-svgkit.git",
       "state" : {
-        "revision" : "ec56044b8d0dcd0caed7ad4bac21b805b44cd14f",
+        "revision" : "83a9601fc4f4d3acaf34fca2f74d1b9faea2b932",
         "version" : "0.1.0"
       }
     },

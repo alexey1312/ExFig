@@ -29,8 +29,9 @@ struct ExFigMCPServer {
         let transport = StdioTransport(logger: logger)
         try await server.start(transport: transport)
 
-        // Keep running until cancelled
-        try await Task.sleep(for: .seconds(365 * 24 * 3600))
+        // Block until the process is terminated (SIGINT/SIGTERM).
+        // AsyncStream continuation is never yielded or finished, so this suspends indefinitely.
+        let _: Void = await withCheckedContinuation { _ in }
     }
 
     // MARK: - Tool Handlers

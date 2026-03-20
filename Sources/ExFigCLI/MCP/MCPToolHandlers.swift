@@ -41,61 +41,48 @@ enum MCPToolHandlers {
 
         let config = try await PKLEvaluator.evaluate(configPath: configURL)
 
-        var summary: [String: Any] = [
-            "config_path": configPath,
-            "valid": true,
-        ]
-
         let platforms = buildPlatformSummary(config: config)
-        if !platforms.isEmpty { summary["platforms"] = platforms }
+        let fileIDs = Array(config.getFileIds()).sorted()
 
-        let fileIDs = Array(config.getFileIds())
-        if !fileIDs.isEmpty { summary["figma_file_ids"] = fileIDs.sorted() }
+        let summary = ValidateSummary(
+            configPath: configPath,
+            valid: true,
+            platforms: platforms.isEmpty ? nil : platforms,
+            figmaFileIds: fileIDs.isEmpty ? nil : fileIDs
+        )
 
-        return .init(content: [.text(formatJSON(summary))])
+        return .init(content: [.text(encodeJSON(summary))])
     }
 
-    private static func buildPlatformSummary(config: PKLConfig) -> [String: Any] {
-        var platforms: [String: Any] = [:]
+    private static func buildPlatformSummary(config: PKLConfig) -> [String: EntrySummary] {
+        var platforms: [String: EntrySummary] = [:]
 
         if let ios = config.ios {
-            platforms["ios"] = entrySummary(
-                colors: ios.colors?.count, icons: ios.icons?.count,
-                images: ios.images?.count, hasTypography: ios.typography != nil
+            platforms["ios"] = EntrySummary(
+                colorsEntries: ios.colors?.count, iconsEntries: ios.icons?.count,
+                imagesEntries: ios.images?.count, typography: ios.typography != nil ? true : nil
             )
         }
         if let android = config.android {
-            platforms["android"] = entrySummary(
-                colors: android.colors?.count, icons: android.icons?.count,
-                images: android.images?.count, hasTypography: android.typography != nil
+            platforms["android"] = EntrySummary(
+                colorsEntries: android.colors?.count, iconsEntries: android.icons?.count,
+                imagesEntries: android.images?.count, typography: android.typography != nil ? true : nil
             )
         }
         if let flutter = config.flutter {
-            platforms["flutter"] = entrySummary(
-                colors: flutter.colors?.count, icons: flutter.icons?.count,
-                images: flutter.images?.count
+            platforms["flutter"] = EntrySummary(
+                colorsEntries: flutter.colors?.count, iconsEntries: flutter.icons?.count,
+                imagesEntries: flutter.images?.count
             )
         }
         if let web = config.web {
-            platforms["web"] = entrySummary(
-                colors: web.colors?.count, icons: web.icons?.count,
-                images: web.images?.count
+            platforms["web"] = EntrySummary(
+                colorsEntries: web.colors?.count, iconsEntries: web.icons?.count,
+                imagesEntries: web.images?.count
             )
         }
 
         return platforms
-    }
-
-    private static func entrySummary(
-        colors: Int? = nil, icons: Int? = nil,
-        images: Int? = nil, hasTypography: Bool = false
-    ) -> [String: Any] {
-        var info: [String: Any] = [:]
-        if let c = colors { info["colors_entries"] = c }
-        if let i = icons { info["icons_entries"] = i }
-        if let m = images { info["images_entries"] = m }
-        if hasTypography { info["typography"] = true }
-        return info
     }
 
     // MARK: - Tokens Info
@@ -108,178 +95,159 @@ enum MCPToolHandlers {
         var source = try TokensFileSource.parse(fileAt: filePath)
         try source.resolveAliases()
 
-        var result: [String: Any] = [
-            "file_path": filePath,
-            "total_tokens": source.tokens.count,
-            "alias_count": source.aliasCount,
-        ]
-
+        var countsByType: [String: Int]?
         let byType = source.tokenCountsByType()
         if !byType.isEmpty {
             var typeCounts: [String: Int] = [:]
             for entry in byType {
                 typeCounts[entry.type] = entry.count
             }
-            result["counts_by_type"] = typeCounts
+            countsByType = typeCounts
         }
 
+        var topLevelGroups: [String: Int]?
         let groups = source.topLevelGroups()
         if !groups.isEmpty {
             var groupCounts: [String: Int] = [:]
             for entry in groups {
                 groupCounts[entry.name] = entry.count
             }
-            result["top_level_groups"] = groupCounts
+            topLevelGroups = groupCounts
         }
 
-        if !source.warnings.isEmpty {
-            result["warnings"] = source.warnings
-        }
+        let result = TokensInfoResult(
+            filePath: filePath,
+            totalTokens: source.tokens.count,
+            aliasCount: source.aliasCount,
+            countsByType: countsByType,
+            topLevelGroups: topLevelGroups,
+            warnings: source.warnings.isEmpty ? nil : source.warnings
+        )
 
-        let jsonText = formatJSON(result)
-        return .init(content: [.text(jsonText)])
+        return .init(content: [.text(encodeJSON(result))])
     }
 
     // MARK: - Inspect
 
-    // swiftlint:disable:next cyclomatic_complexity
     private static func handleInspect(
         params: CallTool.Parameters,
         state: MCPServerState
     ) async throws -> CallTool.Result {
+        // Validate inputs before expensive operations (PKL eval, API client)
+        guard let resourceType = params.arguments?["resource_type"]?.stringValue else {
+            return .init(content: [.text("Missing required parameter: resource_type")], isError: true)
+        }
+
         let configPath = try resolveConfigPath(from: params.arguments?["config_path"]?.stringValue)
         let configURL = URL(fileURLWithPath: configPath)
         let config = try await PKLEvaluator.evaluate(configPath: configURL)
         let client = try await state.getClient()
 
-        guard let resourceType = params.arguments?["resource_type"]?.stringValue else {
-            return .init(content: [.text("Missing required parameter: resource_type")], isError: true)
-        }
-
-        var results: [String: Any] = ["config_path": configPath]
         let types = resourceType == "all"
             ? ["colors", "icons", "images", "typography"]
             : [resourceType]
 
+        var results = InspectResult(configPath: configPath)
+
         for type in types {
             switch type {
             case "colors":
-                results["colors"] = try await inspectColors(config: config, client: client)
+                results.colors = try await inspectColors(config: config, client: client)
             case "icons":
-                results["icons"] = try await inspectIcons(config: config, client: client)
+                results.icons = try await inspectIcons(config: config, client: client)
             case "images":
-                results["images"] = try await inspectImages(config: config, client: client)
+                results.images = try await inspectImages(config: config, client: client)
             case "typography":
-                results["typography"] = try await inspectTypography(config: config, client: client)
+                results.typography = try await inspectTypography(config: config, client: client)
             default:
-                results[type] = ["error": "Unknown resource type: \(type)"]
+                results.unknownTypes[type] = "Unknown resource type: \(type)"
             }
         }
 
-        let jsonText = formatJSON(results)
-        return .init(content: [.text(jsonText)])
+        return .init(content: [.text(encodeJSON(results))])
     }
 
     // MARK: - Inspect Helpers
 
+    private static func requireFileId(config: PKLConfig) throws -> String {
+        guard let fileId = config.figma?.lightFileId else {
+            throw ExFigError.custom(
+                errorString: "No Figma file ID configured. Set figma.lightFileId in config."
+            )
+        }
+        return fileId
+    }
+
     private static func inspectColors(
         config: PKLConfig,
         client: FigmaAPI.Client
-    ) async throws -> [String: Any] {
-        guard let fileId = config.figma?.lightFileId else {
-            return ["status": "no_config", "message": "No Figma file ID configured"]
-        }
-
+    ) async throws -> ColorsInspectResult {
+        let fileId = try requireFileId(config: config)
         let styles = try await client.request(StylesEndpoint(fileId: fileId))
-
-        var result: [String: Any] = [
-            "file_id": fileId,
-            "styles_count": styles.count,
-        ]
-
-        // Filter color styles
         let colorStyles = styles.filter { $0.styleType == .fill }
-        result["color_styles_count"] = colorStyles.count
-        if !colorStyles.isEmpty {
-            result["sample_names"] = Array(colorStyles.prefix(20).map(\.name))
-            if colorStyles.count > 20 { result["truncated"] = true }
-        }
 
-        // Count platform entries
+        var entriesPerPlatform: [String: Int]?
         var entries: [String: Int] = [:]
         if let c = config.ios?.colors { entries["ios"] = c.count }
         if let c = config.android?.colors { entries["android"] = c.count }
         if let c = config.flutter?.colors { entries["flutter"] = c.count }
         if let c = config.web?.colors { entries["web"] = c.count }
-        if !entries.isEmpty { result["entries_per_platform"] = entries }
+        if !entries.isEmpty { entriesPerPlatform = entries }
 
-        return result
+        return ColorsInspectResult(
+            fileId: fileId,
+            stylesCount: styles.count,
+            colorStylesCount: colorStyles.count,
+            sampleNames: colorStyles.isEmpty ? nil : Array(colorStyles.prefix(20).map(\.name)),
+            truncated: colorStyles.count > 20 ? true : nil,
+            entriesPerPlatform: entriesPerPlatform
+        )
     }
 
     private static func inspectIcons(
         config: PKLConfig,
         client: FigmaAPI.Client
-    ) async throws -> [String: Any] {
-        guard let fileId = config.figma?.lightFileId else {
-            return ["status": "no_config", "message": "No Figma file ID configured"]
-        }
-
+    ) async throws -> ComponentsInspectResult {
+        let fileId = try requireFileId(config: config)
         let components = try await client.request(ComponentsEndpoint(fileId: fileId))
 
-        var result: [String: Any] = [
-            "file_id": fileId,
-            "components_count": components.count,
-        ]
-
-        if !components.isEmpty {
-            result["sample_names"] = Array(components.prefix(20).map(\.name))
-            if components.count > 20 { result["truncated"] = true }
-        }
-
-        return result
+        return ComponentsInspectResult(
+            fileId: fileId,
+            componentsCount: components.count,
+            sampleNames: components.isEmpty ? nil : Array(components.prefix(20).map(\.name)),
+            truncated: components.count > 20 ? true : nil
+        )
     }
 
     private static func inspectImages(
         config: PKLConfig,
         client: FigmaAPI.Client
-    ) async throws -> [String: Any] {
-        // Images share the same file — use lightFileId or a dedicated images file
-        guard let fileId = config.figma?.lightFileId else {
-            return ["status": "no_config", "message": "No Figma file ID configured"]
-        }
-
+    ) async throws -> FileInspectResult {
+        let fileId = try requireFileId(config: config)
         let metadata = try await client.request(FileMetadataEndpoint(fileId: fileId))
 
-        return [
-            "file_id": fileId,
-            "file_name": metadata.name,
-            "last_modified": metadata.lastModified,
-            "version": metadata.version,
-        ]
+        return FileInspectResult(
+            fileId: fileId,
+            fileName: metadata.name,
+            lastModified: metadata.lastModified,
+            version: metadata.version
+        )
     }
 
     private static func inspectTypography(
         config: PKLConfig,
         client: FigmaAPI.Client
-    ) async throws -> [String: Any] {
-        guard let fileId = config.figma?.lightFileId else {
-            return ["status": "no_config", "message": "No Figma file ID configured"]
-        }
-
+    ) async throws -> TypographyInspectResult {
+        let fileId = try requireFileId(config: config)
         let styles = try await client.request(StylesEndpoint(fileId: fileId))
         let textStyles = styles.filter { $0.styleType == .text }
 
-        var result: [String: Any] = [
-            "file_id": fileId,
-            "text_styles_count": textStyles.count,
-        ]
-
-        if !textStyles.isEmpty {
-            result["sample_names"] = Array(textStyles.prefix(20).map(\.name))
-            if textStyles.count > 20 { result["truncated"] = true }
-        }
-
-        return result
+        return TypographyInspectResult(
+            fileId: fileId,
+            textStylesCount: textStyles.count,
+            sampleNames: textStyles.isEmpty ? nil : Array(textStyles.prefix(20).map(\.name)),
+            truncated: textStyles.count > 20 ? true : nil
+        )
     }
 
     // MARK: - Helpers
@@ -311,15 +279,147 @@ enum MCPToolHandlers {
         return .init(content: [.text(message)], isError: true)
     }
 
-    /// Formats a dictionary as pretty-printed JSON string.
-    private static func formatJSON(_ dict: [String: Any]) -> String {
-        guard let data = try? JSONSerialization.data(
-            withJSONObject: dict,
-            options: [.prettyPrinted, .sortedKeys]
-        ) else {
-            return "\(dict)"
+    /// Encodes a Codable value as pretty-printed JSON with sorted keys.
+    private static func encodeJSON(_ value: some Encodable) -> String {
+        guard let data = try? JSONCodec.encodePrettySorted(value) else {
+            return "\(value)"
         }
-        return String(data: data, encoding: .utf8) ?? "\(dict)"
+        return String(data: data, encoding: .utf8) ?? "\(value)"
+    }
+}
+
+// MARK: - Response Types
+
+private struct ValidateSummary: Codable, Sendable {
+    let configPath: String
+    let valid: Bool
+    var platforms: [String: EntrySummary]?
+    var figmaFileIds: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case configPath = "config_path"
+        case valid
+        case platforms
+        case figmaFileIds = "figma_file_ids"
+    }
+}
+
+private struct EntrySummary: Codable, Sendable {
+    var colorsEntries: Int?
+    var iconsEntries: Int?
+    var imagesEntries: Int?
+    var typography: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case colorsEntries = "colors_entries"
+        case iconsEntries = "icons_entries"
+        case imagesEntries = "images_entries"
+        case typography
+    }
+}
+
+private struct TokensInfoResult: Codable, Sendable {
+    let filePath: String
+    let totalTokens: Int
+    let aliasCount: Int
+    var countsByType: [String: Int]?
+    var topLevelGroups: [String: Int]?
+    var warnings: [String]?
+
+    enum CodingKeys: String, CodingKey {
+        case filePath = "file_path"
+        case totalTokens = "total_tokens"
+        case aliasCount = "alias_count"
+        case countsByType = "counts_by_type"
+        case topLevelGroups = "top_level_groups"
+        case warnings
+    }
+}
+
+private struct InspectResult: Codable, Sendable {
+    let configPath: String
+    var colors: ColorsInspectResult?
+    var icons: ComponentsInspectResult?
+    var images: FileInspectResult?
+    var typography: TypographyInspectResult?
+    var unknownTypes: [String: String] = [:]
+
+    enum CodingKeys: String, CodingKey {
+        case configPath = "config_path"
+        case colors, icons, images, typography
+        case unknownTypes = "unknown_types"
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(configPath, forKey: .configPath)
+        try container.encodeIfPresent(colors, forKey: .colors)
+        try container.encodeIfPresent(icons, forKey: .icons)
+        try container.encodeIfPresent(images, forKey: .images)
+        try container.encodeIfPresent(typography, forKey: .typography)
+        if !unknownTypes.isEmpty {
+            try container.encode(unknownTypes, forKey: .unknownTypes)
+        }
+    }
+}
+
+private struct ColorsInspectResult: Codable, Sendable {
+    let fileId: String
+    let stylesCount: Int
+    let colorStylesCount: Int
+    var sampleNames: [String]?
+    var truncated: Bool?
+    var entriesPerPlatform: [String: Int]?
+
+    enum CodingKeys: String, CodingKey {
+        case fileId = "file_id"
+        case stylesCount = "styles_count"
+        case colorStylesCount = "color_styles_count"
+        case sampleNames = "sample_names"
+        case truncated
+        case entriesPerPlatform = "entries_per_platform"
+    }
+}
+
+private struct ComponentsInspectResult: Codable, Sendable {
+    let fileId: String
+    let componentsCount: Int
+    var sampleNames: [String]?
+    var truncated: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case fileId = "file_id"
+        case componentsCount = "components_count"
+        case sampleNames = "sample_names"
+        case truncated
+    }
+}
+
+private struct FileInspectResult: Codable, Sendable {
+    let fileId: String
+    let fileName: String
+    let lastModified: String
+    let version: String
+
+    enum CodingKeys: String, CodingKey {
+        case fileId = "file_id"
+        case fileName = "file_name"
+        case lastModified = "last_modified"
+        case version
+    }
+}
+
+private struct TypographyInspectResult: Codable, Sendable {
+    let fileId: String
+    let textStylesCount: Int
+    var sampleNames: [String]?
+    var truncated: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case fileId = "file_id"
+        case textStylesCount = "text_styles_count"
+        case sampleNames = "sample_names"
+        case truncated
     }
 }
 
