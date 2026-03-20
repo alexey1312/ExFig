@@ -188,6 +188,19 @@ reserved for MCP JSON-RPC protocol.
 
 **Tool handler order:** Validate input parameters BEFORE expensive operations (PKL eval, API client creation).
 
+### Adding an MCP Tool Handler
+
+1. Add tool definition in `MCP/MCPToolDefinitions.swift` (JSON Schema via `.object([...])`)
+2. Add case in `MCPToolHandlers.handle()` dispatch switch
+3. Implement handler in an `extension MCPToolHandlers` (keeps `type_body_length` under 300)
+4. `ExFigWarning` → string via `ExFigWarningFormatter().format(warning)` (no `.formattedMessage` property)
+5. `Color.hex` is in AndroidExport, not accessible from ExFigCLI — use RGBA components
+6. `ColorsVariablesLoader` takes `PKLConfig.Common.VariablesColors?`, not `.Colors?`
+7. MCP `CallTool.Parameters.arguments` type is `[String: Value]?` (not `JSONValue`); accessors: `.stringValue`, `.intValue`, `.boolValue`
+8. Export tools: `exfig_export` runs subprocess (self-invoke), reads JSON report from temp file; `exfig_download` returns tokens inline via loaders
+9. `runSubprocess` pattern: set `terminationHandler` BEFORE `process.run()` (race condition); read stderr pipe concurrently via `Task` (deadlock at 64KB buffer); use `withThrowingTaskGroup` race for timeout
+10. Validate cheap params (format, resource_type) BEFORE expensive operations (PKL eval, `state.getClient()`) — keeps tests fast and error messages clear
+
 ## Modification Patterns
 
 ### Adding a New Subcommand
