@@ -4,33 +4,36 @@ ExFig is tightly coupled to the Figma API — all loaders directly call FigmaAPI
 
 ## What Changes
 
-- New per-asset-type source protocols in ExFigCore: `ColorsSource`, `ComponentsSource`, `TypographySource`
+- New per-asset-type source protocols in ExFigCore: `ColorsSource`, `ComponentsSource`, `TypographySource` (no `sourceKind` in protocols — clean contract)
 - `DesignSourceKind` enum (figma, penpot, tokensFile, tokensStudio, sketchFile) added to `*SourceInput` types
 - `FigmaColorsSource`, `FigmaComponentsSource`, `FigmaTypographySource` — wrappers around current Figma logic
-- `TokensFileColorsSource` — extracted from `ColorsExportContextImpl`
-- Refactored `*ExportContextImpl` — source injection instead of direct `Client`
+- `TokensFileColorsSource` — extracted from `ColorsExportContextImpl` (including warning logic)
+- `SourceFactory` — centralized factory for creating source instances by `DesignSourceKind`
+- Refactored `*ExportContextImpl` — source injection instead of direct `Client` (Icons/Images context retains `client` for granular cache path)
 - PKL: `sourceKind` field in `Common.pkl` (`FrameSource`, `VariablesSource`)
-- Source factories in subcommands and batch runner
 
 **Unchanged:** ExportContext protocols, platform exporters, processors, FileContents, batch TaskLocal pattern, granular cache (stays inside `FigmaComponentsSource`).
+
+**Deferred (follow-up change):** Download icons/images path (`DownloadImageLoader`), MCP `exfig_download` tool handler.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `design-source-protocol`: Per-asset-type source protocols (`ColorsSource`, `ComponentsSource`, `TypographySource`) and `DesignSourceKind` enum to abstract the data source from the export pipeline
-- `source-dispatch`: Factory logic for selecting the source implementation based on `sourceKind` in subcommands, batch runner, and download commands
+- `design-source-protocol`: Per-asset-type source protocols (`ColorsSource`, `ComponentsSource`, `TypographySource`) and `DesignSourceKind` enum to abstract the data source from the export pipeline. Protocols are clean (no `sourceKind` property) — dispatch is handled by `SourceFactory`
+- `source-dispatch`: Centralized `SourceFactory` for selecting the source implementation based on `sourceKind`. Used by Plugin*Export files, batch runner, and download colors command
 
 ### Modified Capabilities
 
-- `tokens-file-source`: Extract loading logic from `ColorsExportContextImpl` into a standalone `TokensFileColorsSource` implementing the `ColorsSource` protocol
-- `configuration`: Add `sourceKind` field to PKL schemas (`Common.pkl`: `FrameSource`, `VariablesSource`)
+- `tokens-file-source`: Extract loading logic (including darkModeName warning) from `ColorsExportContextImpl` into a standalone `TokensFileColorsSource` implementing the `ColorsSource` protocol
+- `configuration`: Add `sourceKind` field to PKL schemas (`Common.pkl`: `FrameSource`, `VariablesSource`) with resolution priority: explicit > auto-detect > default `.figma`
 
 ## Impact
 
-- **ExFigCore** — 2 new files (protocols + enum), changes to 4 `*SourceInput` types (new field with default)
-- **ExFigCLI** — 5 new source files, refactoring 4 context implementations, changes to ~10 subcommand/export files
-- **PKL schemas** — `Common.pkl` (new typealias + fields), possibly `ExFig.pkl`
-- **Tests** — new unit tests for source types, existing tests remain unaffected (default `.figma`)
+- **ExFigCore** — 1 new file (protocols + enum + `ColorsSourceConfig` + `FigmaColorsConfig` + `TokensFileColorsConfig`), refactored `ColorsSourceInput` (sourceConfig pattern), `sourceKind` field added to 3 other SourceInput types
+- **ExFigCLI** — 6 new source files (4 sources + factory + tokens-file extraction), refactoring 4 context implementations, changes to ~10 subcommand/export files
+- **PKL schemas** — `Common.pkl` (new typealias + fields)
+- **Tests** — new unit tests for TokensFileColorsSource, DesignSourceKind, SourceFactory. Figma source tests are integration-only (require API token). Existing tests remain unaffected (default `.figma`)
 - **API compatibility** — full backward compatibility, `sourceKind` defaults to figma/null
 - **Dependencies** — none added
+- **Deferred** — download icons/images path, MCP `exfig_download` handler (follow-up change)

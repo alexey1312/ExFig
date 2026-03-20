@@ -21,7 +21,7 @@ The loading logic SHALL be encapsulated in a `TokensFileColorsSource` struct tha
     }
   }
   ```
-- **WHEN** `TokensFileColorsSource.loadColors()` is called with a `ColorsSourceInput` where `tokensFilePath` points to this file
+- **WHEN** `TokensFileColorsSource.loadColors()` is called with a `ColorsSourceInput` containing a `TokensFileColorsConfig(filePath: "path/to/file.tokens.json", groupFilter: nil)`
 - **THEN** the source SHALL return a `ColorsLoadOutput` with one color named "Brand/Primary" in the `light` array
 
 #### Scenario: Parse nested groups with type inheritance
@@ -51,17 +51,17 @@ The loading logic SHALL be encapsulated in a `TokensFileColorsSource` struct tha
 #### Scenario: Group filter applied
 
 - **GIVEN** a `.tokens.json` file with tokens under "Brand/Colors" and "Brand/Spacing" groups
-- **WHEN** `TokensFileColorsSource.loadColors()` is called with `tokensFileGroupFilter` set to "Brand.Colors"
+- **WHEN** `TokensFileColorsSource.loadColors()` is called with a `TokensFileColorsConfig` where `groupFilter` is "Brand.Colors"
 - **THEN** only tokens under "Brand/Colors" SHALL be returned
 
 #### Scenario: Mode-related fields ignored with warning
 
-- **WHEN** `TokensFileColorsSource.loadColors()` is called with `darkModeName` or `lightHCModeName` set
-- **THEN** the source SHALL emit a warning that mode-related fields are ignored for local tokens files
+- **WHEN** `TokensFileColorsSource.loadColors()` is called AND the caller has also configured dark/HC mode fields in the PKL config
+- **THEN** the source SHALL emit a warning via the injected `TerminalUI` that mode-related fields are ignored for local tokens files
 - **AND** `dark`, `lightHC`, `darkHC` arrays SHALL be empty
+- **NOTE:** This warning logic moves from `ColorsExportContextImpl.loadColors()` into `TokensFileColorsSource.loadColors()`. The context impl SHALL NOT contain source-specific warning logic after refactoring.
 
 #### Scenario: TokensFileColorsSource implements ColorsSource
 
 - **WHEN** `TokensFileColorsSource` is instantiated
 - **THEN** it SHALL conform to the `ColorsSource` protocol
-- **AND** `sourceKind` SHALL be `.tokensFile`

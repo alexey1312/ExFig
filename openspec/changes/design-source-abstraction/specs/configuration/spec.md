@@ -72,6 +72,12 @@ When `sourceKind` is `null`, the system SHALL auto-detect:
 - **WHEN** a colors entry has `sourceKind = "tokens-studio"` and no `tokensFile`
 - **THEN** the system SHALL use `tokens-studio` as the source kind regardless of auto-detection
 
+#### Scenario: Explicit sourceKind takes priority over tokensFile presence
+
+- **WHEN** a colors entry has `sourceKind = "figma"` AND `tokensFile` is also set
+- **THEN** the system SHALL use `figma` as the source kind (explicit overrides auto-detection)
+- **NOTE:** This handles the case where a user switches back from tokens-file to figma without removing the `tokensFile` field
+
 ### Requirement: PKL codegen produces DesignSourceKind bridging
 
 After running `./bin/mise run codegen:pkl`, the generated Swift types SHALL include `SourceKind` as a String-based enum. The ExFig-* platform entry types SHALL bridge PKL `SourceKind` to ExFigCore `DesignSourceKind`.
