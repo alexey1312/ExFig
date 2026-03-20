@@ -46,8 +46,8 @@ export FIGMA_PERSONAL_TOKEN=your_token_here
 # 3a. Quick one-off export (interactive wizard)
 exfig fetch
 
-# 3b. Or generate config for full pipeline
-exfig init -p ios
+# 3b. Or generate config for full pipeline (interactive wizard)
+exfig init
 exfig batch exfig.pkl
 ```
 
@@ -256,6 +256,22 @@ exfig images
 
 # Export typography
 exfig typography
+```
+
+## Getting Started
+
+Generate a config file with the interactive wizard:
+
+```bash
+exfig init
+```
+
+The wizard guides you through platform selection, asset types, and Figma file IDs.
+For non-interactive use, specify the platform directly:
+
+```bash
+exfig init -p ios       # Full iOS template
+exfig init -p android   # Full Android template
 ```
 
 ## Configuration File
