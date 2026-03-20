@@ -163,6 +163,13 @@ Tests/               # Test targets mirror source structure
 
 ## Code Patterns
 
+### Generated PKL Config URIs
+
+Templates in `*Config.swift` use `.exfig/schemas/` as placeholder paths. `GenerateConfigFile.substitutePackageURI()`
+replaces them with `package://github.com/DesignPipe/exfig/releases/download/v{VERSION}/exfig@{VERSION}#/` at generation
+time. Version comes from `ExFigCommand.version`. `exfig init` does NOT extract local schemas — config references the
+published PKL package directly.
+
 ### PKL Consumer Config DRY Patterns
 
 Consumer `exfig.pkl` configs can use `local` Mapping + `for`-generators to eliminate entry duplication:
