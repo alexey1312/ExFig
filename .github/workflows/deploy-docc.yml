@@ -1,6 +1,8 @@
 name: Deploy DocC
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
