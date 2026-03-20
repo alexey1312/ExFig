@@ -22,6 +22,22 @@ exfig images
 exfig typography
 ```
 
+## Getting Started
+
+Generate a config file with the interactive wizard:
+
+```bash
+exfig init
+```
+
+The wizard guides you through platform selection, asset types, and Figma file IDs.
+For non-interactive use, specify the platform directly:
+
+```bash
+exfig init -p ios       # Full iOS template
+exfig init -p android   # Full Android template
+```
+
 ## Configuration File
 
 By default, ExFig looks for `exfig.pkl` in the current directory. Specify a different location:
@@ -141,15 +157,23 @@ exfig icons --resume
 
 ## Quick Fetch
 
-Download images without a configuration file:
+Download images without a configuration file. Run `exfig fetch` with no arguments for an
+interactive wizard that guides you through file ID, asset type, platform, frame selection,
+format, output directory, and more:
 
 ```bash
-# Download PNG images at 3x scale
+# Interactive wizard — asks platform, format, output step by step
+exfig fetch
+
+# Or pass all options directly
 exfig fetch --file-id YOUR_FILE_ID --frame "Illustrations" --output ./images
 
 # Using short options
 exfig fetch -f YOUR_FILE_ID -r "Icons" -o ./icons
 ```
+
+The wizard provides smart defaults per platform (e.g., SVG + camelCase for iOS icons,
+WebP + snake_case for Android illustrations) and only runs in interactive terminals.
 
 ### Format Options
 

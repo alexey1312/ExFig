@@ -37,8 +37,11 @@ brew install designpipe/tap/exfig
 # 2. Set Figma token
 export FIGMA_PERSONAL_TOKEN=your_token_here
 
-# 3. Generate config and export
-exfig init -p ios
+# 3a. Quick one-off export (interactive wizard)
+exfig fetch
+
+# 3b. Or generate config for full pipeline (interactive wizard)
+exfig init
 exfig batch exfig.pkl
 ```
 
