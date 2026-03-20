@@ -36,6 +36,26 @@ enum InitAssetType: String, CaseIterable, CustomStringConvertible, Equatable {
     }
 }
 
+// MARK: - Colors Source
+
+/// How colors are sourced from Figma.
+enum InitColorsSource: String, CaseIterable, CustomStringConvertible, Equatable {
+    case styles = "Color Styles (from file)"
+    case variables = "Figma Variables"
+
+    var description: String {
+        rawValue
+    }
+}
+
+/// Configuration for colors sourced from Figma Variables.
+struct InitVariablesConfig {
+    let tokensFileId: String
+    let collectionName: String
+    let lightModeName: String
+    let darkModeName: String?
+}
+
 // MARK: - Init Wizard Result
 
 /// Result of the interactive init wizard flow.
@@ -45,12 +65,17 @@ struct InitWizardResult {
     let lightFileId: String
     let darkFileId: String?
     let iconsFrameName: String?
+    let iconsPageName: String?
     let imagesFrameName: String?
+    let imagesPageName: String?
+    let variablesConfig: InitVariablesConfig?
 }
 
 // MARK: - Init Wizard Flow
 
 /// Interactive wizard for `exfig init` when `--platform` is not provided.
+///
+/// Template transformation logic lives in `InitWizardTransform.swift`.
 enum InitWizard {
     /// Run the interactive wizard and return collected answers.
     static func run() -> InitWizardResult {
@@ -86,18 +111,33 @@ enum InitWizard {
             inputPrompt: "Dark mode file ID:"
         )
 
-        // 5. Icons frame name (if icons selected)
-        let iconsFrameName: String? = if selectedTypes.contains(.icons) {
-            promptFrameName(assetType: "icons", defaultName: "Icons")
+        // 5. Colors source (if colors selected)
+        let variablesConfig: InitVariablesConfig? = if selectedTypes.contains(.colors) {
+            promptColorsSource(lightFileId: lightFileId)
         } else {
             nil
         }
 
-        // 6. Images frame name (if images selected)
-        let imagesFrameName: String? = if selectedTypes.contains(.images) {
-            promptFrameName(assetType: "images", defaultName: "Illustrations")
+        // 6. Icons details (if icons selected)
+        let iconsFrameName: String?
+        let iconsPageName: String?
+        if selectedTypes.contains(.icons) {
+            iconsFrameName = promptFrameName(assetType: "icons", defaultName: "Icons")
+            iconsPageName = promptPageName(assetType: "icons")
         } else {
-            nil
+            iconsFrameName = nil
+            iconsPageName = nil
+        }
+
+        // 7. Images details (if images selected)
+        let imagesFrameName: String?
+        let imagesPageName: String?
+        if selectedTypes.contains(.images) {
+            imagesFrameName = promptFrameName(assetType: "images", defaultName: "Illustrations")
+            imagesPageName = promptPageName(assetType: "images")
+        } else {
+            imagesFrameName = nil
+            imagesPageName = nil
         }
 
         return InitWizardResult(
@@ -106,51 +146,14 @@ enum InitWizard {
             lightFileId: lightFileId,
             darkFileId: darkFileId,
             iconsFrameName: iconsFrameName,
-            imagesFrameName: imagesFrameName
+            iconsPageName: iconsPageName,
+            imagesFrameName: imagesFrameName,
+            imagesPageName: imagesPageName,
+            variablesConfig: variablesConfig
         )
     }
 
-    // MARK: - Template Transformation (Pure, Testable)
-
-    /// Apply wizard result to a platform template, removing unselected sections and substituting values.
-    static func applyResult(_ result: InitWizardResult, to template: String) -> String {
-        var output = template
-
-        // Substitute file IDs
-        output = output.replacingOccurrences(of: "shPilWnVdJfo10YF12345", with: result.lightFileId)
-
-        if let darkId = result.darkFileId {
-            output = output.replacingOccurrences(of: "KfF6DnJTWHGZzC912345", with: darkId)
-        } else {
-            output = removeDarkFileIdLine(from: output)
-        }
-
-        // Substitute frame names
-        if let iconsFrame = result.iconsFrameName {
-            output = substituteFrameName(in: output, section: "icons", name: iconsFrame)
-        }
-        if let imagesFrame = result.imagesFrameName {
-            output = substituteFrameName(in: output, section: "images", name: imagesFrame)
-        }
-
-        // Remove unselected asset sections
-        let allTypes: [InitAssetType] = [.colors, .icons, .images, .typography]
-        for assetType in allTypes where !result.selectedAssetTypes.contains(assetType) {
-            output = removeAssetSections(from: output, assetType: assetType)
-        }
-
-        // When colors removed, also remove commented variablesColors block
-        if !result.selectedAssetTypes.contains(.colors) {
-            output = removeCommentedVariablesColors(from: output)
-        }
-
-        // Collapse 3+ consecutive blank lines to 2
-        output = collapseBlankLines(output)
-
-        return output
-    }
-
-    // MARK: - Private Helpers
+    // MARK: - Prompt Helpers
 
     private static func promptFrameName(assetType: String, defaultName: String) -> String {
         let input = NooraUI.textPrompt(
@@ -177,220 +180,50 @@ enum InitWizard {
         )
     }
 
-    /// Remove the `darkFileId = "..."` line (and its comment) from the template.
-    private static func removeDarkFileIdLine(from template: String) -> String {
-        var lines = template.components(separatedBy: "\n")
-        lines.removeAll { line in
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            return trimmed.hasPrefix("darkFileId = ")
-                || trimmed == "// [optional] Identifier of the file containing dark color palette and dark images."
-                || trimmed == "// [optional] Identifier of the file containing dark color palette."
-        }
-        return lines.joined(separator: "\n")
+    private static func promptPageName(assetType: String) -> String? {
+        promptOptionalText(
+            question: "Filter \(assetType) by Figma page name?",
+            description: "Useful when multiple pages have frames with the same name",
+            inputPrompt: "Page name:"
+        )
     }
 
-    /// Substitute the default frame name in the `figmaFrameName = "..."` line within a section.
-    private static func substituteFrameName(in template: String, section: String, name: String) -> String {
-        let defaultName = section == "icons" ? "Icons" : "Illustrations"
-        let lines = template.components(separatedBy: "\n")
-        var result: [String] = []
-        var inSection = false
+    private static func promptColorsSource(lightFileId: String) -> InitVariablesConfig? {
+        let source: InitColorsSource = NooraUI.singleChoicePrompt(
+            question: "How are your colors defined in Figma?",
+            options: InitColorsSource.allCases,
+            description: "Variables is the modern approach; Styles is the classic one"
+        )
 
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
+        guard source == .variables else { return nil }
 
-            if trimmed.contains("\(section) = new Common.") {
-                inSection = true
-            }
+        let tokensFileId = NooraUI.textPrompt(
+            prompt: "Variables file ID (default: same as light file):",
+            description: "The Figma file containing your color variables. Press Enter to use the light file ID."
+        )
 
-            if inSection, trimmed.hasPrefix("figmaFrameName = \"\(defaultName)\"") {
-                result.append(line.replacingOccurrences(of: "\"\(defaultName)\"", with: "\"\(name)\""))
-                inSection = false
-            } else {
-                result.append(line)
-            }
+        let collectionName = NooraUI.textPrompt(
+            prompt: "Variables collection name:",
+            description: "The name of the variable collection in Figma (e.g., 'Primitives', 'Base collection')",
+            validationRules: [NonEmptyValidationRule(error: "Collection name cannot be empty.")]
+        )
 
-            if inSection, trimmed == "}" {
-                inSection = false
-            }
-        }
+        let lightModeName = NooraUI.textPrompt(
+            prompt: "Light mode column name (default: Light):",
+            description: "Column name for light color values. Press Enter for default."
+        )
 
-        return result.joined(separator: "\n")
-    }
+        let darkModeName = promptOptionalText(
+            question: "Do you have a dark mode column?",
+            description: "Column name for dark color values in the variables table",
+            inputPrompt: "Dark mode column name:"
+        )
 
-    /// Remove all sections (common + platform) for the given asset type.
-    static func removeAssetSections(from template: String, assetType: InitAssetType) -> String {
-        var output = template
-
-        // Remove common section
-        let commonMarkers = commonSectionMarkers(for: assetType)
-        for marker in commonMarkers {
-            output = removeSection(from: output, matching: marker)
-        }
-
-        // Remove platform-specific section
-        let platformMarkers = platformSectionMarkers(for: assetType)
-        for marker in platformMarkers {
-            output = removeSection(from: output, matching: marker)
-        }
-
-        return output
-    }
-
-    /// Remove a PKL section starting with a line matching the marker, counting braces to find the end.
-    static func removeSection(from template: String, matching marker: String) -> String {
-        let lines = template.components(separatedBy: "\n")
-        var result: [String] = []
-        var braceDepth = 0
-        var removing = false
-
-        for line in lines {
-            if removing {
-                braceDepth += braceBalance(in: line)
-                if braceDepth <= 0 { removing = false }
-                continue
-            }
-
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard trimmed.contains(marker) else {
-                result.append(line)
-                continue
-            }
-
-            // Start removing: strip preceding comments/blanks
-            removing = true
-            braceDepth = braceBalance(in: line)
-            stripTrailingCommentsAndBlanks(&result)
-            if braceDepth <= 0 { removing = false }
-        }
-
-        return result.joined(separator: "\n")
-    }
-
-    /// Count net brace balance ({  = +1, } = -1) in a line.
-    private static func braceBalance(in line: String) -> Int {
-        var balance = 0
-        for char in line {
-            if char == "{" { balance += 1 }
-            if char == "}" { balance -= 1 }
-        }
-        return balance
-    }
-
-    /// Remove trailing comment lines and blank lines from the result array.
-    private static func stripTrailingCommentsAndBlanks(_ lines: inout [String]) {
-        while let last = lines.last {
-            let trimmed = last.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("//") || trimmed.isEmpty {
-                lines.removeLast()
-            } else {
-                break
-            }
-        }
-    }
-
-    /// Markers for common section blocks (in `common = new Common.CommonConfig`).
-    private static func commonSectionMarkers(for assetType: InitAssetType) -> [String] {
-        switch assetType {
-        case .colors:
-            ["colors = new Common.Colors {"]
-        case .icons:
-            ["icons = new Common.Icons {"]
-        case .images:
-            ["images = new Common.Images {"]
-        case .typography:
-            ["typography = new Common.Typography {"]
-        }
-    }
-
-    /// Markers for platform-specific section blocks.
-    private static func platformSectionMarkers(for assetType: InitAssetType) -> [String] {
-        switch assetType {
-        case .colors:
-            [
-                "colors = new iOS.ColorsEntry {",
-                "colors = new Android.ColorsEntry {",
-                "colors = new Flutter.ColorsEntry {",
-                "colors = new Web.ColorsEntry {",
-            ]
-        case .icons:
-            [
-                "icons = new iOS.IconsEntry {",
-                "icons = new Android.IconsEntry {",
-                "icons = new Flutter.IconsEntry {",
-                "icons = new Web.IconsEntry {",
-            ]
-        case .images:
-            [
-                "images = new iOS.ImagesEntry {",
-                "images = new Android.ImagesEntry {",
-                "images = new Flutter.ImagesEntry {",
-                "images = new Web.ImagesEntry {",
-            ]
-        case .typography:
-            [
-                "typography = new iOS.Typography {",
-                "typography = new Android.Typography {",
-            ]
-        }
-    }
-
-    /// Remove commented-out `variablesColors` block when colors are not selected.
-    private static func removeCommentedVariablesColors(from template: String) -> String {
-        let lines = template.components(separatedBy: "\n")
-        var result: [String] = []
-        var removing = false
-
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-
-            if !removing {
-                if trimmed.hasPrefix("// variablesColors = new Common.VariablesColors {")
-                    || trimmed
-                    .hasPrefix(
-                        "// [optional] Use variablesColors instead of colors to export colors from Figma Variables."
-                    )
-                    || trimmed
-                    .hasPrefix(
-                        "// [optional] Use variablesColors to export colors from Figma Variables."
-                    )
-                {
-                    removing = true
-                    continue
-                }
-                result.append(line)
-            } else {
-                // Keep removing commented lines until we find a non-comment line
-                if trimmed.hasPrefix("//") {
-                    continue
-                } else {
-                    removing = false
-                    result.append(line)
-                }
-            }
-        }
-
-        return result.joined(separator: "\n")
-    }
-
-    /// Collapse 3+ consecutive blank lines into 2.
-    private static func collapseBlankLines(_ text: String) -> String {
-        let lines = text.components(separatedBy: "\n")
-        var result: [String] = []
-        var consecutiveBlanks = 0
-
-        for line in lines {
-            if line.trimmingCharacters(in: .whitespaces).isEmpty {
-                consecutiveBlanks += 1
-                if consecutiveBlanks <= 2 {
-                    result.append(line)
-                }
-            } else {
-                consecutiveBlanks = 0
-                result.append(line)
-            }
-        }
-
-        return result.joined(separator: "\n")
+        return InitVariablesConfig(
+            tokensFileId: tokensFileId.isEmpty ? lightFileId : tokensFileId,
+            collectionName: collectionName,
+            lightModeName: lightModeName.isEmpty ? "Light" : lightModeName,
+            darkModeName: darkModeName
+        )
     }
 }

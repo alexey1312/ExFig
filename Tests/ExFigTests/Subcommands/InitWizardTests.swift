@@ -80,6 +80,95 @@ struct InitWizardTests {
         #expect(output.contains("figmaFrameName = \"MyImages\""))
     }
 
+    // MARK: - applyResult: Page name substitution
+
+    @Test("applyResult uncomments icons page name when provided")
+    func uncommentIconsPageName() {
+        let result = makeResult(iconsPageName: "Outlined")
+        let output = InitWizard.applyResult(result, to: iosTemplate)
+        #expect(output.contains("figmaPageName = \"Outlined\""))
+        #expect(!output.contains("// figmaPageName = \"Outlined\""))
+    }
+
+    @Test("applyResult uncomments images page name when provided")
+    func uncommentImagesPageName() {
+        let result = makeResult(imagesPageName: "Marketing")
+        let output = InitWizard.applyResult(result, to: iosTemplate)
+        #expect(output.contains("figmaPageName = \"Marketing\""))
+    }
+
+    @Test("applyResult keeps page name commented when not provided")
+    func pageNameStaysCommentedWhenNil() {
+        let result = makeResult()
+        let output = InitWizard.applyResult(result, to: iosTemplate)
+        // Both page name lines should remain commented
+        #expect(output.contains("// figmaPageName = "))
+    }
+
+    // MARK: - applyResult: Variables colors
+
+    @Test("applyResult replaces colors with variablesColors when variables config provided")
+    func variablesColorsReplacesStyles() {
+        let vars = InitVariablesConfig(
+            tokensFileId: "TOKENS_FILE",
+            collectionName: "My Tokens",
+            lightModeName: "Day",
+            darkModeName: "Night"
+        )
+        let result = makeResult(variablesConfig: vars)
+        let output = InitWizard.applyResult(result, to: iosTemplate)
+        // Regular colors section removed
+        #expect(!output.contains("colors = new Common.Colors {"))
+        // variablesColors uncommented and populated
+        #expect(output.contains("variablesColors = new Common.VariablesColors {"))
+        #expect(output.contains("tokensFileId = \"TOKENS_FILE\""))
+        #expect(output.contains("tokensCollectionName = \"My Tokens\""))
+        #expect(output.contains("lightModeName = \"Day\""))
+        #expect(output.contains("darkModeName = \"Night\""))
+    }
+
+    @Test("applyResult comments out darkModeName when variables config has no dark mode")
+    func variablesColorsNoDarkMode() {
+        let vars = InitVariablesConfig(
+            tokensFileId: "TOKENS_FILE",
+            collectionName: "Primitives",
+            lightModeName: "Light",
+            darkModeName: nil
+        )
+        let result = makeResult(variablesConfig: vars)
+        let output = InitWizard.applyResult(result, to: iosTemplate)
+        #expect(output.contains("variablesColors = new Common.VariablesColors {"))
+        // darkModeName should be commented out
+        let darkModeLines = output.components(separatedBy: "\n")
+            .filter { $0.contains("darkModeName") }
+        for line in darkModeLines {
+            #expect(
+                line.trimmingCharacters(in: .whitespaces).hasPrefix("//"),
+                "darkModeName should be commented: \(line)"
+            )
+        }
+    }
+
+    @Test("applyResult with styles removes variablesColors comment block")
+    func stylesRemovesVariablesBlock() {
+        let result = makeResult(variablesConfig: nil)
+        let output = InitWizard.applyResult(result, to: iosTemplate)
+        #expect(output.contains("colors = new Common.Colors {"))
+        #expect(!output.contains("variablesColors = new Common.VariablesColors {"))
+    }
+
+    @Test("Brace balance with variablesColors")
+    func balancedBracesWithVariables() {
+        let vars = InitVariablesConfig(
+            tokensFileId: "ID", collectionName: "C", lightModeName: "L", darkModeName: "D"
+        )
+        let result = makeResult(variablesConfig: vars)
+        let output = InitWizard.applyResult(result, to: iosTemplate)
+        let openCount = output.filter { $0 == "{" }.count
+        let closeCount = output.filter { $0 == "}" }.count
+        #expect(openCount == closeCount, "Unbalanced braces: \(openCount) open vs \(closeCount) close")
+    }
+
     // MARK: - applyResult: Section removal
 
     @Test("applyResult removes colors section when not selected")
@@ -88,7 +177,6 @@ struct InitWizardTests {
         let output = InitWizard.applyResult(result, to: iosTemplate)
         #expect(!output.contains("colors = new Common.Colors {"))
         #expect(!output.contains("colors = new iOS.ColorsEntry {"))
-        // variablesColors commented block should also be removed
         #expect(!output.contains("variablesColors = new Common.VariablesColors {"))
     }
 
@@ -137,7 +225,10 @@ struct InitWizardTests {
             lightFileId: "FLUTTER_ID",
             darkFileId: "FLUTTER_DARK",
             iconsFrameName: nil,
-            imagesFrameName: nil
+            iconsPageName: nil,
+            imagesFrameName: nil,
+            imagesPageName: nil,
+            variablesConfig: nil
         )
         let output = InitWizard.applyResult(result, to: flutterTemplate)
         #expect(output.contains("FLUTTER_ID"))
@@ -146,7 +237,6 @@ struct InitWizardTests {
         #expect(output.contains("colors = new Flutter.ColorsEntry {"))
         #expect(output.contains("icons = new Flutter.IconsEntry {"))
         #expect(output.contains("images = new Flutter.ImagesEntry {"))
-        // Flutter has no typography config sections
         #expect(!output.contains("typography = new Common.Typography {"))
         #expect(!output.contains("typography = new Flutter."))
     }
@@ -187,7 +277,10 @@ struct InitWizardTests {
         lightFileId: String = "LIGHT_FILE_ID",
         darkFileId: String? = "DARK_FILE_ID",
         iconsFrameName: String? = nil,
-        imagesFrameName: String? = nil
+        iconsPageName: String? = nil,
+        imagesFrameName: String? = nil,
+        imagesPageName: String? = nil,
+        variablesConfig: InitVariablesConfig? = nil
     ) -> InitWizardResult {
         InitWizardResult(
             platform: platform,
@@ -195,7 +288,10 @@ struct InitWizardTests {
             lightFileId: lightFileId,
             darkFileId: darkFileId,
             iconsFrameName: iconsFrameName,
-            imagesFrameName: imagesFrameName
+            iconsPageName: iconsPageName,
+            imagesFrameName: imagesFrameName,
+            imagesPageName: imagesPageName,
+            variablesConfig: variablesConfig
         )
     }
 }
