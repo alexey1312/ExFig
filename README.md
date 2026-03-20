@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/DesignPipe/exfig/actions/workflows/ci.yml/badge.svg)](https://github.com/DesignPipe/exfig/actions/workflows/ci.yml)
 [![Release](https://github.com/DesignPipe/exfig/actions/workflows/release.yml/badge.svg)](https://github.com/DesignPipe/exfig/actions/workflows/release.yml)
-[![Docs](https://github.com/DesignPipe/exfig/actions/workflows/deploy-docc.yml/badge.svg)](https://DesignPipe.github.io/exfig/documentation/exfig)
+[![Docs](https://github.com/DesignPipe/exfig/actions/workflows/deploy-docc.yml/badge.svg)](https://DesignPipe.github.io/exfig/documentation/exfigcli)
 ![Coverage](https://img.shields.io/badge/coverage-50.65%25-yellow)
 [![License](https://img.shields.io/github/license/DesignPipe/exfig.svg)](LICENSE)
 
@@ -45,7 +45,7 @@ exfig init
 exfig batch exfig.pkl
 ```
 
-See the [Getting Started guide](https://DesignPipe.github.io/exfig/documentation/exfig/gettingstarted) for detailed setup, including Mint, mise, and building from source.
+See the [Getting Started guide](https://DesignPipe.github.io/exfig/documentation/exfigcli/gettingstarted) for detailed setup, including Mint, mise, and building from source.
 
 ## GitHub Action
 
@@ -69,13 +69,13 @@ Includes MCP integration, setup wizard, config review, troubleshooting, and `/ex
 
 ## Documentation
 
-Full documentation — platform guides, configuration reference, batch processing, design tokens, custom templates, and MCP server — is available at **[DesignPipe.github.io/exfig](https://DesignPipe.github.io/exfig/documentation/exfig)**.
+Full documentation — platform guides, configuration reference, batch processing, design tokens, custom templates, and MCP server — is available at **[DesignPipe.github.io/exfig](https://DesignPipe.github.io/exfig/documentation/exfigcli)**.
 
 Configuration reference: [CONFIG.md](CONFIG.md).
 
 ## Contributing
 
-See the [Development Guide](https://DesignPipe.github.io/exfig/documentation/exfig/development) for setup, testing, and code style.
+See the [Development Guide](https://DesignPipe.github.io/exfig/documentation/exfigcli/development) for setup, testing, and code style.
 
 ## License
 
