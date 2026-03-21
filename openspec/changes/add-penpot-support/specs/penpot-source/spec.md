@@ -99,18 +99,18 @@ The system SHALL provide a `PenpotTypographySource` struct in `ExFigCLI/Source/`
 
 #### Scenario: String-to-Double conversion
 
-- **WHEN** a Penpot typography has `font-size: "16"` and `line-height: "1.5"`
+- **WHEN** a Penpot typography has `fontSize: "16"` (string) or `fontSize: 16` (number) and `lineHeight: "1.5"`
 - **THEN** the resulting `TextStyle` SHALL have `fontSize: 16.0` and `lineHeight: 1.5`
 
 #### Scenario: Unparseable font-size skipped
 
-- **WHEN** a typography has `font-size: "auto"` (unparseable)
+- **WHEN** a typography has `fontSize: "auto"` (unparseable)
 - **THEN** it SHALL be excluded from output
 - **AND** a warning SHALL be emitted
 
 #### Scenario: Text transform mapping
 
-- **WHEN** a typography has `text-transform: "uppercase"`
+- **WHEN** a typography has `textTransform: "uppercase"`
 - **THEN** the resulting `TextStyle.textCase` SHALL be `.uppercased`
 
 ### Requirement: PKL PenpotSource configuration

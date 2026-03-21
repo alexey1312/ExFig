@@ -1,39 +1,39 @@
 ## Why
 
-Penpot — открытый конкурент Figma с быстро растущей базой пользователей. ExFig уже имеет абстракцию `DesignSource` с `DesignSourceKind.penpot` (объявлен, но не реализован). Добавление Penpot как второго источника данных реализует Фазу 3 ROADMAP.md и подтверждает архитектуру мульти-source.
+Penpot is an open-source Figma competitor with a rapidly growing user base. ExFig already has a `DesignSource` abstraction with `DesignSourceKind.penpot` (declared but not implemented). Adding Penpot as a second data source implements Phase 3 of ROADMAP.md and validates the multi-source architecture.
 
 ## What Changes
 
-- Новый модуль `PenpotAPI` — Swift HTTP клиент для Penpot RPC API (аналог `swift-figma-api`)
-- `PenpotColorsSource` — загрузка library colors из Penpot файлов
-- `PenpotComponentsSource` — загрузка компонентов (иконки, иллюстрации) через thumbnails API
-- `PenpotTypographySource` — загрузка типографий из Penpot файлов
-- `PenpotColorsConfig` в ExFigCore — type-erased конфиг для Penpot colors
-- `PenpotSource` PKL class в Common.pkl — конфигурация Penpot source
-- `SourceFactory` — замена `throw unsupportedSourceKind(.penpot)` на реальные реализации
-- Env var `PENPOT_ACCESS_TOKEN` для аутентификации
-- E2E тесты против реального Penpot instance
+- New `PenpotAPI` module — Swift HTTP client for Penpot RPC API (analogous to `swift-figma-api`)
+- `PenpotColorsSource` — loads library colors from Penpot files
+- `PenpotComponentsSource` — loads components (icons, illustrations) via thumbnails API
+- `PenpotTypographySource` — loads typographies from Penpot files
+- `PenpotColorsConfig` in ExFigCore — type-erased config for Penpot colors
+- `PenpotSource` PKL class in Common.pkl — Penpot source configuration
+- `SourceFactory` — replaces `throw unsupportedSourceKind(.penpot)` with real implementations
+- Env var `PENPOT_ACCESS_TOKEN` for authentication
+- E2E tests against a real Penpot instance
 
-**Ограничение v1**: Penpot API не имеет endpoint для рендеринга компонентов в SVG/PNG. Иконки и иллюстрации экспортируются как растровые thumbnails.
+**v1 limitation**: Penpot API has no public endpoint for rendering components as SVG/PNG (the exporter is an internal service based on headless Chromium). Icons and illustrations are exported as raster thumbnails.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `penpot-api`: HTTP клиент для Penpot RPC API — client, endpoints (`get-file`, `get-profile`, `get-file-object-thumbnails`), response models (Color, Component, Typography, Shape), error handling
-- `penpot-source`: Интеграция Penpot с ExFig DesignSource — `PenpotColorsSource`, `PenpotComponentsSource`, `PenpotTypographySource`, `PenpotColorsConfig`, PKL schema, SourceFactory wiring
+- `penpot-api`: HTTP client for Penpot RPC API (`/api/main/methods/`) — client, endpoints (`get-file`, `get-profile`, `get-file-object-thumbnails`), response models (Color, Component, Typography, Shape), error handling. JSON responses use camelCase (standard Codable, no CodingKeys needed)
+- `penpot-source`: Penpot integration with ExFig DesignSource — `PenpotColorsSource`, `PenpotComponentsSource`, `PenpotTypographySource`, `PenpotColorsConfig`, PKL schema, SourceFactory wiring
 
 ### Modified Capabilities
 
-- `source-dispatch`: SourceFactory заменяет `throw unsupportedSourceKind(.penpot)` на реальные Penpot source реализации
-- `design-source-protocol`: Добавляется `PenpotColorsConfig: ColorsSourceConfig` и spinnerLabel для `.penpot`
+- `source-dispatch`: SourceFactory replaces `throw unsupportedSourceKind(.penpot)` with real Penpot source implementations
+- `design-source-protocol`: Adds `PenpotColorsConfig: ColorsSourceConfig` and spinnerLabel for `.penpot`
 
 ## Impact
 
-- **Новый модуль**: `Sources/PenpotAPI/` (~13 файлов), `Tests/PenpotAPITests/`
-- **Новые файлы**: `Sources/ExFigCLI/Source/Penpot{Colors,Components,Typography}Source.swift`
-- **Изменяемые файлы**: `Package.swift`, `DesignSource.swift`, `ExportContext.swift`, `SourceFactory.swift`, `Common.pkl`
-- **Зависимости**: PenpotAPI → swift-yyjson (уже есть). Без новых внешних зависимостей
-- **Env vars**: `PENPOT_ACCESS_TOKEN` (required когда sourceKind=penpot), `PENPOT_BASE_URL` (optional)
-- **PKL codegen**: `./bin/mise run codegen:pkl` после изменения Common.pkl
-- **Entry bridge**: `Sources/ExFig-*/Config/*Entry.swift` — маппинг `penpotSource` полей
+- **New module**: `Sources/PenpotAPI/` (~13 files), `Tests/PenpotAPITests/`
+- **New files**: `Sources/ExFigCLI/Source/Penpot{Colors,Components,Typography}Source.swift`
+- **Modified files**: `Package.swift`, `DesignSource.swift`, `ExportContext.swift`, `SourceFactory.swift`, `Common.pkl`
+- **Dependencies**: PenpotAPI → swift-yyjson (already present). No new external dependencies
+- **Env vars**: `PENPOT_ACCESS_TOKEN` (required when sourceKind=penpot), `PENPOT_BASE_URL` (optional)
+- **PKL codegen**: `./bin/mise run codegen:pkl` after modifying Common.pkl
+- **Entry bridge**: `Sources/ExFig-*/Config/*Entry.swift` — mapping `penpotSource` fields

@@ -19,18 +19,18 @@
 ## 4. PenpotAPI Module — Models
 
 - [ ] 4.1 Define `PenpotFileResponse` and `PenpotFileData` with selective decoding (colors, typographies, components)
-- [ ] 4.2 Define `PenpotColor` with kebab-case CodingKeys (id, name, path, color hex, opacity)
-- [ ] 4.3 Define `PenpotComponent` with kebab-case CodingKeys (id, name, path, main-instance-id, main-instance-page)
-- [ ] 4.4 Define `PenpotTypography` with string→Double computed properties and kebab-case CodingKeys
+- [ ] 4.2 Define `PenpotColor` (id, name, path, color hex, opacity) — standard Codable, no CodingKeys (JSON uses camelCase)
+- [ ] 4.3 Define `PenpotComponent` (id, name, path, mainInstanceId, mainInstancePage) — standard Codable, no CodingKeys
+- [ ] 4.4 Define `PenpotTypography` with dual String/Double decoding via custom `init(from:)` — handles both `"24"` and `24`
 - [ ] 4.5 Define `PenpotProfile` (id, fullname, email)
 
 ## 5. PenpotAPI Module — Unit Tests
 
 - [ ] 5.1 Create JSON fixtures in `Tests/PenpotAPITests/Fixtures/` (file response, colors, components, typographies)
 - [ ] 5.2 Write `PenpotColorDecodingTests` — solid, gradient (nil hex), path grouping
-- [ ] 5.3 Write `PenpotTypographyDecodingTests` — string→Double, unparseable values, all kebab-case keys
-- [ ] 5.4 Write `PenpotComponentDecodingTests` — kebab-case keys, optional fields
-- [ ] 5.5 Write `PenpotEndpointTests` — URL construction, body serialization for RPC endpoints
+- [ ] 5.3 Write `PenpotTypographyDecodingTests` — string→Double, number→Double, unparseable values, camelCase keys
+- [ ] 5.4 Write `PenpotComponentDecodingTests` — camelCase keys, optional fields
+- [ ] 5.5 Write `PenpotEndpointTests` — URL construction (`/api/main/methods/`), body serialization for RPC endpoints
 - [ ] 5.6 Write `PenpotAPIErrorTests` — recovery suggestions for 401, 404, 429
 
 ## 6. ExFigCore — Config Types

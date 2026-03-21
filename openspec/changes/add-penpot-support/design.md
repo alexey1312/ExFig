@@ -1,31 +1,31 @@
 ## Context
 
-ExFig v2.8.0 уже имеет абстракцию DesignSource (`ColorsSource`, `ComponentsSource`, `TypographySource` протоколы) с `DesignSourceKind.penpot` объявленным, но выбрасывающим `unsupportedSourceKind`. Существует паттерн `swift-figma-api` — standalone Swift package с protocol-based client, endpoint structs, и response models.
+ExFig v2.8.0 already has a DesignSource abstraction (`ColorsSource`, `ComponentsSource`, `TypographySource` protocols) with `DesignSourceKind.penpot` declared but throwing `unsupportedSourceKind`. The `swift-figma-api` pattern exists — a standalone Swift package with protocol-based client, endpoint structs, and response models.
 
-Penpot использует **RPC API** (не REST): все вызовы — `POST /api/rpc/command/<name>` с JSON body. Ключи в JSON — kebab-case. Числа в типографии — строки. SVG/PNG export endpoint **отсутствует** — только thumbnails через `get-file-object-thumbnails`.
+Penpot uses an **RPC API** (not REST): all calls are `POST /api/main/methods/<name>` with JSON body (the legacy path `/api/rpc/command/<name>` is preserved for backward compatibility). With `Accept: application/json`, responses arrive in **camelCase** (middleware `json/write-camel-key`); kebab-case is preserved only in transit+json. Typography numeric fields are strings in the Clojure schema but may serialize as JSON numbers. There is **no public SVG/PNG export endpoint** — the Penpot exporter uses headless Chromium (internal service); only thumbnails are available via API.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- PenpotAPI модуль внутри ExFig (позже извлечь в `swift-penpot-api`)
-- Базовая поддержка: solid colors, icons (thumbnails), illustrations (thumbnails), typography
-- E2E тесты против реального Penpot instance
-- Бесшовная интеграция через существующую DesignSource абстракцию
+- PenpotAPI module inside ExFig (extract to `swift-penpot-api` later)
+- Basic support: solid colors, icons (thumbnails), illustrations (thumbnails), typography
+- E2E tests against a real Penpot instance
+- Seamless integration via the existing DesignSource abstraction
 
 **Non-Goals:**
 
-- SVG reconstruction из shape tree (future phase)
-- Gradient/image fill colors (v1 — только solid)
-- Dark mode для Penpot (Penpot не имеет mode-based переменных как Figma Variables)
+- SVG reconstruction from shape tree (future phase)
+- Gradient/image fill colors (v1 — solid only)
+- Dark mode for Penpot (Penpot has no mode-based variables like Figma Variables)
 - Penpot webhooks / watch mode
-- Извлечение в отдельный репозиторий (делаем после e2e)
+- Extraction into a separate repository (after e2e validation)
 
 ## Decisions
 
-### D1: RPC endpoint protocol вместо REST
+### D1: RPC endpoint protocol instead of REST
 
-**Решение:** Собственный `PenpotEndpoint` protocol, не наследующий от FigmaAPI.
+**Decision:** Custom `PenpotEndpoint` protocol, not inheriting from FigmaAPI. URL: `/api/main/methods/<commandName>` (new recommended path).
 
 ```swift
 protocol PenpotEndpoint: Sendable {
@@ -36,64 +36,70 @@ protocol PenpotEndpoint: Sendable {
 }
 ```
 
-**Почему:** Penpot RPC (POST + body) фундаментально отличается от Figma REST (GET + path params). Общий endpoint protocol создал бы leaky abstraction. При извлечении в `swift-penpot-api` модуль поедет as-is.
+**Rationale:** Penpot RPC (POST + body) is fundamentally different from Figma REST (GET + path params). A shared endpoint protocol would create a leaky abstraction. When extracted to `swift-penpot-api`, the module ships as-is.
 
-**Альтернатива:** Generic HTTP endpoint protocol поверх обоих API → отклонено: усложняет оба клиента без выгоды.
+**URL migration:** Penpot migrated from `/api/rpc/command/` to `/api/main/methods/`. The old path is preserved for backward compatibility, but the new one is "strongly recommended". We use the new path by default.
 
-### D2: application/json вместо transit+json
+**Alternative:** Generic HTTP endpoint protocol over both APIs — rejected: adds complexity to both clients with no benefit.
 
-**Решение:** `Accept: application/json` header во всех запросах.
+### D2: application/json instead of transit+json
 
-**Почему:** Transit — Clojure-specific формат без Swift библиотеки. JSON работает для всех endpoint'ов. Известный баг #7540 (JSON decode fails для файлов с Design Tokens) — edge case, обрабатываем понятной ошибкой.
+**Decision:** `Accept: application/json` header on all requests.
 
-**Альтернатива:** Написать transit parser → отклонено: непропорциональные затраты для edge case.
+**Rationale:** Transit is a Clojure-specific format with no Swift library. JSON works for all endpoints. The Penpot backend automatically converts keys to camelCase via `json/write-camel-key` middleware when responding with `Accept: application/json`, making responses natively compatible with Swift `Codable`.
 
-### D3: Явные CodingKeys вместо key strategy
+**Bug #7540:** Previously, JSON decode failed for files with Design Tokens (missing write handler for `TokensLib` in `clojure.data.json`). The bug was **fixed** (January 2026). We keep a defensive catch for self-hosted instances running older Penpot versions.
 
-**Решение:** Каждая модель имеет `enum CodingKeys: String, CodingKey` с маппингом kebab→camelCase.
+**Alternative:** Write a transit parser — rejected: disproportionate effort, and transit preserves kebab-case keys requiring additional mapping.
 
-**Почему:** YYJSON (swift-yyjson) — primary JSON decoder в проекте. `JSONCodec.decode()` может не поддерживать custom key strategies. Explicit CodingKeys — паттерн из FigmaAPI для snake_case. Моделей ~6 — overhead минимальный.
+### D3: Standard Codable without CodingKeys
 
-**Альтернатива:** `JSONDecoder.keyDecodingStrategy = .custom` → отклонено: несовместимо с JSONCodec/YYJSON.
+**Decision:** Models use standard Swift `Codable` synthesis without explicit `CodingKeys`.
 
-### D4: Клиент создаётся внутри Source, не передаётся через SourceFactory
+**Rationale:** The Penpot backend automatically converts kebab-case keys to camelCase via `json/write-camel-key` middleware when responding with `Accept: application/json`. JSON responses arrive with keys like `fontFamily`, `mainInstanceId`, `fontSize`, etc. — matching standard Swift naming with no mapping required. Confirmed by the official `penpot-export` tool, which works with camelCase without transformation.
 
-**Решение:** `PenpotColorsSource` / `PenpotComponentsSource` сами создают `BasePenpotClient` из env var `PENPOT_ACCESS_TOKEN` и `baseURL` из config.
+**Note:** Kebab-case (`font-family`, `main-instance-id`) is preserved only in `application/transit+json` format, which we do not use (D2).
 
-**Почему:** Аналог `TokensFileColorsSource` (не получает FigmaAPI Client). Не требует изменения сигнатуры `SourceFactory`. Penpot client лёгкий — 1-3 API вызова на экспорт, нет смысла в shared rate limiter.
+**Alternative:** Explicit CodingKeys with kebab→camelCase mapping — rejected: unnecessary boilerplate since JSON already arrives in camelCase.
 
-**Альтернатива:** Добавить `penpotClient` в SourceFactory → отклонено: ломает сигнатуру, требует создание клиента даже когда sourceKind=figma.
+### D4: Client created inside Source, not passed through SourceFactory
 
-### D5: Thumbnails для icons/images (v1)
+**Decision:** `PenpotColorsSource` / `PenpotComponentsSource` create `BasePenpotClient` themselves from env var `PENPOT_ACCESS_TOKEN` and `baseURL` from config.
 
-**Решение:** Использовать `get-file-object-thumbnails` → `GET /assets/by-file-media-id/<id>` для растровых thumbnails.
+**Rationale:** Analogous to `TokensFileColorsSource` (does not receive a FigmaAPI Client). Does not require changing the `SourceFactory` signature. The Penpot client is lightweight — 1-3 API calls per export, no benefit from a shared rate limiter.
 
-**Почему:** Penpot API не имеет SVG/PNG render endpoint. Thumbnails — единственный способ получить визуальное представление компонента через API. Для иконок это субоптимально (растр вместо вектора), но работает для иллюстраций.
+**Alternative:** Add `penpotClient` to SourceFactory — rejected: breaks the signature, requires client creation even when sourceKind=figma.
 
-**Ограничение:** Иконки будут растровые. Warn пользователя при `format: svg` + `sourceKind: penpot`.
+### D5: Thumbnails for icons/images (v1)
 
-**Future:** SVG reconstruction из shape tree (parse objects → build SVG DOM) — отдельная фаза после e2e валидации базового flow.
+**Decision:** Use `get-file-object-thumbnails` → `GET /assets/by-file-media-id/<id>` for raster thumbnails.
 
-### D6: Переиспользование полей IconsSourceInput/ImagesSourceInput
+**Rationale:** Penpot API has no SVG/PNG render endpoint for external consumers. Thumbnails are the only way to obtain a visual representation of a component via API. Suboptimal for icons (raster instead of vector), but works for illustrations.
 
-**Решение:** Для v1 — `figmaFileId` → Penpot file UUID, `frameName` → component path filter. Без рефакторинга на `sourceConfig` pattern.
+**Limitation:** Icons will be raster. Warn the user when `format: svg` + `sourceKind: penpot`.
 
-**Почему:** Минимальные изменения в ExFigCore. Рефакторинг на `ComponentsSourceConfig` (как у Colors) — follow-up, когда появится 3-й source. Прагматичный подход: имена полей неидеальные, но типы совпадают (String).
+**Future:** SVG reconstruction from shape tree (parse objects → build SVG DOM) — separate phase after e2e validation of the basic flow.
 
-### D7: Простой retry вместо SharedRateLimiter
+### D6: Reuse IconsSourceInput/ImagesSourceInput fields
 
-**Решение:** Простой retry (3 попытки, exponential backoff) внутри `BasePenpotClient`. Без `SharedRateLimiter`.
+**Decision:** For v1 — `figmaFileId` → Penpot file UUID, `frameName` → component path filter. No refactoring to `sourceConfig` pattern.
 
-**Почему:** Penpot API — 1-3 вызова на экспорт (`get-file` возвращает всё). Rate limits не задокументированы. SharedRateLimiter оправдан для Figma (десятки запросов, известные лимиты), но overhead для Penpot.
+**Rationale:** Minimal changes to ExFigCore. Refactoring to `ComponentsSourceConfig` (like Colors) — follow-up when a 3rd source appears. Pragmatic approach: field names are not ideal, but types match (String).
+
+### D7: Simple retry instead of SharedRateLimiter
+
+**Decision:** Simple retry (3 attempts, exponential backoff) inside `BasePenpotClient`. No `SharedRateLimiter`.
+
+**Rationale:** Penpot API — 1-3 calls per export (`get-file` returns everything). Rate limits are undocumented. SharedRateLimiter is justified for Figma (dozens of requests, known limits), but overhead for Penpot.
 
 ## Risks / Trade-offs
 
-| Risk                                        | Mitigation                                                                        |
-| ------------------------------------------- | --------------------------------------------------------------------------------- |
-| Нет SVG export → иконки растровые           | Warn пользователя. Документировать ограничение. SVG reconstruction в future phase |
-| JSON bug #7540 (Design Tokens)              | Catch decode error → понятное сообщение с workaround                              |
-| Penpot API нестабилен (нет версионирования) | E2E тесты как canary. Version check через `get-profile`                           |
-| Большой `get-file` response                 | YYJSON эффективно парсит. Декодируем только нужные секции через optional поля     |
-| String numerics в типографии                | `Double(string)` с guard + warning, never force-unwrap                            |
-| Kebab-case → CodingKeys boilerplate         | ~6 моделей, терпимо. При извлечении в пакет — один раз написать                   |
-| Self-hosted Penpot разные версии            | Configurable `baseURL`. E2E против cloud, manual testing для self-hosted          |
+| Risk                                       | Mitigation                                                                 |
+| ------------------------------------------ | -------------------------------------------------------------------------- |
+| No SVG export → raster icons               | Warn the user. Document the limitation. SVG reconstruction in future phase |
+| JSON bug #7540 (Design Tokens)             | Fixed (January 2026). Defensive catch for older self-hosted versions       |
+| Penpot API unstable (no versioning)        | E2E tests as canary. Version check via `get-profile`                       |
+| Large `get-file` response                  | YYJSON parses efficiently. Decode only needed sections via optional fields |
+| String vs Number in typography             | Custom `Codable` init with `decodeIfPresent` for both String and Double    |
+| URL migration (`/api/rpc/` → `/api/main/`) | Use new path by default. Old path preserved for backward compatibility     |
+| Self-hosted Penpot different versions      | Configurable `baseURL`. E2E against cloud, manual testing for self-hosted  |

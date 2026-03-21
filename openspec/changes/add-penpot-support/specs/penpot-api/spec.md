@@ -22,12 +22,12 @@ public protocol PenpotEndpoint: Sendable {
 }
 ```
 
-All endpoints SHALL be `POST /api/rpc/command/<commandName>` with `Content-Type: application/json` body. Response parsing SHALL use `JSONCodec.decode()` from swift-yyjson.
+All endpoints SHALL be `POST /api/main/methods/<commandName>` with `Content-Type: application/json` body (the legacy path `/api/rpc/command/<commandName>` is preserved for backward compatibility but the new path is recommended). Response parsing SHALL use `JSONCodec.decode()` from swift-yyjson. All JSON responses use camelCase keys (Penpot backend applies `json/write-camel-key` middleware for `Accept: application/json`).
 
 #### Scenario: Endpoint builds correct URL
 
 - **WHEN** a `PenpotEndpoint` with `commandName = "get-file"` is used
-- **THEN** the request URL SHALL be `<baseURL>/api/rpc/command/get-file`
+- **THEN** the request URL SHALL be `<baseURL>/api/main/methods/get-file`
 - **AND** the HTTP method SHALL be POST
 
 #### Scenario: Endpoint with no body
@@ -50,7 +50,7 @@ public protocol PenpotClient: Sendable {
 - Accept `accessToken`, `baseURL` (default `https://design.penpot.app/`), and optional `timeout`
 - Use `URLSessionConfiguration.ephemeral` (no caching)
 - Set `Authorization: Token <accessToken>` header on all requests
-- Set `Accept: application/json` header (NOT `application/transit+json`)
+- Set `Accept: application/json` header (NOT `application/transit+json`) — this ensures camelCase keys in responses
 - Implement simple retry (3 attempts, exponential backoff) for 429/5xx responses
 
 #### Scenario: Successful authenticated request
@@ -175,7 +175,7 @@ public struct PenpotColor: Decodable, Sendable {
 }
 ```
 
-CodingKeys SHALL handle kebab-case keys where needed. The `path` field uses slash-separated groups (e.g., `"Brand/Primary"`).
+No custom `CodingKeys` are needed — JSON responses use camelCase keys which match Swift property names. The `path` field uses slash-separated groups (e.g., `"Brand/Primary"`).
 
 #### Scenario: Solid color decoding
 
@@ -206,21 +206,21 @@ public struct PenpotComponent: Decodable, Sendable {
 }
 ```
 
-CodingKeys SHALL map `main-instance-id` → `mainInstanceId`, `main-instance-page` → `mainInstancePage`.
+No custom `CodingKeys` are needed — JSON responses use camelCase keys (`mainInstanceId`, `mainInstancePage`) which match Swift property names.
 
 #### Scenario: Component with path
 
 - **WHEN** JSON contains `"path": "Icons/Navigation"` and `"name": "arrow-right"`
 - **THEN** `PenpotComponent.path` SHALL be `"Icons/Navigation"` and `name` SHALL be `"arrow-right"`
 
-#### Scenario: Component with kebab-case keys
+#### Scenario: Component with camelCase keys
 
-- **WHEN** JSON contains `"main-instance-id": "uuid-123"`
+- **WHEN** JSON contains `"mainInstanceId": "uuid-123"`
 - **THEN** `PenpotComponent.mainInstanceId` SHALL be `"uuid-123"`
 
 ### Requirement: PenpotTypography model
 
-The system SHALL define a `PenpotTypography` struct with string-encoded numeric fields:
+The system SHALL define a `PenpotTypography` struct with numeric fields that may arrive as either JSON strings or JSON numbers (Clojure schema defines them as strings, but JSON serialization may convert some to numbers):
 
 ```swift
 public struct PenpotTypography: Decodable, Sendable {
@@ -230,7 +230,6 @@ public struct PenpotTypography: Decodable, Sendable {
     public let fontFamily: String
     public let fontStyle: String?
     public let textTransform: String?
-    // String-encoded numerics with computed Double? accessors
     public var fontSize: Double?
     public var fontWeight: Double?
     public var lineHeight: Double?
@@ -238,19 +237,26 @@ public struct PenpotTypography: Decodable, Sendable {
 }
 ```
 
-CodingKeys SHALL map all kebab-case keys (`font-family`, `font-size`, `font-weight`, `line-height`, `letter-spacing`, `font-style`, `text-transform`).
+No custom `CodingKeys` are needed — JSON responses use camelCase keys (`fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`, `fontStyle`, `textTransform`) which match Swift property names.
+
+Numeric fields (`fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`) SHALL implement custom `init(from decoder:)` that handles BOTH JSON string values (e.g., `"24"`) AND JSON number values (e.g., `24`). This dual decoding is necessary because Penpot's Clojure schema defines these as strings, but the JSON serialization middleware may convert numeric strings to actual JSON numbers.
 
 #### Scenario: Typography with string numerics
 
-- **WHEN** JSON contains `"font-size": "24"` and `"font-weight": "700"`
+- **WHEN** JSON contains `"fontSize": "24"` and `"fontWeight": "700"`
+- **THEN** `fontSize` SHALL return `24.0` and `fontWeight` SHALL return `700.0`
+
+#### Scenario: Typography with JSON number values
+
+- **WHEN** JSON contains `"fontSize": 24` and `"fontWeight": 700` (as JSON numbers)
 - **THEN** `fontSize` SHALL return `24.0` and `fontWeight` SHALL return `700.0`
 
 #### Scenario: Typography with unparseable string
 
-- **WHEN** JSON contains `"font-size": "auto"`
+- **WHEN** JSON contains `"fontSize": "auto"`
 - **THEN** `fontSize` SHALL return `nil` (not crash)
 
-#### Scenario: Typography with all kebab-case keys
+#### Scenario: Typography with camelCase keys
 
-- **WHEN** JSON contains `"font-family": "Roboto"`, `"line-height": "1.5"`, `"letter-spacing": "0.02"`
-- **THEN** all fields SHALL decode correctly via CodingKeys mapping
+- **WHEN** JSON contains `"fontFamily": "Roboto"`, `"lineHeight": "1.5"`, `"letterSpacing": "0.02"`
+- **THEN** all fields SHALL decode correctly via standard Codable synthesis
