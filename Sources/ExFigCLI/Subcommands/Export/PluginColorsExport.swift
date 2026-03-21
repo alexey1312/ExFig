@@ -30,7 +30,7 @@ extension ExFigCommand.ExportColors {
     ) async throws -> Int {
         let platformConfig = ios.platformConfig()
 
-        // Create context
+        // Create context (SourceFactory dispatches per-entry based on sourceKind)
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
         let context = ColorsExportContextImpl(
             client: client,
