@@ -1,147 +1,98 @@
-# Configuration
-
-Default values and constraints for PKL configuration schemas.
-
 ## ADDED Requirements
 
-### Requirement: iOS default values
+### Requirement: SourceKind typealias in Common.pkl
 
-iOS PKL schema SHALL provide sensible default values for commonly used fields to reduce boilerplate in configuration files.
+The `Common.pkl` schema SHALL define a `SourceKind` typealias:
 
-#### Scenario: iOS ColorsEntry defaults
+```pkl
+typealias SourceKind = "figma"|"penpot"|"tokens-file"|"tokens-studio"|"sketch-file"
+```
 
-- **WHEN** an iOS ColorsEntry does not specify `useColorAssets`
-- **THEN** the system SHALL use `true` as the default value
+#### Scenario: Valid sourceKind values accepted
 
-#### Scenario: iOS ColorsEntry nameStyle default
+- **WHEN** a PKL config sets `sourceKind = "figma"`
+- **THEN** PKL evaluation SHALL succeed
 
-- **WHEN** an iOS ColorsEntry does not specify `nameStyle`
-- **THEN** the system SHALL use `"camelCase"` as the default value
+#### Scenario: Invalid sourceKind rejected
 
-#### Scenario: iOS IconsEntry defaults
+- **WHEN** a PKL config sets `sourceKind = "unknown"`
+- **THEN** PKL evaluation SHALL fail with a validation error
 
-- **WHEN** an iOS IconsEntry does not specify `format`
-- **THEN** the system SHALL use `"pdf"` as the default value
+### Requirement: sourceKind field in FrameSource
 
-#### Scenario: iOS IconsEntry assetsFolder default
+The `FrameSource` open class in `Common.pkl` SHALL include an optional `sourceKind` field:
 
-- **WHEN** an iOS IconsEntry does not specify `assetsFolder`
-- **THEN** the system SHALL use `"Icons"` as the default value
+```pkl
+open class FrameSource extends NameProcessing {
+    sourceKind: SourceKind?
+    // ... existing fields
+}
+```
 
-#### Scenario: iOS ImagesEntry scales default
+When `sourceKind` is `null`, the system SHALL default to `"figma"`.
 
-- **WHEN** an iOS ImagesEntry does not specify `scales`
-- **THEN** the system SHALL use `[1, 2, 3]` as the default value
+#### Scenario: FrameSource without sourceKind defaults to figma
 
-#### Scenario: iOS ImagesEntry format defaults
+- **WHEN** an icons entry does not specify `sourceKind`
+- **THEN** the system SHALL treat it as `sourceKind = "figma"`
 
-- **WHEN** an iOS ImagesEntry does not specify `sourceFormat` or `outputFormat`
-- **THEN** the system SHALL use `"png"` as the default for both
+#### Scenario: FrameSource with explicit sourceKind
 
-#### Scenario: iOS iOSConfig xcassetsInMainBundle default
+- **WHEN** an icons entry specifies `sourceKind = "penpot"`
+- **THEN** the system SHALL use `"penpot"` as the source kind for that entry
 
-- **WHEN** an iOSConfig does not specify `xcassetsInMainBundle`
-- **THEN** the system SHALL use `true` as the default value
+### Requirement: sourceKind field in VariablesSource
 
-### Requirement: Android default values
+The `VariablesSource` open class in `Common.pkl` SHALL include an optional `sourceKind` field:
 
-Android PKL schema SHALL provide sensible default values for commonly used fields.
+```pkl
+open class VariablesSource extends NameProcessing {
+    sourceKind: SourceKind?
+    // ... existing fields
+}
+```
 
-#### Scenario: Android ImagesEntry format default
+When `sourceKind` is `null`, the system SHALL auto-detect:
 
-- **WHEN** an Android ImagesEntry does not specify `format`
-- **THEN** the system SHALL use `"png"` as the default value
+- If `tokensFile` is set → `.tokensFile`
+- Otherwise → `.figma`
 
-#### Scenario: Android IconsEntry nameStyle default
+#### Scenario: VariablesSource auto-detects tokensFile
 
-- **WHEN** an Android IconsEntry does not specify `nameStyle`
-- **THEN** the system SHALL use `"snake_case"` as the default value
+- **WHEN** a colors entry has `tokensFile` set but `sourceKind` is null
+- **THEN** the system SHALL use `tokensFile` as the source kind
 
-#### Scenario: Android ImagesEntry scales default
+#### Scenario: VariablesSource auto-detects figma
 
-- **WHEN** an Android ImagesEntry does not specify `scales`
-- **THEN** the system SHALL use `[1, 1.5, 2, 3, 4]` as the default value
+- **WHEN** a colors entry has no `tokensFile` and `sourceKind` is null
+- **THEN** the system SHALL use `figma` as the source kind
 
-#### Scenario: Android ThemeAttributes defaults
+#### Scenario: Explicit sourceKind overrides auto-detection
 
-- **WHEN** ThemeAttributes does not specify `attrsFile`, `stylesFile`, `stylesNightFile`
-- **THEN** the system SHALL use `"values/attrs.xml"`, `"values/styles.xml"`, `"values-night/styles.xml"` respectively
+- **WHEN** a colors entry has `sourceKind = "tokens-studio"` and no `tokensFile`
+- **THEN** the system SHALL use `tokens-studio` as the source kind regardless of auto-detection
 
-### Requirement: Flutter default values
+#### Scenario: Explicit sourceKind takes priority over tokensFile presence
 
-Flutter PKL schema SHALL provide sensible default values for commonly used fields.
+- **WHEN** a colors entry has `sourceKind = "figma"` AND `tokensFile` is also set
+- **THEN** the system SHALL use `figma` as the source kind (explicit overrides auto-detection)
+- **NOTE:** This handles the case where a user switches back from tokens-file to figma without removing the `tokensFile` field
 
-#### Scenario: Flutter ColorsEntry className default
+### Requirement: PKL codegen produces DesignSourceKind bridging
 
-- **WHEN** a Flutter ColorsEntry does not specify `className`
-- **THEN** the system SHALL use `"AppColors"` as the default value
+After running `./bin/mise run codegen:pkl`, the generated Swift types SHALL include `SourceKind` as a String-based enum. The ExFig-* platform entry types SHALL bridge PKL `SourceKind` to ExFigCore `DesignSourceKind`.
 
-#### Scenario: Flutter ImagesEntry scales default
+#### Scenario: PKL SourceKind bridges to Swift DesignSourceKind
 
-- **WHEN** a Flutter ImagesEntry does not specify `scales`
-- **THEN** the system SHALL use `[1, 2, 3]` as the default value
+- **WHEN** a PKL config with `sourceKind = "tokens-file"` is evaluated
+- **THEN** the generated Swift value SHALL be bridged to `DesignSourceKind.tokensFile`
 
-### Requirement: Web default values
+### Requirement: Backward compatibility
 
-Web PKL schema SHALL provide sensible default values for commonly used fields.
+All existing PKL configs without `sourceKind` fields SHALL continue to work without modification. The field is optional with null default, and null maps to auto-detected behavior (figma for FrameSource, figma-or-tokensFile for VariablesSource).
 
-#### Scenario: Web IconsEntry defaults
+#### Scenario: Existing config without sourceKind
 
-- **WHEN** a Web IconsEntry does not specify `iconSize`
-- **THEN** the system SHALL use `24` as the default value
-
-#### Scenario: Web IconsEntry generateReactComponents default
-
-- **WHEN** a Web IconsEntry does not specify `generateReactComponents`
-- **THEN** the system SHALL use `true` as the default value
-
-### Requirement: Common and Figma default values
-
-Common and Figma PKL schemas SHALL provide sensible default values.
-
-#### Scenario: Cache defaults
-
-- **WHEN** a Cache config does not specify `enabled` or `path`
-- **THEN** the system SHALL use `false` and `".exfig-cache.json"` respectively
-
-#### Scenario: Figma timeout default
-
-- **WHEN** a FigmaConfig does not specify `timeout`
-- **THEN** the system SHALL use `30` seconds as the default value
-
-### Requirement: PKL constraints for required string fields
-
-PKL schemas SHALL validate that required string fields are not empty using `!isEmpty` constraint.
-
-#### Scenario: Empty xcodeprojPath rejected
-
-- **WHEN** a PKL config specifies `xcodeprojPath = ""`
-- **THEN** `pkl eval` SHALL fail with a constraint violation error
-
-#### Scenario: Empty tokensFileId rejected
-
-- **WHEN** a PKL config specifies `tokensFileId = ""`
-- **THEN** `pkl eval` SHALL fail with a constraint violation error
-
-### Requirement: PKL constraints for numeric ranges
-
-PKL schemas SHALL validate numeric fields with appropriate range constraints.
-
-#### Scenario: Figma timeout range
-
-- **WHEN** a PKL config specifies `timeout = 0`
-- **THEN** `pkl eval` SHALL fail with a constraint violation error
-
-#### Scenario: Valid Figma timeout
-
-- **WHEN** a PKL config specifies `timeout = 60`
-- **THEN** `pkl eval` SHALL succeed
-
-### Requirement: Defaults do not change generated Swift code
-
-Adding default values to PKL schemas SHALL NOT change the generated Swift types (`codegen:pkl` output).
-
-#### Scenario: Zero diff after codegen
-
-- **WHEN** `./bin/mise run codegen:pkl` is run after adding defaults to PKL schemas
-- **THEN** the generated `Sources/ExFigConfig/Generated/*.pkl.swift` files SHALL have zero diff
+- **WHEN** an existing `exfig.pkl` config with no `sourceKind` fields is evaluated
+- **THEN** PKL evaluation SHALL succeed
+- **AND** export behavior SHALL be identical to the current implementation
