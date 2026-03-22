@@ -85,17 +85,31 @@ struct PlatformDefaults {
 
 /// Result of the interactive wizard flow.
 struct FetchWizardResult {
+    let designSource: WizardDesignSource
     let fileId: String
     let frameName: String
     let pageName: String?
     let outputPath: String
-    let format: ImageFormat
+    let format: ImageFormat?
     let scale: Double?
     let nameStyle: NameStyle?
     let filter: String?
+    let penpotBaseURL: String?
 }
 
-// MARK: - Figma File ID Helpers
+// MARK: - Design Source
+
+/// Design source choice for wizard prompts.
+enum WizardDesignSource: String, CaseIterable, CustomStringConvertible, Equatable {
+    case figma = "Figma"
+    case penpot = "Penpot"
+
+    var description: String {
+        rawValue
+    }
+}
+
+// MARK: - File ID Helpers
 
 /// Extract Figma file ID from a full URL or return the input as-is if it looks like a bare ID.
 /// Supports: figma.com/file/<ID>/..., figma.com/design/<ID>/..., or bare alphanumeric IDs.
@@ -107,6 +121,20 @@ func extractFigmaFileId(from input: String) -> String {
         // Extract the ID part after the last /
         if let lastSlash = match.lastIndex(of: "/") {
             return String(match[match.index(after: lastSlash)...])
+        }
+    }
+    return trimmed
+}
+
+/// Extract Penpot file UUID from a workspace URL or return the input as-is.
+/// Supports: design.penpot.app/#/workspace/...?file-id=UUID or bare UUIDs.
+func extractPenpotFileId(from input: String) -> String {
+    let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+    // Match file-id=UUID query parameter
+    if let range = trimmed.range(of: #"file-id=([0-9a-fA-F-]+)"#, options: .regularExpression) {
+        let match = trimmed[range]
+        if let eqSign = match.firstIndex(of: "=") {
+            return String(match[match.index(after: eqSign)...])
         }
     }
     return trimmed
@@ -126,9 +154,25 @@ enum FetchWizard {
 
     /// Run the interactive wizard and return populated options.
     static func run() -> FetchWizardResult {
-        // 1–3: Core choices (file, asset type, platform)
+        // 1: Design source
+        let source: WizardDesignSource = NooraUI.singleChoicePrompt(
+            title: "ExFig Export Wizard",
+            question: "Design source:",
+            options: WizardDesignSource.allCases,
+            description: "Where are your design assets stored?"
+        )
+
+        if source == .penpot {
+            return runPenpotFlow()
+        }
+
+        return runFigmaFlow()
+    }
+
+    // MARK: - Figma Flow
+
+    private static func runFigmaFlow() -> FetchWizardResult {
         let fileIdInput = NooraUI.textPrompt(
-            title: "Figma Export Wizard",
             prompt: "Figma file ID or URL (figma.com/design/<ID>/...):",
             description: "Paste the file URL or just the ID from it",
             validationRules: [NonEmptyValidationRule(error: "File ID cannot be empty.")]
@@ -149,11 +193,61 @@ enum FetchWizard {
 
         let defaults = PlatformDefaults.forPlatform(platform, assetType: assetType)
 
-        // 4–8: Details (page, frame, format, output, filter)
-        return promptDetails(assetType: assetType, platform: platform, defaults: defaults, fileId: fileId)
+        return promptFigmaDetails(assetType: assetType, platform: platform, defaults: defaults, fileId: fileId)
     }
 
-    private static func promptDetails(
+    // MARK: - Penpot Flow
+
+    private static func runPenpotFlow() -> FetchWizardResult {
+        let fileIdInput = NooraUI.textPrompt(
+            prompt: "Penpot file UUID or workspace URL:",
+            description: "Paste the workspace URL or just the file UUID",
+            validationRules: [NonEmptyValidationRule(error: "File ID cannot be empty.")]
+        )
+        let fileId = extractPenpotFileId(from: fileIdInput)
+
+        let baseURL: String? = if NooraUI.yesOrNoPrompt(
+            question: "Self-hosted Penpot instance?",
+            defaultAnswer: false,
+            description: "Select Yes if you're not using design.penpot.app"
+        ) {
+            NooraUI.textPrompt(
+                prompt: "Penpot base URL (e.g., https://penpot.mycompany.com/):",
+                validationRules: [NonEmptyValidationRule(error: "URL cannot be empty.")]
+            )
+        } else {
+            nil
+        }
+
+        let defaultPath = "Icons"
+        let pathInput = NooraUI.textPrompt(
+            prompt: "Component path filter (default: \(defaultPath)):",
+            description: "Library component path prefix to export. Press Enter for default."
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+        let pathFilter = pathInput.isEmpty ? defaultPath : pathInput
+
+        let defaultOutput = "./output"
+        let outputInput = NooraUI.textPrompt(
+            prompt: "Output directory (default: \(defaultOutput)):",
+            description: "Where to save exported assets. Press Enter for default."
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+        let outputPath = outputInput.isEmpty ? defaultOutput : outputInput
+
+        return FetchWizardResult(
+            designSource: .penpot,
+            fileId: fileId,
+            frameName: pathFilter,
+            pageName: nil,
+            outputPath: outputPath,
+            format: nil,
+            scale: nil,
+            nameStyle: nil,
+            filter: nil,
+            penpotBaseURL: baseURL
+        )
+    }
+
+    private static func promptFigmaDetails(
         assetType: WizardAssetType,
         platform: WizardPlatform,
         defaults: PlatformDefaults,
@@ -193,6 +287,7 @@ enum FetchWizard {
         )
 
         return FetchWizardResult(
+            designSource: .figma,
             fileId: fileId,
             frameName: frameName,
             pageName: pageName,
@@ -200,7 +295,8 @@ enum FetchWizard {
             format: format,
             scale: defaults.scale,
             nameStyle: defaults.nameStyle,
-            filter: filter
+            filter: filter,
+            penpotBaseURL: nil
         )
     }
 

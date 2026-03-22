@@ -245,6 +245,13 @@ transformation logic into `*WizardTransform.swift` as `extension`. SwiftLint enf
 - **Remove section** — brace-counting (`removeSection`), strips preceding comments
 - **Substitute value** — simple `replacingOccurrences` for file IDs, frame names
 - **Uncomment block** — strip `//` prefix, substitute values (variablesColors, figmaPageName)
+- **Insert block** (Penpot) — `applyPenpotResult` removes figma section, inserts `penpotSource` blocks into platform entries
+
+### Penpot Fetch Path
+
+`DownloadImages.runPenpotFetch()` uses `PenpotAPI` directly (not `DownloadImageLoader`).
+Creates `BasePenpotClient`, fetches file, filters components by path, downloads thumbnails as PNG.
+Triggered when `wizardResult?.designSource == .penpot` after wizard flow.
 
 ### Adding a New Platform Export
 

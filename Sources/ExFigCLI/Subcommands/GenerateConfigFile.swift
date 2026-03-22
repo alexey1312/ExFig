@@ -55,7 +55,11 @@ extension ExFigCommand {
                 // Interactive wizard
                 let result = InitWizard.run()
                 let template = templateForPlatform(result.platform)
-                rawContents = InitWizard.applyResult(result, to: template)
+                rawContents = if result.designSource == .penpot {
+                    InitWizard.applyPenpotResult(result, to: template)
+                } else {
+                    InitWizard.applyResult(result, to: template)
+                }
                 wizardResult = result
             } else {
                 // Non-TTY without --platform
@@ -154,11 +158,14 @@ extension ExFigCommand {
                     stepOffset = 2
                 }
 
-                if ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"] == nil {
-                    ui.info("\(stepOffset). Set your Figma token (missing):")
-                    ui.info("   export FIGMA_PERSONAL_TOKEN=your_token_here")
+                let isPenpot = wizardResult?.designSource == .penpot
+                let tokenName = isPenpot ? "PENPOT_ACCESS_TOKEN" : "FIGMA_PERSONAL_TOKEN"
+                let sourceName = isPenpot ? "Penpot" : "Figma"
+                if ProcessInfo.processInfo.environment[tokenName] == nil {
+                    ui.info("\(stepOffset). Set your \(sourceName) token (missing):")
+                    ui.info("   export \(tokenName)=your_token_here")
                 } else {
-                    ui.info("\(stepOffset). Figma token detected in environment ✅")
+                    ui.info("\(stepOffset). \(sourceName) token detected in environment ✅")
                 }
 
                 ui.info("\(stepOffset + 1). Run export commands:")

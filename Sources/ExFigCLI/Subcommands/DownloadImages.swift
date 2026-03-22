@@ -1,10 +1,13 @@
+// swiftlint:disable file_length
 import ArgumentParser
 import ExFigCore
 import FigmaAPI
 import Foundation
 import Logging
+import PenpotAPI
 
 extension ExFigCommand {
+    // swiftlint:disable type_body_length
     struct FetchImages: AsyncParsableCommand {
         static let configuration = CommandConfiguration(
             commandName: "fetch",
@@ -86,6 +89,7 @@ extension ExFigCommand {
 
             // Resolve required options via wizard if missing
             var options = downloadOptions
+            var wizardResult: FetchWizardResult?
             if options.fileId == nil || options.frameName == nil || options.outputPath == nil {
                 guard TTYDetector.isTTY else {
                     throw ValidationError(
@@ -94,6 +98,7 @@ extension ExFigCommand {
                     )
                 }
                 let result = FetchWizard.run()
+                wizardResult = result
                 options.fileId = options.fileId ?? result.fileId
                 options.frameName = options.frameName ?? result.frameName
                 options.outputPath = options.outputPath ?? result.outputPath
@@ -108,6 +113,12 @@ extension ExFigCommand {
                 if options.scale == nil {
                     options.scale = result.scale
                 }
+            }
+
+            // Penpot path — use PenpotAPI directly
+            if wizardResult?.designSource == .penpot {
+                try await runPenpotFetch(options: options, wizardResult: wizardResult!, ui: ui)
+                return
             }
 
             // Validate required fields are now populated
@@ -292,6 +303,97 @@ extension ExFigCommand {
         }
 
         // swiftlint:enable function_parameter_count
+
+        // MARK: - Penpot Fetch
+
+        // swiftlint:disable function_body_length
+        private func runPenpotFetch(
+            options: DownloadOptions,
+            wizardResult: FetchWizardResult,
+            ui: TerminalUI
+        ) async throws {
+            guard let fileId = options.fileId else {
+                throw ValidationError("--file-id is required")
+            }
+            guard let frameName = options.frameName else {
+                throw ValidationError("--frame is required")
+            }
+            guard let outputPath = options.outputPath else {
+                throw ValidationError("--output is required")
+            }
+
+            let baseURL = wizardResult.penpotBaseURL ?? BasePenpotClient.defaultBaseURL
+            let client = try PenpotColorsSource.makeClient(baseURL: baseURL)
+
+            let outputURL = URL(fileURLWithPath: outputPath, isDirectory: true)
+            try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
+
+            ui.info("Downloading components from Penpot...")
+
+            // Fetch file data
+            let fileResponse = try await ui.withSpinner("Fetching Penpot file...") {
+                try await client.request(GetFileEndpoint(fileId: fileId))
+            }
+
+            guard let components = fileResponse.data.components else {
+                ui.warning("No components found in Penpot file")
+                return
+            }
+
+            // Filter by path prefix
+            let matched = components.values.filter { comp in
+                guard let path = comp.path else { return false }
+                return path.hasPrefix(frameName)
+            }
+
+            guard !matched.isEmpty else {
+                ui.warning("No components matching path '\(frameName)' found")
+                return
+            }
+
+            ui.info("Found \(matched.count) components")
+
+            // Get thumbnails
+            let objectIds = matched.map(\.id)
+            let thumbnails = try await ui.withSpinner("Fetching thumbnails...") {
+                try await client.request(
+                    GetFileObjectThumbnailsEndpoint(fileId: fileId, objectIds: objectIds)
+                )
+            }
+
+            // Download each thumbnail
+            var downloadedCount = 0
+            for component in matched {
+                guard let thumbnailRef = thumbnails[component.id] else {
+                    ui.warning("Component '\(component.name)' has no thumbnail — skipping")
+                    continue
+                }
+
+                let fullURL: String = if thumbnailRef.hasPrefix("http") {
+                    thumbnailRef
+                } else {
+                    "\(baseURL)assets/by-file-media-id/\(thumbnailRef)"
+                }
+
+                let data = try await client
+                    .download(path: fullURL.hasPrefix("http") ? fullURL : "assets/by-file-media-id/\(thumbnailRef)")
+                let fileName = "\(component.name).png"
+                let fileURL = outputURL.appendingPathComponent(fileName)
+                try data.write(to: fileURL)
+                downloadedCount += 1
+            }
+
+            if downloadedCount > 0 {
+                ui.success("Downloaded \(downloadedCount) components to \(outputURL.path)")
+            } else {
+                ui
+                    .warning(
+                        "No thumbnails available for download (components may need to be opened in Penpot editor first)"
+                    )
+            }
+        }
+
+        // swiftlint:enable function_body_length
 
         private func convertToWebP(
             _ files: [FileContents],

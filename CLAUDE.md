@@ -282,6 +282,12 @@ Follow `InitWizard.swift` / `FetchWizard.swift` pattern:
 - Use `extractFigmaFileId(from:)` for file ID inputs (auto-extracts ID from full Figma URLs)
 - Trim text prompt results with `.trimmingCharacters(in: .whitespacesAndNewlines)` before `.isEmpty` default checks
 
+#### Design Source Branching
+
+Both `InitWizard` and `FetchWizard` ask "Figma or Penpot?" first (`WizardDesignSource` enum in `FetchWizard.swift`).
+`extractPenpotFileId(from:)` extracts UUID from Penpot workspace URLs (`file-id=UUID` query param).
+`InitWizardTransform` has separate methods: `applyResult` (Figma) and `applyPenpotResult` (Penpot — removes figma section, inserts penpotSource blocks).
+
 ### Adding a NooraUI Prompt Wrapper
 
 Follow the existing pattern in `NooraUI.swift`: static method delegating to `shared` instance with matching parameter names.

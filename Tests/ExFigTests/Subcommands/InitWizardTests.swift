@@ -220,6 +220,7 @@ struct InitWizardTests {
     @Test("applyResult with Flutter and all available types preserves all sections")
     func flutterAllSelected() {
         let result = InitWizardResult(
+            designSource: .figma,
             platform: .flutter,
             selectedAssetTypes: [.colors, .icons, .images],
             lightFileId: "FLUTTER_ID",
@@ -228,7 +229,8 @@ struct InitWizardTests {
             iconsPageName: nil,
             imagesFrameName: nil,
             imagesPageName: nil,
-            variablesConfig: nil
+            variablesConfig: nil,
+            penpotBaseURL: nil
         )
         let output = InitWizard.applyResult(result, to: flutterTemplate)
         #expect(output.contains("FLUTTER_ID"))
@@ -283,6 +285,7 @@ struct InitWizardTests {
         variablesConfig: InitVariablesConfig? = nil
     ) -> InitWizardResult {
         InitWizardResult(
+            designSource: .figma,
             platform: platform,
             selectedAssetTypes: selectedAssetTypes,
             lightFileId: lightFileId,
@@ -291,7 +294,8 @@ struct InitWizardTests {
             iconsPageName: iconsPageName,
             imagesFrameName: imagesFrameName,
             imagesPageName: imagesPageName,
-            variablesConfig: variablesConfig
+            variablesConfig: variablesConfig,
+            penpotBaseURL: nil
         )
     }
 }
@@ -303,6 +307,7 @@ struct InitWizardCrossPlatformTests {
     @Test("applyResult works with Android template")
     func androidAllSelected() {
         let result = InitWizardResult(
+            designSource: .figma,
             platform: .android,
             selectedAssetTypes: [.colors, .icons, .images, .typography],
             lightFileId: "ANDROID_ID",
@@ -311,7 +316,8 @@ struct InitWizardCrossPlatformTests {
             iconsPageName: nil,
             imagesFrameName: nil,
             imagesPageName: nil,
-            variablesConfig: nil
+            variablesConfig: nil,
+            penpotBaseURL: nil
         )
         let output = InitWizard.applyResult(result, to: androidConfigFileContents)
         #expect(output.contains("ANDROID_ID"))
@@ -328,6 +334,7 @@ struct InitWizardCrossPlatformTests {
     @Test("applyResult works with Web template (no typography)")
     func webAllSelected() {
         let result = InitWizardResult(
+            designSource: .figma,
             platform: .web,
             selectedAssetTypes: [.colors, .icons, .images],
             lightFileId: "WEB_ID",
@@ -336,7 +343,8 @@ struct InitWizardCrossPlatformTests {
             iconsPageName: nil,
             imagesFrameName: nil,
             imagesPageName: nil,
-            variablesConfig: nil
+            variablesConfig: nil,
+            penpotBaseURL: nil
         )
         let output = InitWizard.applyResult(result, to: webConfigFileContents)
         #expect(output.contains("WEB_ID"))
