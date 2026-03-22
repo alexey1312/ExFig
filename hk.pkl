@@ -125,7 +125,7 @@ hooks {
     // Using patch-file stash mode to properly handle untracked files
     ["pre-commit"] {
         fix = true
-        stash = "patch-file"
+        stash = "none"
         steps = all_linters
     }
 
