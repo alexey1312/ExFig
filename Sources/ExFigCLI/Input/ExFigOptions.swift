@@ -25,8 +25,8 @@ struct ExFigOptions: ParsableArguments {
     // MARK: - Validated Properties
 
     /// Figma personal access token from FIGMA_PERSONAL_TOKEN environment variable.
-    /// Populated during `validate()`.
-    private(set) var accessToken: String!
+    /// Populated during `validate()`. May be `nil` if not set (validated lazily when needed).
+    private(set) var accessToken: String?
 
     /// Parsed configuration from the PKL input file.
     /// Populated during `validate()`.
@@ -35,13 +35,19 @@ struct ExFigOptions: ParsableArguments {
     // MARK: - Validation
 
     mutating func validate() throws {
-        guard let token = ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"] else {
-            throw ExFigError.accessTokenNotFound
-        }
-        accessToken = token
+        accessToken = ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"]
 
         let configPath = try resolveConfigPath()
         params = try readParams(at: configPath)
+    }
+
+    /// Returns the Figma access token, or throws if not set.
+    /// Call this only when the current operation requires Figma API access.
+    func requireFigmaToken() throws -> String {
+        guard let accessToken else {
+            throw ExFigError.accessTokenNotFound
+        }
+        return accessToken
     }
 
     // MARK: - Private Helpers

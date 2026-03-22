@@ -60,6 +60,7 @@ struct InitVariablesConfig {
 
 /// Result of the interactive init wizard flow.
 struct InitWizardResult {
+    let designSource: WizardDesignSource
     let platform: Platform
     let selectedAssetTypes: [InitAssetType]
     let lightFileId: String
@@ -69,6 +70,7 @@ struct InitWizardResult {
     let imagesFrameName: String?
     let imagesPageName: String?
     let variablesConfig: InitVariablesConfig?
+    let penpotBaseURL: String?
 }
 
 // MARK: - Init Wizard Flow
@@ -79,16 +81,23 @@ struct InitWizardResult {
 enum InitWizard {
     /// Run the interactive wizard and return collected answers.
     static func run() -> InitWizardResult {
-        // 1. Platform selection
-        let wizardPlatform: WizardPlatform = NooraUI.singleChoicePrompt(
+        // 1. Design source
+        let source: WizardDesignSource = NooraUI.singleChoicePrompt(
             title: "ExFig Config Wizard",
+            question: "Design source:",
+            options: WizardDesignSource.allCases,
+            description: "Where are your design assets stored?"
+        )
+
+        // 2. Platform selection
+        let wizardPlatform: WizardPlatform = NooraUI.singleChoicePrompt(
             question: "Target platform:",
             options: WizardPlatform.allCases,
             description: "Select the platform you want to export assets for"
         )
         let platform = wizardPlatform.asPlatform
 
-        // 2. Asset type multi-select
+        // 3. Asset type multi-select
         let availableTypes = InitAssetType.availableTypes(for: wizardPlatform)
         let selectedTypes: [InitAssetType] = NooraUI.multipleChoicePrompt(
             question: "What do you want to export?",
@@ -97,7 +106,21 @@ enum InitWizard {
             minLimit: .limited(count: 1, errorMessage: "Select at least one asset type.")
         )
 
-        // 3. Figma file ID (light)
+        if source == .penpot {
+            return runPenpotFlow(platform: platform, selectedTypes: selectedTypes)
+        }
+
+        return runFigmaFlow(platform: platform, selectedTypes: selectedTypes)
+    }
+
+    // MARK: - Figma Flow
+
+    // swiftlint:disable function_body_length
+    private static func runFigmaFlow(
+        platform: Platform,
+        selectedTypes: [InitAssetType]
+    ) -> InitWizardResult {
+        // File ID (light)
         let lightFileIdInput = NooraUI.textPrompt(
             prompt: "Figma file ID or URL (figma.com/design/<ID>/...):",
             description: "Paste the file URL or just the ID from it",
@@ -105,7 +128,7 @@ enum InitWizard {
         )
         let lightFileId = extractFigmaFileId(from: lightFileIdInput)
 
-        // 4. Dark mode file ID (optional)
+        // Dark mode file ID (optional)
         let darkFileIdRaw = promptOptionalText(
             question: "Do you have a separate dark mode file?",
             description: "If your dark colors/images are in a different Figma file",
@@ -113,14 +136,14 @@ enum InitWizard {
         )
         let darkFileId = darkFileIdRaw.map { extractFigmaFileId(from: $0) }
 
-        // 5. Colors source (if colors selected)
+        // Colors source (if colors selected)
         let variablesConfig: InitVariablesConfig? = if selectedTypes.contains(.colors) {
             promptColorsSource(lightFileId: lightFileId)
         } else {
             nil
         }
 
-        // 6. Icons details (if icons selected)
+        // Icons details (if icons selected)
         let iconsFrameName: String?
         let iconsPageName: String?
         if selectedTypes.contains(.icons) {
@@ -131,7 +154,7 @@ enum InitWizard {
             iconsPageName = nil
         }
 
-        // 7. Images details (if images selected)
+        // Images details (if images selected)
         let imagesFrameName: String?
         let imagesPageName: String?
         if selectedTypes.contains(.images) {
@@ -143,6 +166,7 @@ enum InitWizard {
         }
 
         return InitWizardResult(
+            designSource: .figma,
             platform: platform,
             selectedAssetTypes: selectedTypes,
             lightFileId: lightFileId,
@@ -151,7 +175,67 @@ enum InitWizard {
             iconsPageName: iconsPageName,
             imagesFrameName: imagesFrameName,
             imagesPageName: imagesPageName,
-            variablesConfig: variablesConfig
+            variablesConfig: variablesConfig,
+            penpotBaseURL: nil
+        )
+    }
+
+    // swiftlint:enable function_body_length
+
+    // MARK: - Penpot Flow
+
+    private static func runPenpotFlow(
+        platform: Platform,
+        selectedTypes: [InitAssetType]
+    ) -> InitWizardResult {
+        // File UUID
+        let fileIdInput = NooraUI.textPrompt(
+            prompt: "Penpot file UUID or workspace URL:",
+            description: "Paste the workspace URL or just the file UUID",
+            validationRules: [NonEmptyValidationRule(error: "File ID cannot be empty.")]
+        )
+        let fileId = extractPenpotFileId(from: fileIdInput)
+
+        // Base URL (only for self-hosted)
+        let baseURL: String? = if NooraUI.yesOrNoPrompt(
+            question: "Self-hosted Penpot instance?",
+            defaultAnswer: false,
+            description: "Select Yes if you're not using design.penpot.app"
+        ) {
+            NooraUI.textPrompt(
+                prompt: "Penpot base URL (e.g., https://penpot.mycompany.com/):",
+                validationRules: [NonEmptyValidationRule(error: "URL cannot be empty.")]
+            )
+        } else {
+            nil
+        }
+
+        // Icons path filter (if icons selected)
+        let iconsFrameName: String? = if selectedTypes.contains(.icons) {
+            promptPathFilter(assetType: "icons", defaultPath: "Icons")
+        } else {
+            nil
+        }
+
+        // Images path filter (if images selected)
+        let imagesFrameName: String? = if selectedTypes.contains(.images) {
+            promptPathFilter(assetType: "images", defaultPath: "Illustrations")
+        } else {
+            nil
+        }
+
+        return InitWizardResult(
+            designSource: .penpot,
+            platform: platform,
+            selectedAssetTypes: selectedTypes,
+            lightFileId: fileId,
+            darkFileId: nil,
+            iconsFrameName: iconsFrameName,
+            iconsPageName: nil,
+            imagesFrameName: imagesFrameName,
+            imagesPageName: nil,
+            variablesConfig: nil,
+            penpotBaseURL: baseURL
         )
     }
 
@@ -163,6 +247,14 @@ enum InitWizard {
             description: "Name of the frame containing your \(assetType). Press Enter for default."
         ).trimmingCharacters(in: .whitespacesAndNewlines)
         return input.isEmpty ? defaultName : input
+    }
+
+    private static func promptPathFilter(assetType: String, defaultPath: String) -> String {
+        let input = NooraUI.textPrompt(
+            prompt: "Penpot library path for \(assetType) (default: \(defaultPath)):",
+            description: "Path prefix to filter library components. Press Enter for default."
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+        return input.isEmpty ? defaultPath : input
     }
 
     private static func promptOptionalText(

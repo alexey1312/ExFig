@@ -1,16 +1,19 @@
+// swiftlint:disable file_length
 import ArgumentParser
 import ExFigCore
 import FigmaAPI
 import Foundation
 import Logging
+import PenpotAPI
 
 extension ExFigCommand {
+    // swiftlint:disable type_body_length
     struct FetchImages: AsyncParsableCommand {
         static let configuration = CommandConfiguration(
             commandName: "fetch",
-            abstract: "Downloads images from Figma without config file",
+            abstract: "Downloads images from Figma or Penpot without config file",
             discussion: """
-            Downloads images from a specific Figma frame to a local directory.
+            Downloads images from a specific frame to a local directory.
             All parameters are passed via command-line arguments.
 
             When required options (--file-id, --frame, --output) are omitted in an
@@ -20,23 +23,21 @@ extension ExFigCommand {
               # Interactive wizard (TTY only)
               exfig fetch
 
-              # Download PNGs at 3x scale (default)
-              exfig fetch --file-id abc123 --frame "Illustrations" --output ./images
+              # Download PNGs from Figma at 3x scale (default)
+              exfig fetch -f abc123 -r "Illustrations" -o ./images
 
               # Download SVGs
               exfig fetch -f abc123 -r "Icons" -o ./icons --format svg
 
-              # Download PDFs
-              exfig fetch -f abc123 -r "Icons" -o ./icons --format pdf
+              # Download from Penpot
+              exfig fetch --source penpot -f <penpot-uuid> -r "Icons" -o ./icons
+
+              # Download from self-hosted Penpot
+              exfig fetch --source penpot --penpot-base-url https://penpot.mycompany.com/ \\
+                -f <uuid> -r "UI" -o ./components
 
               # Download with filtering
               exfig fetch -f abc123 -r "Images" -o ./images --filter "logo/*"
-
-              # Download PNG at 2x scale with camelCase naming
-              exfig fetch -f abc123 -r "Images" -o ./images --scale 2 --name-style camelCase
-
-              # Download with dark mode variants
-              exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 
               # Download as WebP with quality settings
               exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
@@ -49,8 +50,33 @@ extension ExFigCommand {
         @OptionGroup
         var downloadOptions: DownloadOptions
 
-        @OptionGroup
-        var faultToleranceOptions: HeavyFaultToleranceOptions
+        @Option(name: .long, help: "Maximum retry attempts for failed API requests")
+        var maxRetries: Int = 4
+
+        @Option(name: .long, help: "Maximum API requests per minute")
+        var rateLimit: Int = 10
+
+        @Flag(name: .long, help: "Stop on first error without retrying")
+        var failFast: Bool = false
+
+        @Flag(name: .long, help: "Continue from checkpoint after interruption")
+        var resume: Bool = false
+
+        @Option(name: .long, help: "Maximum concurrent CDN downloads")
+        var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
+
+        /// Constructs `HeavyFaultToleranceOptions` from locally declared options,
+        /// using `DownloadOptions.timeout` to avoid duplicate `--timeout` flags.
+        var faultToleranceOptions: HeavyFaultToleranceOptions {
+            var opts = HeavyFaultToleranceOptions()
+            opts.maxRetries = maxRetries
+            opts.rateLimit = rateLimit
+            opts.timeout = downloadOptions.timeout
+            opts.failFast = failFast
+            opts.resume = resume
+            opts.concurrentDownloads = concurrentDownloads
+            return opts
+        }
 
         // swiftlint:disable function_body_length cyclomatic_complexity
 
@@ -61,6 +87,7 @@ extension ExFigCommand {
 
             // Resolve required options via wizard if missing
             var options = downloadOptions
+            var wizardResult: FetchWizardResult?
             if options.fileId == nil || options.frameName == nil || options.outputPath == nil {
                 guard TTYDetector.isTTY else {
                     throw ValidationError(
@@ -69,6 +96,7 @@ extension ExFigCommand {
                     )
                 }
                 let result = FetchWizard.run()
+                wizardResult = result
                 options.fileId = options.fileId ?? result.fileId
                 options.frameName = options.frameName ?? result.frameName
                 options.outputPath = options.outputPath ?? result.outputPath
@@ -83,6 +111,18 @@ extension ExFigCommand {
                 if options.scale == nil {
                     options.scale = result.scale
                 }
+            }
+
+            // Determine design source: from wizard, from --source flag, or default figma
+            let designSource: WizardDesignSource = wizardResult?.designSource
+                ?? options.source.map { $0 == .penpot ? .penpot : .figma }
+                ?? .figma
+
+            // Penpot path — use PenpotAPI directly
+            if designSource == .penpot {
+                let penpotBaseURL = wizardResult?.penpotBaseURL ?? options.penpotBaseURL
+                try await runPenpotFetch(options: options, penpotBaseURL: penpotBaseURL, ui: ui)
+                return
             }
 
             // Validate required fields are now populated
@@ -267,6 +307,142 @@ extension ExFigCommand {
         }
 
         // swiftlint:enable function_parameter_count
+
+        // MARK: - Penpot Fetch
+
+        // swiftlint:disable function_body_length cyclomatic_complexity
+        private func runPenpotFetch(
+            options: DownloadOptions,
+            penpotBaseURL: String?,
+            ui: TerminalUI
+        ) async throws {
+            guard let fileId = options.fileId else {
+                throw ValidationError("--file-id is required")
+            }
+            guard let frameName = options.frameName else {
+                throw ValidationError("--frame is required")
+            }
+            guard let outputPath = options.outputPath else {
+                throw ValidationError("--output is required")
+            }
+
+            // Validate format early — Penpot supports svg and png (via SVG reconstruction)
+            let format = options.format ?? .svg
+            switch format {
+            case .svg, .png:
+                break // supported
+            default:
+                throw ExFigError.custom(
+                    errorString: "Format '\(format.rawValue)' is not yet supported for Penpot export. " +
+                        "Supported formats: svg, png"
+                )
+            }
+
+            let baseURL = penpotBaseURL ?? BasePenpotClient.defaultBaseURL
+            let client = try PenpotClientFactory.makeClient(baseURL: baseURL)
+
+            let outputURL = URL(fileURLWithPath: outputPath, isDirectory: true)
+            try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
+
+            ui.info("Downloading components from Penpot...")
+
+            // Fetch file data
+            let fileResponse = try await ui.withSpinner("Fetching Penpot file...") {
+                try await client.request(GetFileEndpoint(fileId: fileId))
+            }
+
+            guard let components = fileResponse.data.components else {
+                ui.warning("No components found in Penpot file")
+                return
+            }
+
+            // Filter by path prefix
+            let matched = components.values
+                .filter { comp in
+                    guard let path = comp.path else { return false }
+                    return path.hasPrefix(frameName)
+                }
+                .sorted { $0.name < $1.name }
+
+            guard !matched.isEmpty else {
+                ui.warning("No components matching path '\(frameName)' found")
+                return
+            }
+
+            ui.info("Found \(matched.count) components")
+
+            // Reconstruct SVG from shape tree (format already validated above)
+            var exportedCount = 0
+
+            for component in matched {
+                guard let pageId = component.mainInstancePage,
+                      let instanceId = component.mainInstanceId,
+                      let page = fileResponse.data.pagesIndex?[pageId],
+                      let objects = page.objects
+                else {
+                    ui.warning("Component '\(component.name)' has no shape data — skipping")
+                    continue
+                }
+
+                let renderResult = PenpotShapeRenderer.renderSVGResult(
+                    objects: objects, rootId: instanceId
+                )
+                let svgString: String
+                switch renderResult {
+                case let .success(result):
+                    svgString = result.svg
+                    if !result.skippedShapeTypes.isEmpty {
+                        ui.warning(
+                            "Component '\(component.name)' — unsupported shape types skipped: " +
+                                result.skippedShapeTypes.sorted().joined(separator: ", ")
+                        )
+                    }
+                case let .failure(reason):
+                    switch reason {
+                    case let .rootNotFound(id):
+                        ui.warning("Component '\(component.name)' — root shape '\(id)' not found, skipping")
+                    case let .missingSelrect(id):
+                        ui.warning("Component '\(component.name)' — root shape '\(id)' has no bounds, skipping")
+                    }
+                    continue
+                }
+
+                let svgData = Data(svgString.utf8)
+                let safeName = component.name
+                    .replacingOccurrences(of: "/", with: "_")
+                    .replacingOccurrences(of: " ", with: "_")
+
+                switch format {
+                case .svg:
+                    let fileURL = outputURL.appendingPathComponent("\(safeName).svg")
+                    try svgData.write(to: fileURL)
+                case .png:
+                    let scale = options.scale ?? 3.0
+                    let converter = SvgToPngConverter()
+                    let pngData = try converter.convert(svgData: svgData, scale: scale, fileName: safeName)
+                    let fileURL = outputURL.appendingPathComponent("\(safeName).png")
+                    try pngData.write(to: fileURL)
+                default:
+                    // Unreachable — format validated at method start
+                    fatalError("Unsupported format '\(format.rawValue)' should have been caught earlier")
+                }
+
+                exportedCount += 1
+            }
+
+            if exportedCount > 0 {
+                ui
+                    .success(
+                        "Exported \(exportedCount) components as \(format.rawValue.uppercased()) to \(outputURL.path)"
+                    )
+            } else {
+                ui.warning(
+                    "No components could be exported. Components may lack mainInstanceId (not opened in Penpot editor)."
+                )
+            }
+        }
+
+        // swiftlint:enable function_body_length cyclomatic_complexity
 
         private func convertToWebP(
             _ files: [FileContents],

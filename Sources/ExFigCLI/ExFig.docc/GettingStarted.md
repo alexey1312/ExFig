@@ -4,13 +4,13 @@ Install ExFig and configure your first export.
 
 ## Overview
 
-ExFig is a command-line tool that exports design resources from Figma to iOS, Android, and Flutter projects.
+ExFig is a command-line tool that exports design resources from Figma and Penpot to iOS, Android, Flutter, and Web projects.
 
 ## Requirements
 
 - macOS 13.0 or later (or Linux Ubuntu 22.04)
-- Figma account with file access
-- Figma Personal Access Token
+- Figma account with file access, **or** Penpot account
+- Figma Personal Access Token (for Figma sources) or Penpot Access Token (for Penpot sources)
 
 ## Installation
 
@@ -45,7 +45,9 @@ cp .build/release/exfig /usr/local/bin/
 
 Download the latest release from [GitHub Releases](https://github.com/DesignPipe/exfig/releases).
 
-## Figma Access Token
+## Authentication
+
+### Figma Access Token
 
 ExFig requires a Figma Personal Access Token to access the Figma API.
 
@@ -71,6 +73,34 @@ Or pass it directly to commands:
 ```bash
 FIGMA_PERSONAL_TOKEN="your-token" exfig colors
 ```
+
+### Penpot Access Token
+
+For Penpot sources, set the `PENPOT_ACCESS_TOKEN` environment variable:
+
+1. Open your Penpot instance → Settings → Access Tokens
+2. Create a new token
+3. Set it:
+
+```bash
+export PENPOT_ACCESS_TOKEN="your-penpot-token-here"
+```
+
+> Note: `PENPOT_ACCESS_TOKEN` is only required when using `penpotSource` in config.
+
+### Quick Penpot Icons Export (No Config)
+
+```bash
+# Export Penpot icons as SVG
+export PENPOT_ACCESS_TOKEN="your-token"
+exfig fetch --source penpot -f "file-uuid" -r "Icons" -o ./icons --format svg
+
+# Export as PNG at 3x scale
+exfig fetch --source penpot -f "file-uuid" -r "Icons" -o ./icons --format png --scale 3
+```
+
+> File UUID is in the Penpot workspace URL: `?file-id=UUID`.
+> For shared libraries, use the library's file ID from the Assets panel.
 
 ## Quick Start
 

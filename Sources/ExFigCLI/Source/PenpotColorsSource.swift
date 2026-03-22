@@ -1,0 +1,97 @@
+import ExFigCore
+import Foundation
+import PenpotAPI
+
+struct PenpotColorsSource: ColorsSource {
+    let ui: TerminalUI
+
+    func loadColors(from input: ColorsSourceInput) async throws -> ColorsLoadOutput {
+        guard let config = input.sourceConfig as? PenpotColorsConfig else {
+            throw ExFigError.configurationError(
+                "PenpotColorsSource requires PenpotColorsConfig, got \(type(of: input.sourceConfig))"
+            )
+        }
+
+        let client = try PenpotClientFactory.makeClient(baseURL: config.baseURL)
+        let fileResponse = try await client.request(GetFileEndpoint(fileId: config.fileId))
+
+        guard let penpotColors = fileResponse.data.colors else {
+            ui.warning("Penpot file '\(fileResponse.name)' has no library colors")
+            return ColorsLoadOutput(light: [])
+        }
+
+        var colors: [Color] = []
+        var skippedNonSolid = 0
+        var skippedByFilter = 0
+
+        for (_, penpotColor) in penpotColors.sorted(by: { $0.key < $1.key }) {
+            // Skip gradient/image fills (no solid hex)
+            guard let hex = penpotColor.color else {
+                skippedNonSolid += 1
+                continue
+            }
+
+            // Apply path filter
+            if let pathFilter = config.pathFilter {
+                guard let path = penpotColor.path, path.hasPrefix(pathFilter) else {
+                    skippedByFilter += 1
+                    continue
+                }
+            }
+
+            guard let rgba = Self.hexToRGBA(hex: hex, opacity: penpotColor.opacity ?? 1.0) else {
+                ui.warning("Color '\(penpotColor.name)' has invalid hex value '\(hex)' — skipping")
+                continue
+            }
+
+            let name = if let path = penpotColor.path {
+                path + "/" + penpotColor.name
+            } else {
+                penpotColor.name
+            }
+
+            colors.append(Color(
+                name: name,
+                platform: nil,
+                red: rgba.red,
+                green: rgba.green,
+                blue: rgba.blue,
+                alpha: rgba.alpha
+            ))
+        }
+
+        if skippedNonSolid > 0 {
+            ui.warning(
+                "Skipped \(skippedNonSolid) color(s) without solid hex values " +
+                    "(gradients and image fills are not supported)"
+            )
+        }
+        if skippedByFilter > 0 {
+            ui.warning("Skipped \(skippedByFilter) color(s) not matching path filter '\(config.pathFilter!)'")
+        }
+
+        // Penpot has no mode-based variants — light only
+        return ColorsLoadOutput(light: colors)
+    }
+
+    // MARK: - Internal
+
+    static func hexToRGBA(hex: String, opacity: Double)
+        -> (red: Double, green: Double, blue: Double, alpha: Double)?
+    {
+        var hexString = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if hexString.hasPrefix("#") {
+            hexString.removeFirst()
+        }
+
+        guard hexString.count == 6, let hexValue = UInt64(hexString, radix: 16) else {
+            return nil
+        }
+
+        let red = Double((hexValue >> 16) & 0xFF) / 255.0
+        let green = Double((hexValue >> 8) & 0xFF) / 255.0
+        let blue = Double(hexValue & 0xFF) / 255.0
+
+        return (red: red, green: green, blue: blue, alpha: opacity)
+    }
+}

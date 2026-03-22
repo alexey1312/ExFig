@@ -351,6 +351,119 @@ extension InitWizard {
         return result
     }
 
+    // MARK: - Penpot Template Transformation
+
+    /// Apply Penpot wizard result to a platform template.
+    /// Removes Figma-specific sections and inserts `penpotSource` blocks.
+    static func applyPenpotResult(_ result: InitWizardResult, to template: String) -> String {
+        var output = template
+
+        // Remove figma section entirely
+        output = removeSection(from: output, matching: "figma = new Figma.FigmaConfig {")
+        // Remove Figma import
+        output = output.replacingOccurrences(
+            of: "import \".exfig/schemas/Figma.pkl\"\n",
+            with: ""
+        )
+
+        // Remove dark file ID lines
+        output = removeDarkFileIdLine(from: output)
+
+        // Remove variablesColors block (not applicable for Penpot)
+        output = removeCommentedVariablesColors(from: output)
+
+        // Remove common colors section (Penpot colors use penpotSource on platform entries)
+        output = removeSection(from: output, matching: "colors = new Common.Colors {")
+
+        // Remove common icons/images sections (Penpot uses path filters, not frame names)
+        output = removeSection(from: output, matching: "icons = new Common.Icons {")
+        output = removeSection(from: output, matching: "images = new Common.Images {")
+        output = removeSection(from: output, matching: "typography = new Common.Typography {")
+
+        // Build penpotSource block
+        let baseURLLine = if let baseURL = result.penpotBaseURL {
+            "\n      baseUrl = \"\(baseURL)\""
+        } else {
+            ""
+        }
+
+        let penpotBlock = """
+            penpotSource = new Common.PenpotSource {
+              fileId = "\(result.lightFileId)"\(baseURLLine)
+            }
+        """
+
+        // Insert penpotSource into each remaining platform entry
+        output = insertIntoPlatformEntries(output, block: penpotBlock)
+
+        // Substitute icons/images path filters in platform entries
+        if let iconsFrame = result.iconsFrameName {
+            output = substitutePenpotPathFilter(
+                in: output, entryMarker: "icons", fieldName: "figmaFrameName", value: iconsFrame
+            )
+        }
+        if let imagesFrame = result.imagesFrameName {
+            output = substitutePenpotPathFilter(
+                in: output, entryMarker: "images", fieldName: "figmaFrameName", value: imagesFrame
+            )
+        }
+
+        // Remove unselected asset sections
+        let allTypes: [InitAssetType] = [.colors, .icons, .images, .typography]
+        for assetType in allTypes where !result.selectedAssetTypes.contains(assetType) {
+            output = removeAssetSections(from: output, assetType: assetType)
+        }
+
+        output = collapseBlankLines(output)
+        return output
+    }
+
+    /// Insert a block of PKL text after the opening brace of each platform entry.
+    private static func insertIntoPlatformEntries(_ template: String, block: String) -> String {
+        let lines = template.components(separatedBy: "\n")
+        var result: [String] = []
+        let entryPattern = #"= new (iOS|Android|Flutter|Web)\.\w+Entry \{"#
+
+        for line in lines {
+            result.append(line)
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.range(of: entryPattern, options: .regularExpression) != nil {
+                result.append(block)
+            }
+        }
+
+        return result.joined(separator: "\n")
+    }
+
+    /// Replace `figmaFrameName` value in a platform entry for Penpot path filter.
+    private static func substitutePenpotPathFilter(
+        in template: String,
+        entryMarker: String,
+        fieldName: String,
+        value: String
+    ) -> String {
+        let lines = template.components(separatedBy: "\n")
+        var result: [String] = []
+        var inEntry = false
+
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.contains("\(entryMarker) = new"), trimmed.contains("Entry {") {
+                inEntry = true
+            }
+            if inEntry, trimmed.hasPrefix("\(fieldName) = ") {
+                let indent = String(line.prefix(while: { $0 == " " }))
+                result.append("\(indent)\(fieldName) = \"\(value)\"")
+                inEntry = false
+            } else {
+                result.append(line)
+            }
+            if inEntry, trimmed == "}" { inEntry = false }
+        }
+
+        return result.joined(separator: "\n")
+    }
+
     static func collapseBlankLines(_ text: String) -> String {
         let lines = text.components(separatedBy: "\n")
         var result: [String] = []

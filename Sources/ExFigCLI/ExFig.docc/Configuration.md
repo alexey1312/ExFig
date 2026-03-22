@@ -103,6 +103,67 @@ common = new Common.CommonConfig {
 }
 ```
 
+### Penpot Source
+
+Use a Penpot project instead of Figma as the design source. For file preparation guidelines,
+see <doc:DesignRequirements>.
+
+**Colors:**
+
+```pkl
+import ".exfig/schemas/Common.pkl"
+import ".exfig/schemas/iOS.pkl"
+
+ios = new iOS.iOSConfig {
+  colors = new iOS.ColorsEntry {
+    penpotSource = new Common.PenpotSource {
+      fileId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      // baseUrl = "https://penpot.mycompany.com/"  // optional: self-hosted
+      pathFilter = "Brand"  // optional: filter by path prefix
+    }
+    assetsFolder = "Colors"
+    nameStyle = "camelCase"
+  }
+}
+```
+
+**Icons:**
+
+```pkl
+ios = new iOS.iOSConfig {
+  icons = new Listing {
+    new iOS.IconsEntry {
+      penpotSource = new Common.PenpotSource {
+        fileId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        // pathFilter = "Icons / Actions"  // optional: filter by path prefix
+      }
+      figmaFrameName = "Icons"  // path prefix filter (same field as Figma)
+      format = "svg"            // svg or pdf — SVG reconstructed from shape tree
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+    }
+  }
+}
+```
+
+**Typography:**
+
+```pkl
+ios = new iOS.iOSConfig {
+  typography = new iOS.TypographyEntry {
+    penpotSource = new Common.PenpotSource {
+      fileId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    }
+  }
+}
+```
+
+> When `penpotSource` is set, `sourceKind` auto-detects as `"penpot"`. ExFig reads from
+> the Penpot API and does not require `FIGMA_PERSONAL_TOKEN`. Set `PENPOT_ACCESS_TOKEN` instead.
+>
+> Icons and images are exported via **SVG reconstruction** from Penpot's shape tree —
+> no headless Chrome needed. Supported formats: SVG, PNG (any scale), PDF, WebP.
+
 ### Tokens File Source
 
 Use a local W3C DTCG `.tokens.json` file instead of the Figma Variables API:

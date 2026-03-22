@@ -15,3 +15,34 @@ public extension Common.SourceKind {
         }
     }
 }
+
+public extension Common_FrameSource {
+    /// Resolves the design source kind with priority: explicit > auto-detect > default (.figma).
+    ///
+    /// Auto-detection: `penpotSource` set → `.penpot`, otherwise `.figma`.
+    var resolvedSourceKind: DesignSourceKind {
+        if let explicit = sourceKind {
+            return explicit.coreSourceKind
+        }
+        if penpotSource != nil {
+            return .penpot
+        }
+        return .figma
+    }
+
+    /// Resolves the file ID based on the resolved source kind.
+    ///
+    /// When source is Penpot, returns only the Penpot file ID (not Figma's)
+    /// to prevent passing a Figma file key to the Penpot API.
+    var resolvedFileId: String? {
+        if resolvedSourceKind == .penpot {
+            return penpotSource?.fileId
+        }
+        return figmaFileId
+    }
+
+    /// Resolves the Penpot base URL from penpotSource config.
+    var resolvedPenpotBaseURL: String? {
+        penpotSource?.baseUrl
+    }
+}

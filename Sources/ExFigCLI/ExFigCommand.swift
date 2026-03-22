@@ -29,7 +29,7 @@ enum ExFigError: LocalizedError {
                 "Components not found in Figma file"
             }
         case .accessTokenNotFound:
-            "FIGMA_PERSONAL_TOKEN not set"
+            "FIGMA_PERSONAL_TOKEN is required for Figma sources"
         case .colorsAssetsFolderNotSpecified:
             "Config missing: ios.colors.assetsFolder"
         case let .configurationError(message):
@@ -55,7 +55,8 @@ enum ExFigError: LocalizedError {
                 "Publish Components to the Team Library in Figma"
             }
         case .accessTokenNotFound:
-            "Run: export FIGMA_PERSONAL_TOKEN=your_token"
+            "Run: export FIGMA_PERSONAL_TOKEN=your_token\n" +
+                "Not needed if all entries use penpotSource or tokensFile."
         case .colorsAssetsFolderNotSpecified:
             "Add ios.colors.assetsFolder to your config file"
         case .configurationError, .custom:

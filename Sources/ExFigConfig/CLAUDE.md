@@ -48,14 +48,21 @@ ExFigCore domain types (NameStyle, ColorsSourceInput, etc.)
 
 ### Key Public API
 
-| Symbol                                                  | Purpose                                                                                                 |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `PKLEvaluator.evaluate(configPath:)`                    | Async evaluation of .pkl → `ExFig.ModuleImpl`                                                           |
-| `PKLError.configNotFound` / `.evaluationDidNotComplete` | Error cases                                                                                             |
-| `Common.NameStyle.coreNameStyle`                        | Bridge to `ExFigCore.NameStyle` via rawValue match                                                      |
-| `Common.SourceKind.coreSourceKind`                      | Bridge to `ExFigCore.DesignSourceKind` via explicit switch (NOT rawValue — kebab vs camelCase mismatch) |
-| `Common_VariablesSource.resolvedSourceKind`             | Resolution priority: explicit `sourceKind` > auto-detect (tokensFile presence) > default `.figma`       |
-| `Common_VariablesSource.validatedColorsSourceInput()`   | Validates required fields, returns `ColorsSourceInput`. Uses `resolvedSourceKind` for dispatch          |
+| Symbol                                                  | Purpose                                                                                                                                    |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PKLEvaluator.evaluate(configPath:)`                    | Async evaluation of .pkl → `ExFig.ModuleImpl`                                                                                              |
+| `PKLError.configNotFound` / `.evaluationDidNotComplete` | Error cases                                                                                                                                |
+| `Common.NameStyle.coreNameStyle`                        | Bridge to `ExFigCore.NameStyle` via rawValue match                                                                                         |
+| `Common.SourceKind.coreSourceKind`                      | Bridge to `ExFigCore.DesignSourceKind` via explicit switch (NOT rawValue — kebab vs camelCase mismatch)                                    |
+| `Common_VariablesSource.resolvedSourceKind`             | Resolution priority: explicit `sourceKind` > auto-detect (penpotSource > tokensFile) > default `.figma`                                    |
+| `Common_VariablesSource.validatedColorsSourceInput()`   | Validates required fields, returns `ColorsSourceInput`. Uses `resolvedSourceKind` for dispatch                                             |
+| `Common_FrameSource.resolvedSourceKind`                 | Resolution priority: explicit `sourceKind` > auto-detect (penpotSource presence) > default `.figma`. Defined in `SourceKindBridging.swift` |
+| `Common_FrameSource.resolvedFileId`                     | Source-kind-aware: Penpot → `penpotSource?.fileId` only, Figma → `figmaFileId`. Defined in `SourceKindBridging.swift`                      |
+| `Common_FrameSource.resolvedPenpotBaseURL`              | `penpotSource?.baseUrl` — passes Penpot base URL through entry bridges. Defined in `SourceKindBridging.swift`                              |
+
+### Generated Type Gotchas
+
+- `Common.PenpotSource.baseUrl` is non-optional `String` (has PKL default) — tests must pass a real URL, not `nil`
 
 ### PklError Workaround
 
@@ -74,6 +81,11 @@ When adding new PKL types to schemas, regenerate with `codegen:pkl` and add the 
 - After regeneration, verify bridging switch statements in `Sources/ExFig-*/Config/*Entry.swift`
 - New fields in generated inits require updating ALL test call sites with new `nil` parameters
 - Generated files are excluded from SwiftLint (`.swiftlint.yml`)
+
+## Module Boundaries
+
+ExFigConfig imports ExFigCore but NOT ExFigCLI. Error types available: `ColorsConfigError` (ExFigCore), NOT `ExFigError` (ExFigCLI).
+When adding validation errors in this module, extend `ColorsConfigError` or create a new error enum in ExFigCore.
 
 ## Consumers
 

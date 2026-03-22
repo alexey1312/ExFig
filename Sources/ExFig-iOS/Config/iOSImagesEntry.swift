@@ -13,8 +13,8 @@ public extension iOS.ImagesEntry {
     /// Returns an ImagesSourceInput for use with ImagesExportContext.
     func imagesSourceInput(darkFileId: String? = nil) -> ImagesSourceInput {
         ImagesSourceInput(
-            sourceKind: sourceKind?.coreSourceKind ?? .figma,
-            figmaFileId: figmaFileId,
+            sourceKind: resolvedSourceKind,
+            figmaFileId: resolvedFileId,
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Images",
             pageName: figmaPageName,
@@ -24,7 +24,8 @@ public extension iOS.ImagesEntry {
             darkModeSuffix: "_dark",
             rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
-            nameReplaceRegexp: nameReplaceRegexp
+            nameReplaceRegexp: nameReplaceRegexp,
+            penpotBaseURL: resolvedPenpotBaseURL
         )
     }
 

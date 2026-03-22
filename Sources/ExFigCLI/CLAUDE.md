@@ -30,7 +30,7 @@ exfig mcp                   → MCPServe
 Each subcommand composes options via `@OptionGroup`:
 
 - `GlobalOptions` — `--verbose/-v`, `--quiet/-q`
-- `ExFigOptions` — `--input/-i`, validates PKL config + FIGMA_PERSONAL_TOKEN
+- `ExFigOptions` — `--input/-i`, validates PKL config, reads FIGMA_PERSONAL_TOKEN (optional — `String?`, not required for non-Figma sources). Use `requireFigmaToken()` when creating `FigmaClient` directly in Download commands.
 - `CacheOptions` — `--cache`, `--no-cache`, `--force`, `--experimental-granular-cache`
 - `FaultToleranceOptions` — retry/timeout configuration
 
@@ -174,6 +174,7 @@ Converter factories (`WebpConverterFactory`, `HeicConverterFactory`) handle plat
 | `MCP/MCPServerState.swift`               | MCP server shared state                                             |
 | `Source/SourceFactory.swift`             | Centralized factory creating source instances by `DesignSourceKind` |
 | `Source/Figma*Source.swift`              | Figma source implementations wrapping existing loaders              |
+| `Source/Penpot*Source.swift`             | Penpot source implementations (colors, components, typography)      |
 | `Source/TokensFileColorsSource.swift`    | Local .tokens.json source (extracted from ColorsExportContextImpl)  |
 
 ### MCP Server Architecture
@@ -188,6 +189,9 @@ reserved for MCP JSON-RPC protocol.
 **Name collision:** Both `FigmaAPI` and `MCP` export `Client` — always use `FigmaAPI.Client` in MCP/ files.
 
 **Keepalive:** `withCheckedContinuation { _ in }` — suspends indefinitely without hacks (no `Task.sleep(365 days)`).
+
+**Guide resources:** `exfig://guides/` serves markdown files from `Resources/Guides/` (copied from DocC articles).
+DocC `.docc` articles are NOT accessible via `Bundle.module` at runtime — must be separately copied to `Resources/Guides/`.
 
 **Tool handler order:** Validate input parameters BEFORE expensive operations (PKL eval, API client creation).
 
@@ -209,9 +213,17 @@ reserved for MCP JSON-RPC protocol.
 ### Source Dispatch Pattern
 
 `ColorsExportContextImpl.loadColors()` creates source via `SourceFactory.createColorsSource(for:...)` per call.
-`IconsExportContextImpl` / `ImagesExportContextImpl` still use injected `componentsSource` (only Figma supported).
+`IconsExportContextImpl` / `ImagesExportContextImpl` use injected `componentsSource` (Figma and Penpot supported via `SourceFactory`).
 `PluginColorsExport` does NOT create sources — context handles dispatch internally.
+All platforms (iOS/Android/Flutter/Web) use `SourceFactory.createComponentsSource(for:)` in both `PluginIconsExport` and `PluginImagesExport`.
 When adding a new source kind: update `SourceFactory`, add source impl in `Source/`, update error `assetType`.
+Penpot sources create `BasePenpotClient` internally from `PENPOT_ACCESS_TOKEN` env var (like TokensFileSource reads local files — no injected client).
+
+### Local File URLs (Penpot SVG)
+
+`PenpotComponentsSource` writes reconstructed SVGs to temp files and passes `file://` URLs in `Image.url`.
+`FileDownloader.fetch()` treats `file://` URLs as local files (skips HTTP download). Do NOT weaken
+`validateDownloadURL()` — it must remain HTTPS-only. Filter file URLs in `fetch()` before download loop.
 
 ### Adding a New Subcommand
 
@@ -240,6 +252,13 @@ transformation logic into `*WizardTransform.swift` as `extension`. SwiftLint enf
 - **Remove section** — brace-counting (`removeSection`), strips preceding comments
 - **Substitute value** — simple `replacingOccurrences` for file IDs, frame names
 - **Uncomment block** — strip `//` prefix, substitute values (variablesColors, figmaPageName)
+- **Insert block** (Penpot) — `applyPenpotResult` removes figma section, inserts `penpotSource` blocks into platform entries
+
+### Penpot Fetch Path
+
+`DownloadImages.runPenpotFetch()` uses `PenpotAPI` directly (not `DownloadImageLoader`).
+Creates `BasePenpotClient`, fetches file, filters components by path, downloads thumbnails as PNG.
+Triggered when `wizardResult?.designSource == .penpot` after wizard flow.
 
 ### Adding a New Platform Export
 

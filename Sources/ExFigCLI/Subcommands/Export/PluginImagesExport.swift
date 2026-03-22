@@ -38,12 +38,18 @@ extension ExFigCommand.ExportImages {
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
         let fileDownloader = faultToleranceOptions.createFileDownloader()
 
-        let componentsSource = FigmaComponentsSource(
+        // All entries in a platform section share one source kind (mixed sources not yet supported)
+        guard let sourceKind = entries.first?.resolvedSourceKind else {
+            throw ExFigError.configurationError("No entries provided for images export")
+        }
+        let componentsSource = try SourceFactory.createComponentsSource(
+            for: sourceKind,
             client: client,
             params: params,
             platform: .ios,
             logger: ExFigCommand.logger,
-            filter: filter
+            filter: filter,
+            ui: ui
         )
 
         let context = ImagesExportContextImpl(
@@ -114,12 +120,18 @@ extension ExFigCommand.ExportImages {
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
         let fileDownloader = faultToleranceOptions.createFileDownloader()
 
-        let componentsSource = FigmaComponentsSource(
+        // All entries in a platform section share one source kind (mixed sources not yet supported)
+        guard let sourceKind = entries.first?.resolvedSourceKind else {
+            throw ExFigError.configurationError("No entries provided for images export")
+        }
+        let componentsSource = try SourceFactory.createComponentsSource(
+            for: sourceKind,
             client: client,
             params: params,
             platform: .android,
             logger: ExFigCommand.logger,
-            filter: filter
+            filter: filter,
+            ui: ui
         )
 
         let context = ImagesExportContextImpl(
@@ -167,12 +179,18 @@ extension ExFigCommand.ExportImages {
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
         let fileDownloader = faultToleranceOptions.createFileDownloader()
 
-        let componentsSource = FigmaComponentsSource(
+        // All entries in a platform section share one source kind (mixed sources not yet supported)
+        guard let sourceKind = entries.first?.resolvedSourceKind else {
+            throw ExFigError.configurationError("No entries provided for images export")
+        }
+        let componentsSource = try SourceFactory.createComponentsSource(
+            for: sourceKind,
             client: client,
             params: params,
             platform: .flutter,
             logger: ExFigCommand.logger,
-            filter: filter
+            filter: filter,
+            ui: ui
         )
 
         let context = ImagesExportContextImpl(
@@ -220,12 +238,18 @@ extension ExFigCommand.ExportImages {
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
         let fileDownloader = faultToleranceOptions.createFileDownloader()
 
-        let componentsSource = FigmaComponentsSource(
+        // All entries in a platform section share one source kind (mixed sources not yet supported)
+        guard let sourceKind = entries.first?.resolvedSourceKind else {
+            throw ExFigError.configurationError("No entries provided for images export")
+        }
+        let componentsSource = try SourceFactory.createComponentsSource(
+            for: sourceKind,
             client: client,
             params: params,
             platform: .web,
             logger: ExFigCommand.logger,
-            filter: filter
+            filter: filter,
+            ui: ui
         )
 
         let context = ImagesExportContextImpl(

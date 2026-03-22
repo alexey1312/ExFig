@@ -45,14 +45,31 @@ extension NameStyle: ExpressibleByArgument {
     }
 }
 
+/// Design source for fetch command.
+enum FetchSource: String, ExpressibleByArgument, CaseIterable, Sendable {
+    case figma
+    case penpot
+}
+
 /// CLI options for the download command.
-/// All required parameters for downloading images from Figma without a config file.
+/// All required parameters for downloading images from Figma or Penpot without a config file.
 struct DownloadOptions: ParsableArguments {
+    // MARK: - Source Options
+
+    @Option(name: .long, help: "Design source: figma, penpot. Default: figma")
+    var source: FetchSource?
+
+    @Option(
+        name: [.customLong("penpot-base-url")],
+        help: "Penpot instance base URL (default: design.penpot.app)"
+    )
+    var penpotBaseURL: String?
+
     // MARK: - Required Options
 
     @Option(
         name: [.customLong("file-id"), .customShort("f")],
-        help: "Figma file ID (from the URL: figma.com/file/<FILE_ID>/...)"
+        help: "File ID (Figma file key or Penpot file UUID)"
     )
     var fileId: String?
 

@@ -127,17 +127,25 @@ public struct ColorsSourceInput: Sendable {
                 return URL(fileURLWithPath: config.filePath).lastPathComponent
             }
             return "tokens file"
-        case .penpot, .tokensStudio, .sketchFile:
+        case .penpot:
+            if let config = sourceConfig as? PenpotColorsConfig {
+                let shortId = String(config.fileId.prefix(8))
+                return "Penpot colors (\(shortId)…)"
+            }
+            return "Penpot"
+        case .tokensStudio, .sketchFile:
             return sourceKind.rawValue
         }
     }
 }
 
 /// Error thrown when required colors configuration fields are missing.
-public enum ColorsConfigError: LocalizedError {
+public enum ColorsConfigError: LocalizedError, Equatable {
     case missingTokensFileId
     case missingTokensCollectionName
     case missingLightModeName
+    case missingPenpotSource
+    case unsupportedSourceKind(DesignSourceKind)
 
     public var errorDescription: String? {
         switch self {
@@ -147,6 +155,10 @@ public enum ColorsConfigError: LocalizedError {
             "tokensCollectionName is required for colors export"
         case .missingLightModeName:
             "lightModeName is required for colors export"
+        case .missingPenpotSource:
+            "penpotSource configuration is required when sourceKind is 'penpot'"
+        case let .unsupportedSourceKind(kind):
+            "Source kind '\(kind.rawValue)' is not supported for colors export"
         }
     }
 
@@ -158,6 +170,10 @@ public enum ColorsConfigError: LocalizedError {
             "Add 'tokensCollectionName' to your colors entry, or set common.variablesColors"
         case .missingLightModeName:
             "Add 'lightModeName' to your colors entry, or set common.variablesColors"
+        case .missingPenpotSource:
+            "Add 'penpotSource { fileId = \"...\" }' to your colors entry"
+        case let .unsupportedSourceKind(kind):
+            "Supported source kinds for colors: figma, penpot, tokensFile. Got: '\(kind.rawValue)'"
         }
     }
 }

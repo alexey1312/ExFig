@@ -28,6 +28,7 @@ let package = Package(
         .package(url: "https://github.com/apple/pkl-swift", from: "0.8.0"),
         .package(url: "https://github.com/DesignPipe/swift-svgkit.git", from: "0.1.0"),
         .package(url: "https://github.com/DesignPipe/swift-figma-api.git", from: "0.2.0"),
+        .package(url: "https://github.com/DesignPipe/swift-penpot-api.git", from: "0.1.0"),
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.9.0"),
     ],
     targets: [
@@ -36,6 +37,7 @@ let package = Package(
             name: "ExFigCLI",
             dependencies: [
                 .product(name: "FigmaAPI", package: "swift-figma-api"),
+                .product(name: "PenpotAPI", package: "swift-penpot-api"),
                 "ExFigCore",
                 "ExFigConfig",
                 "XcodeExport",
@@ -60,6 +62,7 @@ let package = Package(
             exclude: ["CLAUDE.md", "AGENTS.md"],
             resources: [
                 .copy("Resources/Schemas/"),
+                .copy("Resources/Guides/"),
             ]
         ),
 
