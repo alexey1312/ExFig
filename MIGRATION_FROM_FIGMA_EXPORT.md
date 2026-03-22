@@ -260,6 +260,6 @@ exfig icons --concurrent-downloads 50  # Increase CDN parallelism
 ## Getting Help
 
 - Configuration reference: [CONFIG.md](CONFIG.md)
-- PKL guide: [docs/PKL.md](docs/PKL.md)
-- Migration guide (YAML to PKL): [MIGRATION.md](MIGRATION.md)
+- PKL guide: [PKLGuide](https://DesignPipe.github.io/exfig/documentation/exfigcli/pklguide)
+- Migration guide (YAML to PKL): [Migration](https://DesignPipe.github.io/exfig/documentation/exfigcli/migration)
 - Issues: [GitHub Issues](https://github.com/DesignPipe/exfig/issues)

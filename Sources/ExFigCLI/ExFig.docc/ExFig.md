@@ -88,7 +88,10 @@ Compose color and icon objects, and Flutter path constants.
 - <doc:CustomTemplates>
 - <doc:MCPServer>
 - <doc:CICDIntegration>
+- <doc:PKLGuide>
 
 ### Contributing
 
 - <doc:Development>
+- <doc:Architecture>
+- <doc:Migration>

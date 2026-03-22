@@ -504,7 +504,7 @@ exfig batch configs/ --parallel 2 --dry-run
 ## Getting Help
 
 - [PKL Documentation](https://pkl-lang.org/main/current/index.html)
-- [ExFig PKL Guide](./PKL.md)
+- <doc:PKLGuide>
 - [ExFig Schema Reference](https://github.com/DesignPipe/exfig/tree/main/Sources/ExFigCLI/Resources/Schemas)
 
 ## Validation Checklist
