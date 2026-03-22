@@ -132,7 +132,7 @@ enum MCPPrompts {
         Important notes:
         - PENPOT_ACCESS_TOKEN must be set (not FIGMA_PERSONAL_TOKEN)
         - No `figma` section needed when using only Penpot sources
-        - v1 limitation: icons/images export as raster thumbnails only
+        - Icons/images: SVG reconstructed from shape tree (supports SVG, PNG, PDF output)
 
         First, validate the config with exfig_validate after creating it.
         """

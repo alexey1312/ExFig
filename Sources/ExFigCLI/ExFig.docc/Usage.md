@@ -194,6 +194,26 @@ exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
 exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-encoding lossless
 ```
 
+### Penpot Fetch
+
+```bash
+# Fetch icons from Penpot as SVG
+exfig fetch --source penpot -f "a1b2c3d4-..." -r "Icons / App" -o ./icons --format svg
+
+# Fetch as PNG at 3x scale (SVG reconstructed, then rasterized via resvg)
+exfig fetch --source penpot -f "a1b2c3d4-..." -r "Icons" -o ./icons --format png --scale 3
+
+# From a shared library (use library file ID)
+exfig fetch --source penpot -f "library-uuid" -r "Icons / Actions" -o ./icons --format svg
+
+# Self-hosted Penpot instance
+exfig fetch --source penpot --penpot-base-url https://penpot.mycompany.com/ \
+  -f "uuid" -r "Icons" -o ./icons --format svg
+```
+
+> Set `PENPOT_ACCESS_TOKEN` environment variable (generate at Settings → Access Tokens).
+> File ID is in the Penpot workspace URL: `?file-id=UUID`.
+
 ### Scale Options
 
 ```bash

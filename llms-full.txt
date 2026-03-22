@@ -182,7 +182,21 @@ For Penpot sources, set the `PENPOT_ACCESS_TOKEN` environment variable:
 export PENPOT_ACCESS_TOKEN="your-penpot-token-here"
 ```
 
-> Note: `PENPOT_ACCESS_TOKEN` is only required when using `sourceKind: "penpot"` or `penpotSource` in config.
+> Note: `PENPOT_ACCESS_TOKEN` is only required when using `penpotSource` in config.
+
+### Quick Penpot Icons Export (No Config)
+
+```bash
+# Export Penpot icons as SVG
+export PENPOT_ACCESS_TOKEN="your-token"
+exfig fetch --source penpot -f "file-uuid" -r "Icons" -o ./icons --format svg
+
+# Export as PNG at 3x scale
+exfig fetch --source penpot -f "file-uuid" -r "Icons" -o ./icons --format png --scale 3
+```
+
+> File UUID is in the Penpot workspace URL: `?file-id=UUID`.
+> For shared libraries, use the library's file ID from the Assets panel.
 
 ## Quick Start
 
@@ -457,6 +471,26 @@ exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
 exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-encoding lossless
 ```
 
+### Penpot Fetch
+
+```bash
+# Fetch icons from Penpot as SVG
+exfig fetch --source penpot -f "a1b2c3d4-..." -r "Icons / App" -o ./icons --format svg
+
+# Fetch as PNG at 3x scale (SVG reconstructed, then rasterized via resvg)
+exfig fetch --source penpot -f "a1b2c3d4-..." -r "Icons" -o ./icons --format png --scale 3
+
+# From a shared library (use library file ID)
+exfig fetch --source penpot -f "library-uuid" -r "Icons / Actions" -o ./icons --format svg
+
+# Self-hosted Penpot instance
+exfig fetch --source penpot --penpot-base-url https://penpot.mycompany.com/ \
+  -f "uuid" -r "Icons" -o ./icons --format svg
+```
+
+> Set `PENPOT_ACCESS_TOKEN` environment variable (generate at Settings → Access Tokens).
+> File ID is in the Penpot workspace URL: `?file-id=UUID`.
+
 ### Scale Options
 
 ```bash
@@ -649,6 +683,25 @@ ios = new iOS.iOSConfig {
 }
 ```
 
+**Icons:**
+
+```pkl
+ios = new iOS.iOSConfig {
+  icons = new Listing {
+    new iOS.IconsEntry {
+      penpotSource = new Common.PenpotSource {
+        fileId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        // pathFilter = "Icons / Actions"  // optional: filter by path prefix
+      }
+      figmaFrameName = "Icons"  // path prefix filter (same field as Figma)
+      format = "svg"            // svg or pdf — SVG reconstructed from shape tree
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+    }
+  }
+}
+```
+
 **Typography:**
 
 ```pkl
@@ -664,9 +717,8 @@ ios = new iOS.iOSConfig {
 > When `penpotSource` is set, `sourceKind` auto-detects as `"penpot"`. ExFig reads from
 > the Penpot API and does not require `FIGMA_PERSONAL_TOKEN`. Set `PENPOT_ACCESS_TOKEN` instead.
 >
-> **v1 limitation:** Penpot icons/images are exported as raster thumbnails (the Penpot API has
-> no public SVG/PNG render endpoint). SVG reconstruction from the shape tree is planned for a
-> future version.
+> Icons and images are exported via **SVG reconstruction** from Penpot's shape tree —
+> no headless Chrome needed. Supported formats: SVG, PNG (any scale), PDF, WebP.
 
 ### Tokens File Source
 
@@ -1554,10 +1606,8 @@ penpotSource = new Common.PenpotSource {
 figmaFrameName = "Icons/Navigation"  // exports arrow-left, arrow-right
 ```
 
-> **v1 limitation:** Penpot components are exported as **raster thumbnails** (PNG only).
-> The Penpot API has no public SVG/PNG render endpoint. SVG reconstruction from the
-> shape tree is planned for a future version. For best quality, design components at the
-> largest needed scale.
+ExFig reconstructs SVG directly from Penpot's shape tree — no headless Chrome or CDN needed.
+Supported output formats: **SVG** (native vector), **PNG** (via resvg at any scale), **PDF**, **WebP**.
 
 ### Library Typography
 
@@ -1599,13 +1649,13 @@ Design System (Penpot file)
     └── Caption/* (regular, small)
 ```
 
-### Known Limitations (v1)
+### Known Limitations
 
 - **No dark mode support** — Penpot has no Variables/modes equivalent; colors export as light-only
-- **Raster-only components** — icons and images export as PNG thumbnails, not SVG
 - **No `exfig_inspect` for Penpot** — the MCP inspect tool works with Figma API only
 - **Gradients skipped** — only solid hex colors are supported
 - **No page filtering** — all library assets are global to the file, not page-scoped
+- **SVG reconstruction scope** — supports path, rect, circle, bool, group shapes; complex effects (blur, shadow, gradients on shapes) are not yet rendered
 
 ### Penpot Troubleshooting
 

@@ -127,6 +127,25 @@ ios = new iOS.iOSConfig {
 }
 ```
 
+**Icons:**
+
+```pkl
+ios = new iOS.iOSConfig {
+  icons = new Listing {
+    new iOS.IconsEntry {
+      penpotSource = new Common.PenpotSource {
+        fileId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        // pathFilter = "Icons / Actions"  // optional: filter by path prefix
+      }
+      figmaFrameName = "Icons"  // path prefix filter (same field as Figma)
+      format = "svg"            // svg or pdf — SVG reconstructed from shape tree
+      assetsFolder = "Icons"
+      nameStyle = "camelCase"
+    }
+  }
+}
+```
+
 **Typography:**
 
 ```pkl
@@ -142,9 +161,8 @@ ios = new iOS.iOSConfig {
 > When `penpotSource` is set, `sourceKind` auto-detects as `"penpot"`. ExFig reads from
 > the Penpot API and does not require `FIGMA_PERSONAL_TOKEN`. Set `PENPOT_ACCESS_TOKEN` instead.
 >
-> **v1 limitation:** Penpot icons/images are exported as raster thumbnails (the Penpot API has
-> no public SVG/PNG render endpoint). SVG reconstruction from the shape tree is planned for a
-> future version.
+> Icons and images are exported via **SVG reconstruction** from Penpot's shape tree —
+> no headless Chrome needed. Supported formats: SVG, PNG (any scale), PDF, WebP.
 
 ### Tokens File Source
 

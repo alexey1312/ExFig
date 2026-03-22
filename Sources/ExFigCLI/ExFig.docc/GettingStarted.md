@@ -86,7 +86,21 @@ For Penpot sources, set the `PENPOT_ACCESS_TOKEN` environment variable:
 export PENPOT_ACCESS_TOKEN="your-penpot-token-here"
 ```
 
-> Note: `PENPOT_ACCESS_TOKEN` is only required when using `sourceKind: "penpot"` or `penpotSource` in config.
+> Note: `PENPOT_ACCESS_TOKEN` is only required when using `penpotSource` in config.
+
+### Quick Penpot Icons Export (No Config)
+
+```bash
+# Export Penpot icons as SVG
+export PENPOT_ACCESS_TOKEN="your-token"
+exfig fetch --source penpot -f "file-uuid" -r "Icons" -o ./icons --format svg
+
+# Export as PNG at 3x scale
+exfig fetch --source penpot -f "file-uuid" -r "Icons" -o ./icons --format png --scale 3
+```
+
+> File UUID is in the Penpot workspace URL: `?file-id=UUID`.
+> For shared libraries, use the library's file ID from the Assets panel.
 
 ## Quick Start
 

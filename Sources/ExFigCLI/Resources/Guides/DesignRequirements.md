@@ -443,10 +443,8 @@ penpotSource = new Common.PenpotSource {
 figmaFrameName = "Icons/Navigation"  // exports arrow-left, arrow-right
 ```
 
-> **v1 limitation:** Penpot components are exported as **raster thumbnails** (PNG only).
-> The Penpot API has no public SVG/PNG render endpoint. SVG reconstruction from the
-> shape tree is planned for a future version. For best quality, design components at the
-> largest needed scale.
+ExFig reconstructs SVG directly from Penpot's shape tree — no headless Chrome or CDN needed.
+Supported output formats: **SVG** (native vector), **PNG** (via resvg at any scale), **PDF**, **WebP**.
 
 ### Library Typography
 
@@ -488,13 +486,13 @@ Design System (Penpot file)
     └── Caption/* (regular, small)
 ```
 
-### Known Limitations (v1)
+### Known Limitations
 
 - **No dark mode support** — Penpot has no Variables/modes equivalent; colors export as light-only
-- **Raster-only components** — icons and images export as PNG thumbnails, not SVG
 - **No `exfig_inspect` for Penpot** — the MCP inspect tool works with Figma API only
 - **Gradients skipped** — only solid hex colors are supported
 - **No page filtering** — all library assets are global to the file, not page-scoped
+- **SVG reconstruction scope** — supports path, rect, circle, bool, group shapes; complex effects (blur, shadow, gradients on shapes) are not yet rendered
 
 ### Penpot Troubleshooting
 
