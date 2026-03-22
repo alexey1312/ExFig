@@ -307,8 +307,8 @@ struct BatchConfigRunner: Sendable {
             let effectiveTimeout: TimeInterval? = cliTimeout.map { TimeInterval($0) }
                 ?? options.params.figma?.timeout
 
-            let baseClient = FigmaClient(
-                accessToken: options.accessToken,
+            let baseClient = try FigmaClient(
+                accessToken: options.requireFigmaToken(),
                 timeout: effectiveTimeout
             )
 

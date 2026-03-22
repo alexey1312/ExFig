@@ -96,7 +96,10 @@ extension ExFigCommand.Download {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
-            let baseClient = FigmaClient(accessToken: options.accessToken, timeout: options.params.figma?.timeout)
+            let baseClient = try FigmaClient(
+                accessToken: options.requireFigmaToken(),
+                timeout: options.params.figma?.timeout
+            )
             let rateLimiter = faultToleranceOptions.createRateLimiter()
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,

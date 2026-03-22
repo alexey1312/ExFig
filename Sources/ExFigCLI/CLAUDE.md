@@ -30,7 +30,7 @@ exfig mcp                   → MCPServe
 Each subcommand composes options via `@OptionGroup`:
 
 - `GlobalOptions` — `--verbose/-v`, `--quiet/-q`
-- `ExFigOptions` — `--input/-i`, validates PKL config + FIGMA_PERSONAL_TOKEN
+- `ExFigOptions` — `--input/-i`, validates PKL config, reads FIGMA_PERSONAL_TOKEN (optional — `String?`, not required for non-Figma sources). Use `requireFigmaToken()` when creating `FigmaClient` directly in Download commands.
 - `CacheOptions` — `--cache`, `--no-cache`, `--force`, `--experimental-granular-cache`
 - `FaultToleranceOptions` — retry/timeout configuration
 

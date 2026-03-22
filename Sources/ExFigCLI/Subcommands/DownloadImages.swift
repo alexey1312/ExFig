@@ -11,9 +11,9 @@ extension ExFigCommand {
     struct FetchImages: AsyncParsableCommand {
         static let configuration = CommandConfiguration(
             commandName: "fetch",
-            abstract: "Downloads images from Figma without config file",
+            abstract: "Downloads images from Figma or Penpot without config file",
             discussion: """
-            Downloads images from a specific Figma frame to a local directory.
+            Downloads images from a specific frame to a local directory.
             All parameters are passed via command-line arguments.
 
             When required options (--file-id, --frame, --output) are omitted in an
@@ -23,23 +23,21 @@ extension ExFigCommand {
               # Interactive wizard (TTY only)
               exfig fetch
 
-              # Download PNGs at 3x scale (default)
-              exfig fetch --file-id abc123 --frame "Illustrations" --output ./images
+              # Download PNGs from Figma at 3x scale (default)
+              exfig fetch -f abc123 -r "Illustrations" -o ./images
 
               # Download SVGs
               exfig fetch -f abc123 -r "Icons" -o ./icons --format svg
 
-              # Download PDFs
-              exfig fetch -f abc123 -r "Icons" -o ./icons --format pdf
+              # Download from Penpot
+              exfig fetch --source penpot -f <penpot-uuid> -r "Icons" -o ./icons
+
+              # Download from self-hosted Penpot
+              exfig fetch --source penpot --penpot-base-url https://penpot.mycompany.com/ \\
+                -f <uuid> -r "UI" -o ./components
 
               # Download with filtering
               exfig fetch -f abc123 -r "Images" -o ./images --filter "logo/*"
-
-              # Download PNG at 2x scale with camelCase naming
-              exfig fetch -f abc123 -r "Images" -o ./images --scale 2 --name-style camelCase
-
-              # Download with dark mode variants
-              exfig fetch -f abc123 -r "Images" -o ./images --dark-mode-suffix "_dark"
 
               # Download as WebP with quality settings
               exfig fetch -f abc123 -r "Images" -o ./images --format webp --webp-quality 90
@@ -115,9 +113,26 @@ extension ExFigCommand {
                 }
             }
 
+            // Determine design source: from wizard, from --source flag, or default figma
+            let designSource: WizardDesignSource = wizardResult?.designSource
+                ?? options.source.map { $0 == .penpot ? .penpot : .figma }
+                ?? .figma
+
             // Penpot path — use PenpotAPI directly
-            if let result = wizardResult, result.designSource == .penpot {
-                try await runPenpotFetch(options: options, wizardResult: result, ui: ui)
+            if designSource == .penpot {
+                let penpotResult = wizardResult ?? FetchWizardResult(
+                    designSource: .penpot,
+                    fileId: options.fileId ?? "",
+                    frameName: options.frameName ?? "",
+                    pageName: options.pageName,
+                    outputPath: options.outputPath ?? "",
+                    format: options.format,
+                    scale: options.scale,
+                    nameStyle: options.nameStyle,
+                    filter: options.filter,
+                    penpotBaseURL: options.penpotBaseURL
+                )
+                try await runPenpotFetch(options: options, wizardResult: penpotResult, ui: ui)
                 return
             }
 

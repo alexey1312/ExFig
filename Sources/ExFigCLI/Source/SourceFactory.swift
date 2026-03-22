@@ -7,17 +7,18 @@ import Logging
 enum SourceFactory {
     static func createColorsSource(
         for input: ColorsSourceInput,
-        client: Client,
+        client: Client?,
         ui: TerminalUI,
         filter: String?
     ) throws -> any ColorsSource {
         switch input.sourceKind {
         case .figma:
-            FigmaColorsSource(client: client, ui: ui, filter: filter)
+            guard let client else { throw ExFigError.accessTokenNotFound }
+            return FigmaColorsSource(client: client, ui: ui, filter: filter)
         case .tokensFile:
-            TokensFileColorsSource(ui: ui)
+            return TokensFileColorsSource(ui: ui)
         case .penpot:
-            PenpotColorsSource(ui: ui)
+            return PenpotColorsSource(ui: ui)
         case .tokensStudio, .sketchFile:
             throw ExFigError.unsupportedSourceKind(input.sourceKind, assetType: "colors")
         }
@@ -26,7 +27,7 @@ enum SourceFactory {
     // swiftlint:disable:next function_parameter_count
     static func createComponentsSource(
         for sourceKind: DesignSourceKind,
-        client: Client,
+        client: Client?,
         params: PKLConfig,
         platform: Platform,
         logger: Logger,
@@ -34,7 +35,8 @@ enum SourceFactory {
     ) throws -> any ComponentsSource {
         switch sourceKind {
         case .figma:
-            FigmaComponentsSource(
+            guard let client else { throw ExFigError.accessTokenNotFound }
+            return FigmaComponentsSource(
                 client: client,
                 params: params,
                 platform: platform,
@@ -42,7 +44,7 @@ enum SourceFactory {
                 filter: filter
             )
         case .penpot:
-            PenpotComponentsSource(ui: ExFigCommand.terminalUI)
+            return PenpotComponentsSource(ui: ExFigCommand.terminalUI)
         case .tokensFile, .tokensStudio, .sketchFile:
             throw ExFigError.unsupportedSourceKind(sourceKind, assetType: "icons/images")
         }
@@ -50,13 +52,14 @@ enum SourceFactory {
 
     static func createTypographySource(
         for sourceKind: DesignSourceKind,
-        client: Client
+        client: Client?
     ) throws -> any TypographySource {
         switch sourceKind {
         case .figma:
-            FigmaTypographySource(client: client)
+            guard let client else { throw ExFigError.accessTokenNotFound }
+            return FigmaTypographySource(client: client)
         case .penpot:
-            PenpotTypographySource(ui: ExFigCommand.terminalUI)
+            return PenpotTypographySource(ui: ExFigCommand.terminalUI)
         case .tokensFile, .tokensStudio, .sketchFile:
             throw ExFigError.unsupportedSourceKind(sourceKind, assetType: "typography")
         }

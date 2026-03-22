@@ -253,13 +253,19 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
 ///
 /// Timeout precedence: CLI `--timeout` > config > FigmaClient default (30s)
 func resolveClient(
-    accessToken: String,
+    accessToken: String?,
     timeout: TimeInterval?,
     options: FaultToleranceOptions,
     ui: TerminalUI
 ) -> Client {
     if let injectedClient = InjectedClientStorage.client {
         return injectedClient
+    }
+    guard let accessToken else {
+        // No Figma token — return a placeholder client.
+        // Non-Figma sources (Penpot, tokens-file) never call it.
+        // SourceFactory guards the .figma branch and throws accessTokenNotFound.
+        return FigmaClient(accessToken: "no-token", timeout: nil)
     }
     // CLI timeout takes precedence over config timeout
     let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout
@@ -293,13 +299,16 @@ func resolveClient(
 ///
 /// Timeout precedence: CLI `--timeout` > config > FigmaClient default (30s)
 func resolveClient(
-    accessToken: String,
+    accessToken: String?,
     timeout: TimeInterval?,
     options: HeavyFaultToleranceOptions,
     ui: TerminalUI
 ) -> Client {
     if let injectedClient = InjectedClientStorage.client {
         return injectedClient
+    }
+    guard let accessToken else {
+        return FigmaClient(accessToken: "no-token", timeout: nil)
     }
     // CLI timeout takes precedence over config timeout
     let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout

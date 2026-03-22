@@ -303,10 +303,15 @@ FigmaAPI is now an external package (`swift-figma-api`). See its repository for 
 This enables per-entry `sourceKind` — different entries in one config can use different sources.
 Do NOT inject `colorsSource` at context construction time — it breaks multi-source configs.
 
+### Lazy Figma Client Pattern
+
+`resolveClient(accessToken:...)` accepts `String?`. When nil (no `FIGMA_PERSONAL_TOKEN`), returns a placeholder `FigmaClient(accessToken: "no-token")` that is never called by non-Figma sources. `SourceFactory` guards the `.figma` branch: `guard let client else { throw ExFigError.accessTokenNotFound }`. This avoids making `Client?` cascade through 20+ type signatures.
+
 ### Penpot Source Patterns
 
 - `PenpotClientFactory.makeClient(baseURL:)` — shared factory in `Source/PenpotClientFactory.swift`. All Penpot sources use this (NOT a static on any single source).
 - Dictionary iteration from Penpot API (`colors`, `typographies`, `components`) must be sorted by key for deterministic export order: `.sorted(by: { $0.key < $1.key })`.
+- `exfig fetch --source penpot` — `FetchSource` enum in `DownloadOptions.swift`. Route: `--source` flag > wizard result > default `.figma`. Also `--penpot-base-url` for self-hosted.
 
 ### Entry Bridge Source Kind Resolution
 
@@ -451,7 +456,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | DocC articles not in Bundle.module  | `.docc` articles aren't copied to SPM bundle — use `Resources/Guides/` with `.copy()` for MCP-served content                                                                           |
 | Penpot `update-file` changes format | Flat `changes[]` array, `type` dispatch, needs `vern` field. Shapes need `parentId`, `frameId`, `selrect`, `points`, `transform`. Undocumented — use validation errors                 |
 | Switch expression + `return`        | When any switch branch has side-effects before `return`, use explicit `return` on ALL branches — implicit return breaks type inference                                                 |
-| `FIGMA_PERSONAL_TOKEN` for Penpot   | `ExFigOptions.validate()` requires it even for Penpot-only configs — pass dummy value for testing                                                                                      |
+| Lazy Figma token validation         | `ExFigOptions.validate()` reads token without throwing; `resolveClient()` returns placeholder if nil; `SourceFactory` guards `.figma` branch with `accessTokenNotFound`                |
 | PKL `swiftuiColorSwift` casing      | PKL codegen lowercases: `swiftuiColorSwift`, not `swiftUIColorSwift` — check with `pkl eval` if unsure                                                                                 |
 
 ## Additional Rules
