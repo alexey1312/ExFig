@@ -53,11 +53,16 @@ jobs:
         if: matrix.platform == 'windows-x64'
         uses: compnerd/gha-setup-swift@v0.3.0
         with:
-          release: "6.3"
+          branch: swift-6.3-release
+          tag: swift-6.3-RELEASE
 
-      - name: Select Xcode 26.2 (macOS)
+      - name: Install Swift 6.3 via swiftly (macOS)
         if: matrix.platform == 'macos'
-        run: sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+        run: |
+          curl -L https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
+          export PATH="$HOME/.swiftly/bin:$PATH"
+          swiftly install 6.3
+          echo "$HOME/.swiftly/bin" >> "$GITHUB_PATH"
 
       - name: Install system dependencies (Linux)
         if: matrix.platform == 'linux-x64'
@@ -330,10 +335,15 @@ jobs:
     concurrency:
       group: "pages"
       cancel-in-progress: true
-    env:
-      DEVELOPER_DIR: "/Applications/Xcode_26.2.app/Contents/Developer"
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install Swift 6.3 via swiftly
+        run: |
+          curl -L https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
+          export PATH="$HOME/.swiftly/bin:$PATH"
+          swiftly install 6.3
+          echo "$HOME/.swiftly/bin" >> "$GITHUB_PATH"
 
       - name: Build DocC
         run: |

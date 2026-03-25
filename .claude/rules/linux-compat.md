@@ -57,7 +57,7 @@ func testSomePngOperation() throws {
 ### Swift Version
 
 Windows requires Swift 6.3 (stable release) due to `swift-resvg` artifactbundle compatibility.
-CI uses `compnerd/gha-setup-swift@v0.3.0` with `release: "6.3"`.
+CI uses `compnerd/gha-setup-swift@v0.3.0` with `branch: swift-6.3-release` and `tag: swift-6.3-RELEASE`.
 
 ### Conditional Dependencies (Package.swift)
 

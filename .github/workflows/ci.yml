@@ -50,13 +50,20 @@ jobs:
         with:
           lfs: true
 
+      - name: Install Swift 6.3 via swiftly
+        run: |
+          curl -L https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
+          export PATH="$HOME/.swiftly/bin:$PATH"
+          swiftly install 6.3
+          echo "$HOME/.swiftly/bin" >> "$GITHUB_PATH"
+
       - name: Cache SPM dependencies
         uses: actions/cache@v5
         with:
           path: .build
-          key: ${{ runner.os }}-xcode-26.2-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          key: ${{ runner.os }}-swift-6.3-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
           restore-keys: |
-            ${{ runner.os }}-xcode-26.2-spm-
+            ${{ runner.os }}-swift-6.3-spm-
 
       - uses: jdx/mise-action@v4
         with:
@@ -135,7 +142,8 @@ jobs:
       - name: Install Swift
         uses: compnerd/gha-setup-swift@v0.3.0
         with:
-          release: "6.3"
+          branch: swift-6.3-release
+          tag: swift-6.3-RELEASE
 
       - name: Cache SPM dependencies
         uses: actions/cache@v5
