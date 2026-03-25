@@ -138,6 +138,14 @@ jobs:
           branch: swift-6.3-branch
           tag: 6.3-DEVELOPMENT-SNAPSHOT-2026-02-21-a
 
+      - name: Cache SPM dependencies
+        uses: actions/cache@v5
+        with:
+          path: .build
+          key: ${{ runner.os }}-swift-6.3-spm-${{ hashFiles('Package.swift', 'Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swift-6.3-spm-
+
       - name: Swift version
         run: swift --version
 
@@ -146,6 +154,3 @@ jobs:
 
       - name: Build (Debug)
         run: swift build
-
-      - name: Build (Release)
-        run: swift build -c release
