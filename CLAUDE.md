@@ -319,9 +319,8 @@ Both `.text(_:metadata:)` and `.text(text:metadata:)` factories are deprecated b
 
 ### Build Environment (Swift 6.3 via swiftly)
 
-Swift 6.3 is managed by swiftly (`.swift-version` file), not mise. For building and testing:
-`export PATH="$HOME/.swiftly/bin:$PATH" && export DEVELOPER_DIR="/Applications/Xcode-26.4.0.app/Contents/Developer"`
-swiftly provides Swift 6.3; Xcode provides macOS SDK with XCTest. Both are needed for `swift test`.
+Swift 6.3 is managed by swiftly (`.swift-version` file), not mise. Always use `./bin/mise run build` and `./bin/mise run test` — mise handles PATH and DEVELOPER_DIR automatically.
+Under the hood: swiftly provides Swift 6.3; Xcode provides macOS SDK with XCTest. Both are needed for `swift test`.
 
 ### Dependency Version Coupling (swift-resvg ↔ swift-svgkit)
 

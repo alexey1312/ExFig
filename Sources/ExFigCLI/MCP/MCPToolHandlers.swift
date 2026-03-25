@@ -23,17 +23,24 @@
                 case "exfig_download":
                     return try await handleDownload(params: params, state: state)
                 default:
-                    return .init(content: [.text("Unknown tool: \(params.name)")], isError: true)
+                    return .init(
+                        content: [.text(text: "Unknown tool: \(params.name)", annotations: nil, _meta: nil)],
+                        isError: true
+                    )
                 }
             } catch let error as ExFigError {
                 return errorResult(error)
             } catch let error as TokensFileError {
                 return .init(
-                    content: [.text("Token file error: \(error.errorDescription ?? "\(error)")")],
+                    content: [.text(
+                        text: "Token file error: \(error.errorDescription ?? "\(error)")",
+                        annotations: nil,
+                        _meta: nil
+                    )],
                     isError: true
                 )
             } catch {
-                return .init(content: [.text("Error: \(error)")], isError: true)
+                return .init(content: [.text(text: "Error: \(error)", annotations: nil, _meta: nil)], isError: true)
             }
         }
 
@@ -55,7 +62,7 @@
                 figmaFileIds: fileIDs.isEmpty ? nil : fileIDs
             )
 
-            return try .init(content: [.text(encodeJSON(summary))])
+            return try .init(content: [.text(text: encodeJSON(summary), annotations: nil, _meta: nil)])
         }
 
         private static func buildPlatformSummary(config: PKLConfig) -> [String: EntrySummary] {
@@ -93,7 +100,10 @@
 
         private static func handleTokensInfo(params: CallTool.Parameters) async throws -> CallTool.Result {
             guard let filePath = params.arguments?["file_path"]?.stringValue else {
-                return .init(content: [.text("Missing required parameter: file_path")], isError: true)
+                return .init(
+                    content: [.text(text: "Missing required parameter: file_path", annotations: nil, _meta: nil)],
+                    isError: true
+                )
             }
 
             var source = try TokensFileSource.parse(fileAt: filePath)
@@ -128,7 +138,7 @@
                 warnings: source.warnings.isEmpty ? nil : source.warnings
             )
 
-            return try .init(content: [.text(encodeJSON(result))])
+            return try .init(content: [.text(text: encodeJSON(result), annotations: nil, _meta: nil)])
         }
 
         // MARK: - Inspect
@@ -139,7 +149,10 @@
         ) async throws -> CallTool.Result {
             // Validate inputs before expensive operations (PKL eval, API client)
             guard let resourceType = params.arguments?["resource_type"]?.stringValue else {
-                return .init(content: [.text("Missing required parameter: resource_type")], isError: true)
+                return .init(
+                    content: [.text(text: "Missing required parameter: resource_type", annotations: nil, _meta: nil)],
+                    isError: true
+                )
             }
 
             let configPath = try resolveConfigPath(from: params.arguments?["config_path"]?.stringValue)
@@ -168,7 +181,7 @@
                 }
             }
 
-            return try .init(content: [.text(encodeJSON(results))])
+            return try .init(content: [.text(text: encodeJSON(results), annotations: nil, _meta: nil)])
         }
 
         // MARK: - Inspect Helpers
@@ -280,7 +293,7 @@
             if let recovery = error.recoverySuggestion {
                 message += "\n\nSuggestion: \(recovery)"
             }
-            return .init(content: [.text(message)], isError: true)
+            return .init(content: [.text(text: message, annotations: nil, _meta: nil)], isError: true)
         }
 
         /// Encodes a Codable value as pretty-printed JSON with sorted keys.
@@ -341,17 +354,20 @@
                let reportData = FileManager.default.contents(atPath: reportPath),
                let reportJSON = String(data: reportData, encoding: .utf8)
             {
-                return .init(content: [.text(reportJSON)], isError: result.exitCode != 0)
+                return .init(
+                    content: [.text(text: reportJSON, annotations: nil, _meta: nil)],
+                    isError: result.exitCode != 0
+                )
             }
 
             if result.exitCode != 0 {
                 let message = result.stderr.isEmpty
                     ? "Export failed with exit code \(result.exitCode)"
                     : result.stderr
-                return .init(content: [.text(message)], isError: true)
+                return .init(content: [.text(text: message, annotations: nil, _meta: nil)], isError: true)
             }
 
-            return .init(content: [.text("{\"success\": true}")])
+            return .init(content: [.text(text: "{\"success\": true}", annotations: nil, _meta: nil)])
         }
 
         private static func handleDownload(
@@ -387,7 +403,10 @@
             case "tokens":
                 return try await downloadUnifiedTokens(config: config, client: client)
             default:
-                return .init(content: [.text("Unknown resource_type: \(resourceType)")], isError: true)
+                return .init(
+                    content: [.text(text: "Unknown resource_type: \(resourceType)", annotations: nil, _meta: nil)],
+                    isError: true
+                )
             }
         }
     }
@@ -519,9 +538,9 @@
                         resourceType: "colors", format: "raw",
                         tokenCount: result.output.light.count, warnings: warnings
                     )
-                    try content.append(.text(encodeJSON(meta)))
+                    try content.append(.text(text: encodeJSON(meta), annotations: nil, _meta: nil))
                 }
-                try content.append(.text(encodeRawColors(result.output)))
+                try content.append(.text(text: encodeRawColors(result.output), annotations: nil, _meta: nil))
                 return .init(content: content)
             }
 
@@ -555,7 +574,11 @@
             let textStyles = try await loader.load()
 
             if format == "raw" {
-                return try .init(content: [.text(encodeJSON(textStyles.map { RawTextStyle(from: $0) }))])
+                return try .init(content: [.text(
+                    text: encodeJSON(textStyles.map { RawTextStyle(from: $0) }),
+                    annotations: nil,
+                    _meta: nil
+                )])
             }
 
             let exporter = W3CTokensExporter(version: .v2025)
@@ -612,7 +635,11 @@
 
             if allTokens.isEmpty {
                 return .init(
-                    content: [.text("No token sections configured for export. Check your config file.")],
+                    content: [.text(
+                        text: "No token sections configured for export. Check your config file.",
+                        annotations: nil,
+                        _meta: nil
+                    )],
                     isError: true
                 )
             }
@@ -691,8 +718,8 @@
             }
 
             return try .init(content: [
-                .text(encodeJSON(meta)),
-                .text(tokensJSON),
+                .text(text: encodeJSON(meta), annotations: nil, _meta: nil),
+                .text(text: tokensJSON, annotations: nil, _meta: nil),
             ])
         }
 
