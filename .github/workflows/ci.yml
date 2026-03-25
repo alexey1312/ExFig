@@ -143,7 +143,7 @@ jobs:
         uses: compnerd/gha-setup-swift@v0.3.0
         with:
           branch: swift-6.3-release
-          tag: swift-6.3-RELEASE
+          tag: 6.3-RELEASE
 
       - name: Cache SPM dependencies
         uses: actions/cache@v5
