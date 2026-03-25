@@ -11,6 +11,8 @@ import XcodeExport
 
 // MARK: - Plugin-based Icons Export
 
+// swiftlint:disable function_body_length
+
 extension ExFigCommand.ExportIcons {
     /// Exports iOS icons using plugin architecture.
     ///

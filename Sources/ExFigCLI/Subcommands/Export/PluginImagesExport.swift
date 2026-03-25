@@ -11,6 +11,8 @@ import XcodeExport
 
 // MARK: - Plugin-based Images Export
 
+// swiftlint:disable function_body_length
+
 extension ExFigCommand.ExportImages {
     /// Exports iOS images using plugin architecture.
     ///
