@@ -22,7 +22,6 @@ var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/DesignPipe/swift-svgkit.git", from: "0.1.0"),
     .package(url: "https://github.com/DesignPipe/swift-figma-api.git", from: "0.2.0"),
     .package(url: "https://github.com/DesignPipe/swift-penpot-api.git", from: "0.1.0"),
-    .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.9.0"),
 ]
 
 var exfigCLIDependencies: [Target.Dependency] = [
@@ -46,16 +45,22 @@ var exfigCLIDependencies: [Target.Dependency] = [
     .product(name: "WebP", package: "libwebp"),
     .product(name: "LibPNG", package: "libpng"),
     .product(name: "Noora", package: "Noora"),
-    .product(name: "MCP", package: "swift-sdk"),
 ]
 
-// XcodeProj is Apple-only (not available on Windows)
+// XcodeProj and MCP SDK are not available on Windows
+// (XcodeProj depends on PathKit/AEXML, MCP SDK depends on swift-nio which doesn't compile on Windows)
 #if !os(Windows)
     packageDependencies.append(
         .package(url: "https://github.com/tuist/XcodeProj.git", from: "8.27.0")
     )
+    packageDependencies.append(
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.9.0")
+    )
     exfigCLIDependencies.append(
         .product(name: "XcodeProj", package: "XcodeProj")
+    )
+    exfigCLIDependencies.append(
+        .product(name: "MCP", package: "swift-sdk")
     )
 #endif
 
