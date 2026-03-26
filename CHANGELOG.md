@@ -2,6 +2,98 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Documentation
+
+- **openspec**: Archive add-penpot-support change and sync specs by @alexey1312
+
+
+## [3.0.0] - 2026-03-26
+
+### Bug Fixes
+
+- **ci**: Pin Swift container and version-aware cache keys by @alexey1312
+
+- **api**: Use cross-platform HTTPURLResponse init in tests by @alexey1312
+
+- **test**: Use /dev/null path for write-failure test on Linux by @alexey1312
+
+- **docs**: Use lowercase hosting-base-path to match GitHub Pages URL by @alexey1312
+
+- **docs**: Update DocC links from /exfig/ to /exfigcli/ after target rename by @alexey1312
+
+- **ci**: Remove unused coverage steps from macOS CI job by @alexey1312
+
+- **ci**: Update deploy-docc workflow to Swift 6.3  by @Copilot in [#77](https://github.com/DesignPipe/exfig/pull/77)
+
+- **ci**: Exclude swift-docc-plugin on Windows by @alexey1312
+
+- **cache**: Graceful degradation when granular cache node fetch fails by @alexey1312
+
+
+### Documentation
+
+- Redesign README as pain-driven, move details to DocC articles by @alexey1312
+
+- **openspec**: Revise design-source-abstraction proposal by @alexey1312
+
+- **openspec**: Add Penpot API support change specification by @alexey1312
+
+- **openspec**: Fix Penpot API assumptions and translate to English by @alexey1312
+
+- Extract Troubleshooting and Dependencies from CLAUDE.md to reduce size by @alexey1312
+
+- Refresh DocC navigation and theming by @alexey1312
+
+
+### Features
+
+- **docs**: Add llms.txt and llms-full.txt generation by @alexey1312
+
+- **mcp**: Add MCP server for AI agent integration  by @alexey1312 in [#72](https://github.com/DesignPipe/exfig/pull/72)
+
+- **cli**: Add interactive wizards for fetch and init commands  by @alexey1312 in [#73](https://github.com/DesignPipe/exfig/pull/73)
+
+- **cli**: Add exfig_export and exfig_download MCP tools  by @alexey1312 in [#74](https://github.com/DesignPipe/exfig/pull/74)
+
+- **core**: Abstract design data sources behind per-asset-type protocols  by @alexey1312 in [#75](https://github.com/DesignPipe/exfig/pull/75)
+
+- **penpot**: Add Penpot as alternative design source  by @alexey1312 in [#76](https://github.com/DesignPipe/exfig/pull/76)
+
+- Add Windows CI support with Swift 6.3  by @alexey1312 in [#64](https://github.com/DesignPipe/exfig/pull/64)
+
+
+### Miscellaneous Tasks
+
+- Update mise lock by @alexey1312
+
+- Add skills by @alexey1312
+
+- Add skills by @alexey1312
+
+- Pin xcsift to 1.1.6 by @alexey1312
+
+- Upgrade mise-action v3 → v4 (Node.js 24) by @alexey1312
+
+- Pin Swift container in release.yml, update checkout in windows-test by @alexey1312
+
+- **openspec**: Add design-source-abstraction change by @alexey1312
+
+- **api**: Bump swift-figma-api to 0.2.0, use FigmaClient.baseURL in mock by @alexey1312
+
+- **docs**: Trigger DocC deploy on release publish by @alexey1312
+
+- Regenerate llms-full.txt after README redesign by @alexey1312
+
+
+### Refactor
+
+- Extract SVGKit into standalone package swift-svgkit  by @alexey1312 in [#70](https://github.com/DesignPipe/exfig/pull/70)
+
+- Extract FigmaAPI into standalone package  by @alexey1312 in [#71](https://github.com/DesignPipe/exfig/pull/71)
+
+
 ## [2.8.1] - 2026-03-15
 
 ### Bug Fixes
