@@ -56,10 +56,10 @@ final class Spinner: @unchecked Sendable {
 
         // Set animation flag and initial frame synchronously BEFORE dispatching
         // This ensures log messages see the animation state immediately
-        TerminalOutputManager.shared.startAnimation(initialFrame: "\(coloredFrame) \(initialMessage)")
+        if useAnimations {
+            TerminalOutputManager.shared.startAnimation(initialFrame: "\(coloredFrame) \(initialMessage)")
 
-        Self.renderQueue.async { [self] in
-            if useAnimations {
+            Self.renderQueue.async { [self] in
                 TerminalOutputManager.shared.writeDirect(ANSICodes.hideCursor)
                 // First frame already rendered by startAnimation(), start timer for next frames
 
@@ -73,9 +73,10 @@ final class Spinner: @unchecked Sendable {
                 }
                 self.timer = timer
                 timer.resume()
-            } else {
-                TerminalOutputManager.shared.writeDirect("\(initialMessage)\n")
             }
+        } else {
+            // Non-animated mode: just print the message once with newline
+            TerminalOutputManager.shared.print("\(coloredFrame) \(initialMessage)")
         }
     }
 

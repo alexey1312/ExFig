@@ -33,9 +33,9 @@ common = new Common.CommonConfig {
     nameReplaceRegexp = "color_$1"
     // [optional] Extract light and dark mode from the lightFileId using name suffix splitting
     // suffixDarkMode = new Common.SuffixDarkMode { suffix = "_dark" }
-    // [optional] If useSingleFile is true, customize the suffix to denote a light high contrast color. Defaults to '_lightHC'
+    // [optional] If suffixDarkMode is set, customize the suffix to denote a light high contrast color. Defaults to '_lightHC'
     // lightHCModeSuffix = "_lightHC"
-    // [optional] If useSingleFile is true, customize the suffix to denote a dark high contrast color. Defaults to '_darkHC'
+    // [optional] If suffixDarkMode is set, customize the suffix to denote a dark high contrast color. Defaults to '_darkHC'
     // darkHCModeSuffix = "_darkHC"
   }
   // [optional] Use variablesColors instead of colors to export colors from Figma Variables. Cannot be used together with colors.

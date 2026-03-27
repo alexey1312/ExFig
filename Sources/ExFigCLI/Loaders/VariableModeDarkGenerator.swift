@@ -55,14 +55,22 @@ struct VariableModeDarkGenerator {
 
         // 2. Find collection and extract mode IDs
         guard let modes = findModeIds(in: variablesMeta, config: config) else {
-            logger.warning("Variables collection '\(config.collectionName)' not found or missing modes")
+            let collectionNames = variablesMeta.variableCollections.values.map(\.name)
+            logger.warning("""
+            Variables dark mode: collection '\(config.collectionName)' not found or missing \
+            modes '\(config.lightModeName)'/'\(config.darkModeName)'. \
+            Available collections: \(collectionNames.sorted().joined(separator: ", "))
+            """)
             return []
         }
 
         // 3. Fetch nodes to discover boundVariables on paints
         let nodeIds = lightPacks.compactMap(\.nodeId)
 
-        guard !nodeIds.isEmpty else { return [] }
+        guard !nodeIds.isEmpty else {
+            logger.warning("Variable-mode dark generation: none of the light packs have node IDs, skipping")
+            return []
+        }
 
         let nodeMap = try await fetchNodesBatched(fileId: config.fileId, nodeIds: nodeIds)
 
@@ -71,58 +79,114 @@ struct VariableModeDarkGenerator {
             .appendingPathComponent("exfig-variable-dark-\(ProcessInfo.processInfo.processIdentifier)")
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
+        var cleanupNeeded = true
+        defer {
+            if cleanupNeeded {
+                try? FileManager.default.removeItem(at: tempDir)
+            }
+        }
+
+        let darkPacks = try processLightPacks(
+            lightPacks,
+            nodeMap: nodeMap,
+            variablesMeta: variablesMeta,
+            modes: modes,
+            tempDir: tempDir
+        )
+
+        // Keep temp dir alive — caller consumes the URLs during export, then OS cleans /tmp
+        cleanupNeeded = false
+        return darkPacks
+    }
+
+    // MARK: - Private
+
+    // swiftlint:disable cyclomatic_complexity
+
+    private func processLightPacks(
+        _ lightPacks: [ImagePack],
+        nodeMap: [String: Node],
+        variablesMeta: VariablesMeta,
+        modes: ModeContext,
+        tempDir: URL
+    ) throws -> [ImagePack] {
         var darkPacks: [ImagePack] = []
 
         for pack in lightPacks {
-            guard let nodeId = pack.nodeId,
-                  let node = nodeMap[nodeId]
-            else { continue }
+            guard let nodeId = pack.nodeId else { continue }
+
+            guard let node = nodeMap[nodeId] else {
+                logger.debug(
+                    "Node '\(nodeId)' for icon '\(pack.name)' not returned by Figma API, skipping dark generation"
+                )
+                continue
+            }
 
             // Collect all bound variable colors from the node tree
             let colorMap = buildColorMap(
                 node: node,
                 variablesMeta: variablesMeta,
-                modes: modes
+                modes: modes,
+                iconName: pack.name
             )
 
-            guard !colorMap.isEmpty else {
-                // No bound variables — skip dark generation for this icon
+            guard !colorMap.isEmpty else { continue }
+
+            guard let darkPack = try buildDarkPack(for: pack, colorMap: colorMap, tempDir: tempDir) else {
                 continue
             }
-
-            // Download light SVG and replace colors
-            guard let svgImage = pack.images.first,
-                  let svgData = try? Data(contentsOf: svgImage.url),
-                  let svgContent = String(data: svgData, encoding: .utf8)
-            else { continue }
-
-            let darkSVG = SVGColorReplacer.replaceColors(in: svgContent, colorMap: colorMap)
-
-            // Write dark SVG to temp file
-            let safeName = pack.name
-                .replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: " ", with: "_")
-            let tempURL = tempDir.appendingPathComponent("\(safeName)_dark.svg")
-            try Data(darkSVG.utf8).write(to: tempURL)
-
-            darkPacks.append(ImagePack(
-                name: pack.name,
-                images: [Image(
-                    name: pack.name,
-                    scale: .all,
-                    url: tempURL,
-                    format: "svg"
-                )],
-                platform: pack.platform,
-                nodeId: pack.nodeId,
-                fileId: pack.fileId
-            ))
+            darkPacks.append(darkPack)
         }
 
         return darkPacks
     }
 
-    // MARK: - Private
+    // swiftlint:enable cyclomatic_complexity
+
+    private func buildDarkPack(
+        for pack: ImagePack,
+        colorMap: [String: String],
+        tempDir: URL
+    ) throws -> ImagePack? {
+        guard let svgImage = pack.images.first else {
+            logger.warning("Icon '\(pack.name)' has no images, skipping dark generation")
+            return nil
+        }
+
+        let svgData: Data
+        do {
+            svgData = try Data(contentsOf: svgImage.url)
+        } catch {
+            logger.warning("Failed to read SVG for icon '\(pack.name)': \(error.localizedDescription)")
+            return nil
+        }
+
+        guard let svgContent = String(data: svgData, encoding: .utf8) else {
+            logger.warning("Icon '\(pack.name)' SVG is not valid UTF-8, skipping dark generation")
+            return nil
+        }
+
+        let darkSVG = SVGColorReplacer.replaceColors(in: svgContent, colorMap: colorMap)
+
+        let safeName = pack.name
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: " ", with: "_")
+        let tempURL = tempDir.appendingPathComponent("\(safeName)_dark.svg")
+        try Data(darkSVG.utf8).write(to: tempURL)
+
+        return ImagePack(
+            name: pack.name,
+            images: [Image(
+                name: pack.name,
+                scale: .all,
+                url: tempURL,
+                format: "svg"
+            )],
+            platform: pack.platform,
+            nodeId: pack.nodeId,
+            fileId: pack.fileId
+        )
+    }
 
     private func loadVariables(fileId: String) async throws -> VariablesMeta {
         let endpoint = VariablesEndpoint(fileId: fileId)
@@ -178,14 +242,16 @@ struct VariableModeDarkGenerator {
     private func buildColorMap(
         node: Node,
         variablesMeta: VariablesMeta,
-        modes: ModeContext
+        modes: ModeContext,
+        iconName: String
     ) -> [String: String] {
         var colorMap: [String: String] = [:]
         collectBoundColors(
             from: node.document,
             variablesMeta: variablesMeta,
             modes: modes,
-            colorMap: &colorMap
+            colorMap: &colorMap,
+            iconName: iconName
         )
         return colorMap
     }
@@ -194,24 +260,37 @@ struct VariableModeDarkGenerator {
         from document: Document,
         variablesMeta: VariablesMeta,
         modes: ModeContext,
-        colorMap: inout [String: String]
+        colorMap: inout [String: String],
+        iconName: String
     ) {
         // Check fills
         for paint in document.fills {
-            collectFromPaint(paint, variablesMeta: variablesMeta, modes: modes, colorMap: &colorMap)
+            collectFromPaint(paint, variablesMeta: variablesMeta, modes: modes, colorMap: &colorMap, iconName: iconName)
         }
 
         // Check strokes
         if let strokes = document.strokes {
             for paint in strokes {
-                collectFromPaint(paint, variablesMeta: variablesMeta, modes: modes, colorMap: &colorMap)
+                collectFromPaint(
+                    paint,
+                    variablesMeta: variablesMeta,
+                    modes: modes,
+                    colorMap: &colorMap,
+                    iconName: iconName
+                )
             }
         }
 
         // Recurse into children
         if let children = document.children {
             for child in children {
-                collectBoundColors(from: child, variablesMeta: variablesMeta, modes: modes, colorMap: &colorMap)
+                collectBoundColors(
+                    from: child,
+                    variablesMeta: variablesMeta,
+                    modes: modes,
+                    colorMap: &colorMap,
+                    iconName: iconName
+                )
             }
         }
     }
@@ -220,7 +299,8 @@ struct VariableModeDarkGenerator {
         _ paint: Paint,
         variablesMeta: VariablesMeta,
         modes: ModeContext,
-        colorMap: inout [String: String]
+        colorMap: inout [String: String],
+        iconName: String
     ) {
         guard let boundVars = paint.boundVariables,
               let colorAlias = boundVars["color"],
@@ -241,6 +321,11 @@ struct VariableModeDarkGenerator {
             primitivesModeId: modes.primitivesModeId
         ) {
             if lightHex != darkHex {
+                if let existing = colorMap[lightHex], existing != darkHex {
+                    logger.warning(
+                        "Icon '\(iconName)': #\(lightHex) maps to multiple dark values (#\(existing) and #\(darkHex))"
+                    )
+                }
                 colorMap[lightHex] = darkHex
             }
         }
@@ -254,9 +339,14 @@ struct VariableModeDarkGenerator {
         primitivesModeId: String?,
         depth: Int = 0
     ) -> String? {
-        guard depth < 10 else { return nil }
+        guard depth < 10 else {
+            logger.warning("Variable alias chain exceeded depth limit (variableId: \(variableId))")
+            return nil
+        }
 
-        guard let variable = variablesMeta.variables[variableId] else { return nil }
+        guard let variable = variablesMeta.variables[variableId],
+              variable.deletedButReferenced != true
+        else { return nil }
 
         // Try the requested mode first, fall back to default mode of the collection
         let value = variable.valuesByMode[modeId]

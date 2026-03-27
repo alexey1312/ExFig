@@ -49,7 +49,7 @@ ios = new iOS.iOSConfig {
       templatesPath = "BrandKit/Templates"
       // rtlProperty = "RTL"  // default; set to null to disable variant-based RTL detection
     }
-    / Variable-mode dark: generate dark SVGs from Figma Variable bindings
+    // Variable-mode dark: generate dark SVGs from Figma Variable bindings
     new iOS.IconsEntry {
       figmaFrameName = "DoubleColor"
       format = "svg"

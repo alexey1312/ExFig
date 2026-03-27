@@ -19,25 +19,34 @@ enum SVGColorReplacer {
         // Replace hex colors in SVG attributes: fill="#RRGGBB", stroke="#RRGGBB", stop-color="#RRGGBB"
         // and inline CSS: fill:#RRGGBB, stroke:#RRGGBB
         for (lightHex, darkHex) in colorMap {
-            // Match both with and without # prefix, case-insensitive
-            let patterns = [
+            // Match both attribute and CSS property styles, case-insensitive
+            let replacements: [(pattern: String, template: String)] = [
                 // Attribute style: fill="#aabbcc" or stroke="#AABBCC"
-                "(fill|stroke|stop-color|flood-color|lighting-color)(\\s*=\\s*[\"'])#\(lightHex)([\"'])",
+                (
+                    "(fill|stroke|stop-color|flood-color|lighting-color)(\\s*=\\s*[\"'])#\(lightHex)([\"'])",
+                    "$1$2#\(darkHex)$3"
+                ),
                 // CSS property style: fill:#aabbcc or stroke:#AABBCC (in style attributes)
-                "(fill|stroke|stop-color|flood-color|lighting-color)(\\s*:\\s*)#\(lightHex)",
+                (
+                    "(fill|stroke|stop-color|flood-color|lighting-color)(\\s*:\\s*)#\(lightHex)",
+                    "$1$2#\(darkHex)"
+                ),
             ]
 
-            for pattern in patterns {
-                if let regex = try? NSRegularExpression(
-                    pattern: pattern,
-                    options: .caseInsensitive
-                ) {
+            for (pattern, template) in replacements {
+                do {
+                    let regex = try NSRegularExpression(
+                        pattern: pattern,
+                        options: .caseInsensitive
+                    )
                     let range = NSRange(result.startIndex..., in: result)
                     result = regex.stringByReplacingMatches(
                         in: result,
                         range: range,
-                        withTemplate: "$1$2#\(darkHex)$3"
+                        withTemplate: template
                     )
+                } catch {
+                    assertionFailure("Invalid regex pattern: \(pattern), error: \(error)")
                 }
             }
         }

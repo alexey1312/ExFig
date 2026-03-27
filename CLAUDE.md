@@ -123,7 +123,7 @@ Twelve modules in `Sources/`:
 **MCP stdout safety:** `OutputMode.mcp` + `TerminalOutputManager.setStderrMode(true)` — all CLI output goes to stderr
 **Claude Code plugins:** [exfig-plugins](https://github.com/DesignPipe/exfig-plugins) marketplace — MCP integration, setup wizard, export commands, config review, troubleshooting
 
-**Variable-mode dark icons:** `FigmaComponentsSource.loadIcons()` → `VariableModeDarkGenerator` — fetches Variables API, resolves alias chains, replaces hex colors in SVG via `SVGColorReplacer`. Third dark mode approach alongside `darkFileId` and `useSingleFile+darkModeSuffix`.
+**Variable-mode dark icons:** `FigmaComponentsSource.loadIcons()` → `VariableModeDarkGenerator` — fetches Variables API, resolves alias chains, replaces hex colors in SVG via `SVGColorReplacer`. Third dark mode approach alongside `darkFileId` and `suffixDarkMode`.
 
 **Batch mode:** Single `@TaskLocal` via `BatchSharedState` actor — see `ExFigCLI/CLAUDE.md`.
 
@@ -247,6 +247,8 @@ Integration point: `FigmaComponentsSource.loadIcons()`.
 → build `lightHex → darkHex` map → `SVGColorReplacer.replaceColors()` → write dark SVG to temp file.
 
 Key files: `VariableModeDarkGenerator.swift`, `SVGColorReplacer.swift`, `FigmaComponentsSource.swift`.
+
+**Logging requirements:** Every `guard ... else { continue }` in the generation loop must log a warning — silent skips cause invisible data loss. `resolveDarkColor` must check `deletedButReferenced != true` (same as all other variable loaders). `SVGColorReplacer` uses separate regex replacement templates per pattern (attribute patterns have 3 capture groups, CSS patterns have 2 — never share a single template).
 
 ### Module Boundaries
 
@@ -474,6 +476,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | SwiftFormat `#if` indent | SwiftFormat 0.60.1 indents content inside `#if canImport()` — this is intentional project style, do not "fix" |
 | SPM `from:` too loose | When code uses APIs from version X, set `from: "X"` not older — SPM may resolve an incompatible earlier version |
 | Granular cache "Access denied" | `GranularCacheManager.filterChangedComponents` degrades gracefully — returns all components on node fetch error instead of failing config |
+| Empty `fileId` in variable dark | `FigmaComponentsSource` must guard `fileId` not empty before calling `VariableModeDarkGenerator` — `?? ""` causes cryptic Figma API 404 |
 
 ## Additional Rules
 

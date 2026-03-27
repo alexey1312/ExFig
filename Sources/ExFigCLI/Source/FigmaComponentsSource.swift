@@ -35,11 +35,17 @@ struct FigmaComponentsSource: ComponentsSource {
         let result = try await loader.load(filter: filter)
 
         // Variable-mode dark generation: resolve variable bindings and replace colors in SVGs
+        let hasPartialConfig = input.variablesCollectionName != nil
+            || input.variablesLightModeName != nil
+            || input.variablesDarkModeName != nil
         if let collectionName = input.variablesCollectionName,
            let lightModeName = input.variablesLightModeName,
            let darkModeName = input.variablesDarkModeName
         {
-            let fileId = input.figmaFileId ?? params.figma?.lightFileId ?? ""
+            guard let fileId = input.figmaFileId ?? params.figma?.lightFileId, !fileId.isEmpty else {
+                logger.warning("Variable-mode dark generation requires a Figma file ID, skipping")
+                return IconsLoadOutput(light: result.light, dark: [])
+            }
             let generator = VariableModeDarkGenerator(client: client, logger: logger)
             let darkPacks = try await generator.generateDarkVariants(
                 lightPacks: result.light,
@@ -52,6 +58,13 @@ struct FigmaComponentsSource: ComponentsSource {
                 )
             )
             return IconsLoadOutput(light: result.light, dark: darkPacks)
+        } else if hasPartialConfig {
+            let col = input.variablesCollectionName ?? "nil"
+            let light = input.variablesLightModeName ?? "nil"
+            let dark = input.variablesDarkModeName ?? "nil"
+            logger.warning(
+                "Variable-mode dark: incomplete config — collection=\(col) light=\(light) dark=\(dark)"
+            )
         }
 
         return IconsLoadOutput(
