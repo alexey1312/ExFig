@@ -16,12 +16,17 @@ public extension Flutter.IconsEntry {
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
             pageName: figmaPageName,
-            useSingleFile: darkFileId == nil,
+            useSingleFile: darkFileId == nil && variablesDarkMode == nil,
             darkModeSuffix: "_dark",
             rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp,
-            penpotBaseURL: resolvedPenpotBaseURL
+            penpotBaseURL: resolvedPenpotBaseURL,
+            variablesCollectionName: variablesDarkMode?.collectionName,
+            variablesLightModeName: variablesDarkMode?.lightModeName,
+            variablesDarkModeName: variablesDarkMode?.darkModeName,
+            variablesPrimitivesModeName: variablesDarkMode?.primitivesModeName,
+            variablesFileId: variablesDarkMode?.variablesFileId
         )
     }
 

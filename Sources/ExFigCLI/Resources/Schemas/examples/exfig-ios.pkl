@@ -49,5 +49,19 @@ ios = new iOS.iOSConfig {
       templatesPath = "BrandKit/Templates"
       // rtlProperty = "RTL"  // default; set to null to disable variant-based RTL detection
     }
+    // Variable-mode dark: generate dark SVGs from Figma Variable bindings.
+    // variablesFileId is required when variables alias to primitives in an external library.
+    new iOS.IconsEntry {
+      figmaFrameName = "DoubleColor"
+      format = "svg"
+      assetsFolder = "DoubleColorIcons"
+      nameStyle = "camelCase"
+      variablesDarkMode = new Common.VariablesDarkMode {
+        collectionName = "DesignTokens"
+        lightModeName = "Light"
+        darkModeName = "Dark"
+        variablesFileId = "LIBRARY_FILE_ID"
+      }
+    }
   }
 }

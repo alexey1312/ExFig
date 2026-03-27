@@ -75,6 +75,17 @@ Uses `static let _typeRegistration` for thread-safe dispatch_once semantics.
 When adding new PKL types to schemas, regenerate with `codegen:pkl` and add the new type to the registration list in `PKLEvaluator.swift`.
 `registerPklTypes` has a hard `precondition(_shared == nil)` — must be called before any `TypeRegistry.get()`.
 
+**Scope:** `registerPklTypes` is a performance optimization that bypasses O(N) type scanning. It does NOT affect decoding of concrete `Decodable` types — pkl-swift decodes those via synthesized `init(from:)` directly. Missing entries only affect polymorphic `PklAny` decoding. Still list all types for completeness and the exhaustive count test in `PKLEvaluatorTests`.
+
+### Debugging PKL Deserialization
+
+When a PKL field appears as `nil` at runtime but `pkl eval --format json` shows it:
+
+1. Write a `PKLEvaluatorTests` test that evaluates a fixture with the field and asserts non-nil
+2. If test passes: issue is downstream (entry bridge, source input, or runtime binary mismatch)
+3. If test fails: issue is in pkl-swift decoding (check CodingKeys, property name mismatch)
+4. Add diagnostic log in `FigmaComponentsSource` or bridge layer to trace values at runtime
+
 ## Codegen Gotchas
 
 - PKL `"kebab-case"` raw values become `.kebabCase` in Swift (not `.kebab_case`)

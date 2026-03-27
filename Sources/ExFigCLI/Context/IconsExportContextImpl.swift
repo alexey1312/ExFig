@@ -23,6 +23,8 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
     let configExecutionContext: ConfigExecutionContext?
     let granularCacheManager: GranularCacheManager?
     let platform: Platform
+    let variablesCache: VariablesCache?
+    let componentsCache: ComponentsCache?
 
     init(
         client: Client,
@@ -34,7 +36,9 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
         fileDownloader: FileDownloader = FileDownloader(),
         configExecutionContext: ConfigExecutionContext? = nil,
         granularCacheManager: GranularCacheManager? = nil,
-        platform: Platform
+        platform: Platform,
+        variablesCache: VariablesCache? = nil,
+        componentsCache: ComponentsCache? = nil
     ) {
         self.client = client
         self.componentsSource = componentsSource
@@ -46,6 +50,8 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
         self.configExecutionContext = configExecutionContext
         self.granularCacheManager = granularCacheManager
         self.platform = platform
+        self.variablesCache = variablesCache
+        self.componentsCache = componentsCache
     }
 
     var isGranularCacheEnabled: Bool {
@@ -102,9 +108,13 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
             dark: icons.dark.isEmpty ? nil : icons.dark
         )
 
+        if let warning = result.warning {
+            let formatted = WarningFormatter().format(warning, compact: isBatchMode)
+            ExFigCommand.logger.debug("\(formatted)")
+        }
+
         return try IconsProcessResult(
-            iconPairs: result.get(),
-            warning: result.warning.map { WarningFormatter().format($0, compact: isBatchMode) }
+            iconPairs: result.get()
         )
     }
 
@@ -166,14 +176,16 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
             logger: ExFigCommand.logger,
             config: config
         )
+        loader.componentsCache = componentsCache
 
+        let output: IconsLoadOutputWithHashes
         if let manager = granularCacheManager {
             loader.granularCacheManager = manager
             let result = try await loader.loadWithGranularCache(
                 filter: filter,
                 onBatchProgress: onProgress ?? { _, _ in }
             )
-            return IconsLoadOutputWithHashes(
+            output = IconsLoadOutputWithHashes(
                 light: result.light,
                 dark: result.dark ?? [],
                 computedHashes: result.computedHashes,
@@ -182,7 +194,7 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
             )
         } else {
             let result = try await loader.load(filter: filter, onBatchProgress: onProgress ?? { _, _ in })
-            return IconsLoadOutputWithHashes(
+            output = IconsLoadOutputWithHashes(
                 light: result.light,
                 dark: result.dark ?? [],
                 computedHashes: [:],
@@ -190,6 +202,44 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
                 allAssetMetadata: []
             )
         }
+
+        return try await applyVariableModeDark(to: output, source: source)
+    }
+
+    /// Applies variable-mode dark generation to granular cache output.
+    private func applyVariableModeDark(
+        to output: IconsLoadOutputWithHashes,
+        source: IconsSourceInput
+    ) async throws -> IconsLoadOutputWithHashes {
+        guard let collectionName = source.variablesCollectionName,
+              let lightModeName = source.variablesLightModeName,
+              let darkModeName = source.variablesDarkModeName
+        else { return output }
+
+        let logger = ExFigCommand.logger
+        guard let fileId = source.figmaFileId ?? params.figma?.lightFileId, !fileId.isEmpty else {
+            logger.warning("Variable-mode dark generation requires a Figma file ID, skipping")
+            return output
+        }
+        let generator = VariableModeDarkGenerator(client: client, logger: logger, variablesCache: variablesCache)
+        let darkPacks = try await generator.generateDarkVariants(
+            lightPacks: output.light,
+            config: .init(
+                fileId: fileId,
+                collectionName: collectionName,
+                lightModeName: lightModeName,
+                darkModeName: darkModeName,
+                primitivesModeName: source.variablesPrimitivesModeName,
+                variablesFileId: source.variablesFileId
+            )
+        )
+        return IconsLoadOutputWithHashes(
+            light: output.light,
+            dark: darkPacks,
+            computedHashes: output.computedHashes,
+            allSkipped: output.allSkipped,
+            allAssetMetadata: output.allAssetMetadata
+        )
     }
 
     func processIconNames(

@@ -291,8 +291,7 @@ import ".exfig/schemas/Common.pkl"
 
 common = new Common.CommonConfig {
   icons = new Common.Icons {
-    useSingleFile = true
-    darkModeSuffix = "_dark"
+    suffixDarkMode = new Common.SuffixDarkMode { suffix = "_dark" }
   }
 }
 ```
@@ -304,6 +303,28 @@ Icons frame
 ├── ic/24/logo
 └── ic/24/logo_dark
 ```
+
+### Variable Mode
+
+For icons using Figma Variable bindings (e.g., double-color icons), ExFig resolves dark colors automatically from the Variables API:
+
+```pkl
+new iOS.IconsEntry {
+  figmaFrameName = "DoubleColor"
+  format = "svg"
+  assetsFolder = "DoubleColorIcons"
+  variablesDarkMode = new Common.VariablesDarkMode {
+    collectionName = "DesignTokens"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+    variablesFileId = "LIBRARY_FILE_ID"
+  }
+}
+```
+
+ExFig fetches variable definitions, resolves alias chains to concrete colors, and replaces hex values in SVGs to produce dark variants.
+
+`variablesFileId` is required when your variables alias to primitives in an external Figma library. It specifies the library file where the full variable chain (including primitives) can be resolved. If all variables are local to the icons file, omit this field.
 
 ## See Also
 

@@ -35,6 +35,7 @@ Exporter.export*(entries, platformConfig, context)
 - `TokensFileColorsConfig.ignoredModeNames`: carries Figma-specific mode field names set by user for warning
 - `IconsSourceInput`, `ImagesSourceInput`, `TypographySourceInput` have `sourceKind` field (default `.figma`)
 - `IconsSourceInput`, `ImagesSourceInput`, `TypographySourceInput` have `penpotBaseURL: String?` field for Penpot base URL
+- `IconsSourceInput` has variable-mode dark fields: `variablesCollectionName`, `variablesLightModeName`, `variablesDarkModeName`, `variablesPrimitivesModeName`
 - When adding a new `ColorsSourceConfig` subtype: update `spinnerLabel` switch in `ExportContext.swift`
 
 Implementations live in `Sources/ExFigCLI/Source/` — `FigmaColorsSource`, `TokensFileColorsSource`, `PenpotColorsSource`, `PenpotComponentsSource`, `PenpotTypographySource`, `FigmaComponentsSource`, `FigmaTypographySource`, `SourceFactory`.

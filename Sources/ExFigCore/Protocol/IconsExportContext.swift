@@ -103,6 +103,21 @@ public struct IconsSourceInput: Sendable {
     /// Penpot instance base URL (used when sourceKind == .penpot).
     public let penpotBaseURL: String?
 
+    /// Variable collection name for dark mode generation via Figma Variables.
+    public let variablesCollectionName: String?
+
+    /// Light mode name in the variables collection.
+    public let variablesLightModeName: String?
+
+    /// Dark mode name in the variables collection.
+    public let variablesDarkModeName: String?
+
+    /// Primitives mode name for resolving variable aliases.
+    public let variablesPrimitivesModeName: String?
+
+    /// Figma file ID for loading variables (when primitives are in a separate library file).
+    public let variablesFileId: String?
+
     public init(
         sourceKind: DesignSourceKind = .figma,
         figmaFileId: String? = nil,
@@ -119,7 +134,12 @@ public struct IconsSourceInput: Sendable {
         rtlProperty: String? = "RTL",
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil,
-        penpotBaseURL: String? = nil
+        penpotBaseURL: String? = nil,
+        variablesCollectionName: String? = nil,
+        variablesLightModeName: String? = nil,
+        variablesDarkModeName: String? = nil,
+        variablesPrimitivesModeName: String? = nil,
+        variablesFileId: String? = nil
     ) {
         self.sourceKind = sourceKind
         self.figmaFileId = figmaFileId
@@ -137,6 +157,11 @@ public struct IconsSourceInput: Sendable {
         self.nameValidateRegexp = nameValidateRegexp
         self.nameReplaceRegexp = nameReplaceRegexp
         self.penpotBaseURL = penpotBaseURL
+        self.variablesCollectionName = variablesCollectionName
+        self.variablesLightModeName = variablesLightModeName
+        self.variablesDarkModeName = variablesDarkModeName
+        self.variablesPrimitivesModeName = variablesPrimitivesModeName
+        self.variablesFileId = variablesFileId
     }
 }
 
@@ -273,6 +298,9 @@ public struct IconsExportResult: Sendable {
     /// Number of icons successfully exported.
     public let count: Int
 
+    /// Number of dark mode variants generated.
+    public let darkCount: Int
+
     /// Number of icons skipped due to granular cache (unchanged).
     public let skippedCount: Int
 
@@ -284,30 +312,34 @@ public struct IconsExportResult: Sendable {
 
     public init(
         count: Int,
+        darkCount: Int = 0,
         skippedCount: Int = 0,
         computedHashes: [String: [String: String]] = [:],
         allAssetMetadata: [AssetMetadata] = []
     ) {
         self.count = count
+        self.darkCount = darkCount
         self.skippedCount = skippedCount
         self.computedHashes = computedHashes
         self.allAssetMetadata = allAssetMetadata
     }
 
     /// Creates a simple result with just count (no granular cache).
-    public static func simple(count: Int) -> IconsExportResult {
-        IconsExportResult(count: count)
+    public static func simple(count: Int, darkCount: Int = 0) -> IconsExportResult {
+        IconsExportResult(count: count, darkCount: darkCount)
     }
 
     /// Merges multiple results into one.
     public static func merge(_ results: [IconsExportResult]) -> IconsExportResult {
         var totalCount = 0
+        var totalDark = 0
         var totalSkipped = 0
         var allHashes: [String: [String: String]] = [:]
         var allMetadata: [AssetMetadata] = []
 
         for result in results {
             totalCount += result.count
+            totalDark += result.darkCount
             totalSkipped += result.skippedCount
 
             // Merge hashes
@@ -324,6 +356,7 @@ public struct IconsExportResult: Sendable {
 
         return IconsExportResult(
             count: totalCount,
+            darkCount: totalDark,
             skippedCount: totalSkipped,
             computedHashes: allHashes,
             allAssetMetadata: allMetadata

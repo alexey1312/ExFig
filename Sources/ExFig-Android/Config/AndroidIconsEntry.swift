@@ -20,12 +20,17 @@ public extension Android.IconsEntry {
             frameName: figmaFrameName ?? "Icons",
             pageName: figmaPageName,
             format: .svg,
-            useSingleFile: darkFileId == nil,
+            useSingleFile: darkFileId == nil && variablesDarkMode == nil,
             darkModeSuffix: "_dark",
             rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp,
-            penpotBaseURL: resolvedPenpotBaseURL
+            penpotBaseURL: resolvedPenpotBaseURL,
+            variablesCollectionName: variablesDarkMode?.collectionName,
+            variablesLightModeName: variablesDarkMode?.lightModeName,
+            variablesDarkModeName: variablesDarkMode?.darkModeName,
+            variablesPrimitivesModeName: variablesDarkMode?.primitivesModeName,
+            variablesFileId: variablesDarkMode?.variablesFileId
         )
     }
 

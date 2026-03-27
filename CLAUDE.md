@@ -122,6 +122,9 @@ Twelve modules in `Sources/`:
 **MCP data flow:** `exfig mcp` → StdioTransport (JSON-RPC on stdin/stdout) → tool handlers → PKLEvaluator / TokensFileSource / FigmaAPI
 **MCP stdout safety:** `OutputMode.mcp` + `TerminalOutputManager.setStderrMode(true)` — all CLI output goes to stderr
 **Claude Code plugins:** [exfig-plugins](https://github.com/DesignPipe/exfig-plugins) marketplace — MCP integration, setup wizard, export commands, config review, troubleshooting
+**Plugin sync checklist:** When adding features visible to end users (new dark mode approach, new CLI flag, new MCP tool), update DesignPipe/exfig-plugins skills: `exfig-mcp-usage`, `exfig-config-review` (common-issues.md), `exfig-troubleshooting` (error-catalog.md), `exfig-setup`. Clone to `/tmp/exfig-plugins`, branch, commit, PR.
+
+**Variable-mode dark icons:** `FigmaComponentsSource.loadIcons()` → `VariableModeDarkGenerator` — fetches Variables API, resolves alias chains, replaces hex colors in SVG via `SVGColorReplacer`. Third dark mode approach alongside `darkFileId` and `suffixDarkMode`.
 
 **Batch mode:** Single `@TaskLocal` via `BatchSharedState` actor — see `ExFigCLI/CLAUDE.md`.
 
@@ -229,6 +232,41 @@ When relocating a type (e.g., `Android.WebpOptions` → `Common.WebpOptions`), u
 5. PKL examples (`Schemas/examples/*.pkl`)
 6. DocC docs (`ExFig.docc/**/*.md`), CONFIG.md
 
+### Variable-Mode Dark Icons (VariableModeDarkGenerator)
+
+Three dark mode approaches for icons (mutually exclusive):
+
+1. `darkFileId` — separate Figma file for dark icons (global `figma` section)
+2. `suffixDarkMode` — `Common.SuffixDarkMode` on `Common.Icons`/`Images`/`Colors`, splits by name suffix
+3. `variablesDarkMode` — `Common.VariablesDarkMode` on `FrameSource` (per-entry), resolves Figma Variable bindings
+
+Approach 3 is configured via nested `variablesDarkMode: VariablesDarkMode?` on `FrameSource`.
+Integration point: `FigmaComponentsSource.loadIcons()`.
+
+**Algorithm:** fetch `VariablesMeta` → fetch icon nodes → walk children tree to find `Paint.boundVariables["color"]`
+→ resolve dark value via alias chain (depth limit 10, same pattern as `ColorsVariablesLoader.handleColorMode()`)
+→ build `lightHex → darkHex` map → `SVGColorReplacer.replaceColors()` → write dark SVG to temp file.
+
+Key files: `VariableModeDarkGenerator.swift`, `SVGColorReplacer.swift`, `FigmaComponentsSource.swift`.
+
+**Logging requirements:** Every `guard ... else { continue }` in the generation loop must log a warning — silent skips cause invisible data loss. `resolveDarkColor` must check `deletedButReferenced != true` (same as all other variable loaders). `SVGColorReplacer` uses separate regex replacement templates per pattern (attribute patterns have 3 capture groups, CSS patterns have 2 — never share a single template).
+
+**Config validation:** `Config.init` uses `precondition(!fileId.isEmpty)` — catches the documented empty-fileId bug at construction time instead of relying on call-site guards.
+
+**Alias resolution behaviour:** `resolveDarkColor` alias targets resolve using the target collection's `defaultModeId`, NOT the requested modeId — test expectations must account for this (e.g., alias to primitive resolves via "light" default mode, not "dark").
+
+**pkl-swift decoding:** pkl-swift uses **keyed** decoding (by property name, not positional). TypeRegistry is only for `PklAny` polymorphic types and performance — concrete `Decodable` structs (like `VariablesDarkMode`) decode via synthesized `init(from:)` regardless of `registerPklTypes`. New types should still be added to `registerPklTypes()` for completeness, but missing entries do NOT cause silent nil for concrete typed fields.
+
+**Cross-file variable resolution:** Figma variable IDs are file-scoped — alias targets from the icons file don't exist in library files by ID. When `variablesFileId` is set, variables are loaded from BOTH files: icons file (semantic variables matching node boundVariables) + library file (primitives for alias resolution). Matching is by variable **name** across files and mode **name** across collections (not IDs).
+
+**VariablesCache pattern:** `VariablesCache` (Lock + Task dedup) caches Variables API responses by fileId across parallel entries. Created per platform section in `PluginIconsExport`, injected through `SourceFactory` → `FigmaComponentsSource` → `VariableModeDarkGenerator`. Same pattern applicable to `ColorsVariablesLoader` if needed. Failed tasks are evicted (`lock.withLock { tasks[fileId] = nil }` in catch) — transient Figma API errors (429) don't permanently poison the cache.
+
+**ComponentsCache pattern:** `ComponentsCache` (same Lock + Task dedup) caches Components API responses by fileId across parallel entries in standalone mode. Solves the problem that `ComponentPreFetcher` only works in batch mode (`BatchSharedState` is nil in standalone). Created per platform section in `PluginIconsExport`, injected through `SourceFactory` → `FigmaComponentsSource` → `ImageLoaderBase`.
+
+**Alpha handling:** `SVGColorReplacer` supports opacity via `ColorReplacement(hex, alpha)`. When `alpha < 1.0`, replacement adds `fill-opacity`/`stroke-opacity` attributes (SVG) or `;fill-opacity:N` (CSS). Same hex with different alpha IS a valid replacement (e.g., `#D6FB94` opaque → `#D6FB94` transparent).
+
+**Granular cache path:** `IconsExportContextImpl.loadIconsWithGranularCache()` creates its own `IconsLoader` and bypasses `FigmaComponentsSource` entirely. Variable-mode dark generation must be applied explicitly at the end of that method via `applyVariableModeDark(to:source:)`.
+
 ### Module Boundaries
 
 ExFigCore does NOT import FigmaAPI. Constants on `Component` (FigmaAPI, extended in ExFigCLI) are
@@ -239,7 +277,7 @@ ExFigConfig imports ExFigCore but NOT ExFigCLI — `ExFigError` is not available
 
 ### Modifying SourceFactory Signatures
 
-`createComponentsSource` has 8 call sites (4 in `PluginIconsExport` + 4 in `PluginImagesExport`) plus tests in `PenpotSourceTests.swift`.
+`createComponentsSource` has 8 call sites (4 in `PluginIconsExport` + 4 in `PluginImagesExport`) plus tests in `PenpotSourceTests.swift`. Icons sites pass `componentsCache:`, Images sites use default `nil`.
 `createTypographySource` call sites: only tests (not yet wired to production export flow).
 Use `replace_all` on the trailing parameter pattern (e.g., `filter: filter\n        )`) to update all sites at once.
 
@@ -455,6 +493,13 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | SwiftFormat `#if` indent | SwiftFormat 0.60.1 indents content inside `#if canImport()` — this is intentional project style, do not "fix" |
 | SPM `from:` too loose | When code uses APIs from version X, set `from: "X"` not older — SPM may resolve an incompatible earlier version |
 | Granular cache "Access denied" | `GranularCacheManager.filterChangedComponents` degrades gracefully — returns all components on node fetch error instead of failing config |
+| Empty `fileId` in variable dark | `FigmaComponentsSource` must guard `fileId` not empty before calling `VariableModeDarkGenerator` — `?? ""` causes cryptic Figma API 404 |
+| PKL field always `nil` | `registerPklTypes()` is a performance optimization, NOT a correctness requirement for concrete typed fields. For optional nested PKL objects returning `nil`, check: (1) `pkl eval --format json` confirms field present, (2) unit test with `PKLEvaluator.evaluate()` decodes correctly, (3) trace values at bridge layer (`iconsSourceInput()`) with diagnostic log |
+| Granular cache skips dark gen | `loadIconsWithGranularCache()` in `IconsExportContextImpl` bypasses `FigmaComponentsSource` — must call `VariableModeDarkGenerator` explicitly via `applyVariableModeDark()` helper |
+| Variable dark always empty maps | Alias targets are external library variables — set `variablesFileId` in `VariablesDarkMode` PKL config to the library file ID containing primitives |
+| Figma variable IDs file-scoped | Variable IDs differ between files — alias targets from file A can't be found by ID in file B. Use name-based matching (`resolveViaLibrary`) + mode name matching (not modeId) for cross-file resolution |
+| `assertionFailure` in release | `assertionFailure` is stripped in release builds — add `FileHandle.standardError.write()` as production fallback for truly-impossible-but-must-not-be-silent error paths |
+| Components API called N times | `ComponentPreFetcher` only works in batch mode — use `ComponentsCache` via `SourceFactory(componentsCache:)` for standalone multi-entry dedup |
 
 ## Additional Rules
 

@@ -77,12 +77,12 @@ final class ProgressBar: @unchecked Sendable {
         // Build initial frame synchronously
         let initialFrame = buildFrame(currentValue: 0)
 
-        // Set animation flag and initial frame synchronously BEFORE dispatching
-        // This ensures log messages see the animation state immediately
-        TerminalOutputManager.shared.startAnimation(initialFrame: initialFrame)
+        if useAnimations {
+            // Set animation flag and initial frame synchronously BEFORE dispatching
+            // This ensures log messages see the animation state immediately
+            TerminalOutputManager.shared.startAnimation(initialFrame: initialFrame)
 
-        Self.renderQueue.async { [self] in
-            if useAnimations {
+            Self.renderQueue.async { [self] in
                 TerminalOutputManager.shared.writeDirect(ANSICodes.hideCursor)
                 // First frame already rendered by startAnimation(), start timer for next frames
 

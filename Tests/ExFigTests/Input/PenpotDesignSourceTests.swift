@@ -28,6 +28,7 @@ final class FrameSourceResolvedSourceKindTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: "figma-file-id",
             rtlProperty: nil,
+            variablesDarkMode: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -57,6 +58,7 @@ final class FrameSourceResolvedSourceKindTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: nil,
             rtlProperty: nil,
+            variablesDarkMode: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -86,6 +88,7 @@ final class FrameSourceResolvedSourceKindTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: "figma-file-id",
             rtlProperty: nil,
+            variablesDarkMode: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -115,6 +118,7 @@ final class FrameSourceResolvedSourceKindTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: "figma-file-id",
             rtlProperty: nil,
+            variablesDarkMode: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -142,6 +146,7 @@ final class FrameSourceResolvedSourceKindTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: "figma-file-id",
             rtlProperty: nil,
+            variablesDarkMode: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -171,6 +176,7 @@ final class FrameSourceResolvedSourceKindTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: nil,
             rtlProperty: nil,
+            variablesDarkMode: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -198,6 +204,7 @@ final class FrameSourceResolvedSourceKindTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: nil,
             rtlProperty: nil,
+            variablesDarkMode: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )

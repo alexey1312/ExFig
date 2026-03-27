@@ -129,6 +129,8 @@ Granular cache flow: pre-fetch nodes → compute hashes → compare with cached 
 - `warning()` / `error()` — NEVER suppressed; queued to `BatchProgressView.queueLogMessage()` for coordinated rendering
 - `TerminalOutputManager` singleton prevents race conditions between animations and log output via `hasActiveAnimation` flag
 - `withParallelEntries()` creates parent spinner suppressing all inner output (except warnings/errors)
+- `OutputMode.useAnimations` is `true` only for `.normal` — `.verbose` and `.quiet` are non-animated
+- `Spinner`/`ProgressBar` non-animated mode: `start()` emits NO output; only `stop()` prints the final `✓`/`✗` line. Do NOT call `startAnimation()` or `writeDirect()` in non-animated mode — causes duplicated output
 
 ### Image Conversion Pipeline
 
@@ -148,34 +150,38 @@ Converter factories (`WebpConverterFactory`, `HeicConverterFactory`) handle plat
 
 ## Key Files
 
-| File                                     | Role                                                                |
-| ---------------------------------------- | ------------------------------------------------------------------- |
-| `ExFigCommand.swift`                     | Entry point, version, shared instances, subcommand registration     |
-| `Input/ExFigOptions.swift`               | PKL config loading, token validation, auto-detection                |
-| `Batch/BatchContext.swift`               | `BatchContext`, `ConfigExecutionContext`, `BatchSharedState` actor  |
-| `Batch/BatchExecutor.swift`              | Parallel config execution with rate limiting                        |
-| `Plugin/PluginRegistry.swift`            | Platform plugin routing (config key → plugin → exporters)           |
-| `TerminalUI/TerminalUI.swift`            | Output facade (info/success/warning/error, spinners, progress)      |
-| `TerminalUI/TerminalOutputManager.swift` | Thread-safe output synchronization, animation coordination          |
-| `TerminalUI/BatchProgressView.swift`     | Multi-config progress display with log queuing                      |
-| `Cache/GranularCacheManager.swift`       | Per-node change detection with FNV-1a hashing                       |
-| `Pipeline/SharedDownloadQueue.swift`     | Cross-config download pipelining actor                              |
-| `Output/FileWriter.swift`                | Sequential and parallel file writing with directory creation        |
-| `Shared/ComponentPreFetcher.swift`       | Pre-fetch components for multi-entry exports                        |
-| `Input/TokensFileSource.swift`           | W3C DTCG .tokens.json parser (local file → ExFigCore models)        |
-| `Output/W3CTokensExporter.swift`         | W3C design token JSON exporter (v1/v2025 formats)                   |
-| `Loaders/NumberVariablesLoader.swift`    | Figma number variables → dimension/number tokens                    |
-| `Subcommands/DownloadTokens.swift`       | Unified `download tokens` subcommand                                |
-| `MCP/ExFigMCPServer.swift`               | MCP server setup and lifecycle (stdio transport)                    |
-| `MCP/MCPToolDefinitions.swift`           | MCP tool schemas (export colors, icons, images, etc.)               |
-| `MCP/MCPToolHandlers.swift`              | MCP tool request handlers                                           |
-| `MCP/MCPResources.swift`                 | MCP resource providers (config, schemas)                            |
-| `MCP/MCPPrompts.swift`                   | MCP prompt templates                                                |
-| `MCP/MCPServerState.swift`               | MCP server shared state                                             |
-| `Source/SourceFactory.swift`             | Centralized factory creating source instances by `DesignSourceKind` |
-| `Source/Figma*Source.swift`              | Figma source implementations wrapping existing loaders              |
-| `Source/Penpot*Source.swift`             | Penpot source implementations (colors, components, typography)      |
-| `Source/TokensFileColorsSource.swift`    | Local .tokens.json source (extracted from ColorsExportContextImpl)  |
+| File                                      | Role                                                                                                            |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `ExFigCommand.swift`                      | Entry point, version, shared instances, subcommand registration                                                 |
+| `Input/ExFigOptions.swift`                | PKL config loading, token validation, auto-detection                                                            |
+| `Batch/BatchContext.swift`                | `BatchContext`, `ConfigExecutionContext`, `BatchSharedState` actor                                              |
+| `Batch/BatchExecutor.swift`               | Parallel config execution with rate limiting                                                                    |
+| `Plugin/PluginRegistry.swift`             | Platform plugin routing (config key → plugin → exporters)                                                       |
+| `TerminalUI/TerminalUI.swift`             | Output facade (info/success/warning/error, spinners, progress)                                                  |
+| `TerminalUI/TerminalOutputManager.swift`  | Thread-safe output synchronization, animation coordination                                                      |
+| `TerminalUI/BatchProgressView.swift`      | Multi-config progress display with log queuing                                                                  |
+| `Cache/GranularCacheManager.swift`        | Per-node change detection with FNV-1a hashing                                                                   |
+| `Pipeline/SharedDownloadQueue.swift`      | Cross-config download pipelining actor                                                                          |
+| `Output/FileWriter.swift`                 | Sequential and parallel file writing with directory creation                                                    |
+| `Shared/ComponentPreFetcher.swift`        | Pre-fetch components for multi-entry exports                                                                    |
+| `Input/TokensFileSource.swift`            | W3C DTCG .tokens.json parser (local file → ExFigCore models)                                                    |
+| `Output/W3CTokensExporter.swift`          | W3C design token JSON exporter (v1/v2025 formats)                                                               |
+| `Loaders/NumberVariablesLoader.swift`     | Figma number variables → dimension/number tokens                                                                |
+| `Subcommands/DownloadTokens.swift`        | Unified `download tokens` subcommand                                                                            |
+| `MCP/ExFigMCPServer.swift`                | MCP server setup and lifecycle (stdio transport)                                                                |
+| `MCP/MCPToolDefinitions.swift`            | MCP tool schemas (export colors, icons, images, etc.)                                                           |
+| `MCP/MCPToolHandlers.swift`               | MCP tool request handlers                                                                                       |
+| `MCP/MCPResources.swift`                  | MCP resource providers (config, schemas)                                                                        |
+| `MCP/MCPPrompts.swift`                    | MCP prompt templates                                                                                            |
+| `MCP/MCPServerState.swift`                | MCP server shared state                                                                                         |
+| `Source/SourceFactory.swift`              | Centralized factory creating source instances by `DesignSourceKind`                                             |
+| `Source/Figma*Source.swift`               | Figma source implementations wrapping existing loaders                                                          |
+| `Source/Penpot*Source.swift`              | Penpot source implementations (colors, components, typography)                                                  |
+| `Source/TokensFileColorsSource.swift`     | Local .tokens.json source (extracted from ColorsExportContextImpl)                                              |
+| `Loaders/VariableModeDarkGenerator.swift` | Generates dark SVGs via Figma Variables; supports cross-file resolution (name-based) when `variablesFileId` set |
+| `Loaders/VariablesCache.swift`            | Lock+Task dedup cache for Variables API responses across parallel entries                                       |
+| `Loaders/ComponentsCache.swift`           | Lock+Task dedup cache for Components API responses across parallel entries (standalone mode)                    |
+| `Output/SVGColorReplacer.swift`           | Hex color replacement in SVG content (fill, stroke, stop-color)                                                 |
 
 ### MCP Server Architecture
 
@@ -192,6 +198,9 @@ reserved for MCP JSON-RPC protocol.
 
 **Guide resources:** `exfig://guides/` serves markdown files from `Resources/Guides/` (copied from DocC articles).
 DocC `.docc` articles are NOT accessible via `Bundle.module` at runtime — must be separately copied to `Resources/Guides/`.
+**Guide sync:** `Resources/Guides/DesignRequirements.md` is served via MCP `exfig://guides/` resource. Must be updated alongside DocC articles when adding dark mode approaches or other user-facing features.
+
+**MCP validate dark_mode field:** `ValidateSummary.darkMode` reports active dark mode approaches (`darkFileId`, `suffixDarkMode`, `variablesDarkMode`). `buildDarkModeSummary()` checks `config.figma?.darkFileId`, `config.common?.icons?.suffixDarkMode`, and `Common_FrameSource.variablesDarkMode` across all platform icon entries.
 
 **Tool handler order:** Validate input parameters BEFORE expensive operations (PKL eval, API client creation).
 
