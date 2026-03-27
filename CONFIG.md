@@ -319,14 +319,18 @@ typography = new Common.Typography {
 
 All Icons and Images entries across platforms extend `Common.FrameSource`, which provides:
 
-| Field                | Type      | Default | Description                                             |
-| -------------------- | --------- | ------- | ------------------------------------------------------- |
-| `figmaFrameName`     | `String?` | —       | Override Figma frame name for this entry                |
-| `figmaPageName`      | `String?` | —       | Filter by Figma page name for this entry                |
-| `figmaFileId`        | `String?` | —       | Override Figma file ID for this entry                   |
-| `rtlProperty`        | `String?` | `"RTL"` | Figma component property name for RTL variant detection |
-| `nameValidateRegexp` | `String?` | —       | Regex pattern for name validation                       |
-| `nameReplaceRegexp`  | `String?` | —       | Replacement pattern using captured groups               |
+| Field                         | Type      | Default | Description                                                   |
+| ----------------------------- | --------- | ------- | ------------------------------------------------------------- |
+| `figmaFrameName`              | `String?` | —       | Override Figma frame name for this entry                      |
+| `figmaPageName`               | `String?` | —       | Filter by Figma page name for this entry                      |
+| `figmaFileId`                 | `String?` | —       | Override Figma file ID for this entry                         |
+| `rtlProperty`                 | `String?` | `"RTL"` | Figma component property name for RTL variant detection       |
+| `variablesCollectionName`     | `String?` | —       | Variables collection name for dark mode via Figma Variables   |
+| `variablesLightModeName`      | `String?` | —       | Light mode name in the variables collection (e.g. "Light")    |
+| `variablesDarkModeName`       | `String?` | —       | Dark mode name in the variables collection (e.g. "Dark")      |
+| `variablesPrimitivesModeName` | `String?` | —       | Primitives mode for resolving variable aliases (e.g. "Value") |
+| `nameValidateRegexp`          | `String?` | —       | Regex pattern for name validation                             |
+| `nameReplaceRegexp`           | `String?` | —       | Replacement pattern using captured groups                     |
 
 **RTL Detection:** When `rtlProperty` is set (default `"RTL"`), ExFig detects RTL support via Figma
 COMPONENT_SET variant properties. Components with `RTL=On` variant are automatically skipped (iOS/Android

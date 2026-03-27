@@ -123,6 +123,8 @@ Twelve modules in `Sources/`:
 **MCP stdout safety:** `OutputMode.mcp` + `TerminalOutputManager.setStderrMode(true)` — all CLI output goes to stderr
 **Claude Code plugins:** [exfig-plugins](https://github.com/DesignPipe/exfig-plugins) marketplace — MCP integration, setup wizard, export commands, config review, troubleshooting
 
+**Variable-mode dark icons:** `FigmaComponentsSource.loadIcons()` → `VariableModeDarkGenerator` — fetches Variables API, resolves alias chains, replaces hex colors in SVG via `SVGColorReplacer`. Third dark mode approach alongside `darkFileId` and `useSingleFile+darkModeSuffix`.
+
 **Batch mode:** Single `@TaskLocal` via `BatchSharedState` actor — see `ExFigCLI/CLAUDE.md`.
 
 **Entry-level parallelism:** All exporters use `parallelMapEntries()` (max 5 concurrent) — see `ExFigCore/CLAUDE.md`.
@@ -228,6 +230,23 @@ When relocating a type (e.g., `Android.WebpOptions` → `Common.WebpOptions`), u
 4. Init-template configs (`Sources/ExFigCLI/Resources/*Config.swift`) — `new Type { }` refs
 5. PKL examples (`Schemas/examples/*.pkl`)
 6. DocC docs (`ExFig.docc/**/*.md`), CONFIG.md
+
+### Variable-Mode Dark Icons (VariableModeDarkGenerator)
+
+Three dark mode approaches for icons (mutually exclusive):
+
+1. `darkFileId` — separate Figma file for dark icons
+2. `useSingleFile` + `darkModeSuffix` — dark icons in same file, split by name suffix
+3. `variablesCollectionName` + mode names — resolve Figma Variable bindings to generate dark SVGs
+
+Approach 3 is configured via `FrameSource` fields: `variablesCollectionName`, `variablesLightModeName`,
+`variablesDarkModeName`, `variablesPrimitivesModeName`. Integration point: `FigmaComponentsSource.loadIcons()`.
+
+**Algorithm:** fetch `VariablesMeta` → fetch icon nodes → walk children tree to find `Paint.boundVariables["color"]`
+→ resolve dark value via alias chain (depth limit 10, same pattern as `ColorsVariablesLoader.handleColorMode()`)
+→ build `lightHex → darkHex` map → `SVGColorReplacer.replaceColors()` → write dark SVG to temp file.
+
+Key files: `VariableModeDarkGenerator.swift`, `SVGColorReplacer.swift`, `FigmaComponentsSource.swift`.
 
 ### Module Boundaries
 

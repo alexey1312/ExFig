@@ -85,6 +85,12 @@ All asset types support dark variants via `AssetPair<T>`. Pattern:
 - Icons: dark variant filenames suffixed with `D` (e.g., `iconD.pdf`)
 - Images: dark variants in imageset with `appearances: [luminosity: dark]`
 
+**Icons dark mode approaches** (mutually exclusive):
+
+1. `darkFileId` — separate Figma file for dark icons
+2. `useSingleFile` + `darkModeSuffix` — dark icons in same file, split by name suffix
+3. Variable modes — `variablesCollectionName` + mode names → SVG color replacement via `VariableModeDarkGenerator`
+
 ### Output Cleanup
 
 Exporters remove old output dirs (`FileManager.removeItem`) before writing when:
