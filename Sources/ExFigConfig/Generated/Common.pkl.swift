@@ -43,6 +43,14 @@ public protocol Common_FrameSource: Common_NameProcessing {
     var figmaFileId: String? { get }
 
     var rtlProperty: String? { get }
+
+    var variablesCollectionName: String? { get }
+
+    var variablesLightModeName: String? { get }
+
+    var variablesDarkModeName: String? { get }
+
+    var variablesPrimitivesModeName: String? { get }
 }
 
 extension Common {
@@ -291,6 +299,21 @@ extension Common {
         /// Set to null to disable variant-based RTL detection.
         public var rtlProperty: String?
 
+        /// Variable collection name for dark mode generation via Figma Variables.
+        /// When set (along with light/dark mode names), dark SVG variants are generated
+        /// by resolving variable bindings and replacing colors in the light SVG.
+        public var variablesCollectionName: String?
+
+        /// Light mode name in the variables collection (e.g. "Light").
+        public var variablesLightModeName: String?
+
+        /// Dark mode name in the variables collection (e.g. "Dark").
+        public var variablesDarkModeName: String?
+
+        /// Primitives mode name for resolving variable aliases (e.g. "Value").
+        /// Used when variables reference other variables through alias chains.
+        public var variablesPrimitivesModeName: String?
+
         /// Regex pattern for validating/capturing names.
         public var nameValidateRegexp: String?
 
@@ -304,6 +327,10 @@ extension Common {
             figmaPageName: String?,
             figmaFileId: String?,
             rtlProperty: String?,
+            variablesCollectionName: String?,
+            variablesLightModeName: String?,
+            variablesDarkModeName: String?,
+            variablesPrimitivesModeName: String?,
             nameValidateRegexp: String?,
             nameReplaceRegexp: String?
         ) {
@@ -313,6 +340,10 @@ extension Common {
             self.figmaPageName = figmaPageName
             self.figmaFileId = figmaFileId
             self.rtlProperty = rtlProperty
+            self.variablesCollectionName = variablesCollectionName
+            self.variablesLightModeName = variablesLightModeName
+            self.variablesDarkModeName = variablesDarkModeName
+            self.variablesPrimitivesModeName = variablesPrimitivesModeName
             self.nameValidateRegexp = nameValidateRegexp
             self.nameReplaceRegexp = nameReplaceRegexp
         }

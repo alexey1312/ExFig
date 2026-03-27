@@ -16,12 +16,16 @@ public extension Web.IconsEntry {
             darkFileId: darkFileId,
             frameName: figmaFrameName ?? "Icons",
             pageName: figmaPageName,
-            useSingleFile: darkFileId == nil,
+            useSingleFile: darkFileId == nil && variablesCollectionName == nil,
             darkModeSuffix: "_dark",
             rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp,
-            penpotBaseURL: resolvedPenpotBaseURL
+            penpotBaseURL: resolvedPenpotBaseURL,
+            variablesCollectionName: variablesCollectionName,
+            variablesLightModeName: variablesLightModeName,
+            variablesDarkModeName: variablesDarkModeName,
+            variablesPrimitivesModeName: variablesPrimitivesModeName
         )
     }
 

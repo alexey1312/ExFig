@@ -34,6 +34,26 @@ struct FigmaComponentsSource: ComponentsSource {
 
         let result = try await loader.load(filter: filter)
 
+        // Variable-mode dark generation: resolve variable bindings and replace colors in SVGs
+        if let collectionName = input.variablesCollectionName,
+           let lightModeName = input.variablesLightModeName,
+           let darkModeName = input.variablesDarkModeName
+        {
+            let fileId = input.figmaFileId ?? params.figma?.lightFileId ?? ""
+            let generator = VariableModeDarkGenerator(client: client, logger: logger)
+            let darkPacks = try await generator.generateDarkVariants(
+                lightPacks: result.light,
+                config: .init(
+                    fileId: fileId,
+                    collectionName: collectionName,
+                    lightModeName: lightModeName,
+                    darkModeName: darkModeName,
+                    primitivesModeName: input.variablesPrimitivesModeName
+                )
+            )
+            return IconsLoadOutput(light: result.light, dark: darkPacks)
+        }
+
         return IconsLoadOutput(
             light: result.light,
             dark: result.dark ?? []

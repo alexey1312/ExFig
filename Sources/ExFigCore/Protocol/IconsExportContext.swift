@@ -103,6 +103,18 @@ public struct IconsSourceInput: Sendable {
     /// Penpot instance base URL (used when sourceKind == .penpot).
     public let penpotBaseURL: String?
 
+    /// Variable collection name for dark mode generation via Figma Variables.
+    public let variablesCollectionName: String?
+
+    /// Light mode name in the variables collection.
+    public let variablesLightModeName: String?
+
+    /// Dark mode name in the variables collection.
+    public let variablesDarkModeName: String?
+
+    /// Primitives mode name for resolving variable aliases.
+    public let variablesPrimitivesModeName: String?
+
     public init(
         sourceKind: DesignSourceKind = .figma,
         figmaFileId: String? = nil,
@@ -119,7 +131,11 @@ public struct IconsSourceInput: Sendable {
         rtlProperty: String? = "RTL",
         nameValidateRegexp: String? = nil,
         nameReplaceRegexp: String? = nil,
-        penpotBaseURL: String? = nil
+        penpotBaseURL: String? = nil,
+        variablesCollectionName: String? = nil,
+        variablesLightModeName: String? = nil,
+        variablesDarkModeName: String? = nil,
+        variablesPrimitivesModeName: String? = nil
     ) {
         self.sourceKind = sourceKind
         self.figmaFileId = figmaFileId
@@ -137,6 +153,10 @@ public struct IconsSourceInput: Sendable {
         self.nameValidateRegexp = nameValidateRegexp
         self.nameReplaceRegexp = nameReplaceRegexp
         self.penpotBaseURL = penpotBaseURL
+        self.variablesCollectionName = variablesCollectionName
+        self.variablesLightModeName = variablesLightModeName
+        self.variablesDarkModeName = variablesDarkModeName
+        self.variablesPrimitivesModeName = variablesPrimitivesModeName
     }
 }
 

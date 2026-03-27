@@ -120,6 +120,10 @@ final class EnumBridgingTests: XCTestCase {
                 figmaPageName: nil,
                 figmaFileId: nil,
                 rtlProperty: nil,
+                variablesCollectionName: nil,
+                variablesLightModeName: nil,
+                variablesDarkModeName: nil,
+                variablesPrimitivesModeName: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -165,6 +169,10 @@ final class EnumBridgingTests: XCTestCase {
                 figmaPageName: nil,
                 figmaFileId: nil,
                 rtlProperty: nil,
+                variablesCollectionName: nil,
+                variablesLightModeName: nil,
+                variablesDarkModeName: nil,
+                variablesPrimitivesModeName: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -206,6 +214,10 @@ final class EnumBridgingTests: XCTestCase {
                 figmaPageName: nil,
                 figmaFileId: nil,
                 rtlProperty: nil,
+                variablesCollectionName: nil,
+                variablesLightModeName: nil,
+                variablesDarkModeName: nil,
+                variablesPrimitivesModeName: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -235,6 +247,10 @@ final class EnumBridgingTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: nil,
             rtlProperty: nil,
+            variablesCollectionName: nil,
+            variablesLightModeName: nil,
+            variablesDarkModeName: nil,
+            variablesPrimitivesModeName: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -270,6 +286,10 @@ final class EnumBridgingTests: XCTestCase {
                 figmaPageName: nil,
                 figmaFileId: nil,
                 rtlProperty: nil,
+                variablesCollectionName: nil,
+                variablesLightModeName: nil,
+                variablesDarkModeName: nil,
+                variablesPrimitivesModeName: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -297,6 +317,10 @@ final class EnumBridgingTests: XCTestCase {
             figmaPageName: nil,
             figmaFileId: nil,
             rtlProperty: nil,
+            variablesCollectionName: nil,
+            variablesLightModeName: nil,
+            variablesDarkModeName: nil,
+            variablesPrimitivesModeName: nil,
             nameValidateRegexp: nil,
             nameReplaceRegexp: nil
         )
@@ -361,6 +385,10 @@ final class EnumBridgingTests: XCTestCase {
                 figmaPageName: nil,
                 figmaFileId: nil,
                 rtlProperty: nil,
+                variablesCollectionName: nil,
+                variablesLightModeName: nil,
+                variablesDarkModeName: nil,
+                variablesPrimitivesModeName: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )
@@ -395,6 +423,10 @@ final class EnumBridgingTests: XCTestCase {
                 figmaPageName: nil,
                 figmaFileId: nil,
                 rtlProperty: nil,
+                variablesCollectionName: nil,
+                variablesLightModeName: nil,
+                variablesDarkModeName: nil,
+                variablesPrimitivesModeName: nil,
                 nameValidateRegexp: nil,
                 nameReplaceRegexp: nil
             )

@@ -19,7 +19,7 @@ public extension iOS.IconsEntry {
             frameName: figmaFrameName ?? "Icons",
             pageName: figmaPageName,
             format: coreVectorFormat,
-            useSingleFile: darkFileId == nil,
+            useSingleFile: darkFileId == nil && variablesCollectionName == nil,
             darkModeSuffix: "_dark",
             renderMode: coreRenderMode,
             renderModeDefaultSuffix: renderModeDefaultSuffix,
@@ -28,7 +28,11 @@ public extension iOS.IconsEntry {
             rtlProperty: rtlProperty,
             nameValidateRegexp: nameValidateRegexp,
             nameReplaceRegexp: nameReplaceRegexp,
-            penpotBaseURL: resolvedPenpotBaseURL
+            penpotBaseURL: resolvedPenpotBaseURL,
+            variablesCollectionName: variablesCollectionName,
+            variablesLightModeName: variablesLightModeName,
+            variablesDarkModeName: variablesDarkModeName,
+            variablesPrimitivesModeName: variablesPrimitivesModeName
         )
     }
 

@@ -152,6 +152,21 @@ open class FrameSource extends NameProcessing {
   /// mirrored at runtime by the platform (iOS languageDirection, Android autoMirrored).
   /// Set to null to disable variant-based RTL detection.
   rtlProperty: String? = "RTL"
+
+  /// Variable collection name for dark mode generation via Figma Variables.
+  /// When set (along with light/dark mode names), dark SVG variants are generated
+  /// by resolving variable bindings and replacing colors in the light SVG.
+  variablesCollectionName: String?
+
+  /// Light mode name in the variables collection (e.g. "Light").
+  variablesLightModeName: String?
+
+  /// Dark mode name in the variables collection (e.g. "Dark").
+  variablesDarkModeName: String?
+
+  /// Primitives mode name for resolving variable aliases (e.g. "Value").
+  /// Used when variables reference other variables through alias chains.
+  variablesPrimitivesModeName: String?
 }
 
 // MARK: - Common Settings
