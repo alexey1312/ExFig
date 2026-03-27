@@ -59,14 +59,15 @@ enum SVGColorReplacer {
                 template: "$1$2#\(darkHex)$3 stop-opacity=\"\(opacityStr)\""
             )
             // CSS property style: fill:#aabbcc → fill:#darkHex;fill-opacity:0
+            // Lookahead prevents partial match on 8-digit hex (e.g., #aabbccdd)
             result = regexReplace(
                 in: result,
-                pattern: "(fill|stroke)(\\s*:\\s*)#\(lightHex)",
+                pattern: "(fill|stroke)(\\s*:\\s*)#\(lightHex)(?=[;\"'\\s]|$)",
                 template: "$1$2#\(darkHex);$1-opacity:\(opacityStr)"
             )
             result = regexReplace(
                 in: result,
-                pattern: "(stop-color)(\\s*:\\s*)#\(lightHex)",
+                pattern: "(stop-color)(\\s*:\\s*)#\(lightHex)(?=[;\"'\\s]|$)",
                 template: "$1$2#\(darkHex);stop-opacity:\(opacityStr)"
             )
         } else {
@@ -77,7 +78,7 @@ enum SVGColorReplacer {
                     "$1$2#\(darkHex)$3"
                 ),
                 (
-                    "(fill|stroke|stop-color|flood-color|lighting-color)(\\s*:\\s*)#\(lightHex)",
+                    "(fill|stroke|stop-color|flood-color|lighting-color)(\\s*:\\s*)#\(lightHex)(?=[;\"'\\s]|$)",
                     "$1$2#\(darkHex)"
                 ),
             ]

@@ -164,6 +164,21 @@ final class SVGColorReplacerTests: XCTestCase {
         XCTAssertTrue(result.contains("fill-opacity=\"0\""), "Should add opacity even when hex is the same: \(result)")
     }
 
+    // MARK: - CSS Partial Hex Match
+
+    func testCSSDoesNotPartialMatch8DigitHex() {
+        // #aabbcc should NOT match inside #aabbccdd
+        let svg = "<rect style=\"fill:#aabbccdd\" />"
+        let result = SVGColorReplacer.replaceColors(in: svg, colorMap: ["aabbcc": opaque("112233")])
+        XCTAssertEqual(result, svg, "Should not partially match 8-digit hex")
+    }
+
+    func testCSSMatchesHexFollowedBySemicolon() {
+        let svg = "<rect style=\"fill:#aabbcc;stroke:#000000\" />"
+        let result = SVGColorReplacer.replaceColors(in: svg, colorMap: ["aabbcc": opaque("112233")])
+        XCTAssertTrue(result.contains("fill:#112233"))
+    }
+
     // MARK: - flood-color / lighting-color
 
     func testReplacesFloodColorAttribute() {

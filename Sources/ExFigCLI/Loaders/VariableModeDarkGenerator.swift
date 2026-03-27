@@ -138,9 +138,7 @@ struct VariableModeDarkGenerator {
         let ctx = ResolutionContext(
             variablesMeta: variablesMeta,
             libMeta: libMeta,
-            libNameIndex: libMeta.map { meta in
-                Dictionary(meta.variables.values.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
-            },
+            libNameIndex: libMeta.map { buildLibNameIndex(from: $0) },
             modes: modes,
             darkModeName: config.darkModeName
         )
@@ -242,6 +240,19 @@ struct VariableModeDarkGenerator {
             nodeId: pack.nodeId,
             fileId: pack.fileId
         )
+    }
+
+    /// Builds a name→variable index from library meta, warning on duplicate names.
+    private func buildLibNameIndex(from meta: VariablesMeta) -> [String: VariableValue] {
+        let grouped = Dictionary(grouping: meta.variables.values, by: \.name)
+        var index: [String: VariableValue] = [:]
+        for (name, vars) in grouped {
+            if vars.count > 1 {
+                logger.warning("Library file has \(vars.count) variables named '\(name)', using first match")
+            }
+            index[name] = vars[0]
+        }
+        return index
     }
 
     private func loadVariables(fileId: String) async throws -> VariablesMeta {
