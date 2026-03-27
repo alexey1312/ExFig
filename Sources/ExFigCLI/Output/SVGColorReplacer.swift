@@ -1,7 +1,7 @@
 import Foundation
 
 /// A resolved dark color with optional alpha override.
-struct ColorReplacement {
+struct ColorReplacement: Equatable {
     let hex: String
     let alpha: Double
 
