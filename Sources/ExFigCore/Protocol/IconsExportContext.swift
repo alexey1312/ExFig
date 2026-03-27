@@ -115,6 +115,9 @@ public struct IconsSourceInput: Sendable {
     /// Primitives mode name for resolving variable aliases.
     public let variablesPrimitivesModeName: String?
 
+    /// Figma file ID for loading variables (when primitives are in a separate library file).
+    public let variablesFileId: String?
+
     public init(
         sourceKind: DesignSourceKind = .figma,
         figmaFileId: String? = nil,
@@ -135,7 +138,8 @@ public struct IconsSourceInput: Sendable {
         variablesCollectionName: String? = nil,
         variablesLightModeName: String? = nil,
         variablesDarkModeName: String? = nil,
-        variablesPrimitivesModeName: String? = nil
+        variablesPrimitivesModeName: String? = nil,
+        variablesFileId: String? = nil
     ) {
         self.sourceKind = sourceKind
         self.figmaFileId = figmaFileId
@@ -157,6 +161,7 @@ public struct IconsSourceInput: Sendable {
         self.variablesLightModeName = variablesLightModeName
         self.variablesDarkModeName = variablesDarkModeName
         self.variablesPrimitivesModeName = variablesPrimitivesModeName
+        self.variablesFileId = variablesFileId
     }
 }
 

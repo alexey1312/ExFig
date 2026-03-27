@@ -76,6 +76,11 @@ class VariablesDarkMode {
 
   /// Primitives mode for resolving variable aliases (e.g., "Value").
   primitivesModeName: String?
+
+  /// Figma file ID containing the full variable chain (including primitives).
+  /// When variables reference an external library, specify the library file ID here.
+  /// Defaults to the entry's figmaFileId if not set.
+  variablesFileId: String?
 }
 
 /// Dark mode via name suffix splitting (global, on common.icons/images/colors).

@@ -252,6 +252,8 @@ Key files: `VariableModeDarkGenerator.swift`, `SVGColorReplacer.swift`, `FigmaCo
 
 **pkl-swift decoding:** pkl-swift uses **keyed** decoding (by property name, not positional). TypeRegistry is only for `PklAny` polymorphic types and performance — concrete `Decodable` structs (like `VariablesDarkMode`) decode via synthesized `init(from:)` regardless of `registerPklTypes`. New types should still be added to `registerPklTypes()` for completeness, but missing entries do NOT cause silent nil for concrete typed fields.
 
+**Cross-file variable resolution:** Figma variable IDs are file-scoped — alias targets from the icons file don't exist in library files by ID. When `variablesFileId` is set, variables are loaded from BOTH files: icons file (semantic variables matching node boundVariables) + library file (primitives for alias resolution). Matching is by variable **name** across files and mode **name** across collections (not IDs).
+
 **Granular cache path:** `IconsExportContextImpl.loadIconsWithGranularCache()` creates its own `IconsLoader` and bypasses `FigmaComponentsSource` entirely. Variable-mode dark generation must be applied explicitly at the end of that method via `applyVariableModeDark(to:source:)`.
 
 ### Module Boundaries
@@ -483,6 +485,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Empty `fileId` in variable dark | `FigmaComponentsSource` must guard `fileId` not empty before calling `VariableModeDarkGenerator` — `?? ""` causes cryptic Figma API 404 |
 | PKL field always `nil` | `registerPklTypes()` is a performance optimization, NOT a correctness requirement for concrete typed fields. For optional nested PKL objects returning `nil`, check: (1) `pkl eval --format json` confirms field present, (2) unit test with `PKLEvaluator.evaluate()` decodes correctly, (3) trace values at bridge layer (`iconsSourceInput()`) with diagnostic log |
 | Granular cache skips dark gen | `loadIconsWithGranularCache()` in `IconsExportContextImpl` bypasses `FigmaComponentsSource` — must call `VariableModeDarkGenerator` explicitly via `applyVariableModeDark()` helper |
+| Variable dark always empty maps | Alias targets are external library variables — set `variablesFileId` in `VariablesDarkMode` PKL config to the library file ID containing primitives |
 
 ## Additional Rules
 

@@ -34,12 +34,6 @@ struct FigmaComponentsSource: ComponentsSource {
 
         let result = try await loader.load(filter: filter)
 
-        // Diagnostic: trace variablesDarkMode config reaching the source
-        let col = input.variablesCollectionName ?? "nil"
-        let lm = input.variablesLightModeName ?? "nil"
-        let dm = input.variablesDarkModeName ?? "nil"
-        logger.info("Variable-mode dark config: collection=\(col) light=\(lm) dark=\(dm)")
-
         // Variable-mode dark generation: resolve variable bindings and replace colors in SVGs
         let hasPartialConfig = input.variablesCollectionName != nil
             || input.variablesLightModeName != nil
@@ -60,7 +54,8 @@ struct FigmaComponentsSource: ComponentsSource {
                     collectionName: collectionName,
                     lightModeName: lightModeName,
                     darkModeName: darkModeName,
-                    primitivesModeName: input.variablesPrimitivesModeName
+                    primitivesModeName: input.variablesPrimitivesModeName,
+                    variablesFileId: input.variablesFileId
                 )
             )
             return IconsLoadOutput(light: result.light, dark: darkPacks)

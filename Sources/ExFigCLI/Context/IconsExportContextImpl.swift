@@ -218,7 +218,8 @@ struct IconsExportContextImpl: IconsExportContextWithGranularCache {
                 collectionName: collectionName,
                 lightModeName: lightModeName,
                 darkModeName: darkModeName,
-                primitivesModeName: source.variablesPrimitivesModeName
+                primitivesModeName: source.variablesPrimitivesModeName,
+                variablesFileId: source.variablesFileId
             )
         )
         return IconsLoadOutputWithHashes(

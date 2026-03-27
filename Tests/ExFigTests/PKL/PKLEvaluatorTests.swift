@@ -73,6 +73,7 @@ struct PKLEvaluatorTests {
         #expect(darkMode.lightModeName == "Light")
         #expect(darkMode.darkModeName == "Dark")
         #expect(darkMode.primitivesModeName == nil)
+        #expect(darkMode.variablesFileId == "lib-file-123")
     }
 
     @Test("All generated PKL types are registered")

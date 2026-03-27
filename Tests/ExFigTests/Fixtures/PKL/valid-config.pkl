@@ -36,6 +36,7 @@ ios = new iOS.iOSConfig {
         collectionName = "TestCollection"
         lightModeName = "Light"
         darkModeName = "Dark"
+        variablesFileId = "lib-file-123"
       }
     }
   }

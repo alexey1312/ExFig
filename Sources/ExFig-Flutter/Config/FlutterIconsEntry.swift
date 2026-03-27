@@ -25,7 +25,8 @@ public extension Flutter.IconsEntry {
             variablesCollectionName: variablesDarkMode?.collectionName,
             variablesLightModeName: variablesDarkMode?.lightModeName,
             variablesDarkModeName: variablesDarkMode?.darkModeName,
-            variablesPrimitivesModeName: variablesDarkMode?.primitivesModeName
+            variablesPrimitivesModeName: variablesDarkMode?.primitivesModeName,
+            variablesFileId: variablesDarkMode?.variablesFileId
         )
     }
 

@@ -241,16 +241,23 @@ extension Common {
         /// Primitives mode for resolving variable aliases (e.g., "Value").
         public var primitivesModeName: String?
 
+        /// Figma file ID containing the full variable chain (including primitives).
+        /// When variables reference an external library, specify the library file ID here.
+        /// Defaults to the entry's figmaFileId if not set.
+        public var variablesFileId: String?
+
         public init(
             collectionName: String,
             lightModeName: String,
             darkModeName: String,
-            primitivesModeName: String?
+            primitivesModeName: String?,
+            variablesFileId: String?
         ) {
             self.collectionName = collectionName
             self.lightModeName = lightModeName
             self.darkModeName = darkModeName
             self.primitivesModeName = primitivesModeName
+            self.variablesFileId = variablesFileId
         }
     }
 

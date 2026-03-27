@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import ExFigCore
 import FigmaAPI
 import Foundation
@@ -6,6 +7,8 @@ import Logging
 #if canImport(FoundationNetworking)
     import FoundationNetworking
 #endif
+
+// swiftlint:disable type_body_length
 
 /// Generates dark SVG variants from light SVGs by resolving Figma Variable bindings.
 ///
@@ -21,6 +24,8 @@ struct VariableModeDarkGenerator {
         let lightModeName: String
         let darkModeName: String
         let primitivesModeName: String?
+        /// Separate file ID for loading variables (when primitives are in a library file).
+        let variablesFileId: String?
     }
 
     /// Resolved mode IDs for variable resolution.
@@ -51,21 +56,42 @@ struct VariableModeDarkGenerator {
         guard !lightPacks.isEmpty else { return [] }
 
         // 1. Fetch variable definitions
-        let variablesMeta = try await loadVariables(fileId: config.fileId)
+        let localMeta = try await loadVariables(fileId: config.fileId)
+        logger.debug("Variable-mode dark: loaded \(localMeta.variables.count) local variables")
+
+        // When library file specified, load its variables for name-based cross-file resolution.
+        // Variable IDs are file-scoped — alias targets from the icons file don't exist in the
+        // library file by ID. We resolve by matching variable NAME across files.
+        let libMeta: VariablesMeta?
+        if let libFileId = config.variablesFileId, libFileId != config.fileId {
+            let lib = try await loadVariables(fileId: libFileId)
+            logger.debug("Variable-mode dark: loaded \(lib.variables.count) library variables from \(libFileId)")
+            libMeta = lib
+        } else {
+            libMeta = nil
+        }
+
+        // Use local meta for ID-based lookups (matches node boundVariables)
+        let variablesMeta = localMeta
 
         // 2. Find collection and extract mode IDs
         guard let modes = findModeIds(in: variablesMeta, config: config) else {
-            let collectionNames = variablesMeta.variableCollections.values.map(\.name)
+            let names = variablesMeta.variableCollections.values.map(\.name).sorted()
+            logger.debug("Variable-mode dark: available collections: \(names)")
             logger.warning("""
             Variables dark mode: collection '\(config.collectionName)' not found or missing \
             modes '\(config.lightModeName)'/'\(config.darkModeName)'. \
-            Available collections: \(collectionNames.sorted().joined(separator: ", "))
+            Available collections: \(variablesMeta.variableCollections.values.map(\.name).sorted()
+                .joined(separator: ", "))
             """)
             return []
         }
 
+        logger.debug("Variable-mode dark: modes light=\(modes.lightModeId) dark=\(modes.darkModeId)")
+
         // 3. Fetch nodes to discover boundVariables on paints
         let nodeIds = lightPacks.compactMap(\.nodeId)
+        logger.debug("Variable-mode dark: \(nodeIds.count)/\(lightPacks.count) packs have nodeIds")
 
         guard !nodeIds.isEmpty else {
             logger.warning("Variable-mode dark generation: none of the light packs have node IDs, skipping")
@@ -73,6 +99,7 @@ struct VariableModeDarkGenerator {
         }
 
         let nodeMap = try await fetchNodesBatched(fileId: config.fileId, nodeIds: nodeIds)
+        logger.debug("Variable-mode dark: fetched \(nodeMap.count) nodes")
 
         // 4. For each icon, build light→dark color map from boundVariables
         let tempDir = FileManager.default.temporaryDirectory
@@ -86,12 +113,17 @@ struct VariableModeDarkGenerator {
             }
         }
 
-        let darkPacks = try processLightPacks(
-            lightPacks,
-            nodeMap: nodeMap,
+        let ctx = ResolutionContext(
             variablesMeta: variablesMeta,
+            libMeta: libMeta,
+            libNameIndex: libMeta.map { meta in
+                Dictionary(meta.variables.values.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+            },
             modes: modes,
-            tempDir: tempDir
+            darkModeName: config.darkModeName
+        )
+        let darkPacks = try processLightPacks(
+            lightPacks, nodeMap: nodeMap, ctx: ctx, tempDir: tempDir
         )
 
         // Keep temp dir alive — caller consumes the URLs during export, then OS cleans /tmp
@@ -106,8 +138,7 @@ struct VariableModeDarkGenerator {
     private func processLightPacks(
         _ lightPacks: [ImagePack],
         nodeMap: [String: Node],
-        variablesMeta: VariablesMeta,
-        modes: ModeContext,
+        ctx: ResolutionContext,
         tempDir: URL
     ) throws -> [ImagePack] {
         var darkPacks: [ImagePack] = []
@@ -122,13 +153,7 @@ struct VariableModeDarkGenerator {
                 continue
             }
 
-            // Collect all bound variable colors from the node tree
-            let colorMap = buildColorMap(
-                node: node,
-                variablesMeta: variablesMeta,
-                modes: modes,
-                iconName: pack.name
-            )
+            let colorMap = buildColorMap(node: node, ctx: ctx, iconName: pack.name)
 
             guard !colorMap.isEmpty else { continue }
 
@@ -138,6 +163,7 @@ struct VariableModeDarkGenerator {
             darkPacks.append(darkPack)
         }
 
+        logger.debug("Variable-mode dark: generated \(darkPacks.count)/\(lightPacks.count) dark packs")
         return darkPacks
     }
 
@@ -238,67 +264,50 @@ struct VariableModeDarkGenerator {
         return allNodes
     }
 
+    /// Context for cross-file variable resolution.
+    private struct ResolutionContext {
+        let variablesMeta: VariablesMeta
+        let libMeta: VariablesMeta?
+        let libNameIndex: [String: VariableValue]?
+        let modes: ModeContext
+        let darkModeName: String
+    }
+
     /// Walks a node tree and collects light→dark color mappings from boundVariables on paints.
     private func buildColorMap(
         node: Node,
-        variablesMeta: VariablesMeta,
-        modes: ModeContext,
+        ctx: ResolutionContext,
         iconName: String
     ) -> [String: String] {
         var colorMap: [String: String] = [:]
-        collectBoundColors(
-            from: node.document,
-            variablesMeta: variablesMeta,
-            modes: modes,
-            colorMap: &colorMap,
-            iconName: iconName
-        )
+        collectBoundColors(from: node.document, ctx: ctx, colorMap: &colorMap, iconName: iconName)
         return colorMap
     }
 
     private func collectBoundColors(
         from document: Document,
-        variablesMeta: VariablesMeta,
-        modes: ModeContext,
+        ctx: ResolutionContext,
         colorMap: inout [String: String],
         iconName: String
     ) {
-        // Check fills
         for paint in document.fills {
-            collectFromPaint(paint, variablesMeta: variablesMeta, modes: modes, colorMap: &colorMap, iconName: iconName)
+            collectFromPaint(paint, ctx: ctx, colorMap: &colorMap, iconName: iconName)
         }
-
-        // Check strokes
         if let strokes = document.strokes {
             for paint in strokes {
-                collectFromPaint(
-                    paint,
-                    variablesMeta: variablesMeta,
-                    modes: modes,
-                    colorMap: &colorMap,
-                    iconName: iconName
-                )
+                collectFromPaint(paint, ctx: ctx, colorMap: &colorMap, iconName: iconName)
             }
         }
-
-        // Recurse into children
         if let children = document.children {
             for child in children {
-                collectBoundColors(
-                    from: child,
-                    variablesMeta: variablesMeta,
-                    modes: modes,
-                    colorMap: &colorMap,
-                    iconName: iconName
-                )
+                collectBoundColors(from: child, ctx: ctx, colorMap: &colorMap, iconName: iconName)
             }
         }
     }
 
     private func collectFromPaint(
         _ paint: Paint,
-        variablesMeta: VariablesMeta,
-        modes: ModeContext,
+        ctx: ResolutionContext,
         colorMap: inout [String: String],
         iconName: String
     ) {
@@ -313,22 +322,70 @@ struct VariableModeDarkGenerator {
             b: lightColor.b
         )
 
-        // Resolve dark value for this variable
-        if let darkHex = resolveDarkColor(
+        // Try local resolution first (same file)
+        var darkHex = resolveDarkColor(
             variableId: colorAlias.id,
-            modeId: modes.darkModeId,
-            variablesMeta: variablesMeta,
-            primitivesModeId: modes.primitivesModeId
-        ) {
-            if lightHex != darkHex {
-                if let existing = colorMap[lightHex], existing != darkHex {
-                    logger.warning(
-                        "Icon '\(iconName)': #\(lightHex) maps to multiple dark values (#\(existing) and #\(darkHex))"
-                    )
-                }
-                colorMap[lightHex] = darkHex
+            modeId: ctx.modes.darkModeId,
+            variablesMeta: ctx.variablesMeta,
+            primitivesModeId: ctx.modes.primitivesModeId
+        )
+
+        // Cross-file fallback: find variable by name in library, resolve there
+        if darkHex == nil, let libMeta = ctx.libMeta, let libNameIndex = ctx.libNameIndex {
+            if let localVar = ctx.variablesMeta.variables[colorAlias.id] {
+                darkHex = resolveViaLibrary(
+                    variableName: localVar.name,
+                    libMeta: libMeta,
+                    libNameIndex: libNameIndex,
+                    darkModeName: ctx.darkModeName
+                )
             }
         }
+
+        if let darkHex, lightHex != darkHex {
+            if let existing = colorMap[lightHex], existing != darkHex {
+                logger.warning(
+                    "Icon '\(iconName)': #\(lightHex) maps to multiple dark values (#\(existing) and #\(darkHex))"
+                )
+            }
+            colorMap[lightHex] = darkHex
+        }
+    }
+
+    /// Resolves a variable's dark color by finding it by name in the library file.
+    private func resolveViaLibrary(
+        variableName: String,
+        libMeta: VariablesMeta,
+        libNameIndex: [String: VariableValue],
+        darkModeName: String
+    ) -> String? {
+        guard let libVar = libNameIndex[variableName] else {
+            logger.debug("Variable-mode dark: library fallback miss — '\(variableName)' not found in library")
+            return nil
+        }
+        guard let libCollection = libMeta.variableCollections[libVar.variableCollectionId] else {
+            return nil
+        }
+
+        // Match mode by NAME (mode IDs are file-scoped and differ between files)
+        guard let libDarkModeId = libCollection.modes.first(where: { $0.name == darkModeName })?.modeId else {
+            logger
+                .debug(
+                    "Variable-mode dark: library mode '\(darkModeName)' not found in collection '\(libCollection.name)'"
+                )
+            return nil
+        }
+
+        let result = resolveDarkColor(
+            variableId: libVar.id,
+            modeId: libDarkModeId,
+            variablesMeta: libMeta,
+            primitivesModeId: nil
+        )
+        if result != nil {
+            logger.debug("Variable-mode dark: resolved '\(variableName)' via library → #\(result!)")
+        }
+        return result
     }
 
     /// Resolves a variable to its concrete color value in the given mode, following alias chains.
@@ -385,3 +442,5 @@ struct VariableModeDarkGenerator {
         }
     }
 }
+
+// swiftlint:enable type_body_length
