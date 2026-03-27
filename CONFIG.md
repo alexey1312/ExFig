@@ -322,7 +322,7 @@ All Icons and Images entries across platforms extend `Common.FrameSource`, which
 | `nameValidateRegexp` | `String?`            | —       | Regex pattern for name validation                       |
 | `nameReplaceRegexp`  | `String?`            | —       | Replacement pattern using captured groups               |
 
-**VariablesDarkMode** fields: `collectionName` (required), `lightModeName` (required), `darkModeName` (required), `primitivesModeName` (optional).
+**VariablesDarkMode** fields: `collectionName` (required), `lightModeName` (required), `darkModeName` (required), `primitivesModeName` (optional), `variablesFileId` (optional — Figma file ID of the library containing the full variable chain including primitives; required when variables alias to an external library).
 
 **RTL Detection:** When `rtlProperty` is set (default `"RTL"`), ExFig detects RTL support via Figma
 COMPONENT_SET variant properties. Components with `RTL=On` variant are automatically skipped (iOS/Android

@@ -272,6 +272,28 @@ ic/24/logo
 ic/24/logo_dark
 ```
 
+### Variable Mode
+
+For icons using Figma Variable bindings (e.g., double-color icons), ExFig resolves dark colors automatically from the Variables API:
+
+```pkl
+new Android.IconsEntry {
+  figmaFrameName = "DoubleColor"
+  format = "svg"
+  output = "./app/src/main/res"
+  variablesDarkMode = new Common.VariablesDarkMode {
+    collectionName = "DesignTokens"
+    lightModeName = "Light"
+    darkModeName = "Dark"
+    variablesFileId = "LIBRARY_FILE_ID"
+  }
+}
+```
+
+ExFig fetches variable definitions, resolves alias chains to concrete colors, and replaces hex values in SVGs to produce dark variants. Light icons go to `drawable/`, dark to `drawable-night/`.
+
+`variablesFileId` is required when your variables alias to primitives in an external Figma library.
+
 ## Tips
 
 1. **Keep icons simple**: Complex paths may not convert well
