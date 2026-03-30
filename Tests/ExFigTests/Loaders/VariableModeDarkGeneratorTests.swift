@@ -539,6 +539,132 @@ final class VariableModeDarkGeneratorColorMapTests: XCTestCase {
     }
 }
 
+// MARK: - processLightPacks RTL Tests
+
+final class VariableModeDarkGeneratorRTLTests: XCTestCase {
+    private var generator: VariableModeDarkGenerator!
+    private var tempDir: URL!
+
+    override func setUp() {
+        super.setUp()
+        generator = makeGenerator()
+        tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("exfig-test-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    }
+
+    override func tearDown() {
+        try? FileManager.default.removeItem(at: tempDir)
+        super.tearDown()
+    }
+
+    private func makeRedToBlueDarkCtx() -> (VariableModeDarkGenerator.ResolutionContext, [String: Node]) {
+        let nodeJson = """
+        {"document":{"id":"1:1","name":"icon","fills":[{"type":"SOLID",
+        "color":{"r":1.0,"g":0.0,"b":0.0,"a":1.0},
+        "boundVariables":{"color":{"id":"VariableID:v1","type":"VARIABLE_ALIAS"}}}]}}
+        """
+        // swiftlint:disable:next force_try
+        let node = try! JSONCodec.decode(Node.self, from: Data(nodeJson.utf8))
+        let meta = VariablesMeta.make(
+            collectionName: "Theme",
+            modes: [("light", "Light"), ("dark", "Dark")],
+            variables: [
+                (id: "v1", name: "red", valuesByMode: [
+                    "light": (r: 1.0, g: 0.0, b: 0.0, a: 1.0),
+                    "dark": (r: 0.0, g: 0.0, b: 1.0, a: 1.0),
+                ]),
+            ]
+        )
+        let ctx = VariableModeDarkGenerator.ResolutionContext(
+            variablesMeta: meta, libMeta: nil, libNameIndex: nil,
+            modes: .init(lightModeId: "light", darkModeId: "dark", primitivesModeId: nil),
+            darkModeName: "Dark"
+        )
+        return (ctx, ["1:1": node])
+    }
+
+    func testProcessLightPacksPreservesRTLFlag() throws {
+        let svg = "<svg><rect fill=\"#ff0000\"/></svg>"
+        let ltrURL = tempDir.appendingPathComponent("ltr.svg")
+        let rtlURL = tempDir.appendingPathComponent("rtl.svg")
+        try Data(svg.utf8).write(to: ltrURL)
+        try Data(svg.utf8).write(to: rtlURL)
+
+        let pack = ImagePack(
+            name: "arrow",
+            images: [
+                Image(name: "arrow", scale: .all, url: ltrURL, format: "svg", isRTL: false),
+                Image(name: "arrow", scale: .all, url: rtlURL, format: "svg", isRTL: true),
+            ],
+            platform: .ios, nodeId: "1:1", fileId: "file1"
+        )
+
+        let (ctx, nodeMap) = makeRedToBlueDarkCtx()
+        let outDir = tempDir.appendingPathComponent("out")
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+
+        let darkPacks = try generator.processLightPacks([pack], nodeMap: nodeMap, ctx: ctx, tempDir: outDir)
+
+        XCTAssertEqual(darkPacks.count, 1)
+        XCTAssertEqual(darkPacks[0].images.count, 2, "Should generate dark variant for both LTR and RTL")
+        XCTAssertNotNil(darkPacks[0].images.first(where: { !$0.isRTL }), "Should have LTR dark image")
+        XCTAssertNotNil(darkPacks[0].images.first(where: { $0.isRTL }), "Should have RTL dark image")
+    }
+
+    func testDarkRTLImageHasReplacedColors() throws {
+        let svg = "<svg><rect fill=\"#ff0000\"/></svg>"
+        let ltrURL = tempDir.appendingPathComponent("ltr.svg")
+        let rtlURL = tempDir.appendingPathComponent("rtl.svg")
+        try Data(svg.utf8).write(to: ltrURL)
+        try Data(svg.utf8).write(to: rtlURL)
+
+        let pack = ImagePack(
+            name: "arrow",
+            images: [
+                Image(name: "arrow", scale: .all, url: ltrURL, format: "svg", isRTL: false),
+                Image(name: "arrow", scale: .all, url: rtlURL, format: "svg", isRTL: true),
+            ],
+            platform: .ios, nodeId: "1:1", fileId: "file1"
+        )
+
+        let (ctx, nodeMap) = makeRedToBlueDarkCtx()
+        let outDir = tempDir.appendingPathComponent("out2")
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+
+        let darkPacks = try generator.processLightPacks([pack], nodeMap: nodeMap, ctx: ctx, tempDir: outDir)
+        for image in darkPacks[0].images {
+            let content = try String(data: Data(contentsOf: image.url), encoding: .utf8)
+            XCTAssertTrue(content?.contains("0000ff") == true, "\(image.isRTL ? "RTL" : "LTR") should have dark color")
+        }
+    }
+
+    func testProcessLightPacksPreservesScaleAndIdiom() throws {
+        let svg = "<svg><rect fill=\"#ff0000\"/></svg>"
+        let svgURL = tempDir.appendingPathComponent("icon.svg")
+        try Data(svg.utf8).write(to: svgURL)
+
+        let pack = ImagePack(
+            name: "star",
+            images: [
+                Image(name: "star", scale: .all, idiom: "universal", url: svgURL, format: "svg", isRTL: false),
+            ],
+            platform: .ios, nodeId: "1:1", fileId: "file1"
+        )
+
+        let (ctx, nodeMap) = makeRedToBlueDarkCtx()
+        let outDir = tempDir.appendingPathComponent("out3")
+        try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+
+        let darkPacks = try generator.processLightPacks([pack], nodeMap: nodeMap, ctx: ctx, tempDir: outDir)
+        XCTAssertEqual(darkPacks.count, 1)
+        let darkImage = darkPacks[0].images[0]
+        XCTAssertEqual(darkImage.idiom, "universal")
+        XCTAssertEqual(darkImage.format, "svg")
+        XCTAssertFalse(darkImage.isRTL)
+    }
+}
+
 // MARK: - VariablesCache Tests
 
 final class VariablesCacheTests: XCTestCase {

@@ -202,40 +202,51 @@ struct VariableModeDarkGenerator {
         colorMap: [String: ColorReplacement],
         tempDir: URL
     ) throws -> ImagePack? {
-        guard let svgImage = pack.images.first else {
+        guard !pack.images.isEmpty else {
             logger.warning("Icon '\(pack.name)' has no images, skipping dark generation")
             return nil
         }
 
-        let svgData: Data
-        do {
-            svgData = try Data(contentsOf: svgImage.url)
-        } catch {
-            logger.warning("Failed to read SVG for icon '\(pack.name)': \(error.localizedDescription)")
-            return nil
-        }
-
-        guard let svgContent = String(data: svgData, encoding: .utf8) else {
-            logger.warning("Icon '\(pack.name)' SVG is not valid UTF-8, skipping dark generation")
-            return nil
-        }
-
-        let darkSVG = SVGColorReplacer.replaceColors(in: svgContent, colorMap: colorMap)
-
         let safeName = pack.name
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: " ", with: "_")
-        let tempURL = tempDir.appendingPathComponent("\(safeName)_dark.svg")
-        try Data(darkSVG.utf8).write(to: tempURL)
+
+        var darkImages: [Image] = []
+        for (index, svgImage) in pack.images.enumerated() {
+            let svgData: Data
+            do {
+                svgData = try Data(contentsOf: svgImage.url)
+            } catch {
+                logger.warning("Failed to read SVG for icon '\(pack.name)' [\(index)]: \(error.localizedDescription)")
+                continue
+            }
+
+            guard let svgContent = String(data: svgData, encoding: .utf8) else {
+                logger.warning("Icon '\(pack.name)' [\(index)] SVG is not valid UTF-8, skipping")
+                continue
+            }
+
+            let darkSVG = SVGColorReplacer.replaceColors(in: svgContent, colorMap: colorMap)
+
+            let suffix = svgImage.isRTL ? "_rtl" : ""
+            let tempURL = tempDir.appendingPathComponent("\(safeName)\(suffix)_dark.\(svgImage.format)")
+            try Data(darkSVG.utf8).write(to: tempURL)
+
+            darkImages.append(Image(
+                name: pack.name,
+                scale: svgImage.scale,
+                idiom: svgImage.idiom,
+                url: tempURL,
+                format: svgImage.format,
+                isRTL: svgImage.isRTL
+            ))
+        }
+
+        guard !darkImages.isEmpty else { return nil }
 
         return ImagePack(
             name: pack.name,
-            images: [Image(
-                name: pack.name,
-                scale: .all,
-                url: tempURL,
-                format: "svg"
-            )],
+            images: darkImages,
             platform: pack.platform,
             nodeId: pack.nodeId,
             fileId: pack.fileId
