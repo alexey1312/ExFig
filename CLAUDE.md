@@ -267,6 +267,8 @@ Key files: `VariableModeDarkGenerator.swift`, `SVGColorReplacer.swift`, `FigmaCo
 
 **Granular cache path:** `IconsExportContextImpl.loadIconsWithGranularCache()` creates its own `IconsLoader` and bypasses `FigmaComponentsSource` entirely. Variable-mode dark generation must be applied explicitly at the end of that method via `applyVariableModeDark(to:source:)`.
 
+**RTL in variable-mode dark:** `buildDarkPack` iterates ALL images in a pack (not just `.first`), preserving `isRTL`, `scale`, `idiom`, and `format` from the light variant. RTL images get `_rtl` suffix in temp file names.
+
 ### Module Boundaries
 
 ExFigCore does NOT import FigmaAPI. Constants on `Component` (FigmaAPI, extended in ExFigCLI) are
