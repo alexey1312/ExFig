@@ -326,6 +326,14 @@ Uses `FigmaAPI.Client.request(SomeEndpoint(...))` directly (no convenience metho
 `ComponentsEndpoint` returns `[Component]`, `VariablesEndpoint` returns `VariablesMeta`,
 `NodesEndpoint` returns `[NodeId: Node]`.
 
+**Lint rule development patterns:**
+
+- Every rule must filter components by BOTH `figmaFrameName` AND `figmaPageName` from config entries
+- Skip RTL variants: `comp.containingFrame.containingComponentSet != nil && comp.name.contains("RTL=")`
+- Skip root frame fills when checking boundVariables — root `Document` fills are backgrounds, check only children
+- Cross-file variable IDs (32+ char hex hash before `/`) are valid external library refs, not broken aliases
+- `LintDataCache` actor caches Components/Variables API responses — use `context.cache.components(for:client:)`
+
 ### Adding a CLI Command
 
 See `ExFigCLI/CLAUDE.md` (Adding a New Subcommand).
@@ -514,6 +522,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Config type reference | `ExFigOptions.params` is `ExFig.ModuleImpl!` — no `PKLConfig` typealias exists |
 | `Paint.visible` doesn't exist | FigmaAPI `Paint` has no `visible` field — use `opacity` to check visibility |
 | `variablesColors` location | On `Common.CommonConfig` (`config.common?.variablesColors`), NOT on `config.common?.colors?.variablesColors` |
+| `cp` prompts overwrite | macOS `trash` alias intercepts `cp`; use `/bin/cp -f` to force overwrite without prompt |
 
 ## Additional Rules
 

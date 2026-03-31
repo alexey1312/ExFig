@@ -5,6 +5,7 @@
     enum MCPToolDefinitions {
         static let allTools: [Tool] = [
             validateTool,
+            lintTool,
             tokensInfoTool,
             inspectTool,
             exportTool,
@@ -28,6 +29,39 @@
                         "description": .string(
                             "Path to PKL config file. Auto-detects exfig.pkl in current directory if omitted."
                         ),
+                    ]),
+                ]),
+            ])
+        )
+
+        static let lintTool = Tool(
+            name: "exfig_lint",
+            description: """
+            Lint Figma file structure against ExFig PKL config. Checks naming conventions, \
+            frame/page structure, variable bindings, dark mode setup, duplicate components, \
+            and deleted variables. Returns JSON with diagnostics. \
+            Requires FIGMA_PERSONAL_TOKEN.
+            """,
+            inputSchema: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "config_path": .object([
+                        "type": .string("string"),
+                        "description": .string(
+                            "Path to PKL config file. Auto-detects exfig.pkl in current directory if omitted."
+                        ),
+                    ]),
+                    "rules": .object([
+                        "type": .string("string"),
+                        "description": .string(
+                            "Comma-separated rule IDs to run. "
+                                + "Available: frame-page-match, naming-convention, component-not-frame, "
+                                + "deleted-variables, duplicate-component-names, dark-mode-variables, dark-mode-suffix"
+                        ),
+                    ]),
+                    "severity": .object([
+                        "type": .string("string"),
+                        "description": .string("Minimum severity: error, warning, or info (default: info)"),
                     ]),
                 ]),
             ])

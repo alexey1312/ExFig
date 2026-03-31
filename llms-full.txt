@@ -249,9 +249,12 @@ ios = new iOS.iOSConfig {
 }
 ```
 
-### 4. Export Resources
+### 4. Validate & Export
 
 ```bash
+# Validate Figma file structure before exporting
+exfig lint
+
 # Export individual resource types
 exfig colors
 exfig icons

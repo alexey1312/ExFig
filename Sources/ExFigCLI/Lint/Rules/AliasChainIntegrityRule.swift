@@ -19,7 +19,7 @@ struct AliasChainIntegrityRule: LintRule {
 
         let variables: VariablesMeta
         do {
-            variables = try await context.client.request(VariablesEndpoint(fileId: fileId))
+            variables = try await context.cache.variables(for: fileId, client: context.client)
         } catch {
             return []
         }

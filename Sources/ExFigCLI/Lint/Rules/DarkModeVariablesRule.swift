@@ -22,23 +22,29 @@ struct DarkModeVariablesRule: LintRule {
         for entry in entries {
             guard !entry.fileId.isEmpty else { continue }
 
-            // Fetch components for this file
             let components: [Component]
             do {
-                components = try await context.client.request(ComponentsEndpoint(fileId: entry.fileId))
+                components = try await context.cache.components(for: entry.fileId, client: context.client)
             } catch {
                 continue
             }
 
-            // Filter to relevant frame
             let relevant = components.filter { comp in
-                if let frame = entry.frameName {
-                    return comp.containingFrame.name == frame
+                if let page = entry.pageName, comp.containingFrame.pageName != page {
+                    return false
+                }
+                if let frame = entry.frameName, comp.containingFrame.name != frame {
+                    return false
+                }
+                // Skip RTL variants — they're duplicates for mirroring, not separate icons
+                if comp.containingFrame.containingComponentSet != nil,
+                   comp.name.contains("RTL=")
+                {
+                    return false
                 }
                 return true
             }
 
-            // Sample first 50 to avoid excessive API calls
             let sampled = Array(relevant.prefix(50))
             guard !sampled.isEmpty else { continue }
 
@@ -52,7 +58,12 @@ struct DarkModeVariablesRule: LintRule {
 
             for (nodeId, node) in nodes {
                 let compName = sampled.first { $0.nodeId == nodeId }?.name ?? nodeId
-                checkNodeFills(node: node.document, componentName: compName, diagnostics: &diagnostics)
+                // Skip root node fills — check only children (vector shapes inside the icon)
+                checkChildrenFills(
+                    children: node.document.children ?? [],
+                    componentName: compName,
+                    diagnostics: &diagnostics
+                )
             }
         }
 
@@ -61,18 +72,28 @@ struct DarkModeVariablesRule: LintRule {
 
     // MARK: - Node Fill Checking
 
+    /// Check fills only on leaf/vector nodes, not on the root component frame.
+    /// Root frames often have background fills (#FFFFFF) that aren't meant to be variable-bound.
+    private func checkChildrenFills(
+        children: [Document],
+        componentName: String,
+        diagnostics: inout [LintDiagnostic]
+    ) {
+        for child in children {
+            checkNodeFills(node: child, componentName: componentName, diagnostics: &diagnostics)
+        }
+    }
+
     private func checkNodeFills(
         node: Document,
         componentName: String,
         diagnostics: inout [LintDiagnostic]
     ) {
+        // Check fills on this node (not root — already skipped by caller)
         for fill in node.fills {
-            // Skip images/videos
             if fill.type == .image { continue }
-            // Skip invisible
             if fill.opacity == 0 { continue }
 
-            // Check boundVariables on the fill
             if fill.boundVariables == nil || fill.boundVariables?["color"] == nil {
                 let colorDesc: String = if let color = fill.color {
                     String(
@@ -108,16 +129,18 @@ struct DarkModeVariablesRule: LintRule {
     private struct VDMEntry {
         let fileId: String
         let frameName: String?
+        let pageName: String?
     }
 
-    private func collectVDMEntries(from config: PKLConfig, defaultFileId: String) -> [VDMEntry] {
+    private func collectVDMEntries(from config: ExFig.ModuleImpl, defaultFileId: String) -> [VDMEntry] {
         var entries: [VDMEntry] = []
 
         func addIcons(_ icons: [some Common_FrameSource]?) {
             for entry in icons ?? [] where entry.variablesDarkMode != nil {
                 entries.append(VDMEntry(
                     fileId: entry.figmaFileId ?? defaultFileId,
-                    frameName: entry.figmaFrameName
+                    frameName: entry.figmaFrameName,
+                    pageName: entry.figmaPageName
                 ))
             }
         }

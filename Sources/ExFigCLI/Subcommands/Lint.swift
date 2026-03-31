@@ -40,13 +40,18 @@ extension ExFigCommand {
         var severity: String = "info"
 
         func run() async throws {
+            let outputFormat = LintOutputFormat(rawValue: format) ?? .text
+
+            // JSON mode: force quiet to keep stdout clean for machine parsing
+            let effectiveVerbose = globalOptions.verbose
+            let effectiveQuiet = outputFormat == .json ? true : globalOptions.quiet
+
             ExFigCommand.initializeTerminalUI(
-                verbose: globalOptions.verbose, quiet: globalOptions.quiet
+                verbose: effectiveVerbose, quiet: effectiveQuiet
             )
             ExFigCommand.checkSchemaVersionIfNeeded()
             let ui = ExFigCommand.terminalUI!
 
-            let outputFormat = LintOutputFormat(rawValue: format) ?? .text
             let minSeverity = LintSeverity(rawValue: severity) ?? .info
             let ruleFilter: Set<String>? = rules.map {
                 Set($0.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) })
@@ -59,15 +64,20 @@ extension ExFigCommand {
                 ui: ui
             )
 
-            let context = LintContext(config: options.params, client: client, ui: ui)
+            let cache = LintDataCache()
+            let context = LintContext(config: options.params, client: client, cache: cache, ui: ui)
             let engine = LintEngine.default
 
-            let diagnostics = try await ui.withSpinner("Linting Figma file structure...") {
+            let diagnostics = try await ui.withSpinnerMessage(
+                "Linting..."
+            ) { updateMessage in
                 try await engine.run(
                     context: context,
                     ruleFilter: ruleFilter,
                     minSeverity: minSeverity
-                )
+                ) { message in
+                    updateMessage(message)
+                }
             }
 
             let reporter = LintReporter(
@@ -76,7 +86,6 @@ extension ExFigCommand {
             )
             try reporter.report(diagnostics: diagnostics, ui: ui)
 
-            // Exit with code 1 if there are errors (for CI)
             if diagnostics.contains(where: { $0.severity == .error }) {
                 throw ExitCode.failure
             }

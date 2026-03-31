@@ -20,7 +20,7 @@ struct FramePageMatchRule: LintRule {
 
         for (fileId, fileEntries) in grouped {
             guard !fileId.isEmpty else { continue }
-            let result = try await checkFile(fileId: fileId, entries: fileEntries, client: context.client)
+            let result = try await checkFile(fileId: fileId, entries: fileEntries, context: context)
             diagnostics.append(contentsOf: result)
         }
 
@@ -32,11 +32,11 @@ struct FramePageMatchRule: LintRule {
     private func checkFile(
         fileId: String,
         entries: [EntryInfo],
-        client: any FigmaAPI.Client
+        context: LintContext
     ) async throws -> [LintDiagnostic] {
         let components: [Component]
         do {
-            components = try await client.request(ComponentsEndpoint(fileId: fileId))
+            components = try await context.cache.components(for: fileId, client: context.client)
         } catch {
             return [LintDiagnostic(
                 ruleId: id, ruleName: name, severity: .error,

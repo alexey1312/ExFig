@@ -1,0 +1,568 @@
+// swiftlint:disable file_length
+@testable import ExFigCLI
+import ExFigConfig
+import ExFigCore
+import FigmaAPI
+import Foundation
+import Testing
+
+// MARK: - Test Helpers
+
+private func makeLintContext(
+    config: PKLConfig,
+    client: MockClient
+) -> LintContext {
+    let ui = TerminalUI(outputMode: .quiet)
+    return LintContext(config: config, client: client, cache: LintDataCache(), ui: ui)
+}
+
+/// Creates a PKLConfig with iOS icons entries for lint testing.
+private func makeIOSIconsConfig(
+    lightFileId: String = "abc123",
+    frameName: String? = nil,
+    pageName: String? = nil,
+    nameValidateRegexp: String? = nil,
+    suffixDarkMode: String? = nil
+) -> PKLConfig {
+    var entryParts: [String] = [
+        "\"assetsFolder\": \"Icons\"",
+        "\"format\": \"svg\"",
+        "\"nameStyle\": \"camelCase\"",
+    ]
+    if let frameName { entryParts.append("\"figmaFrameName\": \"\(frameName)\"") }
+    if let pageName { entryParts.append("\"figmaPageName\": \"\(pageName)\"") }
+    if let regex = nameValidateRegexp { entryParts.append("\"nameValidateRegexp\": \"\(regex)\"") }
+
+    var commonParts: [String] = []
+    if let suffix = suffixDarkMode {
+        commonParts.append("\"icons\": { \"suffixDarkMode\": { \"suffix\": \"\(suffix)\" } }")
+    }
+    let commonJson = commonParts.isEmpty ? "" : ", \"common\": { \(commonParts.joined(separator: ", ")) }"
+
+    let json = """
+    {
+        "figma": { "lightFileId": "\(lightFileId)" },
+        "ios": {
+            "xcodeprojPath": "App.xcodeproj",
+            "target": "App",
+            "xcassetsPath": "Assets.xcassets",
+            "xcassetsInMainBundle": true,
+            "icons": [{ \(entryParts.joined(separator: ", ")) }]
+        }\(commonJson)
+    }
+    """
+    // swiftlint:disable:next force_try
+    return try! JSONCodec.decode(PKLConfig.self, from: Data(json.utf8))
+}
+
+// MARK: - FramePageMatchRule Tests
+
+struct FramePageMatchRuleTests {
+    let rule = FramePageMatchRule()
+
+    @Test("passes when frame and page exist")
+    func passesWhenFrameAndPageExist() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons", pageName: "Components"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons", pageName: "Components")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("error when page not found")
+    func errorWhenPageNotFound() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons", pageName: "Page A"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons", pageName: "NonExistent")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count >= 1)
+        #expect(diagnostics.first?.ruleId == "frame-page-match")
+        #expect(diagnostics.first?.severity == .error)
+        #expect(diagnostics.first?.message.contains("NonExistent") == true)
+    }
+
+    @Test("error when frame not found on page")
+    func errorWhenFrameNotFound() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "OtherFrame", pageName: "Components"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "MissingFrame", pageName: "Components")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.contains { $0.message.contains("MissingFrame") && $0.message.contains("not found") })
+    }
+
+    @Test("skips when no entries configured")
+    func skipsWhenNoEntries() async throws {
+        let client = MockClient()
+        let config = PKLConfig.make(lightFileId: "abc123")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+}
+
+// MARK: - NamingConventionRule Tests
+
+struct NamingConventionRuleTests {
+    let rule = NamingConventionRule()
+
+    @Test("passes when names match regex")
+    func passesWhenNamesMatch() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_home", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "ic_settings", frameName: "Icons"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons", nameValidateRegexp: "^ic_[a-z_]+$")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("error when name violates regex")
+    func errorWhenNameViolatesRegex() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_home", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "BadName", frameName: "Icons"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons", nameValidateRegexp: "^ic_[a-z_]+$")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.componentName == "BadName")
+        #expect(diagnostics.first?.severity == .error)
+    }
+
+    @Test("skips entries without nameValidateRegexp")
+    func skipsWithoutRegex() async throws {
+        let client = MockClient()
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+}
+
+// MARK: - DeletedVariablesRule Tests
+
+struct DeletedVariablesRuleTests {
+    let rule = DeletedVariablesRule()
+
+    @Test("passes when no deleted variables")
+    func passesWhenNoDeletedVars() async throws {
+        let client = MockClient()
+        let variables = VariablesMeta.make(
+            variables: [
+                (id: "1:1", name: "Primary", valuesByMode: ["1:0": (r: 1, g: 0, b: 0, a: 1)]),
+            ]
+        )
+        client.setResponse(variables, for: VariablesEndpoint.self)
+
+        let config = makeConfigWithVariablesColors()
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("error when deleted variable found")
+    func errorWhenDeletedVar() async throws {
+        let client = MockClient()
+        let variables = VariablesMeta.makeWithAliases(
+            variables: [
+                (
+                    id: "1:1",
+                    name: "Old/Deprecated",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .color(r: 1, g: 0, b: 0, a: 1)]
+                ),
+            ],
+            deletedVariableIds: ["1:1"]
+        )
+        client.setResponse(variables, for: VariablesEndpoint.self)
+
+        let config = makeConfigWithVariablesColors()
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.ruleId == "deleted-variables")
+        #expect(diagnostics.first?.componentName == "Old/Deprecated")
+    }
+}
+
+private func makeConfigWithVariablesColors() -> PKLConfig {
+    let json = """
+    {
+        "figma": { "lightFileId": "abc123" },
+        "common": {
+            "variablesColors": {
+                "tokensFileId": "abc123",
+                "tokensCollectionName": "Colors",
+                "lightModeName": "Light",
+                "darkModeName": "Dark"
+            }
+        }
+    }
+    """
+    // swiftlint:disable:next force_try
+    return try! JSONCodec.decode(PKLConfig.self, from: Data(json.utf8))
+}
+
+// MARK: - AliasChainIntegrityRule Tests
+
+struct AliasChainIntegrityRuleTests {
+    let rule = AliasChainIntegrityRule()
+
+    @Test("passes with valid alias chain")
+    func passesWithValidChain() async throws {
+        let client = MockClient()
+        let variables = VariablesMeta.makeWithAliases(
+            variables: [
+                (
+                    id: "1:1",
+                    name: "Semantic/Primary",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .alias("1:2")]
+                ),
+                (
+                    id: "1:2",
+                    name: "Primitive/Blue",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .color(r: 0, g: 0, b: 1, a: 1)]
+                ),
+            ]
+        )
+        client.setResponse(variables, for: VariablesEndpoint.self)
+
+        let config = PKLConfig.make(lightFileId: "abc123")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("error with broken alias chain")
+    func errorWithBrokenChain() async throws {
+        let client = MockClient()
+        let variables = VariablesMeta.makeWithAliases(
+            variables: [
+                (
+                    id: "1:1",
+                    name: "Semantic/Primary",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .alias("9:9")]
+                ),
+            ]
+        )
+        client.setResponse(variables, for: VariablesEndpoint.self)
+
+        let config = PKLConfig.make(lightFileId: "abc123")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.ruleId == "alias-chain-integrity")
+        #expect(diagnostics.first?.severity == .error)
+    }
+
+    @Test("error with circular alias chain")
+    func errorWithCircularChain() async throws {
+        let client = MockClient()
+        let variables = VariablesMeta.makeWithAliases(
+            variables: [
+                (id: "1:1", name: "A", collectionId: nil, valuesByMode: ["1:0": .alias("1:2")]),
+                (id: "1:2", name: "B", collectionId: nil, valuesByMode: ["1:0": .alias("1:1")]),
+            ]
+        )
+        client.setResponse(variables, for: VariablesEndpoint.self)
+
+        let config = PKLConfig.make(lightFileId: "abc123")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.contains { $0.message.contains("circular") })
+    }
+
+    @Test("skips cross-file alias references")
+    func skipsCrossFileAliases() async throws {
+        let client = MockClient()
+        let crossFileId = "806fcc6a84cf048f0a06837634440ecad91622fe/3556:423"
+        let variables = VariablesMeta.makeWithAliases(
+            variables: [
+                (
+                    id: "1:1",
+                    name: "Semantic/Primary",
+                    collectionId: nil,
+                    valuesByMode: ["1:0": .alias(crossFileId)]
+                ),
+            ]
+        )
+        client.setResponse(variables, for: VariablesEndpoint.self)
+
+        let config = PKLConfig.make(lightFileId: "abc123")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+}
+
+// MARK: - ComponentNotFrameRule Tests
+
+struct ComponentNotFrameRuleTests {
+    let rule = ComponentNotFrameRule()
+
+    @Test("passes when frame has components")
+    func passesWhenComponentsExist() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("error when frame has no components")
+    func errorWhenNoComponents() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "OtherFrame"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "EmptyFrame")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.ruleId == "component-not-frame")
+        #expect(diagnostics.first?.message.contains("EmptyFrame") == true)
+    }
+}
+
+// MARK: - DarkModeSuffixRule Tests
+
+struct DarkModeSuffixRuleTests {
+    let rule = DarkModeSuffixRule()
+
+    @Test("passes when all light components have dark pairs")
+    func passesWithDarkPairs() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "icon_home-dark", frameName: "Icons"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons", suffixDarkMode: "-dark")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("warning when dark pair missing")
+    func warningWhenDarkPairMissing() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "icon_settings", frameName: "Icons"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons", suffixDarkMode: "-dark")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 2)
+        #expect(diagnostics.allSatisfy { $0.severity == .warning })
+    }
+
+    @Test("only checks components in configured frames")
+    func onlyChecksConfiguredFrames() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "flag_us", frameName: "Flags"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons", suffixDarkMode: "-dark")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // Only icon_home should be checked, not flag_us
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.componentName == "icon_home")
+    }
+
+    @Test("skips when no suffixDarkMode configured")
+    func skipsWithoutSuffix() async throws {
+        let client = MockClient()
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+}
+
+// MARK: - DuplicateComponentNamesRule Tests
+
+struct DuplicateComponentNamesRuleTests {
+    let rule = DuplicateComponentNamesRule()
+
+    @Test("passes when no duplicates")
+    func passesNoDuplicates() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "icon_settings", frameName: "Icons"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("error when duplicate names on same page")
+    func errorOnDuplicates() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "icon_home", frameName: "Icons"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.message.contains("2x") == true)
+    }
+
+    @Test("skips RTL variants")
+    func skipsRTLVariants() async throws {
+        let client = MockClient()
+        client.setResponse([
+            makeVariantComponent(nodeId: "1:1", name: "RTL=On", frameName: "Icons", componentSetName: "icon_home"),
+            makeVariantComponent(nodeId: "1:2", name: "RTL=On", frameName: "Icons", componentSetName: "icon_settings"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("only checks configured frames")
+    func onlyConfiguredFrames() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "duplicate", frameName: "Icons"),
+            Component.make(nodeId: "1:2", name: "duplicate", frameName: "Icons"),
+            Component.make(nodeId: "1:3", name: "duplicate", frameName: "OtherFrame"),
+            Component.make(nodeId: "1:4", name: "duplicate", frameName: "OtherFrame"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // Only the Icons frame pair should be flagged
+        #expect(diagnostics.count == 1)
+    }
+}
+
+// MARK: - Variant Component Helper
+
+/// Creates a Component that is a variant inside a component set (has containingComponentSet).
+private func makeVariantComponent(
+    nodeId: String,
+    name: String,
+    frameName: String = "Icons",
+    pageName: String = "Components",
+    componentSetName: String
+) -> Component {
+    let json = """
+    {
+        "key": "test-key",
+        "node_id": "\(nodeId)",
+        "name": "\(name)",
+        "containing_frame": {
+            "nodeId": "\(nodeId)",
+            "name": "\(frameName)",
+            "pageName": "\(pageName)",
+            "containingComponentSet": {
+                "nodeId": "set:\(nodeId)",
+                "name": "\(componentSetName)"
+            }
+        }
+    }
+    """
+    // swiftlint:disable:next force_try
+    return try! JSONCodec.decode(Component.self, from: Data(json.utf8))
+}
+
+// MARK: - LintEngine Tests
+
+struct LintEngineTests {
+    @Test("runs all rules and collects diagnostics")
+    func runsAllRules() async throws {
+        let client = MockClient()
+        client.setResponse([Component](), for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let ui = TerminalUI(outputMode: .quiet)
+        let context = LintContext(config: config, client: client, cache: LintDataCache(), ui: ui)
+
+        let engine = LintEngine.default
+        let diagnostics = try await engine.run(context: context)
+
+        // With empty components, component-not-frame should fire
+        #expect(diagnostics.contains { $0.ruleId == "component-not-frame" })
+    }
+
+    @Test("filters by rule ID")
+    func filtersByRuleId() async throws {
+        let client = MockClient()
+        client.setResponse([Component](), for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let ui = TerminalUI(outputMode: .quiet)
+        let context = LintContext(config: config, client: client, cache: LintDataCache(), ui: ui)
+
+        let engine = LintEngine.default
+        let diagnostics = try await engine.run(context: context, ruleFilter: ["deleted-variables"])
+
+        // Only deleted-variables rule should run (may have info from failed rule)
+        #expect(!diagnostics.contains { $0.ruleId == "component-not-frame" })
+    }
+}
+
+// swiftlint:enable file_length

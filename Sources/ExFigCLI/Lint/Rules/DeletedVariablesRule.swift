@@ -8,7 +8,7 @@ struct DeletedVariablesRule: LintRule {
     let id = "deleted-variables"
     let name = "No deleted variables"
     let description = "Variable collections must not contain deletedButReferenced variables"
-    let severity: LintSeverity = .error
+    let severity: LintSeverity = .warning
 
     func check(context: LintContext) async throws -> [LintDiagnostic] {
         let config = context.config
@@ -22,7 +22,7 @@ struct DeletedVariablesRule: LintRule {
 
             let variables: VariablesMeta
             do {
-                variables = try await context.client.request(VariablesEndpoint(fileId: fileId))
+                variables = try await context.cache.variables(for: fileId, client: context.client)
             } catch {
                 continue
             }
@@ -33,7 +33,7 @@ struct DeletedVariablesRule: LintRule {
                 diagnostics.append(LintDiagnostic(
                     ruleId: id,
                     ruleName: name,
-                    severity: .error,
+                    severity: .warning,
                     message: "Variable '\(variable.name)' is deleted but still referenced",
                     componentName: variable.name,
                     nodeId: variableId,

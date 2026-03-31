@@ -32,7 +32,7 @@ struct DarkModeSuffixRule: LintRule {
 
         let components: [Component]
         do {
-            components = try await context.client.request(ComponentsEndpoint(fileId: defaultFileId))
+            components = try await context.cache.components(for: defaultFileId, client: context.client)
         } catch {
             return []
         }

@@ -30,7 +30,7 @@ struct ComponentNotFrameRule: LintRule {
 
             let components: [Component]
             do {
-                components = try await context.client.request(ComponentsEndpoint(fileId: fileId))
+                components = try await context.cache.components(for: fileId, client: context.client)
             } catch {
                 continue
             }

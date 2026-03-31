@@ -1,5 +1,8 @@
 import Foundation
 
+/// Callback for reporting lint progress with a displayable message string.
+typealias LintProgressCallback = @Sendable (String) -> Void
+
 /// Engine that runs lint rules against a PKL configuration.
 struct LintEngine {
     /// All registered lint rules.
@@ -9,7 +12,8 @@ struct LintEngine {
     func run(
         context: LintContext,
         ruleFilter: Set<String>? = nil,
-        minSeverity: LintSeverity = .info
+        minSeverity: LintSeverity = .info,
+        onProgress: LintProgressCallback? = nil
     ) async throws -> [LintDiagnostic] {
         let applicableRules = rules.filter { rule in
             if let filter = ruleFilter, !filter.contains(rule.id) {
@@ -19,13 +23,15 @@ struct LintEngine {
         }
 
         var allDiagnostics: [LintDiagnostic] = []
+        let total = applicableRules.count
 
-        for rule in applicableRules {
+        for (index, rule) in applicableRules.enumerated() {
+            onProgress?("Checking \(rule.name)... (\(index + 1)/\(total))")
+
             do {
                 let diagnostics = try await rule.check(context: context)
                 allDiagnostics.append(contentsOf: diagnostics)
             } catch {
-                // Rule failure becomes an info diagnostic
                 allDiagnostics.append(LintDiagnostic(
                     ruleId: rule.id,
                     ruleName: rule.name,
@@ -57,7 +63,7 @@ extension LintEngine {
         NamingConventionRule(),
         ComponentNotFrameRule(),
         DeletedVariablesRule(),
-        AliasChainIntegrityRule(),
+        DuplicateComponentNamesRule(),
         DarkModeVariablesRule(),
         DarkModeSuffixRule(),
     ])

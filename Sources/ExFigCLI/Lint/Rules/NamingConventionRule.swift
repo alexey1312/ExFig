@@ -26,7 +26,7 @@ struct NamingConventionRule: LintRule {
 
             let components: [Component]
             do {
-                components = try await context.client.request(ComponentsEndpoint(fileId: entryFileId))
+                components = try await context.cache.components(for: entryFileId, client: context.client)
             } catch {
                 continue
             }
