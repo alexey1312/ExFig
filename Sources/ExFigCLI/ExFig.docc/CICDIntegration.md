@@ -65,6 +65,20 @@ In CI, use `--quiet` to keep logs clean. Pair with `--report` for structured out
 | 0    | Success                          |
 | 1    | Export error (API failure, etc.) |
 
+## Linting in CI
+
+Run `exfig lint` as a pre-export validation step. It checks that your Figma file
+matches the conventions expected by your PKL config (naming, frame structure, variable
+bindings, dark mode setup).
+
+```yaml
+- name: Lint Figma structure
+  run: exfig lint -i exfig.pkl --format json --severity error
+```
+
+The command exits with code 1 if any errors are found. Use `--format json` for
+machine-readable output and `--severity error` to ignore warnings.
+
 ## Version Tracking in CI
 
 Enable `--cache` to skip unchanged exports. ExFig compares the Figma file version against a local
