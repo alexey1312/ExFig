@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2026-03-31
+
+### Features
+
+- **cli**: Add `exfig lint` command for Figma file validation  by @alexey1312 in [#80](https://github.com/DesignPipe/exfig/pull/80)
+
+
 ## [3.1.1] - 2026-03-30
 
 ### Bug Fixes
