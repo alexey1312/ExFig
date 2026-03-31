@@ -2,6 +2,8 @@
 import ExFigCore
 import Foundation
 
+// swiftlint:disable type_body_length
+
 /// Main facade for terminal UI operations
 final class TerminalUI: Sendable {
     let outputMode: OutputMode
@@ -287,6 +289,46 @@ final class TerminalUI: Sendable {
         do {
             let result = try await operation { current, total in
                 spinner.update(message: "\(message) (\(current)/\(total) batches)")
+            }
+            spinner.succeed()
+            return result
+        } catch {
+            spinner.fail()
+            throw error
+        }
+    }
+
+    /// Execute an operation with a spinner that supports dynamic message updates.
+    func withSpinnerMessage<T: Sendable>(
+        _ message: String,
+        operation: @Sendable @escaping (@escaping @Sendable (String) -> Void) async throws -> T
+    ) async rethrows -> T {
+        if BatchSharedState.current?.progressView != nil {
+            return try await operation { _ in }
+        }
+
+        if TerminalOutputManager.shared.hasActiveAnimation {
+            return try await operation { _ in }
+        }
+
+        guard outputMode.showProgress else {
+            if outputMode != .quiet {
+                TerminalOutputManager.shared.print(message)
+            }
+            return try await operation { _ in }
+        }
+
+        let spinner = Spinner(
+            message: message,
+            useColors: useColors,
+            useAnimations: useAnimations
+        )
+
+        spinner.start()
+
+        do {
+            let result = try await operation { newMessage in
+                spinner.update(message: newMessage)
             }
             spinner.succeed()
             return result

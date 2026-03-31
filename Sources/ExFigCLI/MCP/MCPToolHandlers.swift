@@ -14,6 +14,8 @@
                 switch params.name {
                 case "exfig_validate":
                     return try await handleValidate(params: params)
+                case "exfig_lint":
+                    return try await handleLint(params: params, state: state)
                 case "exfig_tokens_info":
                     return try await handleTokensInfo(params: params)
                 case "exfig_inspect":
@@ -126,6 +128,46 @@
             checkIconEntries(config.web?.icons)
 
             return approaches.sorted()
+        }
+
+        // MARK: - Lint
+
+        private static func handleLint(
+            params: CallTool.Parameters,
+            state: MCPServerState
+        ) async throws -> CallTool.Result {
+            // Validate cheap params before expensive operations (PKL eval, API client)
+            let ruleFilter: Set<String>? = params.arguments?["rules"]?.stringValue.map {
+                Set($0.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) })
+            }
+            let minSeverity = params.arguments?["severity"]?.stringValue
+                .flatMap { LintSeverity(rawValue: $0) } ?? .info
+
+            let configPath = try resolveConfigPath(from: params.arguments?["config_path"]?.stringValue)
+            let configURL = URL(fileURLWithPath: configPath)
+            let config = try await PKLEvaluator.evaluate(configPath: configURL)
+
+            let client = try await state.getClient()
+            let cache = LintDataCache()
+            let ui = TerminalUI(outputMode: .quiet)
+            let context = LintContext(config: config, client: client, cache: cache, ui: ui)
+
+            let engine = LintEngine.default
+            let diagnostics = try await engine.run(
+                context: context,
+                ruleFilter: ruleFilter,
+                minSeverity: minSeverity
+            )
+
+            let result = LintMCPResult(
+                configPath: configPath,
+                diagnosticsCount: diagnostics.count,
+                errorsCount: diagnostics.filter { $0.severity == .error }.count,
+                warningsCount: diagnostics.filter { $0.severity == .warning }.count,
+                diagnostics: diagnostics
+            )
+
+            return try .init(content: [.text(text: encodeJSON(result), annotations: nil, _meta: nil)])
         }
 
         // MARK: - Tokens Info
@@ -774,6 +816,22 @@
     }
 
     // MARK: - Response Types
+
+    private struct LintMCPResult: Codable {
+        let configPath: String
+        let diagnosticsCount: Int
+        let errorsCount: Int
+        let warningsCount: Int
+        let diagnostics: [LintDiagnostic]
+
+        enum CodingKeys: String, CodingKey {
+            case configPath = "config_path"
+            case diagnosticsCount = "diagnostics_count"
+            case errorsCount = "errors_count"
+            case warningsCount = "warnings_count"
+            case diagnostics
+        }
+    }
 
     private struct ValidateSummary: Codable {
         let configPath: String

@@ -334,6 +334,26 @@ cmd "batch" help="Process multiple config files in parallel" {
 }
 
 // =============================================================================
+// lint
+// =============================================================================
+
+cmd "lint" help="Lint Figma file structure against config" {
+    long_help "Validates that the Figma file follows the conventions required by your ExFig config. Checks naming conventions, frame/page structure, variable bindings, dark mode setup, and more. Exit code 1 if errors found."
+
+    flag "-i --input <path>" help="Path to PKL config file. Auto-detects exfig.pkl if not specified."
+    flag "--max-retries <n>" help="Maximum retry attempts for failed API requests" default="4"
+    flag "--rate-limit <n>" help="Maximum API requests per minute" default="10"
+    flag "--timeout <seconds>" help="Figma API request timeout in seconds (overrides config)"
+    flag "--rules <ids>" help="Comma-separated list of rule IDs to run"
+    flag "--format <fmt>" help="Output format" default="text" {
+        choices "text" "json"
+    }
+    flag "--severity <level>" help="Minimum severity to report" default="info" {
+        choices "error" "warning" "info"
+    }
+}
+
+// =============================================================================
 // mcp
 // =============================================================================
 

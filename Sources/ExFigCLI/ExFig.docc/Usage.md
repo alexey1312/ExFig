@@ -259,6 +259,34 @@ exfig fetch -f abc123 -r "Images" -o ./images \
 | `--webp-encoding`    | -     | WebP encoding: lossy, lossless         | lossy   |
 | `--webp-quality`     | -     | WebP quality (0-100)                   | 80      |
 
+## Linting
+
+Validate your Figma file structure against your PKL config before exporting:
+
+```bash
+# Lint with default rules
+exfig lint -i exfig.pkl
+
+# Only check specific rules
+exfig lint -i exfig.pkl --rules naming-convention,deleted-variables
+
+# JSON output for CI (exit code 1 on errors)
+exfig lint -i exfig.pkl --format json --severity error
+```
+
+### Available Rules
+
+| Rule                       | Severity | Description                                            |
+| -------------------------- | -------- | ------------------------------------------------------ |
+| `frame-page-match`         | error    | Frame/page names in config exist in Figma file         |
+| `naming-convention`        | error    | Component names match `nameValidateRegexp` patterns    |
+| `component-not-frame`      | error    | Configured frames contain published components         |
+| `duplicate-component-names`| error    | No duplicate component names in configured frames      |
+| `deleted-variables`        | warning  | No `deletedButReferenced` variables in collections     |
+| `alias-chain-integrity`    | warning  | Variable alias chains resolve without broken refs      |
+| `dark-mode-variables`      | error    | With `variablesDarkMode`, fills bound to Variables     |
+| `dark-mode-suffix`         | warning  | With `suffixDarkMode`, light components have dark pair |
+
 ## Help and Version
 
 ```bash

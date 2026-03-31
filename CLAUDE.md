@@ -317,6 +317,29 @@ Changing `load()` return type affects:
 
 **`withSpinner` gotcha:** Closure is `@Sendable` — cannot capture mutable vars. Return full result from closure.
 
+### Lint Command
+
+`exfig lint -i exfig.pkl` validates Figma file structure against PKL config.
+Rules in `Sources/ExFigCLI/Lint/Rules/`, engine in `LintEngine.swift`.
+Each rule implements `LintRule` protocol with `check(context: LintContext) -> [LintDiagnostic]`.
+`LintRule` extension provides `diagnostic()` factory pre-filled with rule metadata — use instead of raw `LintDiagnostic` init.
+Uses `FigmaAPI.Client.request(SomeEndpoint(...))` directly (no convenience methods on Client).
+`ComponentsEndpoint` returns `[Component]`, `VariablesEndpoint` returns `VariablesMeta`,
+`NodesEndpoint` returns `[NodeId: Node]`.
+
+**Lint rule development patterns:**
+
+- Every rule must filter components by BOTH `figmaFrameName` AND `figmaPageName` from config entries
+- Skip RTL variants: `comp.containingFrame.containingComponentSet != nil && comp.name.contains("RTL=")`
+- Skip root frame fills when checking boundVariables — root `Document` fills are backgrounds, check only children
+- Cross-file variable IDs (32+ char hex hash before `/`) are valid external library refs, not broken aliases
+- `LintDataCache` actor caches Components/Variables API responses — use `context.cache.components(for:client:)`
+- Rules MUST emit diagnostics on API failure — never `catch { continue }` silently. Follow `FramePageMatchRule` pattern
+- Empty `fileId` guards must return a diagnostic, not silently `return []`
+- `LintSeverity` is `Comparable` — use `>=` directly, no `severityRank()` helpers
+- `LintOutputFormat` and `LintSeverity` conform to `ExpressibleByArgument` — use as `@Option` types directly
+- Adding error handling to `check()` increases cyclomatic complexity — extract per-entry logic into private methods
+
 ### Adding a CLI Command
 
 See `ExFigCLI/CLAUDE.md` (Adding a New Subcommand).
@@ -502,6 +525,11 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Figma variable IDs file-scoped | Variable IDs differ between files — alias targets from file A can't be found by ID in file B. Use name-based matching (`resolveViaLibrary`) + mode name matching (not modeId) for cross-file resolution |
 | `assertionFailure` in release | `assertionFailure` is stripped in release builds — add `FileHandle.standardError.write()` as production fallback for truly-impossible-but-must-not-be-silent error paths |
 | Components API called N times | `ComponentPreFetcher` only works in batch mode — use `ComponentsCache` via `SourceFactory(componentsCache:)` for standalone multi-entry dedup |
+| Config type reference | `ExFigOptions.params` is `ExFig.ModuleImpl!` — `PKLConfig` is a typealias in `PKLConfigCompat.swift`, both names work |
+| `Paint.visible` doesn't exist | FigmaAPI `Paint` has no `visible` field — use `opacity` to check visibility |
+| `variablesColors` location | On `Common.CommonConfig` (`config.common?.variablesColors`), NOT on `config.common?.colors?.variablesColors` |
+| `cp` prompts overwrite | macOS `trash` alias intercepts `cp`; use `/bin/cp -f` to force overwrite without prompt |
+| SwiftFormat `///` before nested `func` | SwiftFormat converts `//` to `///` before `func` inside method bodies — this is expected, don't fight it |
 
 ## Additional Rules
 

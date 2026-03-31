@@ -114,6 +114,7 @@ extension ExFigCommand {
             Download.self,
             Tokens.self,
             Batch.self,
+            Lint.self,
         ]
         #if canImport(MCP)
             commands.append(MCPServe.self)

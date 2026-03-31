@@ -63,6 +63,7 @@ ExFigCore domain types (NameStyle, ColorsSourceInput, etc.)
 ### Generated Type Gotchas
 
 - `Common.PenpotSource.baseUrl` is non-optional `String` (has PKL default) — tests must pass a real URL, not `nil`
+- `variablesColors` is on `Common.CommonConfig` (`config.common?.variablesColors`), NOT on `Common.Colors`
 
 ### PklError Workaround
 

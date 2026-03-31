@@ -234,6 +234,14 @@ Penpot sources create `BasePenpotClient` internally from `PENPOT_ACCESS_TOKEN` e
 `FileDownloader.fetch()` treats `file://` URLs as local files (skips HTTP download). Do NOT weaken
 `validateDownloadURL()` — it must remain HTTPS-only. Filter file URLs in `fetch()` before download loop.
 
+### Lint Subcommand
+
+`Lint.swift` validates Figma file against config without exporting.
+Uses `ExFigOptions` for config loading (same as export commands).
+Rules in `Lint/Rules/`, each uses `client.request(SomeEndpoint(fileId:))` for Figma API.
+Generic entry collection: `func addEntries(_ icons: [some Common_FrameSource]?)` to iterate
+all platform entries without platform-specific code.
+
 ### Adding a New Subcommand
 
 1. Create `Subcommands/NewCommand.swift` implementing `AsyncParsableCommand`

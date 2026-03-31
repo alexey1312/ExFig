@@ -54,6 +54,7 @@ automatic retries with exponential backoff, checkpoint/resume for interrupted ex
 file version tracking, and experimental per-node granular cache.
 
 **Developer Experience**
+`exfig lint` validates Figma file structure against your config before export (naming, variables, dark mode).
 CI/CD ready (quiet mode, exit codes, JSON reports), GitHub Action for automated exports,
 MCP server for AI assistant integration,
 [Claude Code plugins](https://github.com/DesignPipe/exfig-plugins) for setup wizards and slash commands,
