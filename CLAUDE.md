@@ -317,6 +317,15 @@ Changing `load()` return type affects:
 
 **`withSpinner` gotcha:** Closure is `@Sendable` — cannot capture mutable vars. Return full result from closure.
 
+### Lint Command
+
+`exfig lint -i exfig.pkl` validates Figma file structure against PKL config.
+Rules in `Sources/ExFigCLI/Lint/Rules/`, engine in `LintEngine.swift`.
+Each rule implements `LintRule` protocol with `check(context: LintContext) -> [LintDiagnostic]`.
+Uses `FigmaAPI.Client.request(SomeEndpoint(...))` directly (no convenience methods on Client).
+`ComponentsEndpoint` returns `[Component]`, `VariablesEndpoint` returns `VariablesMeta`,
+`NodesEndpoint` returns `[NodeId: Node]`.
+
 ### Adding a CLI Command
 
 See `ExFigCLI/CLAUDE.md` (Adding a New Subcommand).
@@ -502,6 +511,9 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Figma variable IDs file-scoped | Variable IDs differ between files — alias targets from file A can't be found by ID in file B. Use name-based matching (`resolveViaLibrary`) + mode name matching (not modeId) for cross-file resolution |
 | `assertionFailure` in release | `assertionFailure` is stripped in release builds — add `FileHandle.standardError.write()` as production fallback for truly-impossible-but-must-not-be-silent error paths |
 | Components API called N times | `ComponentPreFetcher` only works in batch mode — use `ComponentsCache` via `SourceFactory(componentsCache:)` for standalone multi-entry dedup |
+| Config type reference | `ExFigOptions.params` is `ExFig.ModuleImpl!` — no `PKLConfig` typealias exists |
+| `Paint.visible` doesn't exist | FigmaAPI `Paint` has no `visible` field — use `opacity` to check visibility |
+| `variablesColors` location | On `Common.CommonConfig` (`config.common?.variablesColors`), NOT on `config.common?.colors?.variablesColors` |
 
 ## Additional Rules
 
