@@ -2,12 +2,6 @@ import ExFigCore
 import Foundation
 import Noora
 
-/// Output format for lint results.
-enum LintOutputFormat: String {
-    case text
-    case json
-}
-
 /// Formats and outputs lint results.
 struct LintReporter {
     let format: LintOutputFormat
@@ -18,7 +12,7 @@ struct LintReporter {
         case .text:
             reportText(diagnostics: diagnostics, ui: ui)
         case .json:
-            try reportJSON(diagnostics: diagnostics)
+            try reportJSON(diagnostics: diagnostics, ui: ui)
         }
     }
 
@@ -46,11 +40,10 @@ struct LintReporter {
         ui.info("  \(summaryParts.joined(separator: "  "))")
         ui.info("")
 
-        // Group by rule, sorted: errors first, then warnings
         let grouped = Dictionary(grouping: diagnostics) { $0.ruleId }
         let sortedGroups = grouped.sorted { lhs, rhs in
-            let lSev = severityRank(lhs.value[0].severity)
-            let rSev = severityRank(rhs.value[0].severity)
+            let lSev = lhs.value[0].severity
+            let rSev = rhs.value[0].severity
             if lSev != rSev { return lSev > rSev }
             return lhs.key < rhs.key
         }
@@ -64,7 +57,6 @@ struct LintReporter {
 
             ui.info("  \(icon) \(first.ruleName) \(countStr)")
 
-            // Table: component name | message
             let tableItems = items.prefix(8)
             let maxNameLen = min(
                 tableItems.compactMap(\.componentName).map(\.count).max() ?? 10,
@@ -100,17 +92,9 @@ struct LintReporter {
         }
     }
 
-    private func severityRank(_ severity: LintSeverity) -> Int {
-        switch severity {
-        case .error: 2
-        case .warning: 1
-        case .info: 0
-        }
-    }
-
     // MARK: - JSON Output
 
-    private func reportJSON(diagnostics: [LintDiagnostic]) throws {
+    private func reportJSON(diagnostics: [LintDiagnostic], ui: TerminalUI) throws {
         let report = LintReport(
             diagnosticsCount: diagnostics.count,
             errorsCount: diagnostics.filter { $0.severity == .error }.count,
@@ -118,7 +102,10 @@ struct LintReporter {
             diagnostics: diagnostics
         )
         let data = try JSONCodec.encode(report)
-        print(String(data: data, encoding: .utf8) ?? "{}")
+        guard let jsonString = String(data: data, encoding: .utf8) else {
+            throw ExFigError.custom(errorString: "Failed to encode lint report as UTF-8")
+        }
+        ui.info(jsonString)
     }
 }
 

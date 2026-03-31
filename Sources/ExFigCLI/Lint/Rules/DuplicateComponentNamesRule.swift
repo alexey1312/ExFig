@@ -15,7 +15,6 @@ struct DuplicateComponentNamesRule: LintRule {
     func check(context: LintContext) async throws -> [LintDiagnostic] {
         let config = context.config
         let defaultFileId = config.figma?.lightFileId ?? ""
-        guard !defaultFileId.isEmpty else { return [] }
 
         let configEntries = collectConfiguredEntries(from: config, defaultFileId: defaultFileId)
         guard !configEntries.isEmpty else { return [] }
@@ -24,12 +23,23 @@ struct DuplicateComponentNamesRule: LintRule {
         let grouped = Dictionary(grouping: configEntries) { $0.fileId }
 
         for (fileId, entries) in grouped {
-            guard !fileId.isEmpty else { continue }
+            guard !fileId.isEmpty else {
+                diagnostics.append(diagnostic(
+                    message: "No figma.lightFileId configured — skipping rule",
+                    suggestion: "Set figma.lightFileId in your PKL config"
+                ))
+                continue
+            }
 
             let components: [Component]
             do {
                 components = try await context.cache.components(for: fileId, client: context.client)
             } catch {
+                diagnostics.append(diagnostic(
+                    severity: .error,
+                    message: "Cannot fetch components for file '\(fileId)': \(error.localizedDescription)",
+                    suggestion: "Check FIGMA_PERSONAL_TOKEN and file permissions"
+                ))
                 continue
             }
 
@@ -62,9 +72,7 @@ struct DuplicateComponentNamesRule: LintRule {
                     .map { "'\($0)'" }
                 let uniqueFrames = Array(Set(frames)).sorted()
 
-                diagnostics.append(LintDiagnostic(
-                    ruleId: id,
-                    ruleName: self.name,
+                diagnostics.append(diagnostic(
                     severity: .error,
                     message: "'\(compName)' appears \(duplicates.count)x on page '\(page)'"
                         + (uniqueFrames.count > 1 ? " in \(uniqueFrames.joined(separator: ", "))" : ""),

@@ -34,17 +34,15 @@ extension ExFigCommand {
         var rules: String?
 
         @Option(name: .long, help: "Output format: text or json")
-        var format: String = "text"
+        var format: LintOutputFormat = .text
 
         @Option(name: .long, help: "Minimum severity: error, warning, or info")
-        var severity: String = "info"
+        var severity: LintSeverity = .info
 
         func run() async throws {
-            let outputFormat = LintOutputFormat(rawValue: format) ?? .text
-
             // JSON mode: force quiet to keep stdout clean for machine parsing
             let effectiveVerbose = globalOptions.verbose
-            let effectiveQuiet = outputFormat == .json ? true : globalOptions.quiet
+            let effectiveQuiet = format == .json ? true : globalOptions.quiet
 
             ExFigCommand.initializeTerminalUI(
                 verbose: effectiveVerbose, quiet: effectiveQuiet
@@ -52,7 +50,6 @@ extension ExFigCommand {
             ExFigCommand.checkSchemaVersionIfNeeded()
             let ui = ExFigCommand.terminalUI!
 
-            let minSeverity = LintSeverity(rawValue: severity) ?? .info
             let ruleFilter: Set<String>? = rules.map {
                 Set($0.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) })
             }
@@ -74,14 +71,14 @@ extension ExFigCommand {
                 try await engine.run(
                     context: context,
                     ruleFilter: ruleFilter,
-                    minSeverity: minSeverity
+                    minSeverity: severity
                 ) { message in
                     updateMessage(message)
                 }
             }
 
             let reporter = LintReporter(
-                format: outputFormat,
+                format: format,
                 useColors: ui.outputMode == .normal
             )
             try reporter.report(diagnostics: diagnostics, ui: ui)

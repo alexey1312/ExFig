@@ -1,13 +1,32 @@
+import ArgumentParser
 import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
 
 /// Severity level for lint diagnostics.
-enum LintSeverity: String, CaseIterable, Codable {
+enum LintSeverity: String, CaseIterable, Codable, Comparable, ExpressibleByArgument {
     case error
     case warning
     case info
+
+    static func < (lhs: LintSeverity, rhs: LintSeverity) -> Bool {
+        lhs.rank < rhs.rank
+    }
+
+    private var rank: Int {
+        switch self {
+        case .error: 2
+        case .warning: 1
+        case .info: 0
+        }
+    }
+}
+
+/// Output format for lint results.
+enum LintOutputFormat: String, ExpressibleByArgument {
+    case text
+    case json
 }
 
 /// A single finding from a lint rule.
@@ -66,4 +85,25 @@ protocol LintRule: Sendable {
 
     /// Run the check and return diagnostics (empty = all good).
     func check(context: LintContext) async throws -> [LintDiagnostic]
+}
+
+extension LintRule {
+    /// Create a diagnostic pre-filled with this rule's metadata.
+    func diagnostic(
+        severity: LintSeverity? = nil,
+        message: String,
+        componentName: String? = nil,
+        nodeId: String? = nil,
+        suggestion: String? = nil
+    ) -> LintDiagnostic {
+        LintDiagnostic(
+            ruleId: id,
+            ruleName: name,
+            severity: severity ?? self.severity,
+            message: message,
+            componentName: componentName,
+            nodeId: nodeId,
+            suggestion: suggestion
+        )
+    }
 }

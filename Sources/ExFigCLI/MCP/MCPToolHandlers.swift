@@ -136,6 +136,13 @@
             params: CallTool.Parameters,
             state: MCPServerState
         ) async throws -> CallTool.Result {
+            // Validate cheap params before expensive operations (PKL eval, API client)
+            let ruleFilter: Set<String>? = params.arguments?["rules"]?.stringValue.map {
+                Set($0.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) })
+            }
+            let minSeverity = params.arguments?["severity"]?.stringValue
+                .flatMap { LintSeverity(rawValue: $0) } ?? .info
+
             let configPath = try resolveConfigPath(from: params.arguments?["config_path"]?.stringValue)
             let configURL = URL(fileURLWithPath: configPath)
             let config = try await PKLEvaluator.evaluate(configPath: configURL)
@@ -144,12 +151,6 @@
             let cache = LintDataCache()
             let ui = TerminalUI(outputMode: .quiet)
             let context = LintContext(config: config, client: client, cache: cache, ui: ui)
-
-            let ruleFilter: Set<String>? = params.arguments?["rules"]?.stringValue.map {
-                Set($0.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) })
-            }
-            let minSeverity = params.arguments?["severity"]?.stringValue
-                .flatMap { LintSeverity(rawValue: $0) } ?? .info
 
             let engine = LintEngine.default
             let diagnostics = try await engine.run(

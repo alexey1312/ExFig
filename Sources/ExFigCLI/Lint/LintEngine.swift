@@ -19,7 +19,7 @@ struct LintEngine {
             if let filter = ruleFilter, !filter.contains(rule.id) {
                 return false
             }
-            return severityRank(rule.severity) >= severityRank(minSeverity)
+            return rule.severity >= minSeverity
         }
 
         var allDiagnostics: [LintDiagnostic] = []
@@ -31,28 +31,22 @@ struct LintEngine {
             do {
                 let diagnostics = try await rule.check(context: context)
                 allDiagnostics.append(contentsOf: diagnostics)
+            } catch is CancellationError {
+                throw CancellationError()
             } catch {
                 allDiagnostics.append(LintDiagnostic(
                     ruleId: rule.id,
                     ruleName: rule.name,
-                    severity: .info,
+                    severity: .error,
                     message: "Rule check failed: \(error.localizedDescription)",
                     componentName: nil,
                     nodeId: nil,
-                    suggestion: nil
+                    suggestion: "Check FIGMA_PERSONAL_TOKEN and network connectivity"
                 ))
             }
         }
 
         return allDiagnostics
-    }
-
-    private func severityRank(_ severity: LintSeverity) -> Int {
-        switch severity {
-        case .error: 2
-        case .warning: 1
-        case .info: 0
-        }
     }
 }
 
@@ -64,6 +58,7 @@ extension LintEngine {
         ComponentNotFrameRule(),
         DeletedVariablesRule(),
         DuplicateComponentNamesRule(),
+        AliasChainIntegrityRule(),
         DarkModeVariablesRule(),
         DarkModeSuffixRule(),
     ])

@@ -15,7 +15,6 @@ struct ComponentNotFrameRule: LintRule {
     func check(context: LintContext) async throws -> [LintDiagnostic] {
         let config = context.config
         let defaultFileId = config.figma?.lightFileId ?? ""
-        guard !defaultFileId.isEmpty else { return [] }
 
         var diagnostics: [LintDiagnostic] = []
 
@@ -26,12 +25,23 @@ struct ComponentNotFrameRule: LintRule {
         let grouped = Dictionary(grouping: entries) { $0.fileId }
 
         for (fileId, fileEntries) in grouped {
-            guard !fileId.isEmpty else { continue }
+            guard !fileId.isEmpty else {
+                diagnostics.append(diagnostic(
+                    message: "No figma.lightFileId configured — skipping rule",
+                    suggestion: "Set figma.lightFileId in your PKL config"
+                ))
+                continue
+            }
 
             let components: [Component]
             do {
                 components = try await context.cache.components(for: fileId, client: context.client)
             } catch {
+                diagnostics.append(diagnostic(
+                    severity: .error,
+                    message: "Cannot fetch components for file '\(fileId)': \(error.localizedDescription)",
+                    suggestion: "Check FIGMA_PERSONAL_TOKEN and file permissions"
+                ))
                 continue
             }
 
@@ -47,13 +57,9 @@ struct ComponentNotFrameRule: LintRule {
                 }
 
                 if matchingComponents.isEmpty {
-                    diagnostics.append(LintDiagnostic(
-                        ruleId: id,
-                        ruleName: name,
+                    diagnostics.append(diagnostic(
                         severity: .error,
                         message: "Frame '\(frameName)' has no published components",
-                        componentName: nil,
-                        nodeId: nil,
                         suggestion: "Convert frames to Components (⌥⌘K) and publish to Team Library"
                     ))
                 }

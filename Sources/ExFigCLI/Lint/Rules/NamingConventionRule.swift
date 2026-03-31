@@ -18,63 +18,79 @@ struct NamingConventionRule: LintRule {
         let entries = collectEntriesWithRegex(from: config, defaultFileId: fileId)
         guard !entries.isEmpty else { return [] }
 
-        // Group by fileId
         let grouped = Dictionary(grouping: entries) { $0.fileId }
 
         for (entryFileId, fileEntries) in grouped {
-            guard !entryFileId.isEmpty else { continue }
+            guard !entryFileId.isEmpty else {
+                diagnostics.append(diagnostic(
+                    message: "No figma.lightFileId configured — skipping rule",
+                    suggestion: "Set figma.lightFileId in your PKL config"
+                ))
+                continue
+            }
 
             let components: [Component]
             do {
                 components = try await context.cache.components(for: entryFileId, client: context.client)
             } catch {
+                diagnostics.append(diagnostic(
+                    severity: .error,
+                    message: "Cannot fetch components for file '\(entryFileId)': \(error.localizedDescription)",
+                    suggestion: "Check FIGMA_PERSONAL_TOKEN and file permissions"
+                ))
                 continue
             }
 
             for entry in fileEntries {
-                guard let pattern = entry.regex else { continue }
-                let regex: NSRegularExpression
-                do {
-                    regex = try NSRegularExpression(pattern: pattern)
-                } catch {
-                    diagnostics.append(LintDiagnostic(
-                        ruleId: id,
-                        ruleName: name,
-                        severity: .warning,
-                        message: "Invalid regex pattern: '\(pattern)'",
-                        componentName: nil,
-                        nodeId: nil,
-                        suggestion: "Fix the nameValidateRegexp in your PKL config"
-                    ))
-                    continue
-                }
-
-                // Filter components by frame name if specified
-                let relevant = components.filter { comp in
-                    if let frameName = entry.frameName {
-                        return comp.containingFrame.name == frameName
-                    }
-                    return true
-                }
-
-                for comp in relevant {
-                    let range = NSRange(comp.name.startIndex..., in: comp.name)
-                    if regex.firstMatch(in: comp.name, range: range) == nil {
-                        diagnostics.append(LintDiagnostic(
-                            ruleId: id,
-                            ruleName: name,
-                            severity: .error,
-                            message: "Name '\(comp.name)' doesn't match pattern '\(pattern)'",
-                            componentName: comp.name,
-                            nodeId: comp.nodeId,
-                            suggestion: "Rename the component to match the expected pattern"
-                        ))
-                    }
-                }
+                checkEntry(entry, components: components, diagnostics: &diagnostics)
             }
         }
 
         return diagnostics
+    }
+
+    // MARK: - Per-Entry Check
+
+    private func checkEntry(
+        _ entry: RegexEntry,
+        components: [Component],
+        diagnostics: inout [LintDiagnostic]
+    ) {
+        guard let pattern = entry.regex else { return }
+        let regex: NSRegularExpression
+        do {
+            regex = try NSRegularExpression(pattern: pattern)
+        } catch {
+            diagnostics.append(diagnostic(
+                severity: .warning,
+                message: "Invalid regex pattern: '\(pattern)'",
+                suggestion: "Fix the nameValidateRegexp in your PKL config"
+            ))
+            return
+        }
+
+        let relevant = components.filter { comp in
+            if let pageName = entry.pageName, comp.containingFrame.pageName != pageName {
+                return false
+            }
+            if let frameName = entry.frameName {
+                return comp.containingFrame.name == frameName
+            }
+            return true
+        }
+
+        for comp in relevant {
+            let range = NSRange(comp.name.startIndex..., in: comp.name)
+            if regex.firstMatch(in: comp.name, range: range) == nil {
+                diagnostics.append(diagnostic(
+                    severity: .error,
+                    message: "Name '\(comp.name)' doesn't match pattern '\(pattern)'",
+                    componentName: comp.name,
+                    nodeId: comp.nodeId,
+                    suggestion: "Rename the component to match the expected pattern"
+                ))
+            }
+        }
     }
 
     // MARK: - Entry Collection
@@ -82,6 +98,7 @@ struct NamingConventionRule: LintRule {
     private struct RegexEntry {
         let fileId: String
         let frameName: String?
+        let pageName: String?
         let regex: String?
     }
 
@@ -96,6 +113,7 @@ struct NamingConventionRule: LintRule {
                 entries.append(RegexEntry(
                     fileId: entry.figmaFileId ?? defaultFileId,
                     frameName: entry.figmaFrameName,
+                    pageName: entry.figmaPageName,
                     regex: entry.nameValidateRegexp
                 ))
             }
@@ -111,6 +129,7 @@ struct NamingConventionRule: LintRule {
         }
         if let flutter = config.flutter {
             addEntries(flutter.icons)
+            addEntries(flutter.images)
         }
         if let web = config.web {
             addEntries(web.icons)

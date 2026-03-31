@@ -3,25 +3,34 @@ import ExFigCore
 import FigmaAPI
 import Foundation
 
-/// Checks that all variable alias chains resolve successfully (no broken refs, depth <= 10).
+/// Checks that all variable alias chains resolve successfully (no broken refs, depth < 10).
 struct AliasChainIntegrityRule: LintRule {
     let id = "alias-chain-integrity"
     let name = "Alias chain integrity"
     let description = "All variable alias chains must resolve without broken references"
-    let severity: LintSeverity = .error
+    let severity: LintSeverity = .warning
 
     private let maxDepth = 10
 
     func check(context: LintContext) async throws -> [LintDiagnostic] {
         let config = context.config
         let fileId = config.figma?.lightFileId ?? ""
-        guard !fileId.isEmpty else { return [] }
+        guard !fileId.isEmpty else {
+            return [diagnostic(
+                message: "No figma.lightFileId configured — skipping rule",
+                suggestion: "Set figma.lightFileId in your PKL config"
+            )]
+        }
 
         let variables: VariablesMeta
         do {
             variables = try await context.cache.variables(for: fileId, client: context.client)
         } catch {
-            return []
+            return [diagnostic(
+                severity: .error,
+                message: "Cannot fetch variables for file '\(fileId)': \(error.localizedDescription)",
+                suggestion: "Check FIGMA_PERSONAL_TOKEN and file permissions"
+            )]
         }
 
         var diagnostics: [LintDiagnostic] = []
@@ -41,9 +50,7 @@ struct AliasChainIntegrityRule: LintRule {
                 case .resolved:
                     break
                 case let .broken(targetId):
-                    diagnostics.append(LintDiagnostic(
-                        ruleId: id,
-                        ruleName: name,
+                    diagnostics.append(diagnostic(
                         severity: .error,
                         message: "'\(variable.name)' mode '\(modeId)' refs non-existent '\(targetId)'",
                         componentName: variable.name,
@@ -51,9 +58,7 @@ struct AliasChainIntegrityRule: LintRule {
                         suggestion: "Fix or remove the alias reference"
                     ))
                 case .circular:
-                    diagnostics.append(LintDiagnostic(
-                        ruleId: id,
-                        ruleName: name,
+                    diagnostics.append(diagnostic(
                         severity: .error,
                         message: "'\(variable.name)' has a circular alias chain",
                         componentName: variable.name,
@@ -61,9 +66,7 @@ struct AliasChainIntegrityRule: LintRule {
                         suggestion: "Break the circular reference"
                     ))
                 case .tooDeep:
-                    diagnostics.append(LintDiagnostic(
-                        ruleId: id,
-                        ruleName: name,
+                    diagnostics.append(diagnostic(
                         severity: .warning,
                         message: "'\(variable.name)' alias chain exceeds depth \(maxDepth)",
                         componentName: variable.name,

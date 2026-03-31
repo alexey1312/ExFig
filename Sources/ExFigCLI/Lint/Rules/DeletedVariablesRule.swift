@@ -24,16 +24,18 @@ struct DeletedVariablesRule: LintRule {
             do {
                 variables = try await context.cache.variables(for: fileId, client: context.client)
             } catch {
+                diagnostics.append(diagnostic(
+                    severity: .error,
+                    message: "Cannot fetch variables for file '\(fileId)': \(error.localizedDescription)",
+                    suggestion: "Check FIGMA_PERSONAL_TOKEN and file permissions"
+                ))
                 continue
             }
 
             for (variableId, variable) in variables.variables
                 where variable.deletedButReferenced == true
             {
-                diagnostics.append(LintDiagnostic(
-                    ruleId: id,
-                    ruleName: name,
-                    severity: .warning,
+                diagnostics.append(diagnostic(
                     message: "Variable '\(variable.name)' is deleted but still referenced",
                     componentName: variable.name,
                     nodeId: variableId,

@@ -538,8 +538,7 @@ struct LintEngineTests {
         client.setResponse([Component](), for: ComponentsEndpoint.self)
 
         let config = makeIOSIconsConfig(frameName: "Icons")
-        let ui = TerminalUI(outputMode: .quiet)
-        let context = LintContext(config: config, client: client, cache: LintDataCache(), ui: ui)
+        let context = makeLintContext(config: config, client: client)
 
         let engine = LintEngine.default
         let diagnostics = try await engine.run(context: context)
@@ -554,14 +553,75 @@ struct LintEngineTests {
         client.setResponse([Component](), for: ComponentsEndpoint.self)
 
         let config = makeIOSIconsConfig(frameName: "Icons")
-        let ui = TerminalUI(outputMode: .quiet)
-        let context = LintContext(config: config, client: client, cache: LintDataCache(), ui: ui)
+        let context = makeLintContext(config: config, client: client)
 
         let engine = LintEngine.default
         let diagnostics = try await engine.run(context: context, ruleFilter: ["deleted-variables"])
 
-        // Only deleted-variables rule should run (may have info from failed rule)
+        // Only deleted-variables rule should run
         #expect(!diagnostics.contains { $0.ruleId == "component-not-frame" })
+    }
+
+    @Test("default engine registers all 8 rules")
+    func defaultEngineHasAllRules() {
+        let ruleIds = Set(LintEngine.default.rules.map(\.id))
+        let expected: Set = [
+            "frame-page-match",
+            "naming-convention",
+            "component-not-frame",
+            "deleted-variables",
+            "duplicate-component-names",
+            "alias-chain-integrity",
+            "dark-mode-variables",
+            "dark-mode-suffix",
+        ]
+        #expect(ruleIds == expected)
+    }
+
+    @Test("catches rule errors as error-severity diagnostics")
+    func catchesRuleErrors() async throws {
+        let failingRule = FailingLintRule()
+        let engine = LintEngine(rules: [failingRule])
+
+        let client = MockClient()
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+
+        let diagnostics = try await engine.run(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.ruleId == "failing-rule")
+        #expect(diagnostics.first?.severity == .error)
+        #expect(diagnostics.first?.message.contains("Rule check failed") == true)
+    }
+
+    @Test("filters rules by minimum severity")
+    func filtersByMinSeverity() async throws {
+        let client = MockClient()
+        client.setResponse([Component](), for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+
+        let engine = LintEngine.default
+        let diagnostics = try await engine.run(context: context, minSeverity: .error)
+
+        // Warning-severity rules (deleted-variables, alias-chain-integrity, dark-mode-suffix) should be excluded
+        #expect(!diagnostics.contains { $0.ruleId == "dark-mode-suffix" })
+        #expect(!diagnostics.contains { $0.ruleId == "deleted-variables" })
+        #expect(!diagnostics.contains { $0.ruleId == "alias-chain-integrity" })
+    }
+}
+
+/// A rule that always throws, for testing engine error handling.
+private struct FailingLintRule: LintRule {
+    let id = "failing-rule"
+    let name = "Failing rule"
+    let description = "Always fails"
+    let severity: LintSeverity = .error
+
+    func check(context: LintContext) async throws -> [LintDiagnostic] {
+        throw URLError(.notConnectedToInternet)
     }
 }
 
