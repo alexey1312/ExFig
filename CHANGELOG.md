@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.1] - 2026-04-01
+
+### Bug Fixes
+
+- **lint**: Detect duplicate icons in variant component sets by @alexey1312
+
+
 ## [3.2.0] - 2026-03-31
 
 ### Features
