@@ -338,6 +338,8 @@ Uses `FigmaAPI.Client.request(SomeEndpoint(...))` directly (no convenience metho
 - Empty `fileId` guards must return a diagnostic, not silently `return []`
 - `LintSeverity` is `Comparable` — use `>=` directly, no `severityRank()` helpers
 - `LintOutputFormat` and `LintSeverity` conform to `ExpressibleByArgument` — use as `@Option` types directly
+- Lint rules checking component names MUST use `comp.iconName` (not `comp.name`) — for variants, `name` is the variant value, not the icon name
+- Deduplicate variants by `containingComponentSet.nodeId` before grouping — multiple variants of one set are NOT duplicates
 - Adding error handling to `check()` increases cyclomatic complexity — extract per-entry logic into private methods
 
 ### Adding a CLI Command
@@ -527,6 +529,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | Components API called N times | `ComponentPreFetcher` only works in batch mode — use `ComponentsCache` via `SourceFactory(componentsCache:)` for standalone multi-entry dedup |
 | Config type reference | `ExFigOptions.params` is `ExFig.ModuleImpl!` — `PKLConfig` is a typealias in `PKLConfigCompat.swift`, both names work |
 | `Paint.visible` doesn't exist | FigmaAPI `Paint` has no `visible` field — use `opacity` to check visibility |
+| Lint rule uses `comp.name` | For variants, `comp.name` is the variant value (`"Style=Default"`), not the icon name. Use `comp.iconName` (`containingComponentSet.name ?? name`) for grouping/matching. Affects `DuplicateComponentNamesRule`, `NamingConventionRule`, `DarkModeSuffixRule` |
 | `variablesColors` location | On `Common.CommonConfig` (`config.common?.variablesColors`), NOT on `config.common?.colors?.variablesColors` |
 | `cp` prompts overwrite | macOS `trash` alias intercepts `cp`; use `/bin/cp -f` to force overwrite without prompt |
 | SwiftFormat `///` before nested `func` | SwiftFormat converts `//` to `///` before `func` inside method bodies — this is expected, don't fight it |

@@ -43,47 +43,65 @@ struct DuplicateComponentNamesRule: LintRule {
                 continue
             }
 
-            // Filter to only components matching configured frame/page pairs
-            // Skip RTL variants — they share names across component sets
-            let relevant = components.filter { comp in
-                if comp.containingFrame.containingComponentSet != nil,
-                   comp.name.contains("RTL=")
-                {
-                    return false
-                }
-                return entries.contains { entry in
-                    matchesEntry(comp: comp, entry: entry)
-                }
-            }
-
-            // Group by (pageName, componentName) to find duplicates
-            var seen: [String: [Component]] = [:]
-            for comp in relevant {
-                let page = comp.containingFrame.pageName ?? "(unknown)"
-                let key = "\(page)|\(comp.name)"
-                seen[key, default: []].append(comp)
-            }
-
-            for (key, duplicates) in seen where duplicates.count > 1 {
-                let parts = key.split(separator: "|", maxSplits: 1)
-                let page = parts.first.map(String.init) ?? "(unknown)"
-                let compName = parts.count > 1 ? String(parts[1]) : key
-                let frames = duplicates.compactMap(\.containingFrame.name)
-                    .map { "'\($0)'" }
-                let uniqueFrames = Array(Set(frames)).sorted()
-
-                diagnostics.append(diagnostic(
-                    severity: .error,
-                    message: "'\(compName)' appears \(duplicates.count)x on page '\(page)'"
-                        + (uniqueFrames.count > 1 ? " in \(uniqueFrames.joined(separator: ", "))" : ""),
-                    componentName: compName,
-                    nodeId: duplicates.first?.nodeId,
-                    suggestion: "Rename duplicates or move to different pages"
-                ))
-            }
+            checkFileComponents(components, entries: entries, diagnostics: &diagnostics)
         }
 
         return diagnostics
+    }
+
+    private func checkFileComponents(
+        _ components: [Component],
+        entries: [ConfigEntry],
+        diagnostics: inout [LintDiagnostic]
+    ) {
+        // Filter to only components matching configured frame/page pairs
+        // Skip RTL variants — they share names across component sets
+        let relevant = components.filter { comp in
+            if comp.containingFrame.containingComponentSet != nil,
+               comp.name.contains("RTL=")
+            {
+                return false
+            }
+            return entries.contains { entry in
+                matchesEntry(comp: comp, entry: entry)
+            }
+        }
+
+        // Deduplicate variants: collapse all variants of the same component set
+        // into one representative (variants share iconName but differ in comp.name)
+        var uniqueBySource: [String: Component] = [:]
+        for comp in relevant {
+            let sourceId = comp.containingFrame.containingComponentSet?.nodeId ?? comp.nodeId
+            if uniqueBySource[sourceId] == nil {
+                uniqueBySource[sourceId] = comp
+            }
+        }
+
+        // Group by (pageName, iconName) to find duplicates
+        var seen: [String: [Component]] = [:]
+        for comp in uniqueBySource.values {
+            let page = comp.containingFrame.pageName ?? "(unknown)"
+            let key = "\(page)|\(comp.iconName)"
+            seen[key, default: []].append(comp)
+        }
+
+        for (key, duplicates) in seen where duplicates.count > 1 {
+            let parts = key.split(separator: "|", maxSplits: 1)
+            let page = parts.first.map(String.init) ?? "(unknown)"
+            let compName = parts.count > 1 ? String(parts[1]) : key
+            let frames = duplicates.compactMap(\.containingFrame.name)
+                .map { "'\($0)'" }
+            let uniqueFrames = Array(Set(frames)).sorted()
+
+            diagnostics.append(diagnostic(
+                severity: .error,
+                message: "'\(compName)' appears \(duplicates.count)x on page '\(page)'"
+                    + (uniqueFrames.count > 1 ? " in \(uniqueFrames.joined(separator: ", "))" : ""),
+                componentName: compName,
+                nodeId: duplicates.first?.nodeId,
+                suggestion: "Rename duplicates or move to different pages"
+            ))
+        }
     }
 
     private func matchesEntry(comp: Component, entry: ConfigEntry) -> Bool {

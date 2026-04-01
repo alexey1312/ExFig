@@ -480,6 +480,71 @@ struct DuplicateComponentNamesRuleTests {
         #expect(diagnostics.isEmpty)
     }
 
+    @Test("error when duplicate component sets with same iconName")
+    func errorOnDuplicateComponentSets() async throws {
+        let client = MockClient()
+        // Two different component sets both named "address-a-color" in different frames
+        client.setResponse([
+            makeVariantComponent(
+                nodeId: "1:1", name: "Style=Default", frameName: "Icons/24",
+                componentSetName: "address-a-color", componentSetNodeId: "set:1"
+            ),
+            makeVariantComponent(
+                nodeId: "2:1", name: "Style=Default", frameName: "Icons/32",
+                componentSetName: "address-a-color", componentSetNodeId: "set:2"
+            ),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: nil, pageName: "Components")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.message.contains("address-a-color") == true)
+        #expect(diagnostics.first?.message.contains("2x") == true)
+    }
+
+    @Test("passes when variants belong to same component set")
+    func passesVariantsOfSameComponentSet() async throws {
+        let client = MockClient()
+        // Multiple variants of the SAME component set — not a duplicate
+        client.setResponse([
+            makeVariantComponent(
+                nodeId: "1:1", name: "Size=24", frameName: "Icons",
+                componentSetName: "icon_home", componentSetNodeId: "set:1"
+            ),
+            makeVariantComponent(
+                nodeId: "1:2", name: "Size=32", frameName: "Icons",
+                componentSetName: "icon_home", componentSetNodeId: "set:1"
+            ),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("error when standalone and variant share same iconName")
+    func errorMixedStandaloneAndVariant() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
+            makeVariantComponent(
+                nodeId: "2:1", name: "Style=Default", frameName: "Icons",
+                componentSetName: "icon_home", componentSetNodeId: "set:2"
+            ),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.message.contains("icon_home") == true)
+    }
+
     @Test("only checks configured frames")
     func onlyConfiguredFrames() async throws {
         let client = MockClient()
@@ -507,8 +572,10 @@ private func makeVariantComponent(
     name: String,
     frameName: String = "Icons",
     pageName: String = "Components",
-    componentSetName: String
+    componentSetName: String,
+    componentSetNodeId: String? = nil
 ) -> Component {
+    let setNodeId = componentSetNodeId ?? "set:\(nodeId)"
     let json = """
     {
         "key": "test-key",
@@ -519,7 +586,7 @@ private func makeVariantComponent(
             "name": "\(frameName)",
             "pageName": "\(pageName)",
             "containingComponentSet": {
-                "nodeId": "set:\(nodeId)",
+                "nodeId": "\(setNodeId)",
                 "name": "\(componentSetName)"
             }
         }
