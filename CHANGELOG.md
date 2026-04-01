@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.3] - 2026-04-01
+
+### Bug Fixes
+
+- **lint**: Eliminate silent failures in PathDataLengthRule and improve test coverage by @alexey1312
+
+
+### Features
+
+- **lint**: Add path-data-length rule for Android pathData validation by @alexey1312
+
+
 ## [3.2.2] - 2026-04-01
 
 ### Bug Fixes
