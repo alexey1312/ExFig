@@ -20,7 +20,7 @@ var packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/mattt/swift-yyjson", from: "0.5.0"),
     .package(url: "https://github.com/apple/pkl-swift", from: "0.8.0"),
     .package(url: "https://github.com/DesignPipe/swift-svgkit.git", from: "0.2.0"),
-    .package(url: "https://github.com/DesignPipe/swift-figma-api.git", from: "0.2.0"),
+    .package(url: "https://github.com/DesignPipe/swift-figma-api.git", from: "0.4.0"),
     .package(url: "https://github.com/DesignPipe/swift-penpot-api.git", from: "0.1.0"),
 ]
 

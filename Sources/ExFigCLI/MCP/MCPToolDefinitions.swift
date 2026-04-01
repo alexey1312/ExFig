@@ -56,7 +56,8 @@
                         "description": .string(
                             "Comma-separated rule IDs to run. "
                                 + "Available: frame-page-match, naming-convention, component-not-frame, "
-                                + "deleted-variables, duplicate-component-names, dark-mode-variables, dark-mode-suffix"
+                                + "deleted-variables, duplicate-component-names, dark-mode-variables, "
+                                + "dark-mode-suffix, path-data-length"
                         ),
                     ]),
                     "severity": .object([

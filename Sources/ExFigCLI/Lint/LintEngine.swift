@@ -61,5 +61,6 @@ extension LintEngine {
         AliasChainIntegrityRule(),
         DarkModeVariablesRule(),
         DarkModeSuffixRule(),
+        PathDataLengthRule(),
     ])
 }

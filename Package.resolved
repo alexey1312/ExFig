@@ -1,5 +1,5 @@
 {
-  "originHash" : "0174127c4f0a77235f54c6f12dac004075c2f8b505e4e338cfb70e60ba26609d",
+  "originHash" : "5d7559335deb0f6e77147e493f0e1dc5b2b9d05d9c2dd0952f4f76ac153baa97",
   "pins" : [
     {
       "identity" : "aexml",
@@ -159,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/DesignPipe/swift-figma-api.git",
       "state" : {
-        "revision" : "1dd19cf2e3aa38641552d7542bea5e68375d98ab",
-        "version" : "0.3.0"
+        "revision" : "c266a84a0ed53de5ffd1701c8321ed9c10f34d4c",
+        "version" : "0.4.0"
       }
     },
     {

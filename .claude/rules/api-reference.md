@@ -27,6 +27,7 @@ This rule covers Figma API endpoints and response mapping.
 | Endpoint                        | Purpose                       | File in Project                 |
 | ------------------------------- | ----------------------------- | ------------------------------- |
 | `GET /v1/files/:key`            | File structure, nodes, styles | `NodesEndpoint.swift`           |
+| `GET /v1/files/:key?geometry=paths` | Nodes with fillGeometry/strokeGeometry | `NodesEndpoint(geometry: .paths)` |
 | `GET /v1/images/:key`           | Export images (PNG/SVG/PDF)   | `ImageEndpoint.swift`           |
 | `GET /v1/files/:key/components` | Components list               | `ComponentsEndpoint.swift`      |
 | `GET /v1/files/:key/styles`     | Styles (colors, text)         | `StylesEndpoint.swift`          |

@@ -204,7 +204,15 @@ Android has strict limits on `pathData` string length in VectorDrawable XML:
 | ----- | ---- | ------ |
 | 32,767 bytes | AAPT critical error | STRING_TOO_LARGE build failure |
 
-ExFig automatically validates pathData and logs errors when limits are exceeded.
+ExFig validates pathData in two ways:
+
+1. **During export** — automatically checks paths and logs errors
+2. **During lint** — `exfig lint` rule `path-data-length` downloads SVGs from Figma and validates paths before export
+
+```bash
+# Check pathData before export
+exfig lint -i exfig.pkl --rules path-data-length
+```
 
 ### Enable Strict Validation
 

@@ -692,4 +692,121 @@ private struct FailingLintRule: LintRule {
     }
 }
 
+// MARK: - PathDataLengthRule Tests
+
+/// Creates a PKLConfig with Android icons entries for lint testing.
+private func makeAndroidIconsConfig(
+    lightFileId: String = "abc123",
+    frameName: String? = nil,
+    pageName: String? = nil
+) -> PKLConfig {
+    var entryParts: [String] = [
+        "\"output\": \"drawable\"",
+    ]
+    if let frameName { entryParts.append("\"figmaFrameName\": \"\(frameName)\"") }
+    if let pageName { entryParts.append("\"figmaPageName\": \"\(pageName)\"") }
+
+    let json = """
+    {
+        "figma": { "lightFileId": "\(lightFileId)" },
+        "android": {
+            "mainRes": "app/src/main/res",
+            "icons": [{ \(entryParts.joined(separator: ", ")) }]
+        }
+    }
+    """
+    // swiftlint:disable:next force_try
+    return try! JSONCodec.decode(PKLConfig.self, from: Data(json.utf8))
+}
+
+struct PathDataLengthRuleTests {
+    let rule = PathDataLengthRule()
+
+    @Test("checks iOS icon entries too")
+    func checksIOSIconEntries() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_flag", frameName: "Icons", pageName: "Components"),
+        ], for: ComponentsEndpoint.self)
+
+        let imageURLs: [NodeId: ImagePath?] = ["1:1": "https://invalid.test/flag.svg"]
+        client.setResponse(imageURLs, for: ImageEndpoint.self)
+
+        // Uses iOS config, not Android — rule should still check it
+        let config = makeIOSIconsConfig(frameName: "Icons", pageName: "Components")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // Should get a warning (download fails), proving iOS entries are checked
+        #expect(diagnostics.contains { $0.severity == .warning })
+    }
+
+    @Test("filters by frame and page")
+    func filtersByFrameAndPage() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_other", frameName: "OtherFrame", pageName: "OtherPage"),
+        ], for: ComponentsEndpoint.self)
+
+        let config = makeAndroidIconsConfig(frameName: "Icons", pageName: "Components")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // No matching components → no SVG URLs fetched → no diagnostics
+        #expect(diagnostics.isEmpty)
+    }
+
+    @Test("handles empty fileId")
+    func handlesEmptyFileId() async throws {
+        let client = MockClient()
+        let config = makeAndroidIconsConfig(lightFileId: "")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.message.contains("lightFileId") == true)
+    }
+
+    @Test("emits warning when SVG URL is unreachable")
+    func emitsWarningWhenSVGUnreachable() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_home", frameName: "Icons", pageName: "Page"),
+        ], for: ComponentsEndpoint.self)
+
+        // ImageEndpoint returns a fake URL that will fail to download
+        let imageURLs: [NodeId: ImagePath?] = ["1:1": "https://invalid.test/fake.svg"]
+        client.setResponse(imageURLs, for: ImageEndpoint.self)
+
+        let config = makeAndroidIconsConfig(frameName: "Icons", pageName: "Page")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // Should get a warning about download failure, not a crash
+        #expect(diagnostics.contains { $0.severity == .warning })
+    }
+
+    @Test("skips components not matching configured frame")
+    func skipsComponentsNotMatchingFrame() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_a", frameName: "Icons", pageName: "Page"),
+            Component.make(nodeId: "1:2", name: "ic_b", frameName: "WrongFrame", pageName: "Page"),
+        ], for: ComponentsEndpoint.self)
+
+        // Only ic_a should be checked (matches "Icons" frame)
+        let imageURLs: [NodeId: ImagePath?] = ["1:1": "https://invalid.test/a.svg"]
+        client.setResponse(imageURLs, for: ImageEndpoint.self)
+
+        let config = makeAndroidIconsConfig(frameName: "Icons", pageName: "Page")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // Only one warning for ic_a (download fails), ic_b not checked
+        let warnings = diagnostics.filter { $0.severity == .warning }
+        #expect(warnings.count == 1)
+        #expect(warnings.first?.componentName == "ic_a")
+    }
+}
+
 // swiftlint:enable file_length

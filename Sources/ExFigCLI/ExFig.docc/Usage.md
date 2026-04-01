@@ -286,6 +286,7 @@ exfig lint -i exfig.pkl --format json --severity error
 | `alias-chain-integrity`    | warning  | Variable alias chains resolve without broken refs      |
 | `dark-mode-variables`      | error    | With `variablesDarkMode`, fills bound to Variables     |
 | `dark-mode-suffix`         | warning  | With `suffixDarkMode`, light components have dark pair |
+| `path-data-length`         | error    | Icon SVG pathData within 32,767-byte AAPT limit        |
 
 ## Help and Version
 
