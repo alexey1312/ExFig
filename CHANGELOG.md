@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.2] - 2026-04-01
+
+### Bug Fixes
+
+- **lint**: Write JSON output directly to stdout bypassing quiet mode by @alexey1312
+
+
 ## [3.2.1] - 2026-04-01
 
 ### Bug Fixes
