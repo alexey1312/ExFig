@@ -4,6 +4,7 @@ import ExFigConfig
 import ExFigCore
 import FigmaAPI
 import Foundation
+import SVGKit
 import Testing
 
 // MARK: - Test Helpers
@@ -629,7 +630,7 @@ struct LintEngineTests {
         #expect(!diagnostics.contains { $0.ruleId == "component-not-frame" })
     }
 
-    @Test("default engine registers all 8 rules")
+    @Test("default engine registers all 9 rules")
     func defaultEngineHasAllRules() {
         let ruleIds = Set(LintEngine.default.rules.map(\.id))
         let expected: Set = [
@@ -641,6 +642,7 @@ struct LintEngineTests {
             "alias-chain-integrity",
             "dark-mode-variables",
             "dark-mode-suffix",
+            "path-data-length",
         ]
         #expect(ruleIds == expected)
     }
@@ -806,6 +808,127 @@ struct PathDataLengthRuleTests {
         let warnings = diagnostics.filter { $0.severity == .warning }
         #expect(warnings.count == 1)
         #expect(warnings.first?.componentName == "ic_a")
+    }
+
+    @Test("emits error when components API fails")
+    func emitsErrorWhenComponentsFail() async throws {
+        let client = MockClient()
+        client.setError(URLError(.notConnectedToInternet), for: ComponentsEndpoint.self)
+
+        let config = makeAndroidIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.severity == .error)
+        #expect(diagnostics.first?.message.contains("Cannot fetch components") == true)
+    }
+
+    @Test("skips RTL variants")
+    func skipsRTLVariants() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_home", frameName: "Icons", pageName: "Page"),
+            makeVariantComponent(
+                nodeId: "1:2", name: "RTL=On", frameName: "Icons", pageName: "Page",
+                componentSetName: "ic_home"
+            ),
+        ], for: ComponentsEndpoint.self)
+
+        let imageURLs: [NodeId: ImagePath?] = ["1:1": "https://invalid.test/home.svg"]
+        client.setResponse(imageURLs, for: ImageEndpoint.self)
+
+        let config = makeAndroidIconsConfig(frameName: "Icons", pageName: "Page")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // Only ic_home checked, RTL variant skipped — one warning from download failure
+        let warnings = diagnostics.filter { $0.severity == .warning }
+        #expect(warnings.count == 1)
+        #expect(warnings.first?.componentName == "ic_home")
+    }
+
+    @Test("deduplicates variants by component set")
+    func deduplicatesVariants() async throws {
+        let client = MockClient()
+        client.setResponse([
+            makeVariantComponent(
+                nodeId: "1:1", name: "Style=Default", frameName: "Icons", pageName: "Page",
+                componentSetName: "ic_star", componentSetNodeId: "set:1"
+            ),
+            makeVariantComponent(
+                nodeId: "1:2", name: "Style=Filled", frameName: "Icons", pageName: "Page",
+                componentSetName: "ic_star", componentSetNodeId: "set:1"
+            ),
+        ], for: ComponentsEndpoint.self)
+
+        // Only one SVG URL — only first variant should be checked
+        let imageURLs: [NodeId: ImagePath?] = ["1:1": "https://invalid.test/star.svg"]
+        client.setResponse(imageURLs, for: ImageEndpoint.self)
+
+        let config = makeAndroidIconsConfig(frameName: "Icons", pageName: "Page")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        // One warning from download failure — proves only one variant was checked
+        let warnings = diagnostics.filter { $0.severity == .warning }
+        #expect(warnings.count == 1)
+    }
+
+    @Test("warns when Figma returns nil SVG URL")
+    func warnsWhenNilSVGURL() async throws {
+        let client = MockClient()
+        client.setResponse([
+            Component.make(nodeId: "1:1", name: "ic_empty", frameName: "Icons", pageName: "Page"),
+        ], for: ComponentsEndpoint.self)
+
+        // ImageEndpoint returns nil URL for the component
+        let imageURLs: [NodeId: ImagePath?] = ["1:1": nil]
+        client.setResponse(imageURLs, for: ImageEndpoint.self)
+
+        let config = makeAndroidIconsConfig(frameName: "Icons", pageName: "Page")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.contains { $0.message.contains("no SVG URL") })
+    }
+
+    @Test("validates pathData and reports critical errors")
+    func reportsPathDataCriticalError() {
+        // Generate a path that exceeds 32,767 bytes
+        let longPath = String(repeating: "M0 0L1 1", count: 5000)
+        let svg = ParsedSVG(
+            width: 24, height: 24, viewportWidth: 24, viewportHeight: 24,
+            paths: [SVGPath(
+                pathData: longPath, commands: [], fill: nil, fillType: .none,
+                stroke: nil, strokeWidth: nil, strokeLineCap: nil, strokeLineJoin: nil,
+                strokeDashArray: nil, strokeDashOffset: nil, fillRule: nil, opacity: nil,
+                fillOpacity: nil
+            )]
+        )
+
+        let diagnostics = rule.validateParsedSVG(svg, name: "ic_complex", nodeId: "1:1")
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.severity == .error)
+        #expect(diagnostics.first?.message.contains("32,767 bytes") == true)
+        #expect(diagnostics.first?.componentName == "ic_complex")
+    }
+
+    @Test("no error for short pathData")
+    func noErrorForShortPathData() {
+        let svg = ParsedSVG(
+            width: 24, height: 24, viewportWidth: 24, viewportHeight: 24,
+            paths: [SVGPath(
+                pathData: "M12 2L22 12L12 22L2 12Z", commands: [], fill: nil, fillType: .none,
+                stroke: nil, strokeWidth: nil, strokeLineCap: nil, strokeLineJoin: nil,
+                strokeDashArray: nil, strokeDashOffset: nil, fillRule: nil, opacity: nil,
+                fillOpacity: nil
+            )]
+        )
+
+        let diagnostics = rule.validateParsedSVG(svg, name: "ic_simple", nodeId: "1:1")
+        #expect(diagnostics.isEmpty)
     }
 }
 

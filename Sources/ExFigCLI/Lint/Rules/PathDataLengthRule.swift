@@ -125,20 +125,36 @@ struct PathDataLengthRule: LintRule {
                     ImageEndpoint(fileId: fileId, nodeIds: nodeIds, params: SVGParams())
                 )
             } catch {
+                let batchNames = batch.prefix(5).map(\.iconName).joined(separator: ", ")
+                let suffix = batch.count > 5 ? " and \(batch.count - 5) more" : ""
+                let msg = "Cannot fetch SVG URLs for \(batch.count) icon(s) "
+                    + "(\(batchNames)\(suffix)): \(error.localizedDescription)"
                 diagnostics.append(diagnostic(
                     severity: .warning,
-                    message: "Cannot fetch SVG URLs: \(error.localizedDescription)",
+                    message: msg,
                     suggestion: "Check FIGMA_PERSONAL_TOKEN and file permissions"
                 ))
                 continue
             }
 
+            var missingURLNames: [String] = []
             for comp in batch {
                 if let urlOpt = imageURLs[comp.nodeId], let url = urlOpt {
                     results.append(SVGItem(
                         name: comp.iconName, nodeId: comp.nodeId, url: url
                     ))
+                } else {
+                    missingURLNames.append(comp.iconName)
                 }
+            }
+            if !missingURLNames.isEmpty {
+                let names = missingURLNames.prefix(5).joined(separator: ", ")
+                let suffix = missingURLNames.count > 5 ? " and \(missingURLNames.count - 5) more" : ""
+                diagnostics.append(diagnostic(
+                    severity: .warning,
+                    message: "Figma returned no SVG URL for \(missingURLNames.count) icon(s): \(names)\(suffix)",
+                    suggestion: "These icons could not be rendered — check they are not empty components"
+                ))
             }
         }
 
@@ -177,7 +193,15 @@ struct PathDataLengthRule: LintRule {
     }
 
     private func validateSingleIcon(item: SVGItem) async -> [LintDiagnostic] {
-        guard let url = URL(string: item.url) else { return [] }
+        guard let url = URL(string: item.url) else {
+            return [diagnostic(
+                severity: .warning,
+                message: "Invalid SVG URL for '\(item.name)' — cannot validate pathData",
+                componentName: item.name,
+                nodeId: item.nodeId,
+                suggestion: "Re-run lint; if persistent, the Figma API may be returning malformed URLs"
+            )]
+        }
 
         let svgData: Data
         do {
@@ -205,7 +229,13 @@ struct PathDataLengthRule: LintRule {
             )]
         }
 
-        let issues = PathDataValidator().validate(svg: svg, iconName: item.name)
+        return validateParsedSVG(svg, name: item.name, nodeId: item.nodeId)
+    }
+
+    /// Validates a parsed SVG and returns diagnostics for critical pathData issues.
+    /// Internal for testability.
+    func validateParsedSVG(_ svg: ParsedSVG, name: String, nodeId: String) -> [LintDiagnostic] {
+        let issues = PathDataValidator().validate(svg: svg, iconName: name)
 
         // Only report critical issues (>32,767 bytes) — the 800-char lint threshold
         // is too noisy for most icon sets (flags, illustrations regularly exceed it)
@@ -215,11 +245,11 @@ struct PathDataLengthRule: LintRule {
                 severity: .error,
                 message: """
                 pathData exceeds 32,767 bytes (\(issue.result.byteLength) bytes) \
-                in \(item.name)/\(issue.pathName). \
+                in \(name)/\(issue.pathName). \
                 This will cause STRING_TOO_LARGE error during Android build.
                 """,
-                componentName: item.name,
-                nodeId: item.nodeId,
+                componentName: name,
+                nodeId: nodeId,
                 suggestion: "Simplify the path in Figma or use raster format (PNG/WebP)"
             )
         }

@@ -226,6 +226,7 @@ let package = Package(
             dependencies: [
                 "ExFigCLI",
                 .product(name: "FigmaAPI", package: "swift-figma-api"),
+                .product(name: "SVGKit", package: "swift-svgkit"),
                 "ExFig-Flutter",
                 "ExFig-Web",
                 .product(name: "CustomDump", package: "swift-custom-dump"),

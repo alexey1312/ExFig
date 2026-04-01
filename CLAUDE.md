@@ -341,6 +341,8 @@ Uses `FigmaAPI.Client.request(SomeEndpoint(...))` directly (no convenience metho
 - Lint rules checking component names MUST use `comp.iconName` (not `comp.name`) — for variants, `name` is the variant value, not the icon name
 - Deduplicate variants by `containingComponentSet.nodeId` before grouping — multiple variants of one set are NOT duplicates
 - Adding error handling to `check()` increases cyclomatic complexity — extract per-entry logic into private methods
+- For unit-testable validation logic in lint rules, use `internal` (not `private`) methods — allows `@testable import` testing without network calls (e.g., `validateParsedSVG`)
+- `LintEngineTests.defaultEngineHasAllRules` checks exact set of rule IDs — must add new rule ID when registering in `LintEngine.default`
 - `NodesEndpoint` supports `geometry: .paths` parameter — returns `fillGeometry`/`strokeGeometry` with SVG path data on vector nodes. **Not suitable for pathData validation** — Figma's SVG export flattens masks/booleans into different paths than raw geometry
 - `PathDataLengthRule` checks ALL platform icon entries (iOS/Android/Flutter/Web), deduplicates by fileId+frame+page. Downloads SVGs via `ImageEndpoint` + `URLSession`, parses with `SVGParser`, validates with `PathDataValidator`. Only reports critical >32,767 byte errors (800-char threshold removed as too noisy). Groups by fileId, batches ImageEndpoint by 50, parallelizes SVG downloads (max 10 concurrent) and fileIds
 
@@ -517,6 +519,7 @@ NooraUI.formatLink("url", useColors: true)  // underlined primary
 | JSON output empty in quiet | `ui.info()` suppressed when `outputMode == .quiet` — machine-readable output (JSON) must use `TerminalOutputManager.shared.print()` directly |
 | `Bundle.module` in tests | SPM test targets without declared resources don't have `Bundle.module` — use `Bundle.main` or temp bundle |
 | SwiftFormat breaks `::` syntax | SwiftFormat 0.60.1+ required for Swift 6.3 module selectors (`FigmaAPI::Client`) |
+| `SVGKit` types in tests | Add `.product(name: "SVGKit", package: "swift-svgkit")` to ExFigTests dependencies in Package.swift for direct `ParsedSVG`/`SVGPath` construction |
 | `fillGeometry` wrong pathData | `fillGeometry` returns raw node geometry, NOT the SVG export result. Figma flattens masks/booleans into different paths. Use `ImageEndpoint` SVG download + `SVGParser` for accurate pathData validation |
 | `NodesEndpoint` no `fillGeometry` | Requires `geometry: .paths` param (swift-figma-api 0.4.0+). Fields are `nil` without it. Useful for geometry inspection but NOT for pathData length validation |
 | MCP SDK 0.12.0 breaking | `.text` has 3 associated values — pattern match as `.text(text, _, _)`; `GetPrompt.arguments` is `[String: String]?` now |
