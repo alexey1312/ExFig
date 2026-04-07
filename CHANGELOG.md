@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2026-04-07
+
+### Features
+
+- **lint**: Add configurable rtlActiveValues and invalid-rtl-variant-value rule  by @alexey1312 in [#81](https://github.com/DesignPipe/exfig/pull/81)
+
+
+### Refactor
+
+- **docs**: Extract CLAUDE.md sections into lazy-loaded rule files by @alexey1312
+
+
 ## [3.2.3] - 2026-04-01
 
 ### Bug Fixes
