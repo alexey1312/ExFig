@@ -47,7 +47,7 @@ struct InvalidRTLVariantValueRule: LintRule {
         let config = context.config
         let defaultFileId = config.figma?.lightFileId ?? ""
 
-        let entries = collectIconEntries(from: config, defaultFileId: defaultFileId)
+        let entries = collectEntries(from: config, defaultFileId: defaultFileId)
         guard !entries.isEmpty else { return [] }
 
         let grouped = Dictionary(grouping: entries) { $0.fileId }
@@ -102,16 +102,16 @@ struct InvalidRTLVariantValueRule: LintRule {
         entries: [IconEntry]
     ) -> [LintDiagnostic] {
         var diagnostics: [LintDiagnostic] = []
+        let entryValidValues = entries.map { Self.validValues(for: $0.rtlActiveValues) }
 
         for comp in components {
             guard comp.containingFrame.containingComponentSet != nil else { continue }
 
-            for entry in entries {
+            for (index, entry) in entries.enumerated() {
                 guard matchesEntry(comp, entry) else { continue }
                 guard let value = comp.rtlVariantValue(propertyName: entry.rtlProperty) else { continue }
 
-                let valid = Self.validValues(for: entry.rtlActiveValues)
-                if !valid.contains(value) {
+                if !entryValidValues[index].contains(value) {
                     let iconName = comp.iconName
                     let expected = entry.rtlActiveValues.sorted().joined(separator: "' or '")
                     diagnostics.append(diagnostic(
@@ -151,28 +151,50 @@ struct InvalidRTLVariantValueRule: LintRule {
 
     // MARK: - Entry Collection
 
-    private func collectIconEntries(
+    private func collectEntries(
         from config: ExFig.ModuleImpl,
         defaultFileId: String
     ) -> [IconEntry] {
         var entries: [IconEntry] = []
 
-        func addIcons(_ icons: [some Common_FrameSource]?) {
-            for entry in icons ?? [] {
+        let commonIconsFrame = config.common?.icons?.figmaFrameName ?? "Icons"
+        let commonIconsPage = config.common?.icons?.figmaPageName
+        let commonImagesFrame = config.common?.images?.figmaFrameName ?? "Illustrations"
+        let commonImagesPage = config.common?.images?.figmaPageName
+
+        func addEntries(
+            _ sources: [some Common_FrameSource]?,
+            defaultFrame: String,
+            defaultPage: String?
+        ) {
+            for entry in sources ?? [] {
+                guard let rtlProperty = entry.rtlProperty, !rtlProperty.isEmpty else { continue }
                 entries.append(IconEntry(
                     fileId: entry.figmaFileId ?? defaultFileId,
-                    frameName: entry.figmaFrameName,
-                    pageName: entry.figmaPageName,
-                    rtlProperty: entry.rtlProperty ?? Component.defaultRTLProperty,
+                    frameName: entry.figmaFrameName ?? defaultFrame,
+                    pageName: entry.figmaPageName ?? defaultPage,
+                    rtlProperty: rtlProperty,
                     rtlActiveValues: entry.rtlActiveValues ?? ["On"]
                 ))
             }
         }
 
-        if let ios = config.ios { addIcons(ios.icons) }
-        if let android = config.android { addIcons(android.icons) }
-        if let flutter = config.flutter { addIcons(flutter.icons) }
-        if let web = config.web { addIcons(web.icons) }
+        if let ios = config.ios {
+            addEntries(ios.icons, defaultFrame: commonIconsFrame, defaultPage: commonIconsPage)
+            addEntries(ios.images, defaultFrame: commonImagesFrame, defaultPage: commonImagesPage)
+        }
+        if let android = config.android {
+            addEntries(android.icons, defaultFrame: commonIconsFrame, defaultPage: commonIconsPage)
+            addEntries(android.images, defaultFrame: commonImagesFrame, defaultPage: commonImagesPage)
+        }
+        if let flutter = config.flutter {
+            addEntries(flutter.icons, defaultFrame: commonIconsFrame, defaultPage: commonIconsPage)
+            addEntries(flutter.images, defaultFrame: commonImagesFrame, defaultPage: commonImagesPage)
+        }
+        if let web = config.web {
+            addEntries(web.icons, defaultFrame: commonIconsFrame, defaultPage: commonIconsPage)
+            addEntries(web.images, defaultFrame: commonImagesFrame, defaultPage: commonImagesPage)
+        }
 
         var seen = Set<String>()
         return entries.filter { entry in

@@ -953,7 +953,7 @@ struct InvalidRTLVariantValueRuleTests {
             makeVariantComponent(nodeId: "1:2", name: "RTL=On", frameName: "Icons", componentSetName: "arrow"),
         ], for: ComponentsEndpoint.self)
 
-        let config = makeIOSIconsConfig(frameName: "Icons")
+        let config = makeIOSIconsConfig(frameName: "Icons", rtlProperty: "RTL")
         let context = makeLintContext(config: config, client: client)
         let diagnostics = try await rule.check(context: context)
 
@@ -968,7 +968,7 @@ struct InvalidRTLVariantValueRuleTests {
             makeVariantComponent(nodeId: "1:2", name: "RTL=true", frameName: "Icons", componentSetName: "car"),
         ], for: ComponentsEndpoint.self)
 
-        let config = makeIOSIconsConfig(frameName: "Icons")
+        let config = makeIOSIconsConfig(frameName: "Icons", rtlProperty: "RTL")
         let context = makeLintContext(config: config, client: client)
         let diagnostics = try await rule.check(context: context)
 
@@ -984,7 +984,7 @@ struct InvalidRTLVariantValueRuleTests {
             Component.make(nodeId: "1:1", name: "icon_home", frameName: "Icons"),
         ], for: ComponentsEndpoint.self)
 
-        let config = makeIOSIconsConfig(frameName: "Icons")
+        let config = makeIOSIconsConfig(frameName: "Icons", rtlProperty: "RTL")
         let context = makeLintContext(config: config, client: client)
         let diagnostics = try await rule.check(context: context)
 
@@ -998,7 +998,7 @@ struct InvalidRTLVariantValueRuleTests {
             makeVariantComponent(nodeId: "1:1", name: "Size=Small", frameName: "Icons", componentSetName: "button"),
         ], for: ComponentsEndpoint.self)
 
-        let config = makeIOSIconsConfig(frameName: "Icons")
+        let config = makeIOSIconsConfig(frameName: "Icons", rtlProperty: "RTL")
         let context = makeLintContext(config: config, client: client)
         let diagnostics = try await rule.check(context: context)
 
@@ -1020,10 +1020,25 @@ struct InvalidRTLVariantValueRuleTests {
         #expect(diagnostics.first?.message.contains("Direction=yes") == true)
     }
 
+    @Test("skips entries with nil rtlProperty (RTL disabled)")
+    func skipsEntriesWithNilRTLProperty() async throws {
+        let client = MockClient()
+        client.setResponse([
+            makeVariantComponent(nodeId: "1:1", name: "RTL=true", frameName: "Icons", componentSetName: "car"),
+        ], for: ComponentsEndpoint.self)
+
+        // No rtlProperty in config → entry skipped → no diagnostics
+        let config = makeIOSIconsConfig(frameName: "Icons")
+        let context = makeLintContext(config: config, client: client)
+        let diagnostics = try await rule.check(context: context)
+
+        #expect(diagnostics.isEmpty)
+    }
+
     @Test("handles empty fileId with diagnostic")
     func handlesEmptyFileId() async throws {
         let client = MockClient()
-        let config = makeIOSIconsConfig(lightFileId: "", frameName: "Icons")
+        let config = makeIOSIconsConfig(lightFileId: "", frameName: "Icons", rtlProperty: "RTL")
         let context = makeLintContext(config: config, client: client)
         let diagnostics = try await rule.check(context: context)
 
@@ -1039,7 +1054,7 @@ struct InvalidRTLVariantValueRuleTests {
             for: ComponentsEndpoint.self
         )
 
-        let config = makeIOSIconsConfig(frameName: "Icons")
+        let config = makeIOSIconsConfig(frameName: "Icons", rtlProperty: "RTL")
         let context = makeLintContext(config: config, client: client)
         let diagnostics = try await rule.check(context: context)
 
@@ -1073,7 +1088,7 @@ struct InvalidRTLVariantValueRuleTests {
             makeVariantComponent(nodeId: "1:2", name: "RTL=true", frameName: "Icons", componentSetName: "car"),
         ], for: ComponentsEndpoint.self)
 
-        let config = makeIOSIconsConfig(frameName: "Icons", rtlActiveValues: ["true"])
+        let config = makeIOSIconsConfig(frameName: "Icons", rtlProperty: "RTL", rtlActiveValues: ["true"])
         let context = makeLintContext(config: config, client: client)
         let diagnostics = try await rule.check(context: context)
 
