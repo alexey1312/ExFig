@@ -315,6 +315,11 @@ final class IconsLoaderConfigTests: XCTestCase {
             rtlActiveValues: source.rtlActiveValues
         )
         XCTAssertEqual(config.rtlProperty, "RTL", "rtlProperty must survive source → config conversion")
+        XCTAssertEqual(
+            config.rtlActiveValues,
+            source.rtlActiveValues,
+            "rtlActiveValues must survive source → config conversion"
+        )
     }
 
     func testRTLPropertyNilPreservedThroughEntryToSource() throws {

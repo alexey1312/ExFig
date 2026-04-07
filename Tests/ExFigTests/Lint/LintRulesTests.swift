@@ -1090,6 +1090,29 @@ struct InvalidRTLVariantValueRuleTests {
 
         let valid3 = InvalidRTLVariantValueRule.validValues(for: ["On", "true"])
         #expect(valid3 == ["Off", "On", "false", "true"])
+
+        // Custom value not in knownPairs — only the value itself, no counterpart
+        let valid4 = InvalidRTLVariantValueRule.validValues(for: ["Active"])
+        #expect(valid4 == ["Active"])
+    }
+
+    @Test("validates mixed valid and invalid components in same set")
+    func mixedValidAndInvalidComponents() {
+        let entries = [InvalidRTLVariantValueRule.IconEntry(
+            fileId: "abc", frameName: "Icons", pageName: nil, rtlProperty: "RTL",
+            rtlActiveValues: ["On"]
+        )]
+
+        let components = [
+            makeVariantComponent(nodeId: "1:1", name: "RTL=Off", frameName: "Icons", componentSetName: "arrow"),
+            makeVariantComponent(nodeId: "1:2", name: "RTL=On", frameName: "Icons", componentSetName: "arrow"),
+            makeVariantComponent(nodeId: "2:1", name: "RTL=true", frameName: "Icons", componentSetName: "car"),
+        ]
+
+        let diagnostics = rule.validateRTLValues(components: components, entries: entries)
+
+        #expect(diagnostics.count == 1)
+        #expect(diagnostics.first?.message.contains("RTL=true") == true)
     }
 }
 

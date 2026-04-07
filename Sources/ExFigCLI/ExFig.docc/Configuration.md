@@ -225,9 +225,11 @@ new iOS.IconsEntry {
   rtlProperty = "RTL"
 
   // Values meaning "active RTL" — these variants are skipped.
-  // Default: new { "On" }
-  // If your Figma uses true/false:
-  rtlActiveValues = new { "On"; "true" }
+  // Default: new { "On" } (paired with "Off")
+  rtlActiveValues = new { "On" }
+
+  // If your Figma uses true/false instead of On/Off:
+  // rtlActiveValues = new { "true" }
 }
 ```
 

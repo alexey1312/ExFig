@@ -8,7 +8,8 @@ import Foundation
 ///
 /// When `rtlActiveValues` is `["On"]` (default), valid values are `Off` and `On`.
 /// When set to `["true"]`, valid values are `false` and `true`.
-/// This prevents export failures from unrecognized variant values.
+/// This prevents silent incorrect behavior where RTL variants with unrecognized
+/// values are exported as regular icons instead of being skipped.
 struct InvalidRTLVariantValueRule: LintRule {
     let id = "invalid-rtl-variant-value"
     let name = "RTL variant property values"
@@ -175,7 +176,11 @@ struct InvalidRTLVariantValueRule: LintRule {
 
         var seen = Set<String>()
         return entries.filter { entry in
-            let key = "\(entry.fileId)|\(entry.frameName ?? "")|\(entry.pageName ?? "")|\(entry.rtlProperty)"
+            let activeKey = entry.rtlActiveValues.sorted().joined(separator: ",")
+            let key = [
+                entry.fileId, entry.frameName ?? "", entry.pageName ?? "",
+                entry.rtlProperty, activeKey,
+            ].joined(separator: "|")
             return seen.insert(key).inserted
         }
     }

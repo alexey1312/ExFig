@@ -72,7 +72,7 @@ class ImageLoaderBase: @unchecked Sendable {
     // MARK: - Component Loading
 
     /// Fetches image components from a Figma file filtered by frame name and platform.
-    /// When `rtlProperty` is set, RTL=On variants are filtered out.
+    /// When `rtlProperty` is set, RTL active variants (matching `rtlActiveValues`) are filtered out.
     func fetchImageComponents(
         fileId: String,
         frameName: String,
@@ -100,7 +100,7 @@ class ImageLoaderBase: @unchecked Sendable {
             }
         }
 
-        // Skip RTL=On variants: the base (RTL=Off) icon is sufficient —
+        // Skip RTL active variants: the base (inactive) icon is sufficient —
         // platforms mirror it at runtime (iOS languageDirection, Android autoMirrored).
         let beforeRTLFilter = components.count
         components = components.filter {
@@ -108,7 +108,8 @@ class ImageLoaderBase: @unchecked Sendable {
         }
         let rtlSkipped = beforeRTLFilter - components.count
         if rtlSkipped > 0 {
-            logger.info("Filtered out \(rtlSkipped) RTL=On variant(s) from '\(frameName)'")
+            let activeDesc = (rtlActiveValues ?? ["On"]).joined(separator: "/")
+            logger.info("Filtered out \(rtlSkipped) RTL=\(activeDesc) variant(s) from '\(frameName)'")
         }
 
         if let filter {
