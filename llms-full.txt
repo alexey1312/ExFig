@@ -457,6 +457,25 @@ exfig fetch -f YOUR_FILE_ID -r "Icons" -o ./icons
 The wizard provides smart defaults per platform (e.g., SVG + camelCase for iOS icons,
 WebP + snake_case for Android illustrations) and only runs in interactive terminals.
 
+### Disambiguating Frames by Page
+
+When the same frame name appears on multiple Figma pages (e.g., a `🏞 Illustrations` file
+with frame `InDrive` on both an "Old" and a "New" page), use `-p` / `--page` to filter
+by page name and avoid downloading components from the wrong frame:
+
+```bash
+# Only components from frame "InDrive" on the specified page
+exfig fetch \
+  -f wdUfYHrScBXtgRSyCbwY31 \
+  -r "InDrive" \
+  -p "New illustration - figma export" \
+  -o ./illustrations \
+  --format svg
+```
+
+Without `--page`, `fetch` matches the frame name across the entire file, which can pull in
+components from frames you didn't intend to export.
+
 ### Format Options
 
 ```bash
@@ -526,6 +545,7 @@ exfig fetch -f abc123 -r "Images" -o ./images \
 | -------------------- | ----- | -------------------------------------- | ------- |
 | `--file-id`          | `-f`  | Figma file ID (required)               | -       |
 | `--frame`            | `-r`  | Figma frame name (required)            | -       |
+| `--page`             | `-p`  | Filter by Figma page name              | -       |
 | `--output`           | `-o`  | Output directory (required)            | -       |
 | `--format`           | -     | Image format: png, svg, jpg, pdf, webp | png     |
 | `--scale`            | -     | Scale factor (0.01-4.0)                | 3       |
