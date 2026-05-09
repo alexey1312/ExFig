@@ -15,6 +15,8 @@ public protocol ExFig_Module: PklRegisteredType, DynamicallyEquatable, Hashable,
     var flutter: Flutter.FlutterConfig? { get }
 
     var web: Web.WebConfig? { get }
+
+    var batch: Batch.BatchConfig? { get }
 }
 
 extension ExFig {
@@ -27,7 +29,7 @@ extension ExFig {
     ///
     /// Usage:
     /// ```pkl
-    /// amends "package://pkg.pkl-lang.org/github.com/DesignPipe/exfig/exfig@2.8.0#/ExFig.pkl"
+    /// amends "package://pkg.pkl-lang.org/github.com/DesignPipe/exfig/exfig@3.4.0#/ExFig.pkl"
     ///
     /// figma {
     ///   lightFileId = "xxx"
@@ -62,13 +64,19 @@ extension ExFig {
         /// Web platform configuration.
         public var web: Web.WebConfig?
 
+        /// Batch orchestration settings.
+        /// Only read from the FIRST config when running `exfig batch`.
+        /// Per-target `batch:` blocks in subsequent configs are ignored (logged under -v).
+        public var batch: Batch.BatchConfig?
+
         public init(
             figma: Figma.FigmaConfig?,
             common: Common.CommonConfig?,
             ios: iOS.iOSConfig?,
             android: Android.AndroidConfig?,
             flutter: Flutter.FlutterConfig?,
-            web: Web.WebConfig?
+            web: Web.WebConfig?,
+            batch: Batch.BatchConfig?
         ) {
             self.figma = figma
             self.common = common
@@ -76,6 +84,7 @@ extension ExFig {
             self.android = android
             self.flutter = flutter
             self.web = web
+            self.batch = batch
         }
     }
 }

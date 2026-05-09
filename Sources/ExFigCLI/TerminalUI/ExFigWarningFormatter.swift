@@ -20,7 +20,10 @@ struct ExFigWarningFormatter {
              .themeAttributesMarkerNotFound, .themeAttributesNameCollision,
              .heicUnavailableFallingBackToPng, .deletedVariableAlias,
              .unresolvedNumberAlias, .depthExceededNumberAlias,
-             .circularColorAlias, .downloadTokensSectionSkipped:
+             .circularColorAlias, .downloadTokensSectionSkipped,
+             .batchSettingsPreloadFailed, .ignoredPerTargetBatchBlock,
+             .ignoredPerTargetFigmaRateLimiting, .invalidConfigValue,
+             .excessiveDownloadSlots:
             formatCompact(warning)
 
         // Multiline format warnings
@@ -105,6 +108,25 @@ struct ExFigWarningFormatter {
 
         case let .downloadTokensSectionSkipped(section):
             "Token section skipped (not configured): section=\(section)"
+
+        case let .batchSettingsPreloadFailed(file, error):
+            "Batch settings pre-load failed: file=\(file), error=\(error). " +
+                "CLI flags / built-in defaults will apply."
+
+        case let .ignoredPerTargetBatchBlock(file):
+            "Ignoring batch: in \(file) — only the first config's batch settings apply."
+
+        case let .ignoredPerTargetFigmaRateLimiting(file):
+            "Ignoring per-target figma rate-limiting fields in \(file) — " +
+                "only the first config's figma:* values apply in batch mode."
+
+        case let .invalidConfigValue(key, value, fallback):
+            "Invalid config value: key=\(key), value=\(value), fallback=\(fallback)"
+
+        case let .excessiveDownloadSlots(concurrentDownloads, parallel, capped):
+            "Excessive download slots: concurrentDownloads=\(concurrentDownloads), " +
+                "parallel=\(parallel), product=\(concurrentDownloads * parallel), capped=\(capped). " +
+                "Reduce --concurrent-downloads or --parallel to avoid CDN throttling / EMFILE."
 
         // Multiline cases handled in main format() method
         case .noAssetsFound, .invalidConfigsSkipped, .webIconsMissingSVGData, .webIconsConversionFailed:

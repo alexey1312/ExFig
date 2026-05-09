@@ -54,9 +54,12 @@ extension ExFigCommand {
                 Set($0.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) })
             }
 
+            let figma = options.params.figma
             let client = resolveClient(
                 accessToken: options.accessToken,
-                timeout: options.params.figma?.timeout,
+                timeout: figma?.timeout,
+                rateLimit: figma?.rateLimit,
+                maxRetries: figma?.maxRetries,
                 options: faultToleranceOptions,
                 ui: ui
             )

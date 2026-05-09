@@ -53,11 +53,16 @@ exfig batch ./configs/ --parallel 5
 Batch mode uses shared rate limiting across all concurrent configs. This prevents hitting Figma API
 limits when processing multiple files simultaneously.
 
-| Option          | Description                     | Default |
-| --------------- | ------------------------------- | ------- |
-| `--parallel`    | Maximum concurrent configs      | 3       |
-| `--rate-limit`  | Figma API requests per minute   | 10      |
-| `--max-retries` | Maximum retry attempts          | 4       |
+| Option          | Description                     | Default | PKL key (first config) |
+| --------------- | ------------------------------- | ------- | ----------------------- |
+| `--parallel`    | Maximum concurrent configs      | 3       | `batch.parallel`        |
+| `--rate-limit`  | Figma API requests per minute   | 10      | `figma.rateLimit`       |
+| `--max-retries` | Maximum retry attempts          | 4       | `figma.maxRetries`      |
+
+`exfig batch` reads `batch:` and `figma.*` rate-limiting fields ONLY from the FIRST config in argv.
+Per-target `batch:` blocks in subsequent configs are ignored (logged under `-v`). The rate limiter
+and download queue are shared across all configs, so per-config `figma.rateLimit/maxRetries/
+concurrentDownloads` are intentionally unused inside the batch run.
 
 ## Error Handling
 

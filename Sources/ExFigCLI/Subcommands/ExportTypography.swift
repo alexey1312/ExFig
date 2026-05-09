@@ -32,9 +32,17 @@ extension ExFigCommand {
             ExFigCommand.checkSchemaVersionIfNeeded()
             let ui = ExFigCommand.terminalUI!
 
+            let figma = options.params.figma
+            if globalOptions.verbose, figma?.concurrentDownloads != nil {
+                ui.debug(
+                    "figma.concurrentDownloads ignored: not applicable to typography (no CDN downloads)"
+                )
+            }
             let client = resolveClient(
                 accessToken: options.accessToken,
-                timeout: options.params.figma?.timeout,
+                timeout: figma?.timeout,
+                rateLimit: figma?.rateLimit,
+                maxRetries: figma?.maxRetries,
                 options: faultToleranceOptions,
                 ui: ui
             )

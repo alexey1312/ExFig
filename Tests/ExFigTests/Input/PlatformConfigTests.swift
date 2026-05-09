@@ -28,7 +28,10 @@ final class PlatformConfigTests: XCTestCase {
             darkFileId: "dark-456",
             lightHighContrastFileId: nil,
             darkHighContrastFileId: nil,
-            timeout: 30.0
+            timeout: 30.0,
+            rateLimit: nil,
+            maxRetries: nil,
+            concurrentDownloads: nil
         )
 
         let config = ios.platformConfig(figma: figma)
@@ -81,7 +84,10 @@ final class PlatformConfigTests: XCTestCase {
             darkFileId: nil,
             lightHighContrastFileId: nil,
             darkHighContrastFileId: nil,
-            timeout: 60.0
+            timeout: 60.0,
+            rateLimit: nil,
+            maxRetries: nil,
+            concurrentDownloads: nil
         )
 
         let config = android.platformConfig(figma: figma)

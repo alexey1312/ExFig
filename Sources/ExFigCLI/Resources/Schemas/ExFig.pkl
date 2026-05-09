@@ -5,7 +5,7 @@
 ///
 /// Usage:
 /// ```pkl
-/// amends "package://pkg.pkl-lang.org/github.com/DesignPipe/exfig/exfig@2.8.0#/ExFig.pkl"
+/// amends "package://pkg.pkl-lang.org/github.com/DesignPipe/exfig/exfig@3.4.0#/ExFig.pkl"
 ///
 /// figma {
 ///   lightFileId = "xxx"
@@ -20,6 +20,7 @@
 open module ExFig
 
 import "Figma.pkl"
+import "Batch.pkl"
 import "Common.pkl"
 import "iOS.pkl"
 import "Android.pkl"
@@ -45,3 +46,8 @@ flutter: Flutter.FlutterConfig?
 
 /// Web platform configuration.
 web: Web.WebConfig?
+
+/// Batch orchestration settings.
+/// Only read from the FIRST config when running `exfig batch`.
+/// Per-target `batch:` blocks in subsequent configs are ignored (logged under -v).
+batch: Batch.BatchConfig?

@@ -39,7 +39,9 @@ extension ExFigCommand.ExportIcons {
         let platformConfig = ios.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
+        let fileDownloader = faultToleranceOptions.createFileDownloader(
+            configValue: params.figma?.concurrentDownloads
+        )
 
         // All entries in a platform section share one source kind (mixed sources not yet supported)
         guard let sourceKind = entries.first?.resolvedSourceKind else {
@@ -130,7 +132,9 @@ extension ExFigCommand.ExportIcons {
         let platformConfig = android.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
+        let fileDownloader = faultToleranceOptions.createFileDownloader(
+            configValue: params.figma?.concurrentDownloads
+        )
 
         // All entries in a platform section share one source kind (mixed sources not yet supported)
         guard let sourceKind = entries.first?.resolvedSourceKind else {
@@ -195,7 +199,9 @@ extension ExFigCommand.ExportIcons {
         let platformConfig = flutter.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
+        let fileDownloader = faultToleranceOptions.createFileDownloader(
+            configValue: params.figma?.concurrentDownloads
+        )
 
         // All entries in a platform section share one source kind (mixed sources not yet supported)
         guard let sourceKind = entries.first?.resolvedSourceKind else {
@@ -260,7 +266,9 @@ extension ExFigCommand.ExportIcons {
         let platformConfig = web.platformConfig()
 
         let batchMode = BatchSharedState.current?.isBatchMode ?? false
-        let fileDownloader = faultToleranceOptions.createFileDownloader()
+        let fileDownloader = faultToleranceOptions.createFileDownloader(
+            configValue: params.figma?.concurrentDownloads
+        )
 
         // All entries in a platform section share one source kind (mixed sources not yet supported)
         guard let sourceKind = entries.first?.resolvedSourceKind else {

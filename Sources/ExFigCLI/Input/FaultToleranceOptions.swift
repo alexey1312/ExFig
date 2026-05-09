@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import ArgumentParser
 import ExFigCore
 import FigmaAPI
@@ -10,50 +11,70 @@ import Foundation
 struct FaultToleranceOptions: ParsableArguments {
     @Option(
         name: .long,
-        help: "Maximum retry attempts for failed API requests"
+        help: "Maximum retry attempts for failed API requests (overrides config, default: 4)"
     )
-    var maxRetries: Int = 4
+    var maxRetries: Int?
 
     @Option(
         name: .long,
-        help: "Maximum API requests per minute"
+        help: "Maximum API requests per minute (overrides config, default: 10)"
     )
-    var rateLimit: Int = 10
+    var rateLimit: Int?
 
     @Option(
         name: .long,
-        help: "Figma API request timeout in seconds (overrides config)"
+        help: "Figma API request timeout in seconds (overrides config, default: 30)"
     )
     var timeout: Int?
 
     mutating func validate() throws {
-        if let timeout, timeout <= 0 {
-            throw ValidationError("Timeout must be positive")
-        }
+        try FaultToleranceValidator.validateTimeout(timeout)
+        try FaultToleranceValidator.validateRateLimit(rateLimit)
+        try FaultToleranceValidator.validateMaxRetries(maxRetries)
+    }
+
+    /// CLI value (if user passed --rate-limit) > config value > built-in default.
+    /// Invalid config values (out of `FaultToleranceDefaults.rateLimitRange`) trigger a
+    /// warning and fall back to the built-in default.
+    func effectiveRateLimit(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let rateLimit { return rateLimit }
+        return FaultToleranceValidator.sanitizedRateLimit(configValue, ui: ui)
+    }
+
+    /// CLI value (if user passed --max-retries) > config value > built-in default.
+    /// Invalid config values (out of `FaultToleranceDefaults.maxRetriesRange`) trigger a
+    /// warning and fall back to the built-in default.
+    func effectiveMaxRetries(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let maxRetries { return maxRetries }
+        return FaultToleranceValidator.sanitizedMaxRetries(configValue, ui: ui)
     }
 
     /// Create a retry policy from the options.
+    /// - Parameter configValue: Config-supplied `figma.maxRetries`, or nil.
     /// - Returns: A configured `RetryPolicy`.
-    func createRetryPolicy() -> RetryPolicy {
-        RetryPolicy(maxRetries: maxRetries)
+    func createRetryPolicy(configValue: Int? = nil) -> RetryPolicy {
+        RetryPolicy(maxRetries: effectiveMaxRetries(configValue: configValue))
     }
 
     /// Create a shared rate limiter from the options.
+    /// - Parameter configValue: Config-supplied `figma.rateLimit`, or nil.
     /// - Returns: A configured `SharedRateLimiter`.
-    func createRateLimiter() -> SharedRateLimiter {
-        SharedRateLimiter(requestsPerMinute: Double(rateLimit))
+    func createRateLimiter(configValue: Int? = nil) -> SharedRateLimiter {
+        SharedRateLimiter(requestsPerMinute: Double(effectiveRateLimit(configValue: configValue)))
     }
 
     /// Create a rate-limited client wrapping the given client.
     /// - Parameters:
     ///   - client: The underlying client to wrap.
     ///   - rateLimiter: The shared rate limiter to use.
+    ///   - configMaxRetries: Config-supplied `figma.maxRetries`, or nil.
     ///   - configID: Identifier for this client's config (default: "default").
     ///   - onRetry: Optional callback invoked before each retry attempt.
     /// - Returns: A `RateLimitedClient` instance.
     func createRateLimitedClient(
         wrapping client: Client,
         rateLimiter: SharedRateLimiter,
+        configMaxRetries: Int? = nil,
         configID: ConfigID = ConfigID("default"),
         onRetry: RetryCallback? = nil
     ) -> Client {
@@ -61,7 +82,7 @@ struct FaultToleranceOptions: ParsableArguments {
             client: client,
             rateLimiter: rateLimiter,
             configID: configID,
-            retryPolicy: createRetryPolicy(),
+            retryPolicy: createRetryPolicy(configValue: configMaxRetries),
             onRetry: onRetry
         )
     }
@@ -78,77 +99,102 @@ struct FaultToleranceOptions: ParsableArguments {
 struct HeavyFaultToleranceOptions: ParsableArguments {
     @Option(
         name: .long,
-        help: "Maximum retry attempts for failed API requests"
+        help: "Maximum retry attempts for failed API requests (overrides config, default: 4)"
     )
-    var maxRetries: Int = 4
+    var maxRetries: Int?
 
     @Option(
         name: .long,
-        help: "Maximum API requests per minute"
+        help: "Maximum API requests per minute (overrides config, default: 10)"
     )
-    var rateLimit: Int = 10
+    var rateLimit: Int?
 
     @Option(
         name: .long,
-        help: "Figma API request timeout in seconds (overrides config)"
+        help: "Figma API request timeout in seconds (overrides config, default: 30)"
     )
     var timeout: Int?
 
     @Flag(
         name: .long,
-        help: "Stop on first error without retrying"
+        help: "Stop on first error without retrying (overrides config)"
     )
     var failFast: Bool = false
 
     @Flag(
         name: .long,
-        help: "Continue from checkpoint after interruption"
+        help: "Continue from checkpoint after interruption (overrides config)"
     )
     var resume: Bool = false
 
     @Option(
         name: .long,
-        help: "Maximum concurrent CDN downloads"
+        help: "Maximum concurrent CDN downloads (overrides config, default: 20)"
     )
-    var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
+    var concurrentDownloads: Int?
 
     mutating func validate() throws {
-        if let timeout, timeout <= 0 {
-            throw ValidationError("Timeout must be positive")
-        }
+        try FaultToleranceValidator.validateTimeout(timeout)
+        try FaultToleranceValidator.validateRateLimit(rateLimit)
+        try FaultToleranceValidator.validateMaxRetries(maxRetries)
+        try FaultToleranceValidator.validateConcurrentDownloads(concurrentDownloads)
+    }
+
+    /// CLI value (if user passed --rate-limit) > config value > built-in default.
+    func effectiveRateLimit(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let rateLimit { return rateLimit }
+        return FaultToleranceValidator.sanitizedRateLimit(configValue, ui: ui)
+    }
+
+    /// CLI value (if user passed --max-retries) > config value > built-in default.
+    func effectiveMaxRetries(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let maxRetries { return maxRetries }
+        return FaultToleranceValidator.sanitizedMaxRetries(configValue, ui: ui)
+    }
+
+    /// CLI value (if user passed --concurrent-downloads) > config value > built-in default.
+    func effectiveConcurrentDownloads(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let concurrentDownloads { return concurrentDownloads }
+        return FaultToleranceValidator.sanitizedConcurrentDownloads(configValue, ui: ui)
     }
 
     /// Create a file downloader with configured concurrency.
+    /// - Parameter configValue: Config-supplied `figma.concurrentDownloads`, or nil.
     /// - Returns: A configured `FileDownloader`.
-    func createFileDownloader() -> FileDownloader {
-        FileDownloader(maxConcurrentDownloads: concurrentDownloads)
+    func createFileDownloader(configValue: Int? = nil) -> FileDownloader {
+        FileDownloader(maxConcurrentDownloads: effectiveConcurrentDownloads(configValue: configValue))
     }
 
     /// Create a retry policy from the options.
+    /// `--fail-fast` (CLI flag) forces 0 retries regardless of config.
+    /// - Parameter configValue: Config-supplied `figma.maxRetries`, or nil.
     /// - Returns: A configured `RetryPolicy`.
-    func createRetryPolicy() -> RetryPolicy {
+    func createRetryPolicy(configValue: Int? = nil) -> RetryPolicy {
         if failFast {
             return RetryPolicy(maxRetries: 0)
         }
-        return RetryPolicy(maxRetries: maxRetries)
+        return RetryPolicy(maxRetries: effectiveMaxRetries(configValue: configValue))
     }
 
     /// Create a shared rate limiter from the options.
+    /// - Parameter configValue: Config-supplied `figma.rateLimit`, or nil.
     /// - Returns: A configured `SharedRateLimiter`.
-    func createRateLimiter() -> SharedRateLimiter {
-        SharedRateLimiter(requestsPerMinute: Double(rateLimit))
+    func createRateLimiter(configValue: Int? = nil) -> SharedRateLimiter {
+        SharedRateLimiter(requestsPerMinute: Double(effectiveRateLimit(configValue: configValue)))
     }
 
     /// Create a rate-limited client wrapping the given client.
     /// - Parameters:
     ///   - client: The underlying client to wrap.
     ///   - rateLimiter: The shared rate limiter to use.
+    ///   - configMaxRetries: Config-supplied `figma.maxRetries`, or nil.
     ///   - configID: Identifier for this client's config (default: "default").
     ///   - onRetry: Optional callback invoked before each retry attempt.
     /// - Returns: A `RateLimitedClient` instance.
     func createRateLimitedClient(
         wrapping client: Client,
         rateLimiter: SharedRateLimiter,
+        configMaxRetries: Int? = nil,
         configID: ConfigID = ConfigID("default"),
         onRetry: RetryCallback? = nil
     ) -> Client {
@@ -156,7 +202,7 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
             client: client,
             rateLimiter: rateLimiter,
             configID: configID,
-            retryPolicy: createRetryPolicy(),
+            retryPolicy: createRetryPolicy(configValue: configMaxRetries),
             onRetry: onRetry
         )
     }
@@ -241,21 +287,46 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
 
 // MARK: - Client Resolution
 
+/// Common surface used by `resolveClient` to bridge the two CLI option types.
+protocol RateLimitClientFactory {
+    var timeout: Int? { get }
+    func createRateLimiter(configValue: Int?) -> SharedRateLimiter
+    func effectiveMaxRetries(configValue: Int?, ui: TerminalUI?) -> Int
+    func createRateLimitedClient(
+        wrapping client: Client,
+        rateLimiter: SharedRateLimiter,
+        configMaxRetries: Int?,
+        configID: ConfigID,
+        onRetry: RetryCallback?
+    ) -> Client
+}
+
+extension FaultToleranceOptions: RateLimitClientFactory {}
+extension HeavyFaultToleranceOptions: RateLimitClientFactory {}
+
 /// Resolves a Figma API client, using injected client if available (batch mode)
 /// or creating a new rate-limited client (standalone command mode).
 ///
+/// When `accessToken` is nil (no `FIGMA_PERSONAL_TOKEN`), returns ``NoTokenFigmaClient`` —
+/// a fail-fast client that throws on any request. Non-Figma sources (Penpot, tokens-file)
+/// never call it, so pure-Penpot workflows work without Figma credentials.
+///
 /// - Parameters:
-///   - accessToken: Figma personal access token.
+///   - accessToken: Figma personal access token (nil when using non-Figma sources only).
 ///   - timeout: Request timeout interval from config (optional, uses FigmaClient default if nil).
-///   - options: Fault tolerance options for creating new client (may contain CLI timeout override).
+///   - rateLimit: Config-supplied `figma.rateLimit` (optional). CLI `--rate-limit` overrides.
+///   - maxRetries: Config-supplied `figma.maxRetries` (optional). CLI `--max-retries` overrides.
+///   - options: Fault tolerance options (may contain CLI overrides).
 ///   - ui: Terminal UI for retry warnings.
 /// - Returns: A configured `Client` instance.
 ///
-/// Timeout precedence: CLI `--timeout` > config > FigmaClient default (30s)
+/// Precedence (per knob): CLI flag > config value > built-in default.
 func resolveClient(
     accessToken: String?,
     timeout: TimeInterval?,
-    options: FaultToleranceOptions,
+    rateLimit configRateLimit: Int? = nil,
+    maxRetries configMaxRetries: Int? = nil,
+    options: some RateLimitClientFactory,
     ui: TerminalUI
 ) -> Client {
     if let injectedClient = InjectedClientStorage.client {
@@ -270,64 +341,17 @@ func resolveClient(
     // CLI timeout takes precedence over config timeout
     let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout
     let baseClient = FigmaClient(accessToken: accessToken, timeout: effectiveTimeout)
-    let rateLimiter = options.createRateLimiter()
-    let maxRetries = options.maxRetries
+    let rateLimiter = options.createRateLimiter(configValue: configRateLimit)
+    let effectiveMaxRetries = options.effectiveMaxRetries(configValue: configMaxRetries, ui: ui)
     return options.createRateLimitedClient(
         wrapping: baseClient,
         rateLimiter: rateLimiter,
+        configMaxRetries: configMaxRetries,
+        configID: ConfigID("default"),
         onRetry: { attempt, error in
             let warning = ExFigWarning.retrying(
                 attempt: attempt,
-                maxAttempts: maxRetries,
-                error: error.localizedDescription,
-                delay: "..."
-            )
-            ui.warning(warning)
-        }
-    )
-}
-
-/// Resolves a Figma API client for heavy commands, using injected client if available
-/// (batch mode) or creating a new rate-limited client (standalone command mode).
-///
-/// When `accessToken` is nil (no `FIGMA_PERSONAL_TOKEN`), returns ``NoTokenFigmaClient`` —
-/// a fail-fast client that throws on any request. Non-Figma sources (Penpot, tokens-file)
-/// never call it, so pure-Penpot workflows work without Figma credentials.
-///
-/// - Parameters:
-///   - accessToken: Figma personal access token (nil when using non-Figma sources only).
-///   - timeout: Request timeout interval from config (optional, uses FigmaClient default if nil).
-///   - options: Heavy fault tolerance options for creating new client (may contain CLI timeout override).
-///   - ui: Terminal UI for retry warnings.
-/// - Returns: A configured `Client` instance.
-///
-/// Timeout precedence: CLI `--timeout` > config > FigmaClient default (30s)
-func resolveClient(
-    accessToken: String?,
-    timeout: TimeInterval?,
-    options: HeavyFaultToleranceOptions,
-    ui: TerminalUI
-) -> Client {
-    if let injectedClient = InjectedClientStorage.client {
-        return injectedClient
-    }
-    guard let accessToken else {
-        // No Figma token — return a client that throws on any call.
-        // Non-Figma sources (Penpot, tokens-file) never call it.
-        return NoTokenFigmaClient()
-    }
-    // CLI timeout takes precedence over config timeout
-    let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout
-    let baseClient = FigmaClient(accessToken: accessToken, timeout: effectiveTimeout)
-    let rateLimiter = options.createRateLimiter()
-    let maxRetries = options.maxRetries
-    return options.createRateLimitedClient(
-        wrapping: baseClient,
-        rateLimiter: rateLimiter,
-        onRetry: { attempt, error in
-            let warning = ExFigWarning.retrying(
-                attempt: attempt,
-                maxAttempts: maxRetries,
+                maxAttempts: effectiveMaxRetries,
                 error: error.localizedDescription,
                 delay: "..."
             )

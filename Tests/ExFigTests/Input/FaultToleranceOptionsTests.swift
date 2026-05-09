@@ -5,18 +5,25 @@ import FigmaAPI
 import XCTest
 
 final class FaultToleranceOptionsTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        FaultToleranceValidator.resetWarnedKeys()
+    }
+
     // MARK: - Default Values
 
     func testDefaultMaxRetries() throws {
         let options = try FaultToleranceOptions.parse([])
 
-        XCTAssertEqual(options.maxRetries, 4)
+        XCTAssertNil(options.maxRetries)
+        XCTAssertEqual(options.effectiveMaxRetries(configValue: nil), 4)
     }
 
     func testDefaultRateLimit() throws {
         let options = try FaultToleranceOptions.parse([])
 
-        XCTAssertEqual(options.rateLimit, 10)
+        XCTAssertNil(options.rateLimit)
+        XCTAssertEqual(options.effectiveRateLimit(configValue: nil), 10)
     }
 
     func testDefaultTimeout() throws {
@@ -61,6 +68,10 @@ final class FaultToleranceOptionsTests: XCTestCase {
         XCTAssertEqual(options.maxRetries, 0)
     }
 
+    func testMaxRetriesValidationRejectsNegative() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--max-retries", "-1"]))
+    }
+
     // MARK: - Rate Limit Flag
 
     func testRateLimitFlag() throws {
@@ -73,6 +84,79 @@ final class FaultToleranceOptionsTests: XCTestCase {
         let options = try FaultToleranceOptions.parse(["--rate-limit", "100"])
 
         XCTAssertEqual(options.rateLimit, 100)
+    }
+
+    func testRateLimitValidationRejectsZero() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--rate-limit", "0"]))
+    }
+
+    // MARK: - Upper-bound CLI validation (matches PKL bounds)
+
+    func testRateLimitValidationRejectsAboveMax() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--rate-limit", "601"]))
+    }
+
+    func testMaxRetriesValidationRejectsAboveMax() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--max-retries", "101"]))
+    }
+
+    func testTimeoutValidationRejectsAboveMax() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--timeout", "601"]))
+    }
+
+    // MARK: - Sanitizer (PKL clamp + warn)
+
+    func testEffectiveRateLimitClampsInvalidConfigValue() {
+        let options = try? FaultToleranceOptions.parse([])
+        let ui = TerminalUI(outputMode: .quiet)
+        XCTAssertEqual(options?.effectiveRateLimit(configValue: 0, ui: ui), 10)
+        XCTAssertEqual(options?.effectiveRateLimit(configValue: -5, ui: ui), 10)
+        XCTAssertEqual(options?.effectiveRateLimit(configValue: 700, ui: ui), 10)
+    }
+
+    func testEffectiveMaxRetriesClampsInvalidConfigValue() {
+        let options = try? FaultToleranceOptions.parse([])
+        let ui = TerminalUI(outputMode: .quiet)
+        XCTAssertEqual(options?.effectiveMaxRetries(configValue: -1, ui: ui), 4)
+        XCTAssertEqual(options?.effectiveMaxRetries(configValue: 200, ui: ui), 4)
+    }
+
+    // MARK: - Precedence (CLI > config > default)
+
+    func testEffectiveRateLimitCLIWinsOverConfig() throws {
+        let options = try FaultToleranceOptions.parse(["--rate-limit", "20"])
+
+        XCTAssertEqual(options.effectiveRateLimit(configValue: 15), 20)
+    }
+
+    func testEffectiveRateLimitConfigUsedWhenNoCLI() throws {
+        let options = try FaultToleranceOptions.parse([])
+
+        XCTAssertEqual(options.effectiveRateLimit(configValue: 15), 15)
+    }
+
+    func testEffectiveRateLimitDefaultWhenNoCLINoConfig() throws {
+        let options = try FaultToleranceOptions.parse([])
+
+        XCTAssertEqual(options.effectiveRateLimit(configValue: nil), 10)
+    }
+
+    func testEffectiveMaxRetriesCLIWinsOverConfig() throws {
+        let options = try FaultToleranceOptions.parse(["--max-retries", "8"])
+
+        XCTAssertEqual(options.effectiveMaxRetries(configValue: 6), 8)
+    }
+
+    func testEffectiveMaxRetriesConfigUsedWhenNoCLI() throws {
+        let options = try FaultToleranceOptions.parse([])
+
+        XCTAssertEqual(options.effectiveMaxRetries(configValue: 6), 6)
+    }
+
+    func testEffectiveMaxRetriesDefaultWhenNoCLINoConfig() throws {
+        let options = try FaultToleranceOptions.parse([])
+
+        XCTAssertEqual(options.effectiveMaxRetries(configValue: nil), 4)
     }
 
     // MARK: - Combined Flags
@@ -159,11 +243,61 @@ final class HeavyFaultToleranceOptionsTests: XCTestCase {
     func testDefaultValues() throws {
         let options = try HeavyFaultToleranceOptions.parse([])
 
-        XCTAssertEqual(options.maxRetries, 4)
-        XCTAssertEqual(options.rateLimit, 10)
+        XCTAssertNil(options.maxRetries)
+        XCTAssertNil(options.rateLimit)
         XCTAssertNil(options.timeout)
+        XCTAssertNil(options.concurrentDownloads)
         XCTAssertFalse(options.failFast)
         XCTAssertFalse(options.resume)
+        XCTAssertEqual(options.effectiveMaxRetries(configValue: nil), 4)
+        XCTAssertEqual(options.effectiveRateLimit(configValue: nil), 10)
+        XCTAssertEqual(options.effectiveConcurrentDownloads(configValue: nil), 20)
+    }
+
+    // MARK: - Precedence (CLI > config > default)
+
+    func testHeavyEffectiveConcurrentDownloadsCLIWinsOverConfig() throws {
+        let options = try HeavyFaultToleranceOptions.parse(["--concurrent-downloads", "50"])
+
+        XCTAssertEqual(options.effectiveConcurrentDownloads(configValue: 30), 50)
+    }
+
+    func testHeavyEffectiveConcurrentDownloadsConfigUsedWhenNoCLI() throws {
+        let options = try HeavyFaultToleranceOptions.parse([])
+
+        XCTAssertEqual(options.effectiveConcurrentDownloads(configValue: 30), 30)
+    }
+
+    func testHeavyEffectiveConcurrentDownloadsDefaultWhenNoCLINoConfig() throws {
+        let options = try HeavyFaultToleranceOptions.parse([])
+
+        XCTAssertEqual(options.effectiveConcurrentDownloads(configValue: nil), 20)
+    }
+
+    func testHeavyEffectiveRateLimitCLIWins() throws {
+        let options = try HeavyFaultToleranceOptions.parse(["--rate-limit", "25"])
+
+        XCTAssertEqual(options.effectiveRateLimit(configValue: 15), 25)
+    }
+
+    func testHeavyEffectiveMaxRetriesConfigUsed() throws {
+        let options = try HeavyFaultToleranceOptions.parse([])
+
+        XCTAssertEqual(options.effectiveMaxRetries(configValue: 7), 7)
+    }
+
+    // MARK: - Validation
+
+    func testRateLimitValidationRejectsZero() {
+        XCTAssertThrowsError(try HeavyFaultToleranceOptions.parse(["--rate-limit", "0"]))
+    }
+
+    func testConcurrentDownloadsValidationRejectsZero() {
+        XCTAssertThrowsError(try HeavyFaultToleranceOptions.parse(["--concurrent-downloads", "0"]))
+    }
+
+    func testMaxRetriesValidationRejectsNegative() {
+        XCTAssertThrowsError(try HeavyFaultToleranceOptions.parse(["--max-retries", "-1"]))
     }
 
     // MARK: - Timeout Flag

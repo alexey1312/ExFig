@@ -58,6 +58,9 @@ public enum PKLEvaluator {
             // Figma
             Figma.Module.self,
             Figma.FigmaConfig.self,
+            // Batch
+            Batch.Module.self,
+            Batch.BatchConfig.self,
             // iOS
             iOS.Module.self,
             iOS.HeicOptions.self,

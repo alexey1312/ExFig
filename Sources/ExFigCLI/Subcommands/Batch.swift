@@ -30,19 +30,19 @@ extension ExFigCommand {
         @OptionGroup
         var globalOptions: GlobalOptions
 
-        @Option(name: .long, help: "Maximum configs to process in parallel")
-        var parallel: Int = 3
+        @Option(name: .long, help: "Maximum configs to process in parallel (overrides config, default: 3)")
+        var parallel: Int?
 
-        @Flag(name: .long, help: "Stop processing on first error")
+        @Flag(name: .long, help: "Stop processing on first error (overrides config)")
         var failFast: Bool = false
 
-        @Option(name: .long, help: "Figma API requests per minute")
-        var rateLimit: Int = 10
+        @Option(name: .long, help: "Figma API requests per minute (overrides config, default: 10)")
+        var rateLimit: Int?
 
-        @Option(name: .long, help: "Maximum retry attempts for failed requests")
-        var maxRetries: Int = 4
+        @Option(name: .long, help: "Maximum retry attempts for failed requests (overrides config, default: 4)")
+        var maxRetries: Int?
 
-        @Flag(name: .long, help: "Resume from previous checkpoint if available")
+        @Flag(name: .long, help: "Resume from previous checkpoint if available (overrides config)")
         var resume: Bool = false
 
         @Option(name: .long, help: "Path to write JSON report")
@@ -68,20 +68,22 @@ extension ExFigCommand {
         var experimentalGranularCache: Bool = false
 
         /// Download concurrency
-        @Option(name: .long, help: "Maximum concurrent CDN downloads")
-        var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
+        @Option(name: .long, help: "Maximum concurrent CDN downloads (overrides config, default: 20)")
+        var concurrentDownloads: Int?
 
         /// Connection options
-        @Option(name: .long, help: "Figma API request timeout in seconds (overrides config)")
+        @Option(name: .long, help: "Figma API request timeout in seconds (overrides config, default: 30)")
         var timeout: Int?
 
         @Argument(help: "Config files or directory to process")
         var paths: [String]
 
         mutating func validate() throws {
-            if let timeout, timeout <= 0 {
-                throw ValidationError("Timeout must be positive")
-            }
+            try FaultToleranceValidator.validateTimeout(timeout)
+            try FaultToleranceValidator.validateParallel(parallel)
+            try FaultToleranceValidator.validateRateLimit(rateLimit)
+            try FaultToleranceValidator.validateMaxRetries(maxRetries)
+            try FaultToleranceValidator.validateConcurrentDownloads(concurrentDownloads)
         }
 
         // swiftlint:disable:next function_body_length
@@ -94,11 +96,32 @@ extension ExFigCommand {
             let (validConfigs, conflicts) = try discoverAndValidateConfigs(ui: ui)
             guard !validConfigs.isEmpty else { return }
 
+            // Cache PKL evaluations so the first config (and any verbose-pre-checked configs)
+            // aren't re-evaluated in BatchConfigRunner.
+            let moduleCache = PKLModuleCache()
+
+            // Resolve batch-level settings: CLI flags > first config's batch:/figma: > built-in defaults.
+            // Per-target batch: blocks in subsequent configs are ignored (warning-logged under -v).
+            let resolved = await BatchSettingsResolver.resolve(
+                cliParallel: parallel,
+                cliFailFast: failFast,
+                cliResume: resume,
+                cliRateLimit: rateLimit,
+                cliMaxRetries: maxRetries,
+                cliConcurrentDownloads: concurrentDownloads,
+                cliTimeout: timeout,
+                allConfigs: validConfigs,
+                verbose: globalOptions.verbose,
+                ui: ui,
+                moduleCache: moduleCache
+            )
+
             // Prepare configs with checkpoint handling
             let workingDirectory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
             let (configs, checkpoint) = prepareConfigsWithCheckpoint(
                 validConfigs: validConfigs,
                 workingDirectory: workingDirectory,
+                resolved: resolved,
                 ui: ui
             )
 
@@ -114,6 +137,8 @@ extension ExFigCommand {
                 conflicts: conflicts,
                 checkpoint: checkpoint,
                 workingDirectory: workingDirectory,
+                resolved: resolved,
+                moduleCache: moduleCache,
                 ui: ui
             )
 
@@ -122,6 +147,7 @@ extension ExFigCommand {
                 result: result,
                 rateLimiter: rateLimiter,
                 workingDirectory: workingDirectory,
+                resolved: resolved,
                 ui: ui
             )
         }
@@ -157,11 +183,16 @@ extension ExFigCommand {
         private func prepareConfigsWithCheckpoint(
             validConfigs: [URL],
             workingDirectory: URL,
+            resolved: ResolvedBatchSettings,
             ui: TerminalUI
         ) -> ([ConfigFile], BatchCheckpoint) {
             var configs = validConfigs.map { ConfigFile(url: $0) }
 
-            if let existing = loadCheckpointIfResuming(workingDirectory: workingDirectory, ui: ui) {
+            if let existing = loadCheckpointIfResuming(
+                workingDirectory: workingDirectory,
+                resolved: resolved,
+                ui: ui
+            ) {
                 let skipped = existing.completedConfigs.count
                 configs = configs.filter { !existing.isCompleted($0.url.path) }
                 ui.info("Resuming: \(skipped) config(s) already completed, \(configs.count) remaining")
@@ -171,8 +202,12 @@ extension ExFigCommand {
             return (configs, BatchCheckpoint(requestedPaths: paths))
         }
 
-        private func loadCheckpointIfResuming(workingDirectory: URL, ui: TerminalUI) -> BatchCheckpoint? {
-            guard resume else { return nil }
+        private func loadCheckpointIfResuming(
+            workingDirectory: URL,
+            resolved: ResolvedBatchSettings,
+            ui: TerminalUI
+        ) -> BatchCheckpoint? {
+            guard resolved.resume else { return nil }
 
             guard let existing = try? BatchCheckpoint.load(from: workingDirectory) else {
                 return nil
@@ -193,16 +228,22 @@ extension ExFigCommand {
             return existing
         }
 
-        // swiftlint:disable:next function_body_length
+        // swiftlint:disable:next function_body_length function_parameter_count
         private func executeBatch(
             configs: [ConfigFile],
             conflicts: [OutputPathConflict],
             checkpoint: BatchCheckpoint,
             workingDirectory: URL,
+            resolved: ResolvedBatchSettings,
+            moduleCache: PKLModuleCache,
             ui: TerminalUI
         ) async -> (BatchResult, SharedRateLimiter) {
-            let rateLimiter = SharedRateLimiter(requestsPerMinute: Double(rateLimit))
-            let retryPolicy = RetryPolicy(maxRetries: maxRetries)
+            let rateLimiter = SharedRateLimiter(requestsPerMinute: Double(resolved.rateLimit))
+            // failFast forces 0 retries on individual API calls, matching
+            // `HeavyFaultToleranceOptions.createRetryPolicy()` in non-batch mode.
+            // Without this, --fail-fast at batch level would still retry every
+            // request up to `resolved.maxRetries` times before failing the config.
+            let retryPolicy = RetryPolicy(maxRetries: resolved.failFast ? 0 : resolved.maxRetries)
 
             // Load cache for smart pre-fetch optimization (version checking)
             // This allows skipping heavy Components API calls when file version is unchanged
@@ -240,10 +281,19 @@ extension ExFigCommand {
                 ui: ui
             )
 
-            // Create shared download queue for cross-config pipelining
-            let downloadQueue = SharedDownloadQueue(
-                maxConcurrentDownloads: concurrentDownloads * parallel
-            )
+            // Create shared download queue for cross-config pipelining.
+            // Cap the total slot count so absurd combinations (e.g. 200*50=10000) don't blow
+            // through OS file descriptor limits or trigger cryptic CDN throttling.
+            let requestedSlots = resolved.concurrentDownloads * resolved.parallel
+            let cappedSlots = min(requestedSlots, FaultToleranceDefaults.maxDownloadSlots)
+            if cappedSlots < requestedSlots {
+                ui.warning(.excessiveDownloadSlots(
+                    concurrentDownloads: resolved.concurrentDownloads,
+                    parallel: resolved.parallel,
+                    capped: cappedSlots
+                ))
+            }
+            let downloadQueue = SharedDownloadQueue(maxConcurrentDownloads: cappedSlots)
 
             // Create priority map: configs submitted first get higher priority (lower number)
             let priorityMap = Dictionary(
@@ -254,6 +304,7 @@ extension ExFigCommand {
                 configs: configs,
                 conflicts: conflicts,
                 sharedGranularCache: sharedGranularCache,
+                resolved: resolved,
                 ui: ui
             )
 
@@ -272,12 +323,14 @@ extension ExFigCommand {
                 await progressView.registerConfig(name: config.name)
             }
 
-            let executor = BatchExecutor(maxParallel: parallel, failFast: failFast)
+            let executor = BatchExecutor(maxParallel: resolved.parallel, failFast: resolved.failFast)
             let checkpointManager = CheckpointManager(checkpoint: checkpoint, directory: workingDirectory)
             let runnerFactory = makeRunnerFactory(
                 rateLimiter: rateLimiter,
                 retryPolicy: retryPolicy,
-                priorityMap: priorityMap
+                resolved: resolved,
+                priorityMap: priorityMap,
+                moduleCache: moduleCache
             )
 
             // Create shared theme attributes collector for batch mode
@@ -363,38 +416,46 @@ extension ExFigCommand {
         }
 
         /// Creates a factory function for BatchConfigRunner instances.
+        ///
+        /// In batch mode, rate-limit / max-retries / concurrent-downloads / timeout values are
+        /// already resolved at the batch level (CLI flag > first config's `figma:` block > built-in
+        /// default). Per-config `figma:` rate-limiting fields are intentionally ignored — the rate
+        /// limiter and download queue are shared across all configs in the run.
         private func makeRunnerFactory(
             rateLimiter: SharedRateLimiter,
             retryPolicy: RetryPolicy,
-            priorityMap: [String: Int]
+            resolved: ResolvedBatchSettings,
+            priorityMap: [String: Int],
+            moduleCache: PKLModuleCache
         ) -> @Sendable (ConfigFile) -> BatchConfigRunner {
             // Capture all values needed for runner creation
             let globalOptions = globalOptions
-            let maxRetries = maxRetries
-            let resume = resume
             let cache = cache
             let noCache = noCache
             let force = force
             let cachePath = cachePath
             let experimentalGranularCache = experimentalGranularCache
-            let concurrentDownloads = concurrentDownloads
-            let timeout = timeout
+            let resolvedMaxRetries = resolved.maxRetries
+            let resolvedResume = resolved.resume
+            let resolvedConcurrentDownloads = resolved.concurrentDownloads
+            let resolvedTimeout = resolved.timeout
 
             return { configFile in
                 BatchConfigRunner(
                     rateLimiter: rateLimiter,
                     retryPolicy: retryPolicy,
                     globalOptions: globalOptions,
-                    maxRetries: maxRetries,
-                    resume: resume,
+                    maxRetries: resolvedMaxRetries,
+                    resume: resolvedResume,
                     cache: cache,
                     noCache: noCache,
                     force: force,
                     cachePath: cachePath,
                     experimentalGranularCache: experimentalGranularCache,
-                    concurrentDownloads: concurrentDownloads,
-                    cliTimeout: timeout,
-                    configPriority: priorityMap[configFile.name] ?? 0
+                    concurrentDownloads: resolvedConcurrentDownloads,
+                    cliTimeout: resolvedTimeout,
+                    configPriority: priorityMap[configFile.name] ?? 0,
+                    moduleCache: moduleCache
                 )
             }
         }
@@ -404,9 +465,10 @@ extension ExFigCommand {
             configs: [ConfigFile],
             conflicts: [OutputPathConflict],
             sharedGranularCache: SharedGranularCache?,
+            resolved: ResolvedBatchSettings,
             ui: TerminalUI
         ) {
-            ui.info("Processing \(configs.count) config(s) with up to \(parallel) parallel workers:")
+            ui.info("Processing \(configs.count) config(s) with up to \(resolved.parallel) parallel workers:")
 
             // Build conflict lookup: config name → shared path
             var conflictMap: [String: String] = [:]
@@ -433,11 +495,18 @@ extension ExFigCommand {
             NooraUI.shared.table(headers: headers, rows: rows)
 
             if globalOptions.verbose {
-                ui.info("Rate limit: \(rateLimit) req/min, max retries: \(maxRetries)")
+                ui.info("Rate limit: \(resolved.rateLimit) req/min, max retries: \(resolved.maxRetries)")
+                ui.info(
+                    "Resolved batch settings: parallel=\(resolved.parallel), failFast=\(resolved.failFast), " +
+                        "resume=\(resolved.resume), concurrentDownloads=\(resolved.concurrentDownloads), " +
+                        "timeout=\(resolved.timeout.map(String.init) ?? "default")"
+                )
                 if sharedGranularCache != nil {
                     ui.info("Granular cache: shared across workers")
                 }
-                ui.info("Download queue: shared with \(concurrentDownloads * parallel) concurrent slots")
+                let requestedSlots = resolved.concurrentDownloads * resolved.parallel
+                let slots = min(requestedSlots, FaultToleranceDefaults.maxDownloadSlots)
+                ui.info("Download queue: shared with \(slots) concurrent slots")
             }
         }
 
@@ -696,6 +765,7 @@ extension ExFigCommand {
             result: BatchResult,
             rateLimiter: SharedRateLimiter,
             workingDirectory: URL,
+            resolved: ResolvedBatchSettings,
             ui: TerminalUI
         ) {
             displaySummary(result: result, ui: ui)
@@ -727,7 +797,7 @@ extension ExFigCommand {
                 if globalOptions.verbose {
                     ui.info("Checkpoint cleared (all configs completed successfully)")
                 }
-            } else if !failFast {
+            } else if !resolved.failFast {
                 ui.error("Batch completed with \(result.failureCount) failure(s)")
                 ui.info("Run with --resume to retry failed configs")
             }

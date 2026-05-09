@@ -1,0 +1,20 @@
+/// Batch orchestration configuration.
+///
+/// These settings only apply when running `exfig batch` and are read
+/// from the FIRST config in the argument list. Per-target `batch:` blocks
+/// in subsequent configs are ignored (logged under -v).
+module Batch
+
+import "pkl:base"
+
+/// Batch execution settings — only meaningful for `exfig batch`.
+class BatchConfig {
+  /// Maximum configs to process in parallel. CLI --parallel overrides.
+  parallel: Int(isBetween(1, 50))? = 3
+
+  /// Stop processing on first error. CLI --fail-fast overrides.
+  failFast: Boolean? = false
+
+  /// Resume from previous checkpoint if available. CLI --resume overrides.
+  resume: Boolean? = false
+}
