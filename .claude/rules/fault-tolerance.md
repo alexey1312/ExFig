@@ -13,14 +13,20 @@ This rule covers retry, rate limiting, and timeout configuration for API command
 All commands support configurable retry, rate limiting, and timeout via CLI flags:
 
 ```bash
-# Light commands (colors, typography, download subcommands)
+# Light commands (colors, typography, download colors/typography/icons/images)
 exfig colors --max-retries 6 --rate-limit 15 --timeout 60
 
-# Heavy commands (icons, images) also support fail-fast and concurrent downloads
+# Heavy commands (icons, images, download all) also support fail-fast and
+# concurrent downloads. `download all` shares one rate-limited client across
+# its colors/typography/icons/images sub-flows.
 exfig icons --max-retries 4 --rate-limit 15 --timeout 90 --fail-fast
 exfig icons --concurrent-downloads 50  # Increase CDN parallelism (default: 20)
+exfig download all --rate-limit 25 --concurrent-downloads 50
 
-# Batch command with timeout (overrides all per-config timeouts)
+# Batch command — `--timeout` is the resolved batch-level timeout.
+# In batch mode `figma.*` rate-limiting fields (incl. `timeout`) are read ONLY from
+# the first config; per-target `figma.timeout` in subsequent configs is ignored
+# (warned under -v). Precedence: CLI > first config's figma.timeout > built-in default.
 exfig batch ./configs/ --timeout 60 --rate-limit 20
 
 # fetch command has its own --timeout in DownloadOptions
