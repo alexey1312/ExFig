@@ -277,4 +277,67 @@ final class ExFigWarningFormatterTests: XCTestCase {
 
         XCTAssertFalse(formatted.isEmpty)
     }
+
+    // MARK: - Fault Tolerance Warnings (S6)
+
+    func testBatchSettingsPreloadFailedFormatsAsCompact() {
+        let warning = ExFigWarning.batchSettingsPreloadFailed(
+            file: "ios.pkl",
+            error: "PKL syntax error at line 5"
+        )
+
+        let result = formatter.format(warning)
+
+        XCTAssertTrue(result.contains("Batch settings pre-load failed"))
+        XCTAssertTrue(result.contains("file=ios.pkl"))
+        XCTAssertTrue(result.contains("error=PKL syntax error at line 5"))
+        XCTAssertTrue(result.contains("CLI flags / built-in defaults will apply"))
+    }
+
+    func testIgnoredPerTargetBatchBlockFormatsAsCompact() {
+        let warning = ExFigWarning.ignoredPerTargetBatchBlock(file: "android.pkl")
+
+        let result = formatter.format(warning)
+
+        XCTAssertTrue(result.contains("Ignoring batch:"))
+        XCTAssertTrue(result.contains("android.pkl"))
+        XCTAssertTrue(result.contains("only the first config's batch settings apply"))
+    }
+
+    func testIgnoredPerTargetFigmaRateLimitingFormatsAsCompact() {
+        let warning = ExFigWarning.ignoredPerTargetFigmaRateLimiting(file: "flutter.pkl")
+
+        let result = formatter.format(warning)
+
+        XCTAssertTrue(result.contains("Ignoring per-target figma rate-limiting fields"))
+        XCTAssertTrue(result.contains("flutter.pkl"))
+        XCTAssertTrue(result.contains("only the first config's figma:* values apply"))
+    }
+
+    func testInvalidConfigValueFormatsAsCompact() {
+        let warning = ExFigWarning.invalidConfigValue(
+            key: "figma.rateLimit",
+            value: 999,
+            fallback: 10
+        )
+
+        let result = formatter.format(warning)
+
+        XCTAssertEqual(result, "Invalid config value: key=figma.rateLimit, value=999, fallback=10")
+    }
+
+    func testExcessiveDownloadSlotsFormatsAsCompact() {
+        let warning = ExFigWarning.excessiveDownloadSlots(
+            concurrentDownloads: 200,
+            parallel: 50,
+            capped: 1000
+        )
+
+        let result = formatter.format(warning)
+
+        XCTAssertTrue(result.contains("concurrentDownloads=200"))
+        XCTAssertTrue(result.contains("parallel=50"))
+        XCTAssertTrue(result.contains("product=10000"))
+        XCTAssertTrue(result.contains("capped=1000"))
+    }
 }

@@ -43,8 +43,17 @@ struct ExFigOptions: ParsableArguments {
 
     /// Validates and primes `params` from a pre-evaluated PKL module — avoids redundant PKL eval
     /// when the caller (e.g. `BatchSettingsResolver`) already loaded the same config.
-    mutating func validateUsing(preloadedModule module: ExFig.ModuleImpl) {
+    ///
+    /// Behaves as a drop-in replacement for `validate()`:
+    /// 1. Reads `FIGMA_PERSONAL_TOKEN` from the environment (same as `validate()`).
+    /// 2. Resolves the config path so any future validation rule added to `validate()` that
+    ///    inspects `input` still applies (matches `validate()` precondition surface).
+    /// 3. Skips PKL evaluation by reusing the supplied module.
+    ///
+    /// Throws the same errors as `validate()` for path resolution failures.
+    mutating func validateUsing(preloadedModule module: ExFig.ModuleImpl) throws {
         accessToken = ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"]
+        _ = try resolveConfigPath()
         params = module
     }
 

@@ -4,7 +4,8 @@ import Foundation
 ///
 /// These values must be kept in sync with PKL schema defaults in
 /// `Sources/ExFigCLI/Resources/Schemas/{Figma,Batch}.pkl`. The
-/// `FaultToleranceDefaultsParityTests` test asserts the parity at runtime.
+/// `BatchSettingsResolverExtendedTests.testPKLDefaultsMatchSwiftDefaults` test
+/// asserts the parity at runtime.
 enum FaultToleranceDefaults {
     static let parallel = 3
     static let rateLimit = 10
@@ -17,4 +18,9 @@ enum FaultToleranceDefaults {
     static let maxRetriesRange = 0 ... 100
     static let concurrentDownloadsRange = 1 ... 200
     static let timeoutRange = 1 ... 600
+
+    /// Safe cap for `concurrentDownloads * parallel` (total simultaneous CDN connections).
+    /// Above this, OS file-descriptor limits (~1024-2048) and per-host CDN throttling start
+    /// surfacing as cryptic EMFILE/network errors instead of clean timeouts.
+    static let maxDownloadSlots = 1000
 }

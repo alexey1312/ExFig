@@ -149,10 +149,20 @@ enum BatchSettingsResolver {
                 module = try await PKLEvaluator.evaluate(configPath: url)
                 await moduleCache?.set(module, for: url)
             } catch {
-                ui.debug(
-                    "Could not pre-check \(url.lastPathComponent) for ignored batch settings: " +
-                        "\(error.localizedDescription)"
-                )
+                if isFileNotFound(error: error, url: url) {
+                    // BatchConfigRunner will surface a clearer per-config error; debug only.
+                    ui.debug(
+                        "Pre-check skipped: \(url.lastPathComponent) not found."
+                    )
+                } else {
+                    // Real PKL/syntax/network errors mean we cannot tell whether the user
+                    // had per-target batch:/figma:* fields. Surface as warning so the user
+                    // doesn't think their config was silently accepted.
+                    ui.warning(.batchSettingsPreloadFailed(
+                        file: url.lastPathComponent,
+                        error: error.localizedDescription
+                    ))
+                }
                 continue
             }
             if module?.batch != nil {
@@ -169,7 +179,15 @@ enum BatchSettingsResolver {
         }
     }
 
+    /// Detect "file not found" errors structurally. We check the filesystem FIRST so the
+    /// classification doesn't depend on Foundation/PklSwift error message wording.
+    /// Falls back to NSError domain/code checks for completeness; deliberately does NOT
+    /// match arbitrary "not found" substrings (a real PKL error like
+    /// `module member 'foo' not found` should NOT be reclassified as missing-file).
     private static func isFileNotFound(error: Error, url: URL) -> Bool {
+        if !FileManager.default.fileExists(atPath: url.path) {
+            return true
+        }
         let nsError = error as NSError
         if nsError.domain == NSCocoaErrorDomain, nsError.code == NSFileReadNoSuchFileError {
             return true
@@ -177,12 +195,6 @@ enum BatchSettingsResolver {
         if nsError.domain == NSPOSIXErrorDomain, nsError.code == Int(ENOENT) {
             return true
         }
-        // PklSwift surfaces missing files via PklError text — a textual match is brittle but
-        // acceptable as a fallback (better than over-warning the user).
-        let message = error.localizedDescription.lowercased()
-        if message.contains("no such file") || message.contains("not found") {
-            return true
-        }
-        return !FileManager.default.fileExists(atPath: url.path)
+        return false
     }
 }

@@ -222,7 +222,10 @@ struct BatchConfigRunner {
     let cachePath: String?
     let experimentalGranularCache: Bool
     let concurrentDownloads: Int
-    /// CLI timeout override (in seconds). When set, overrides per-config timeout.
+    /// Resolved batch-level timeout (in seconds). Already merged via `BatchSettingsResolver`:
+    /// CLI flag > FIRST config's `figma.timeout` > built-in default. Per-config `figma.timeout`
+    /// values in subsequent configs are intentionally ignored — `BatchSettingsResolver` warns
+    /// the user under `--verbose` via `.ignoredPerTargetFigmaRateLimiting`.
     let cliTimeout: Int?
     /// Priority for this config's downloads (lower = higher priority, based on submission order).
     let configPriority: Int
@@ -305,16 +308,18 @@ struct BatchConfigRunner {
             var options = ExFigOptions()
             options.input = configFile.url.path
             if let cached = await moduleCache?.get(for: configFile.url) {
-                options.validateUsing(preloadedModule: cached)
+                try options.validateUsing(preloadedModule: cached)
             } else {
                 try options.validate()
             }
 
             let retryHandler = RetryLogger.createHandler(ui: ui, maxAttempts: maxRetries)
 
-            // CLI timeout takes precedence over per-config timeout
+            // Use ONLY the batch-level resolved timeout. Per-config `figma.timeout` is
+            // intentionally ignored — `BatchSettingsResolver` already merged CLI flag +
+            // FIRST config's value, and warns about ignored per-target values under -v.
+            // Honoring per-config timeout here would silently override that resolution.
             let effectiveTimeout: TimeInterval? = cliTimeout.map { TimeInterval($0) }
-                ?? options.params.figma?.timeout
 
             let baseClient = try FigmaClient(
                 accessToken: options.requireFigmaToken(),

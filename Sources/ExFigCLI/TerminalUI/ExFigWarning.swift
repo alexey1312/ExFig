@@ -119,4 +119,8 @@ enum ExFigWarning: Equatable {
 
     /// A PKL config value for fault tolerance was out of range and replaced with the default.
     case invalidConfigValue(key: String, value: Int, fallback: Int)
+
+    /// `concurrentDownloads * parallel` exceeds a safe slot count and was capped.
+    /// Avoids EMFILE / CDN throttling from configurations like `200 * 50 = 10000`.
+    case excessiveDownloadSlots(concurrentDownloads: Int, parallel: Int, capped: Int)
 }

@@ -22,7 +22,8 @@ struct ExFigWarningFormatter {
              .unresolvedNumberAlias, .depthExceededNumberAlias,
              .circularColorAlias, .downloadTokensSectionSkipped,
              .batchSettingsPreloadFailed, .ignoredPerTargetBatchBlock,
-             .ignoredPerTargetFigmaRateLimiting, .invalidConfigValue:
+             .ignoredPerTargetFigmaRateLimiting, .invalidConfigValue,
+             .excessiveDownloadSlots:
             formatCompact(warning)
 
         // Multiline format warnings
@@ -121,6 +122,11 @@ struct ExFigWarningFormatter {
 
         case let .invalidConfigValue(key, value, fallback):
             "Invalid config value: key=\(key), value=\(value), fallback=\(fallback)"
+
+        case let .excessiveDownloadSlots(concurrentDownloads, parallel, capped):
+            "Excessive download slots: concurrentDownloads=\(concurrentDownloads), " +
+                "parallel=\(parallel), product=\(concurrentDownloads * parallel), capped=\(capped). " +
+                "Reduce --concurrent-downloads or --parallel to avoid CDN throttling / EMFILE."
 
         // Multiline cases handled in main format() method
         case .noAssetsFound, .invalidConfigsSkipped, .webIconsMissingSVGData, .webIconsConversionFailed:

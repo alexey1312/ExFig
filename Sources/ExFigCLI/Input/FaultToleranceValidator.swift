@@ -4,8 +4,10 @@ import Foundation
 /// Centralized validation rules for fault-tolerance and batch knobs.
 ///
 /// These rules are shared between CLI `validate()` (raises `ValidationError`) and
-/// PKL `effective*` accessors (clamp + warn). Keeping them in one place removes
-/// the drift hazard that comes with three nearly-identical `validate()` blocks.
+/// the CLI-side `effective*` accessors on `FaultToleranceOptions` /
+/// `HeavyFaultToleranceOptions` (clamp + warn when reading PKL config values).
+/// Keeping them in one place removes the drift hazard that comes with several
+/// nearly-identical `validate()` blocks.
 enum FaultToleranceValidator {
     // MARK: - CLI validation (throws)
 
@@ -92,16 +94,21 @@ enum FaultToleranceValidator {
         )
     }
 
+    /// Sanitize a PKL `figma.timeout`. Unlike the other knobs, `nil` means "no value
+    /// configured" and is preserved (downstream uses `FigmaClient`'s default).
+    /// Out-of-range values fall back to `FaultToleranceDefaults.timeoutSeconds` and emit
+    /// `.invalidConfigValue` at most once per (key, value) pair (deduped via `warnOnce`).
     static func sanitizedTimeout(_ value: Int?, ui: TerminalUI?) -> Int? {
         guard let value else { return nil }
         if FaultToleranceDefaults.timeoutRange.contains(value) {
             return value
         }
-        ui?.warning(.invalidConfigValue(
+        warnOnce(
             key: "figma.timeout",
             value: value,
-            fallback: FaultToleranceDefaults.timeoutSeconds
-        ))
+            fallback: FaultToleranceDefaults.timeoutSeconds,
+            ui: ui
+        )
         return FaultToleranceDefaults.timeoutSeconds
     }
 
@@ -117,6 +124,10 @@ enum FaultToleranceValidator {
 
     // MARK: - Internal
 
+    /// Tracks `(key, value)` pairs we've already warned about so the same out-of-range PKL
+    /// value doesn't dilute the log when sanitize() is called from many sites in one run.
+    private static let warnedKeys = Lock<Set<String>>([])
+
     private static func sanitize(
         value: Int?,
         range: ClosedRange<Int>,
@@ -128,7 +139,23 @@ enum FaultToleranceValidator {
         if range.contains(value) {
             return value
         }
-        ui?.warning(.invalidConfigValue(key: key, value: value, fallback: fallback))
+        warnOnce(key: key, value: value, fallback: fallback, ui: ui)
         return fallback
+    }
+
+    /// Emits `.invalidConfigValue` at most once per `(key, value)` pair within this process.
+    /// Test-only `resetWarnedKeys()` clears the dedup cache between scenarios.
+    static func warnOnce(key: String, value: Int, fallback: Int, ui: TerminalUI?) {
+        let dedupKey = "\(key)=\(value)"
+        let shouldEmit = warnedKeys.withLock { keys -> Bool in
+            keys.insert(dedupKey).inserted
+        }
+        guard shouldEmit else { return }
+        ui?.warning(.invalidConfigValue(key: key, value: value, fallback: fallback))
+    }
+
+    /// Test hook: clears the per-process warning dedup cache.
+    static func resetWarnedKeys() {
+        warnedKeys.withLock { $0.removeAll() }
     }
 }

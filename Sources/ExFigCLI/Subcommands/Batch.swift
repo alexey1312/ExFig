@@ -239,7 +239,11 @@ extension ExFigCommand {
             ui: TerminalUI
         ) async -> (BatchResult, SharedRateLimiter) {
             let rateLimiter = SharedRateLimiter(requestsPerMinute: Double(resolved.rateLimit))
-            let retryPolicy = RetryPolicy(maxRetries: resolved.maxRetries)
+            // failFast forces 0 retries on individual API calls, matching
+            // `HeavyFaultToleranceOptions.createRetryPolicy()` in non-batch mode.
+            // Without this, --fail-fast at batch level would still retry every
+            // request up to `resolved.maxRetries` times before failing the config.
+            let retryPolicy = RetryPolicy(maxRetries: resolved.failFast ? 0 : resolved.maxRetries)
 
             // Load cache for smart pre-fetch optimization (version checking)
             // This allows skipping heavy Components API calls when file version is unchanged
@@ -277,10 +281,19 @@ extension ExFigCommand {
                 ui: ui
             )
 
-            // Create shared download queue for cross-config pipelining
-            let downloadQueue = SharedDownloadQueue(
-                maxConcurrentDownloads: resolved.concurrentDownloads * resolved.parallel
-            )
+            // Create shared download queue for cross-config pipelining.
+            // Cap the total slot count so absurd combinations (e.g. 200*50=10000) don't blow
+            // through OS file descriptor limits or trigger cryptic CDN throttling.
+            let requestedSlots = resolved.concurrentDownloads * resolved.parallel
+            let cappedSlots = min(requestedSlots, FaultToleranceDefaults.maxDownloadSlots)
+            if cappedSlots < requestedSlots {
+                ui.warning(.excessiveDownloadSlots(
+                    concurrentDownloads: resolved.concurrentDownloads,
+                    parallel: resolved.parallel,
+                    capped: cappedSlots
+                ))
+            }
+            let downloadQueue = SharedDownloadQueue(maxConcurrentDownloads: cappedSlots)
 
             // Create priority map: configs submitted first get higher priority (lower number)
             let priorityMap = Dictionary(
@@ -483,10 +496,16 @@ extension ExFigCommand {
 
             if globalOptions.verbose {
                 ui.info("Rate limit: \(resolved.rateLimit) req/min, max retries: \(resolved.maxRetries)")
+                ui.info(
+                    "Resolved batch settings: parallel=\(resolved.parallel), failFast=\(resolved.failFast), " +
+                        "resume=\(resolved.resume), concurrentDownloads=\(resolved.concurrentDownloads), " +
+                        "timeout=\(resolved.timeout.map(String.init) ?? "default")"
+                )
                 if sharedGranularCache != nil {
                     ui.info("Granular cache: shared across workers")
                 }
-                let slots = resolved.concurrentDownloads * resolved.parallel
+                let requestedSlots = resolved.concurrentDownloads * resolved.parallel
+                let slots = min(requestedSlots, FaultToleranceDefaults.maxDownloadSlots)
                 ui.info("Download queue: shared with \(slots) concurrent slots")
             }
         }

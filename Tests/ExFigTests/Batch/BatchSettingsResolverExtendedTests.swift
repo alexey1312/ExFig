@@ -6,6 +6,11 @@ import XCTest
 /// `BatchSettingsResolver`. Lives in its own suite to keep the original
 /// `BatchSettingsResolverTests` under SwiftLint's type/file length limits.
 final class BatchSettingsResolverExtendedTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        FaultToleranceValidator.resetWarnedKeys()
+    }
+
     // MARK: - Multi-Config: First Wins (T1)
 
     func testFirstConfigWinsAndSubsequentConfigsAreIgnored() async throws {
@@ -194,6 +199,102 @@ final class BatchSettingsResolverExtendedTests: XCTestCase {
         XCTAssertEqual(FaultToleranceDefaults.maxRetries, 4)
         XCTAssertEqual(FaultToleranceDefaults.concurrentDownloads, 20)
         XCTAssertEqual(FaultToleranceDefaults.timeoutSeconds, 30)
+    }
+
+    // MARK: - cliTimeout precedence (I8: BatchConfigRunner uses resolved timeout only)
+
+    func testCLITimeoutOverridesFirstConfigTimeout() async throws {
+        // PKL `timeout` is `Number` (Float64); use `.0` to keep pkl-swift happy.
+        let configURL = try BatchResolverFixture.make(figma: "timeout = 90.0", batch: nil)
+        defer { try? FileManager.default.removeItem(at: configURL) }
+        let ui = TerminalUI(outputMode: .quiet)
+
+        let resolved = await BatchSettingsResolver.resolve(
+            cliParallel: nil,
+            cliFailFast: false,
+            cliResume: false,
+            cliRateLimit: nil,
+            cliMaxRetries: nil,
+            cliConcurrentDownloads: nil,
+            cliTimeout: 30,
+            allConfigs: [configURL],
+            verbose: false,
+            ui: ui
+        )
+
+        XCTAssertEqual(resolved.timeout, 30, "CLI --timeout wins over first config's figma.timeout")
+    }
+
+    func testFirstConfigTimeoutWinsWhenCLIMissing() async throws {
+        let configURL = try BatchResolverFixture.make(figma: "timeout = 90.0", batch: nil)
+        defer { try? FileManager.default.removeItem(at: configURL) }
+        let ui = TerminalUI(outputMode: .quiet)
+
+        let resolved = await BatchSettingsResolver.resolve(
+            cliParallel: nil,
+            cliFailFast: false,
+            cliResume: false,
+            cliRateLimit: nil,
+            cliMaxRetries: nil,
+            cliConcurrentDownloads: nil,
+            cliTimeout: nil,
+            allConfigs: [configURL],
+            verbose: false,
+            ui: ui
+        )
+
+        XCTAssertEqual(resolved.timeout, 90, "first config's figma.timeout used when CLI omitted")
+    }
+
+    func testSecondConfigTimeoutIgnored() async throws {
+        // First config sets timeout=45.0 explicitly; second config sets a different value.
+        // Resolved timeout must reflect first config only.
+        let firstURL = try BatchResolverFixture.make(figma: "timeout = 45.0", batch: nil)
+        let secondURL = try BatchResolverFixture.make(figma: "timeout = 599.0", batch: nil)
+        defer {
+            try? FileManager.default.removeItem(at: firstURL)
+            try? FileManager.default.removeItem(at: secondURL)
+        }
+        let ui = TerminalUI(outputMode: .quiet)
+
+        let resolved = await BatchSettingsResolver.resolve(
+            cliParallel: nil,
+            cliFailFast: false,
+            cliResume: false,
+            cliRateLimit: nil,
+            cliMaxRetries: nil,
+            cliConcurrentDownloads: nil,
+            cliTimeout: nil,
+            allConfigs: [firstURL, secondURL],
+            verbose: false,
+            ui: ui
+        )
+
+        XCTAssertEqual(resolved.timeout, 45, "subsequent config timeouts must not influence resolved timeout")
+    }
+
+    // MARK: - Sanitizer upper-bounds (S7)
+
+    func testSanitizedParallelClampsOutOfRangeValues() {
+        let ui = TerminalUI(outputMode: .quiet)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedParallel(0, ui: ui), 3)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedParallel(-1, ui: ui), 3)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedParallel(51, ui: ui), 3)
+    }
+
+    func testSanitizedTimeoutClampsOutOfRangeValuesAndPreservesNil() {
+        let ui = TerminalUI(outputMode: .quiet)
+        XCTAssertNil(FaultToleranceValidator.sanitizedTimeout(nil, ui: ui))
+        XCTAssertEqual(FaultToleranceValidator.sanitizedTimeout(0, ui: ui), 30)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedTimeout(-5, ui: ui), 30)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedTimeout(700, ui: ui), 30)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedTimeout(60, ui: ui), 60)
+    }
+
+    func testSanitizedConcurrentDownloadsClampsAboveRange() {
+        let ui = TerminalUI(outputMode: .quiet)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedConcurrentDownloads(201, ui: ui), 20)
+        XCTAssertEqual(FaultToleranceValidator.sanitizedConcurrentDownloads(200, ui: ui), 200)
     }
 }
 

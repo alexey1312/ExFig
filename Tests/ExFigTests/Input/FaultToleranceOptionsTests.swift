@@ -5,6 +5,11 @@ import FigmaAPI
 import XCTest
 
 final class FaultToleranceOptionsTests: XCTestCase {
+    override func setUp() {
+        super.setUp()
+        FaultToleranceValidator.resetWarnedKeys()
+    }
+
     // MARK: - Default Values
 
     func testDefaultMaxRetries() throws {

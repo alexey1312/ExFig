@@ -25,6 +25,9 @@ extension ExFigCommand.Download {
         @OptionGroup
         var assetOptions: AssetExportOptions
 
+        @OptionGroup
+        var faultToleranceOptions: HeavyFaultToleranceOptions
+
         @Option(name: .long, help: "Figma frame name for icons (default: from config or 'Icons')")
         var iconsFrameName: String?
 
@@ -42,29 +45,49 @@ extension ExFigCommand.Download {
 
             try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
 
+            // Build a single rate-limited client shared across all four sub-flows so
+            // --rate-limit / --max-retries / --concurrent-downloads behave consistently
+            // (matches `download colors`, `download icons`, `download images` siblings).
+            let client = try makeClient(ui: ui)
+
             ui.info("Exporting colors...")
-            try await exportColors(outputDir: outputURL, ui: ui)
+            try await exportColors(client: client, outputDir: outputURL, ui: ui)
 
             ui.info("Exporting typography...")
-            try await exportTypography(outputDir: outputURL, ui: ui)
+            try await exportTypography(client: client, outputDir: outputURL, ui: ui)
 
             ui.info("Exporting icons...")
-            try await exportIcons(outputDir: outputURL, ui: ui)
+            try await exportIcons(client: client, outputDir: outputURL, ui: ui)
 
             ui.info("Exporting images...")
-            try await exportImages(outputDir: outputURL, ui: ui)
+            try await exportImages(client: client, outputDir: outputURL, ui: ui)
 
             ui.success("Exported all design tokens to \(outputDir)")
+        }
+
+        // MARK: - Client Factory
+
+        private func makeClient(ui: TerminalUI) throws -> Client {
+            let figmaParams = options.params.figma
+            let baseClient = try FigmaClient(
+                accessToken: options.requireFigmaToken(),
+                timeout: faultToleranceOptions.timeout.map(TimeInterval.init) ?? figmaParams?.timeout
+            )
+            let rateLimiter = faultToleranceOptions.createRateLimiter(configValue: figmaParams?.rateLimit)
+            return faultToleranceOptions.createRateLimitedClient(
+                wrapping: baseClient,
+                rateLimiter: rateLimiter,
+                configMaxRetries: figmaParams?.maxRetries,
+                onRetry: { attempt, error in
+                    ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
+                }
+            )
         }
 
         // MARK: - Export Methods
 
         // swiftlint:disable:next function_body_length
-        private func exportColors(outputDir: URL, ui: TerminalUI) async throws {
-            let client = try FigmaClient(
-                accessToken: options.requireFigmaToken(),
-                timeout: options.params.figma?.timeout
-            )
+        private func exportColors(client: Client, outputDir: URL, ui: TerminalUI) async throws {
             let figmaParams = options.params.figma
             let commonParams = options.params.common
 
@@ -130,11 +153,7 @@ extension ExFigCommand.Download {
             }
         }
 
-        private func exportTypography(outputDir: URL, ui: TerminalUI) async throws {
-            let client = try FigmaClient(
-                accessToken: options.requireFigmaToken(),
-                timeout: options.params.figma?.timeout
-            )
+        private func exportTypography(client: Client, outputDir: URL, ui: TerminalUI) async throws {
             guard let figmaParams = options.params.figma else {
                 throw ExFigError.custom(errorString: "figma section is required for typography export.")
             }
@@ -171,11 +190,7 @@ extension ExFigCommand.Download {
         }
 
         // swiftlint:disable:next function_body_length
-        private func exportIcons(outputDir: URL, ui: TerminalUI) async throws {
-            let client = try FigmaClient(
-                accessToken: options.requireFigmaToken(),
-                timeout: options.params.figma?.timeout
-            )
+        private func exportIcons(client: Client, outputDir: URL, ui: TerminalUI) async throws {
             guard let figmaParams = options.params.figma else {
                 throw ExFigError.custom(errorString: "figma section is required for icons export.")
             }
@@ -245,11 +260,7 @@ extension ExFigCommand.Download {
         }
 
         // swiftlint:disable:next function_body_length
-        private func exportImages(outputDir: URL, ui: TerminalUI) async throws {
-            let client = try FigmaClient(
-                accessToken: options.requireFigmaToken(),
-                timeout: options.params.figma?.timeout
-            )
+        private func exportImages(client: Client, outputDir: URL, ui: TerminalUI) async throws {
             guard let figmaParams = options.params.figma else {
                 throw ExFigError.custom(errorString: "figma section is required for images export.")
             }
