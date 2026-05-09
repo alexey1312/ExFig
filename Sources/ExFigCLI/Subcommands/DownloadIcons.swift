@@ -63,14 +63,16 @@ extension ExFigCommand.Download {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
+            let figmaParams = options.params.figma
             let baseClient = try FigmaClient(
                 accessToken: options.requireFigmaToken(),
-                timeout: options.params.figma?.timeout
+                timeout: faultToleranceOptions.timeout.map(TimeInterval.init) ?? figmaParams?.timeout
             )
-            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let rateLimiter = faultToleranceOptions.createRateLimiter(configValue: figmaParams?.rateLimit)
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,
                 rateLimiter: rateLimiter,
+                configMaxRetries: figmaParams?.maxRetries,
                 onRetry: { attempt, error in
                     ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
                 }

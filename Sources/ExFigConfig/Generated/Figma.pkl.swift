@@ -32,18 +32,40 @@ extension Figma {
         /// Request timeout in seconds.
         public var timeout: Float64?
 
+        /// Maximum API requests per minute. CLI --rate-limit overrides.
+        /// Tier 1 endpoints (GET file, GET images): 10–20/min on Dev/Full seats.
+        /// Tier 2 endpoints (Variables, Image fills): 25–100/min.
+        /// Tier 3 endpoints (Components, file metadata): 50–150/min.
+        /// Limit is per-token + per-plan, not per-IP. See https://developers.figma.com/docs/rest-api/rate-limits/
+        public var rateLimit: Int?
+
+        /// Maximum retry attempts for failed API requests. CLI --max-retries overrides.
+        public var maxRetries: Int?
+
+        /// Maximum concurrent CDN downloads (icons/images only).
+        /// Ignored by colors/typography. CLI --concurrent-downloads overrides.
+        /// NOTE: client-side cap on CDN connections (URLSession.httpMaximumConnectionsPerHost),
+        /// not a Figma REST API limit. Use `rateLimit` for API throttling.
+        public var concurrentDownloads: Int?
+
         public init(
             lightFileId: String?,
             darkFileId: String?,
             lightHighContrastFileId: String?,
             darkHighContrastFileId: String?,
-            timeout: Float64?
+            timeout: Float64?,
+            rateLimit: Int?,
+            maxRetries: Int?,
+            concurrentDownloads: Int?
         ) {
             self.lightFileId = lightFileId
             self.darkFileId = darkFileId
             self.lightHighContrastFileId = lightHighContrastFileId
             self.darkHighContrastFileId = darkHighContrastFileId
             self.timeout = timeout
+            self.rateLimit = rateLimit
+            self.maxRetries = maxRetries
+            self.concurrentDownloads = concurrentDownloads
         }
     }
 

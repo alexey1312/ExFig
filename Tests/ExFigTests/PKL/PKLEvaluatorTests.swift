@@ -102,6 +102,9 @@ struct PKLEvaluatorTests {
             // Figma
             Figma.Module.registeredIdentifier,
             Figma.FigmaConfig.registeredIdentifier,
+            // Batch
+            Batch.Module.registeredIdentifier,
+            Batch.BatchConfig.registeredIdentifier,
             // iOS
             iOS.Module.registeredIdentifier,
             iOS.HeicOptions.registeredIdentifier,
@@ -134,7 +137,7 @@ struct PKLEvaluatorTests {
         ]
 
         #expect(
-            expectedIdentifiers.count == 41,
+            expectedIdentifiers.count == 43,
             """
             Generated PKL type count changed! After running codegen:pkl:
             1. Update registerPklTypes(_:) in PKLEvaluator.swift with new types

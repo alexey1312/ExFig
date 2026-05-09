@@ -511,9 +511,15 @@ figma = new Figma.FigmaConfig {
   darkFileId = "DEF456"            // Dark mode file (optional)
   lightHighContrastFileId = "GHI789"
   darkHighContrastFileId = "JKL012"
-  timeout = 60                     // Request timeout in seconds
+  timeout = 60                     // Request timeout (seconds, default: 30)
+  rateLimit = 25                   // API requests per minute (default: 10)
+  maxRetries = 6                   // Retry attempts for failed requests (default: 4)
+  concurrentDownloads = 50         // Concurrent CDN downloads, icons/images only (default: 20)
 }
 ```
+
+CLI flags (`--rate-limit`, `--max-retries`, `--concurrent-downloads`, `--timeout`) override these
+PKL values per-run. CI-pinned values live in PKL; ad-hoc overrides go through CLI.
 
 ## Name Processing
 

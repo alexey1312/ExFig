@@ -27,7 +27,21 @@ exfig batch ./configs/ --timeout 60 --rate-limit 20
 exfig fetch -f FILE_ID -r "Frame" -o ./out --timeout 45 --fail-fast
 ```
 
-**Timeout precedence:** CLI `--timeout` > PKL `figma.timeout` > FigmaClient default (30s)
+**Precedence (per knob):** CLI flag > PKL `figma.*` > built-in default. Same rule applies to:
+`--timeout` / `figma.timeout`, `--rate-limit` / `figma.rateLimit`, `--max-retries` / `figma.maxRetries`,
+`--concurrent-downloads` / `figma.concurrentDownloads`. Boolean flags (`--fail-fast`, `--resume`) and
+batch settings (`--parallel`, `batch.parallel`/`failFast`/`resume`) follow OR semantics for booleans
+and standard precedence for `parallel`.
+
+`fetch` is config-free — it does not read `figma.*` PKL fields; only CLI flags and built-in defaults apply.
+
+`colors` and `typography` make no CDN downloads, so `figma.concurrentDownloads` is silently ignored
+(under `-v` a debug log records the skip).
+
+`exfig batch` reads `batch:` and `figma.*` rate-limiting fields ONLY from the FIRST config in argv —
+per-target `batch:` blocks in subsequent configs are ignored (logged under `-v`). The shared rate
+limiter and download queue mean per-config `figma.rateLimit/maxRetries/concurrentDownloads` are
+intentionally unused inside the batch run.
 
 ## Implementing Fault Tolerance in New Commands
 
@@ -64,15 +78,37 @@ let data = try await client.request(endpoint)
 
 ## Defaults
 
-| Setting           | Default | Description                           |
-| ----------------- | ------- | ------------------------------------- |
-| `maxRetries`      | 4       | Number of retry attempts              |
-| `rateLimit`       | 10      | Requests per minute                   |
-| `timeout`         | 30s     | Request timeout                       |
-| `failFast`        | false   | Stop on first error                   |
-| `resume`          | false   | Resume from checkpoint                |
-| `checkpointExpiry`| 24h     | Checkpoint file expiration            |
-| `concurrentDownloads` | 20  | Parallel CDN downloads                |
+| Setting           | Default | PKL key                          | Description                           |
+| ----------------- | ------- | -------------------------------- | ------------------------------------- |
+| `maxRetries`      | 4       | `figma.maxRetries`               | Number of retry attempts              |
+| `rateLimit`       | 10      | `figma.rateLimit`                | Requests per minute                   |
+| `timeout`         | 30s     | `figma.timeout`                  | Request timeout                       |
+| `failFast`        | false   | `batch.failFast` (batch only)    | Stop on first error                   |
+| `resume`          | false   | `batch.resume` (batch only)      | Resume from checkpoint                |
+| `checkpointExpiry`| 24h     | (not configurable)               | Checkpoint file expiration            |
+| `concurrentDownloads` | 20  | `figma.concurrentDownloads`      | Parallel CDN downloads                |
+| `parallel`        | 3       | `batch.parallel` (batch only)    | Concurrent batch configs              |
+
+## PKL Config Alternative
+
+Instead of repeating CLI flags across CI workflows, set the values in `exfig.pkl`:
+
+```pkl
+figma = new Figma.FigmaConfig {
+  lightFileId = "..."
+  rateLimit = 25            // was --rate-limit 25
+  maxRetries = 6            // was --max-retries 6
+  concurrentDownloads = 50  // was --concurrent-downloads 50
+  timeout = 60              // was --timeout 60
+}
+
+batch = new Batch.BatchConfig {
+  parallel = 8              // was exfig batch --parallel 8
+  failFast = true           // was exfig batch --fail-fast
+}
+```
+
+CLI flags still override these values per-run.
 
 ## Retry Behavior
 

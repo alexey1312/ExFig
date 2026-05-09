@@ -140,13 +140,21 @@ exfig images --resume
 exfig icons --concurrent-downloads 50
 ```
 
-| Option                   | Description                            | Commands             |
-| ------------------------ | -------------------------------------- | -------------------- |
-| `--max-retries`          | Maximum retry attempts (default: 4)    | All                  |
-| `--rate-limit`           | API requests per minute (default: 10)  | All                  |
-| `--fail-fast`            | Stop immediately on error              | icons, images, fetch |
-| `--resume`               | Continue from checkpoint               | icons, images, fetch |
-| `--concurrent-downloads` | Concurrent CDN downloads (default: 20) | icons, images, fetch |
+| Option                   | Description                                    | Commands              | PKL key                       |
+| ------------------------ | ---------------------------------------------- | --------------------- | ----------------------------- |
+| `--max-retries`          | Maximum retry attempts (default: 4)            | All                   | `figma.maxRetries`            |
+| `--rate-limit`           | API requests per minute (default: 10)          | All                   | `figma.rateLimit`             |
+| `--timeout`              | Figma API request timeout, sec (default: 30)   | All                   | `figma.timeout`               |
+| `--concurrent-downloads` | Concurrent CDN downloads (default: 20)         | icons, images, fetch  | `figma.concurrentDownloads`*  |
+| `--fail-fast`            | Stop immediately on error                      | icons, images, batch, fetch | `batch.failFast` (batch)|
+| `--resume`               | Continue from checkpoint                       | icons, images, batch, fetch | `batch.resume` (batch)  |
+| `--parallel`             | Concurrent batch configs (default: 3)          | batch                 | `batch.parallel`              |
+
+CLI flags override PKL config; PKL config overrides built-in defaults. `fetch` is config-free —
+only CLI flags and built-in defaults apply there.
+
+*`figma.concurrentDownloads` is silently ignored by `colors`/`typography` (no CDN downloads); under
+`-v` a debug log records the skip.
 
 ### Checkpoint System
 

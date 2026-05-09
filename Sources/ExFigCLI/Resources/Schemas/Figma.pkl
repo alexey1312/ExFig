@@ -21,4 +21,20 @@ class FigmaConfig {
 
   /// Request timeout in seconds.
   timeout: Number(isBetween(1, 600))? = 30.0
+
+  /// Maximum API requests per minute. CLI --rate-limit overrides.
+  /// Tier 1 endpoints (GET file, GET images): 10–20/min on Dev/Full seats.
+  /// Tier 2 endpoints (Variables, Image fills): 25–100/min.
+  /// Tier 3 endpoints (Components, file metadata): 50–150/min.
+  /// Limit is per-token + per-plan, not per-IP. See https://developers.figma.com/docs/rest-api/rate-limits/
+  rateLimit: Int(isBetween(1, 600))? = 10
+
+  /// Maximum retry attempts for failed API requests. CLI --max-retries overrides.
+  maxRetries: Int(isBetween(0, 100))? = 4
+
+  /// Maximum concurrent CDN downloads (icons/images only).
+  /// Ignored by colors/typography. CLI --concurrent-downloads overrides.
+  /// NOTE: client-side cap on CDN connections (URLSession.httpMaximumConnectionsPerHost),
+  /// not a Figma REST API limit. Use `rateLimit` for API throttling.
+  concurrentDownloads: Int(isBetween(1, 200))? = 20
 }

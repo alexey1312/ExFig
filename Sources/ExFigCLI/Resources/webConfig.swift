@@ -3,6 +3,7 @@ let webConfigFileContents = #"""
 amends ".exfig/schemas/ExFig.pkl"
 
 import ".exfig/schemas/Figma.pkl"
+import ".exfig/schemas/Batch.pkl"
 import ".exfig/schemas/Common.pkl"
 import ".exfig/schemas/Web.pkl"
 
@@ -17,6 +18,12 @@ figma = new Figma.FigmaConfig {
   // [optional] Figma API request timeout. The default value is 30 (seconds).
   // If you have a lot of resources to export set this value to 60 or more.
   // timeout = 30.0
+  // [optional] Maximum API requests per minute. CLI --rate-limit overrides. Default: 10.
+  // rateLimit = 10
+  // [optional] Maximum retry attempts for failed API requests. CLI --max-retries overrides. Default: 4.
+  // maxRetries = 4
+  // [optional] Maximum concurrent CDN downloads (icons/images only). CLI --concurrent-downloads overrides. Default: 20.
+  // concurrentDownloads = 20
 }
 
 // [optional] Common export parameters
@@ -117,4 +124,13 @@ web = new Web.WebConfig {
     generateReactComponents = true
   }
 }
+
+// [optional] Batch orchestration settings.
+// Read ONLY from the FIRST config when running `exfig batch`.
+// Per-target `batch:` blocks in subsequent configs are ignored (logged under -v).
+// batch = new Batch.BatchConfig {
+//   parallel = 3   // CLI --parallel overrides
+//   failFast = false   // CLI --fail-fast overrides
+//   resume = false   // CLI --resume overrides
+// }
 """#

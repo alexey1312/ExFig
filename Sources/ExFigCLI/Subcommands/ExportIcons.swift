@@ -44,9 +44,12 @@ extension ExFigCommand {
             ExFigCommand.checkSchemaVersionIfNeeded()
             let ui = ExFigCommand.terminalUI!
 
+            let figma = options.params.figma
             let client = resolveClient(
                 accessToken: options.accessToken,
-                timeout: options.params.figma?.timeout,
+                timeout: figma?.timeout,
+                rateLimit: figma?.rateLimit,
+                maxRetries: figma?.maxRetries,
                 options: faultToleranceOptions,
                 ui: ui
             )

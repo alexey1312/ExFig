@@ -96,14 +96,21 @@ extension ExFigCommand.Download {
             ExFigCommand.initializeTerminalUI(verbose: globalOptions.verbose, quiet: globalOptions.quiet)
             let ui = ExFigCommand.terminalUI!
 
+            let figmaParams = options.params.figma
+            if globalOptions.verbose, figmaParams?.concurrentDownloads != nil {
+                ui.debug(
+                    "figma.concurrentDownloads ignored: not applicable to download colors (no CDN downloads)"
+                )
+            }
             let baseClient = try FigmaClient(
                 accessToken: options.requireFigmaToken(),
-                timeout: options.params.figma?.timeout
+                timeout: faultToleranceOptions.timeout.map(TimeInterval.init) ?? figmaParams?.timeout
             )
-            let rateLimiter = faultToleranceOptions.createRateLimiter()
+            let rateLimiter = faultToleranceOptions.createRateLimiter(configValue: figmaParams?.rateLimit)
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,
                 rateLimiter: rateLimiter,
+                configMaxRetries: figmaParams?.maxRetries,
                 onRetry: { attempt, error in
                     ui.warning("Retry \(attempt) after error: \(error.localizedDescription)")
                 }
@@ -121,8 +128,6 @@ extension ExFigCommand.Download {
                     errorString: "Cannot use both common/colors and common/variablesColors"
                 )
             }
-
-            let figmaParams = options.params.figma
 
             switch jsonOptions.format {
             case .w3c:

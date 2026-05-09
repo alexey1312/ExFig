@@ -50,11 +50,11 @@ extension ExFigCommand {
         @OptionGroup
         var downloadOptions: DownloadOptions
 
-        @Option(name: .long, help: "Maximum retry attempts for failed API requests")
-        var maxRetries: Int = 4
+        @Option(name: .long, help: "Maximum retry attempts for failed API requests (default: 4)")
+        var maxRetries: Int?
 
-        @Option(name: .long, help: "Maximum API requests per minute")
-        var rateLimit: Int = 10
+        @Option(name: .long, help: "Maximum API requests per minute (default: 10)")
+        var rateLimit: Int?
 
         @Flag(name: .long, help: "Stop on first error without retrying")
         var failFast: Bool = false
@@ -62,11 +62,12 @@ extension ExFigCommand {
         @Flag(name: .long, help: "Continue from checkpoint after interruption")
         var resume: Bool = false
 
-        @Option(name: .long, help: "Maximum concurrent CDN downloads")
-        var concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads
+        @Option(name: .long, help: "Maximum concurrent CDN downloads (default: 20)")
+        var concurrentDownloads: Int?
 
         /// Constructs `HeavyFaultToleranceOptions` from locally declared options,
         /// using `DownloadOptions.timeout` to avoid duplicate `--timeout` flags.
+        /// `fetch` is config-free; help text omits "(overrides config)" intentionally.
         var faultToleranceOptions: HeavyFaultToleranceOptions {
             var opts = HeavyFaultToleranceOptions()
             opts.maxRetries = maxRetries
@@ -154,17 +155,18 @@ extension ExFigCommand {
                 ui.debug("Scale: \(options.effectiveScale)x")
             }
 
-            // Create Figma client with fault tolerance
+            // Create Figma client with fault tolerance.
+            // `fetch` is config-free, so config-supplied values are nil and CLI flags / built-in defaults apply.
             let baseClient = FigmaClient(accessToken: accessToken, timeout: TimeInterval(options.timeout))
             let rateLimiter = faultToleranceOptions.createRateLimiter()
-            let maxRetries = faultToleranceOptions.maxRetries
+            let effectiveMaxRetries = faultToleranceOptions.effectiveMaxRetries(configValue: nil)
             let client = faultToleranceOptions.createRateLimitedClient(
                 wrapping: baseClient,
                 rateLimiter: rateLimiter,
                 onRetry: { attempt, error in
                     let warning = ExFigWarning.retrying(
                         attempt: attempt,
-                        maxAttempts: maxRetries,
+                        maxAttempts: effectiveMaxRetries,
                         error: error.localizedDescription,
                         delay: "..."
                     )

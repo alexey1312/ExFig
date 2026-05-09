@@ -53,8 +53,23 @@ figma = new Figma.FigmaConfig {
 
   // Optional: API request timeout in seconds (default: 30)
   timeout = 60
+
+  // Optional: API requests per minute (default: 10). CLI --rate-limit overrides.
+  rateLimit = 25
+
+  // Optional: Retry attempts for failed API requests (default: 4). CLI --max-retries overrides.
+  maxRetries = 6
+
+  // Optional: Concurrent CDN downloads — icons/images only (default: 20).
+  // Ignored by colors/typography. CLI --concurrent-downloads overrides.
+  // Client-side cap on connections (URLSession.httpMaximumConnectionsPerHost), not a Figma REST limit.
+  concurrentDownloads = 50
 }
 ```
+
+**Precedence (per knob):** CLI flag > PKL config > built-in default. The same rule applies to
+all five fields above. CI workflows can keep one value here instead of repeating CLI flags
+everywhere; ad-hoc invocations still override per-run.
 
 ## Common Section
 
@@ -482,6 +497,30 @@ flutter = new Flutter.FlutterConfig {
   }
 }
 ```
+
+## Batch Section
+
+Top-level `batch:` block (read by `exfig batch`). Read ONLY from the **first** config in argv —
+per-target `batch:` blocks in subsequent configs are ignored (logged under `-v`).
+
+```pkl showLineNumbers
+import ".exfig/schemas/Batch.pkl"
+
+batch = new Batch.BatchConfig {
+  // Optional: Maximum configs to process in parallel (default: 3). CLI --parallel overrides.
+  parallel = 8
+
+  // Optional: Stop processing on first error (default: false). CLI --fail-fast overrides.
+  failFast = true
+
+  // Optional: Resume from previous checkpoint (default: false). CLI --resume overrides.
+  resume = false
+}
+```
+
+For `exfig batch ./configs/`, `parallel`/`failFast`/`resume` come from the FIRST config (or CLI flags
+if passed). Boolean fields use OR semantics: CLI `--fail-fast` activates fail-fast even if the config
+has `failFast = false`.
 
 ## Example Configurations
 
