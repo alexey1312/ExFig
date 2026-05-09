@@ -123,6 +123,9 @@ Use `var` + `.append()` pattern or computed property returning the array.
 - Use `Data("string".utf8)` not `"string".data(using: .utf8)!`
 - Add `// swiftlint:disable:next force_try` before `try!` in tests
 - Add `// swiftlint:disable file_length` for files > 400 lines
+- For test files exceeding 400 lines: prefer splitting a second `final class` into its own
+  file (e.g. `PKLModuleCacheTests.swift` was extracted from
+  `BatchSettingsResolverExtendedTests.swift`) over `// swiftlint:disable file_length`
 
 ### swiftlint:disable with Doc Comments
 
@@ -217,6 +220,42 @@ extension SomeType {
 Without the extension in `PKLEvaluator.swift`, `.localizedDescription` returns useless
 `"The operation couldn't be completed. (PklSwift.PklError error 1.)"` instead of the actual PKL error.
 Fix: `extension PklError: @retroactive LocalizedError` in `Sources/ExFigConfig/PKL/PKLEvaluator.swift`.
+
+## PKL Test Fixtures
+
+### Number-typed fields require `.0` suffix
+
+pkl-swift strictly distinguishes `Int` vs `Double` at decode time. PKL fields generated as
+`Double?` (e.g. `figma.timeout: Number(isBetween(1, 600))? = 30.0`) must be written with
+explicit decimal in test fixtures — otherwise decode throws
+`DecodingError.typeMismatch: expected value of type Double`:
+
+```pkl
+# BAD — pkl-swift fails to decode
+figma { timeout = 60 }
+
+# GOOD
+figma { timeout = 60.0 }
+```
+
+This is independent of how PKL itself parses the value; the breakage is in pkl-swift's
+strict type matching, not in PKL semantics.
+
+### PKL constraints validate at amends-time, not at sanitize-time
+
+`Int(isBetween(1, 50))` constraints in `Schemas/*.pkl` fail during PKL evaluation, BEFORE
+`FaultToleranceValidator.sanitized*` ever runs. Fixtures with `parallel = 99` will fail
+to load entirely, not produce a clamped value:
+
+```swift
+// BAD — fixture never loads, test asserts wrong condition
+let url = try BatchResolverFixture.make(batch: "parallel = 99")
+
+// GOOD — to test sanitizer with out-of-range values, call it directly
+XCTAssertEqual(FaultToleranceValidator.sanitizedParallel(99, ui: ui), 3)
+```
+
+If a test needs both an in-range PKL value AND an out-of-range case, split into two tests.
 
 ## Figma API Rate Limits
 

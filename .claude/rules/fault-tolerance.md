@@ -121,3 +121,38 @@ CLI flags still override these values per-run.
 - Exponential backoff: 2s -> 4s -> 8s -> 16s with jitter
 - Respects `Retry-After` header from Figma API on 429 errors
 - Checkpoint system saves progress for resumption on failure
+
+## Batch Settings Architecture
+
+`BatchSettingsResolver.resolve(...)` is the single point where CLI flags, the FIRST config's
+`batch:`/`figma.*` blocks, and built-in defaults merge into `ResolvedBatchSettings`.
+`BatchConfigRunner` consumes the resolved values and MUST NOT read per-config `figma.timeout`
+(or any other rate-limiting field) again — doing so silently overrides the documented
+"first-config-wins" rule and contradicts the `ignoredPerTargetFigmaRateLimiting` warning.
+
+**Single source of truth pattern:**
+- `FaultToleranceDefaults` — Swift defaults; parity with PKL schema asserted at runtime via
+  `BatchSettingsResolverExtendedTests.testPKLDefaultsMatchSwiftDefaults`.
+- `FaultToleranceValidator.sanitized*` — clamps PKL values to ranges, falls back to default
+  with a `.invalidConfigValue` warning. Used both by the resolver and by per-command
+  `effective*` accessors.
+- `FaultToleranceValidator.warnOnce(key:value:fallback:ui:)` — process-level dedup so the
+  same out-of-range PKL value doesn't produce duplicate warnings across many call-sites.
+  Has a `resetWarnedKeys()` test hook called from XCTest `setUp()` (`Lock<T>` pattern,
+  same shape as `WarningCollector` / `ManifestTracker`).
+
+**PKL module reuse:**
+- `PKLModuleCache` (actor) caches `ExFig.ModuleImpl` by URL across `BatchSettingsResolver`,
+  `logIgnoredPerTargetSettings`, and `BatchConfigRunner` to avoid re-evaluating the same
+  config 2-3 times in one batch run. URL keys go through `standardizedFileURL`.
+- Consumers must call `try options.validateUsing(preloadedModule:)` (mirror of
+  `validate()` — same env+path checks minus PKL eval) to keep validation surfaces in sync.
+
+**Slot product cap:** `concurrentDownloads * parallel` is capped at
+`FaultToleranceDefaults.maxDownloadSlots = 1000` in `Batch.swift` to prevent EMFILE / CDN
+throttling at extreme combinations (e.g. 200 × 50 = 10000). Out-of-range emits
+`.excessiveDownloadSlots` warning.
+
+**Batch RetryPolicy:** when constructing `RetryPolicy` in batch mode, honor `failFast`:
+`RetryPolicy(maxRetries: resolved.failFast ? 0 : resolved.maxRetries)` — matches
+`HeavyFaultToleranceOptions.createRetryPolicy()` outside batch.
