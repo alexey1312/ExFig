@@ -79,21 +79,11 @@ extension ExFigCommand {
         var paths: [String]
 
         mutating func validate() throws {
-            if let timeout, timeout <= 0 {
-                throw ValidationError("Timeout must be positive")
-            }
-            if let parallel, parallel <= 0 {
-                throw ValidationError("Parallel must be positive")
-            }
-            if let rateLimit, rateLimit <= 0 {
-                throw ValidationError("Rate limit must be positive")
-            }
-            if let maxRetries, maxRetries < 0 {
-                throw ValidationError("Max retries cannot be negative")
-            }
-            if let concurrentDownloads, concurrentDownloads <= 0 {
-                throw ValidationError("Concurrent downloads must be positive")
-            }
+            try FaultToleranceValidator.validateTimeout(timeout)
+            try FaultToleranceValidator.validateParallel(parallel)
+            try FaultToleranceValidator.validateRateLimit(rateLimit)
+            try FaultToleranceValidator.validateMaxRetries(maxRetries)
+            try FaultToleranceValidator.validateConcurrentDownloads(concurrentDownloads)
         }
 
         // swiftlint:disable:next function_body_length
@@ -106,8 +96,12 @@ extension ExFigCommand {
             let (validConfigs, conflicts) = try discoverAndValidateConfigs(ui: ui)
             guard !validConfigs.isEmpty else { return }
 
+            // Cache PKL evaluations so the first config (and any verbose-pre-checked configs)
+            // aren't re-evaluated in BatchConfigRunner.
+            let moduleCache = PKLModuleCache()
+
             // Resolve batch-level settings: CLI flags > first config's batch:/figma: > built-in defaults.
-            // Per-target batch: blocks in subsequent configs are ignored (debug-logged under -v).
+            // Per-target batch: blocks in subsequent configs are ignored (warning-logged under -v).
             let resolved = await BatchSettingsResolver.resolve(
                 cliParallel: parallel,
                 cliFailFast: failFast,
@@ -118,7 +112,8 @@ extension ExFigCommand {
                 cliTimeout: timeout,
                 allConfigs: validConfigs,
                 verbose: globalOptions.verbose,
-                ui: ui
+                ui: ui,
+                moduleCache: moduleCache
             )
 
             // Prepare configs with checkpoint handling
@@ -143,6 +138,7 @@ extension ExFigCommand {
                 checkpoint: checkpoint,
                 workingDirectory: workingDirectory,
                 resolved: resolved,
+                moduleCache: moduleCache,
                 ui: ui
             )
 
@@ -239,6 +235,7 @@ extension ExFigCommand {
             checkpoint: BatchCheckpoint,
             workingDirectory: URL,
             resolved: ResolvedBatchSettings,
+            moduleCache: PKLModuleCache,
             ui: TerminalUI
         ) async -> (BatchResult, SharedRateLimiter) {
             let rateLimiter = SharedRateLimiter(requestsPerMinute: Double(resolved.rateLimit))
@@ -319,7 +316,8 @@ extension ExFigCommand {
                 rateLimiter: rateLimiter,
                 retryPolicy: retryPolicy,
                 resolved: resolved,
-                priorityMap: priorityMap
+                priorityMap: priorityMap,
+                moduleCache: moduleCache
             )
 
             // Create shared theme attributes collector for batch mode
@@ -414,7 +412,8 @@ extension ExFigCommand {
             rateLimiter: SharedRateLimiter,
             retryPolicy: RetryPolicy,
             resolved: ResolvedBatchSettings,
-            priorityMap: [String: Int]
+            priorityMap: [String: Int],
+            moduleCache: PKLModuleCache
         ) -> @Sendable (ConfigFile) -> BatchConfigRunner {
             // Capture all values needed for runner creation
             let globalOptions = globalOptions
@@ -442,7 +441,8 @@ extension ExFigCommand {
                     experimentalGranularCache: experimentalGranularCache,
                     concurrentDownloads: resolvedConcurrentDownloads,
                     cliTimeout: resolvedTimeout,
-                    configPriority: priorityMap[configFile.name] ?? 0
+                    configPriority: priorityMap[configFile.name] ?? 0,
+                    moduleCache: moduleCache
                 )
             }
         }

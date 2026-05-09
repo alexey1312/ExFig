@@ -7,6 +7,10 @@ import Foundation
 /// Precedence (per knob):
 /// - CLI flag (`--parallel`, `--rate-limit`, etc.) > config value > built-in default.
 /// - For `failFast`/`resume` (presence flags), CLI || config (either source enables it).
+///
+/// Construction is restricted to ``BatchSettingsResolver/resolve(...)`` — the resolver guarantees
+/// that values fall within the documented ranges (CLI is validated, PKL values are clamped with
+/// a warning when out of range).
 struct ResolvedBatchSettings {
     let parallel: Int
     let failFast: Bool
@@ -15,19 +19,30 @@ struct ResolvedBatchSettings {
     let maxRetries: Int
     let concurrentDownloads: Int
     let timeout: Int?
+
+    fileprivate init(
+        parallel: Int,
+        failFast: Bool,
+        resume: Bool,
+        rateLimit: Int,
+        maxRetries: Int,
+        concurrentDownloads: Int,
+        timeout: Int?
+    ) {
+        self.parallel = parallel
+        self.failFast = failFast
+        self.resume = resume
+        self.rateLimit = rateLimit
+        self.maxRetries = maxRetries
+        self.concurrentDownloads = concurrentDownloads
+        self.timeout = timeout
+    }
 }
 
 /// Loads the FIRST config in `exfig batch` argv and merges its `batch:` and `figma:` rate-limiting
-/// fields with CLI flags. Per-target `batch:` blocks in subsequent configs are ignored — under
-/// `--verbose` they emit a debug log line.
+/// fields with CLI flags. Per-target `batch:` blocks (and per-target `figma:*` rate-limiting fields)
+/// in subsequent configs are ignored — under `--verbose` they emit a warning.
 enum BatchSettingsResolver {
-    /// Built-in defaults — kept in lockstep with `FaultToleranceOptions` and `Batch` field defaults.
-    private enum Defaults {
-        static let parallel = 3
-        static let rateLimit = 10
-        static let maxRetries = 4
-    }
-
     // swiftlint:disable function_parameter_count
 
     /// - Parameters:
@@ -39,8 +54,10 @@ enum BatchSettingsResolver {
     ///   - cliConcurrentDownloads: `--concurrent-downloads` value, or nil if user didn't pass.
     ///   - cliTimeout: `--timeout` value (seconds), or nil if user didn't pass.
     ///   - allConfigs: Discovered config URLs in argv order. First wins for batch settings.
-    ///   - verbose: When true, emit debug log for ignored per-target `batch:` blocks.
+    ///   - verbose: When true, emit a warning for ignored per-target `batch:` blocks.
     ///   - ui: Terminal UI for debug/warn output.
+    ///   - moduleCache: Optional cache to populate with the first-config evaluation result so
+    ///     downstream consumers (`BatchConfigRunner`) can skip a redundant PKL eval.
     /// - Returns: Resolved settings to drive the batch run.
     static func resolve(
         cliParallel: Int?,
@@ -52,26 +69,38 @@ enum BatchSettingsResolver {
         cliTimeout: Int?,
         allConfigs: [URL],
         verbose: Bool,
-        ui: TerminalUI
+        ui: TerminalUI,
+        moduleCache: PKLModuleCache? = nil
     ) async -> ResolvedBatchSettings {
-        let firstConfig: ExFig.ModuleImpl? = await loadFirstConfig(allConfigs: allConfigs, ui: ui)
+        let firstConfig: ExFig.ModuleImpl? = await loadFirstConfig(
+            allConfigs: allConfigs,
+            ui: ui,
+            moduleCache: moduleCache
+        )
         let batch = firstConfig?.batch
         let figma = firstConfig?.figma
 
         if verbose, allConfigs.count > 1 {
-            await logIgnoredPerTargetBatchBlocks(otherConfigs: Array(allConfigs.dropFirst()), ui: ui)
+            await logIgnoredPerTargetSettings(
+                otherConfigs: Array(allConfigs.dropFirst()),
+                ui: ui,
+                moduleCache: moduleCache
+            )
         }
 
         return ResolvedBatchSettings(
-            parallel: cliParallel ?? batch?.parallel ?? Defaults.parallel,
+            parallel: cliParallel
+                ?? FaultToleranceValidator.sanitizedParallel(batch?.parallel, ui: ui),
             failFast: cliFailFast || (batch?.failFast ?? false),
             resume: cliResume || (batch?.resume ?? false),
-            rateLimit: cliRateLimit ?? figma?.rateLimit ?? Defaults.rateLimit,
-            maxRetries: cliMaxRetries ?? figma?.maxRetries ?? Defaults.maxRetries,
+            rateLimit: cliRateLimit
+                ?? FaultToleranceValidator.sanitizedRateLimit(figma?.rateLimit, ui: ui),
+            maxRetries: cliMaxRetries
+                ?? FaultToleranceValidator.sanitizedMaxRetries(figma?.maxRetries, ui: ui),
             concurrentDownloads: cliConcurrentDownloads
-                ?? figma?.concurrentDownloads
-                ?? FileDownloader.defaultMaxConcurrentDownloads,
-            timeout: cliTimeout ?? figma?.timeout.map { Int($0) }
+                ?? FaultToleranceValidator.sanitizedConcurrentDownloads(figma?.concurrentDownloads, ui: ui),
+            timeout: cliTimeout
+                ?? FaultToleranceValidator.sanitizedTimeout(figma?.timeout.map { Int($0) }, ui: ui)
         )
     }
 
@@ -79,30 +108,81 @@ enum BatchSettingsResolver {
 
     // MARK: - Internals
 
-    private static func loadFirstConfig(allConfigs: [URL], ui: TerminalUI) async -> ExFig.ModuleImpl? {
+    private static func loadFirstConfig(
+        allConfigs: [URL],
+        ui: TerminalUI,
+        moduleCache: PKLModuleCache?
+    ) async -> ExFig.ModuleImpl? {
         guard let firstURL = allConfigs.first else { return nil }
         do {
-            return try await PKLEvaluator.evaluate(configPath: firstURL)
+            let module = try await PKLEvaluator.evaluate(configPath: firstURL)
+            await moduleCache?.set(module, for: firstURL)
+            return module
         } catch {
-            // Falling back to defaults is safe — the config will be re-evaluated by BatchConfigRunner
-            // and any real syntax/validation error will surface there with a per-config error.
-            ui.debug(
-                "Could not pre-load batch settings from \(firstURL.lastPathComponent): " +
-                    "\(error.localizedDescription). Using CLI flags / built-in defaults."
-            )
+            // File-not-found will surface again in BatchConfigRunner with a clearer message;
+            // for that case we keep the message under -v. For real PKL/syntax/network errors,
+            // batch settings from the user are silently dropped — promote to a visible warning
+            // so the user knows defaults are in effect.
+            if isFileNotFound(error: error, url: firstURL) {
+                ui.debug(
+                    "Pre-load skipped: \(firstURL.lastPathComponent) not found. " +
+                        "BatchConfigRunner will surface the error per-config."
+                )
+            } else {
+                ui.warning(.batchSettingsPreloadFailed(
+                    file: firstURL.lastPathComponent,
+                    error: error.localizedDescription
+                ))
+            }
             return nil
         }
     }
 
-    private static func logIgnoredPerTargetBatchBlocks(otherConfigs: [URL], ui: TerminalUI) async {
+    private static func logIgnoredPerTargetSettings(
+        otherConfigs: [URL],
+        ui: TerminalUI,
+        moduleCache: PKLModuleCache?
+    ) async {
         for url in otherConfigs {
-            let module = try? await PKLEvaluator.evaluate(configPath: url)
-            if module?.batch != nil {
+            let module: ExFig.ModuleImpl?
+            do {
+                module = try await PKLEvaluator.evaluate(configPath: url)
+                await moduleCache?.set(module, for: url)
+            } catch {
                 ui.debug(
-                    "Ignoring batch: in \(url.lastPathComponent) — only the first config's " +
-                        "batch settings apply."
+                    "Could not pre-check \(url.lastPathComponent) for ignored batch settings: " +
+                        "\(error.localizedDescription)"
                 )
+                continue
+            }
+            if module?.batch != nil {
+                ui.warning(.ignoredPerTargetBatchBlock(file: url.lastPathComponent))
+            }
+            if let figma = module?.figma,
+               figma.rateLimit != nil
+               || figma.maxRetries != nil
+               || figma.concurrentDownloads != nil
+               || figma.timeout != nil
+            {
+                ui.warning(.ignoredPerTargetFigmaRateLimiting(file: url.lastPathComponent))
             }
         }
+    }
+
+    private static func isFileNotFound(error: Error, url: URL) -> Bool {
+        let nsError = error as NSError
+        if nsError.domain == NSCocoaErrorDomain, nsError.code == NSFileReadNoSuchFileError {
+            return true
+        }
+        if nsError.domain == NSPOSIXErrorDomain, nsError.code == Int(ENOENT) {
+            return true
+        }
+        // PklSwift surfaces missing files via PklError text — a textual match is brittle but
+        // acceptable as a fallback (better than over-warning the user).
+        let message = error.localizedDescription.lowercased()
+        if message.contains("no such file") || message.contains("not found") {
+            return true
+        }
+        return !FileManager.default.fileExists(atPath: url.path)
     }
 }

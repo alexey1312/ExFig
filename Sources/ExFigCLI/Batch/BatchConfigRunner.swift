@@ -226,6 +226,9 @@ struct BatchConfigRunner {
     let cliTimeout: Int?
     /// Priority for this config's downloads (lower = higher priority, based on submission order).
     let configPriority: Int
+    /// Optional pre-evaluated PKL module cache (avoids re-eval of configs already loaded by
+    /// `BatchSettingsResolver`).
+    let moduleCache: PKLModuleCache?
     /// Test-only: injected exporter for unit testing.
     private let _testExporter: (any ConfigExportPerforming)?
 
@@ -240,9 +243,10 @@ struct BatchConfigRunner {
         force: Bool = false,
         cachePath: String? = nil,
         experimentalGranularCache: Bool = false,
-        concurrentDownloads: Int = FileDownloader.defaultMaxConcurrentDownloads,
+        concurrentDownloads: Int = FaultToleranceDefaults.concurrentDownloads,
         cliTimeout: Int? = nil,
         configPriority: Int = 0,
+        moduleCache: PKLModuleCache? = nil,
         exporter: (any ConfigExportPerforming)? = nil
     ) {
         self.rateLimiter = rateLimiter
@@ -258,6 +262,7 @@ struct BatchConfigRunner {
         self.concurrentDownloads = concurrentDownloads
         self.cliTimeout = cliTimeout
         self.configPriority = configPriority
+        self.moduleCache = moduleCache
         _testExporter = exporter
     }
 
@@ -299,7 +304,11 @@ struct BatchConfigRunner {
         do {
             var options = ExFigOptions()
             options.input = configFile.url.path
-            try options.validate()
+            if let cached = await moduleCache?.get(for: configFile.url) {
+                options.validateUsing(preloadedModule: cached)
+            } else {
+                try options.validate()
+            }
 
             let retryHandler = RetryLogger.createHandler(ui: ui, maxAttempts: maxRetries)
 

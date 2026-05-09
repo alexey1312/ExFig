@@ -85,6 +85,37 @@ final class FaultToleranceOptionsTests: XCTestCase {
         XCTAssertThrowsError(try FaultToleranceOptions.parse(["--rate-limit", "0"]))
     }
 
+    // MARK: - Upper-bound CLI validation (matches PKL bounds)
+
+    func testRateLimitValidationRejectsAboveMax() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--rate-limit", "601"]))
+    }
+
+    func testMaxRetriesValidationRejectsAboveMax() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--max-retries", "101"]))
+    }
+
+    func testTimeoutValidationRejectsAboveMax() {
+        XCTAssertThrowsError(try FaultToleranceOptions.parse(["--timeout", "601"]))
+    }
+
+    // MARK: - Sanitizer (PKL clamp + warn)
+
+    func testEffectiveRateLimitClampsInvalidConfigValue() {
+        let options = try? FaultToleranceOptions.parse([])
+        let ui = TerminalUI(outputMode: .quiet)
+        XCTAssertEqual(options?.effectiveRateLimit(configValue: 0, ui: ui), 10)
+        XCTAssertEqual(options?.effectiveRateLimit(configValue: -5, ui: ui), 10)
+        XCTAssertEqual(options?.effectiveRateLimit(configValue: 700, ui: ui), 10)
+    }
+
+    func testEffectiveMaxRetriesClampsInvalidConfigValue() {
+        let options = try? FaultToleranceOptions.parse([])
+        let ui = TerminalUI(outputMode: .quiet)
+        XCTAssertEqual(options?.effectiveMaxRetries(configValue: -1, ui: ui), 4)
+        XCTAssertEqual(options?.effectiveMaxRetries(configValue: 200, ui: ui), 4)
+    }
+
     // MARK: - Precedence (CLI > config > default)
 
     func testEffectiveRateLimitCLIWinsOverConfig() throws {

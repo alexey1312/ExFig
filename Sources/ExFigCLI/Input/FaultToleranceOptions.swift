@@ -28,25 +28,25 @@ struct FaultToleranceOptions: ParsableArguments {
     var timeout: Int?
 
     mutating func validate() throws {
-        if let timeout, timeout <= 0 {
-            throw ValidationError("Timeout must be positive")
-        }
-        if let rateLimit, rateLimit <= 0 {
-            throw ValidationError("Rate limit must be positive")
-        }
-        if let maxRetries, maxRetries < 0 {
-            throw ValidationError("Max retries cannot be negative")
-        }
+        try FaultToleranceValidator.validateTimeout(timeout)
+        try FaultToleranceValidator.validateRateLimit(rateLimit)
+        try FaultToleranceValidator.validateMaxRetries(maxRetries)
     }
 
-    /// CLI value (if user passed --rate-limit) > config value > built-in default (10).
-    func effectiveRateLimit(configValue: Int?) -> Int {
-        rateLimit ?? configValue ?? 10
+    /// CLI value (if user passed --rate-limit) > config value > built-in default.
+    /// Invalid config values (out of `FaultToleranceDefaults.rateLimitRange`) trigger a
+    /// warning and fall back to the built-in default.
+    func effectiveRateLimit(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let rateLimit { return rateLimit }
+        return FaultToleranceValidator.sanitizedRateLimit(configValue, ui: ui)
     }
 
-    /// CLI value (if user passed --max-retries) > config value > built-in default (4).
-    func effectiveMaxRetries(configValue: Int?) -> Int {
-        maxRetries ?? configValue ?? 4
+    /// CLI value (if user passed --max-retries) > config value > built-in default.
+    /// Invalid config values (out of `FaultToleranceDefaults.maxRetriesRange`) trigger a
+    /// warning and fall back to the built-in default.
+    func effectiveMaxRetries(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let maxRetries { return maxRetries }
+        return FaultToleranceValidator.sanitizedMaxRetries(configValue, ui: ui)
     }
 
     /// Create a retry policy from the options.
@@ -134,33 +134,28 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
     var concurrentDownloads: Int?
 
     mutating func validate() throws {
-        if let timeout, timeout <= 0 {
-            throw ValidationError("Timeout must be positive")
-        }
-        if let rateLimit, rateLimit <= 0 {
-            throw ValidationError("Rate limit must be positive")
-        }
-        if let maxRetries, maxRetries < 0 {
-            throw ValidationError("Max retries cannot be negative")
-        }
-        if let concurrentDownloads, concurrentDownloads <= 0 {
-            throw ValidationError("Concurrent downloads must be positive")
-        }
+        try FaultToleranceValidator.validateTimeout(timeout)
+        try FaultToleranceValidator.validateRateLimit(rateLimit)
+        try FaultToleranceValidator.validateMaxRetries(maxRetries)
+        try FaultToleranceValidator.validateConcurrentDownloads(concurrentDownloads)
     }
 
-    /// CLI value (if user passed --rate-limit) > config value > built-in default (10).
-    func effectiveRateLimit(configValue: Int?) -> Int {
-        rateLimit ?? configValue ?? 10
+    /// CLI value (if user passed --rate-limit) > config value > built-in default.
+    func effectiveRateLimit(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let rateLimit { return rateLimit }
+        return FaultToleranceValidator.sanitizedRateLimit(configValue, ui: ui)
     }
 
-    /// CLI value (if user passed --max-retries) > config value > built-in default (4).
-    func effectiveMaxRetries(configValue: Int?) -> Int {
-        maxRetries ?? configValue ?? 4
+    /// CLI value (if user passed --max-retries) > config value > built-in default.
+    func effectiveMaxRetries(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let maxRetries { return maxRetries }
+        return FaultToleranceValidator.sanitizedMaxRetries(configValue, ui: ui)
     }
 
-    /// CLI value (if user passed --concurrent-downloads) > config value > built-in default (20).
-    func effectiveConcurrentDownloads(configValue: Int?) -> Int {
-        concurrentDownloads ?? configValue ?? FileDownloader.defaultMaxConcurrentDownloads
+    /// CLI value (if user passed --concurrent-downloads) > config value > built-in default.
+    func effectiveConcurrentDownloads(configValue: Int?, ui: TerminalUI? = nil) -> Int {
+        if let concurrentDownloads { return concurrentDownloads }
+        return FaultToleranceValidator.sanitizedConcurrentDownloads(configValue, ui: ui)
     }
 
     /// Create a file downloader with configured concurrency.
@@ -292,15 +287,36 @@ struct HeavyFaultToleranceOptions: ParsableArguments {
 
 // MARK: - Client Resolution
 
+/// Common surface used by `resolveClient` to bridge the two CLI option types.
+protocol RateLimitClientFactory {
+    var timeout: Int? { get }
+    func createRateLimiter(configValue: Int?) -> SharedRateLimiter
+    func effectiveMaxRetries(configValue: Int?, ui: TerminalUI?) -> Int
+    func createRateLimitedClient(
+        wrapping client: Client,
+        rateLimiter: SharedRateLimiter,
+        configMaxRetries: Int?,
+        configID: ConfigID,
+        onRetry: RetryCallback?
+    ) -> Client
+}
+
+extension FaultToleranceOptions: RateLimitClientFactory {}
+extension HeavyFaultToleranceOptions: RateLimitClientFactory {}
+
 /// Resolves a Figma API client, using injected client if available (batch mode)
 /// or creating a new rate-limited client (standalone command mode).
 ///
+/// When `accessToken` is nil (no `FIGMA_PERSONAL_TOKEN`), returns ``NoTokenFigmaClient`` —
+/// a fail-fast client that throws on any request. Non-Figma sources (Penpot, tokens-file)
+/// never call it, so pure-Penpot workflows work without Figma credentials.
+///
 /// - Parameters:
-///   - accessToken: Figma personal access token.
+///   - accessToken: Figma personal access token (nil when using non-Figma sources only).
 ///   - timeout: Request timeout interval from config (optional, uses FigmaClient default if nil).
 ///   - rateLimit: Config-supplied `figma.rateLimit` (optional). CLI `--rate-limit` overrides.
 ///   - maxRetries: Config-supplied `figma.maxRetries` (optional). CLI `--max-retries` overrides.
-///   - options: Fault tolerance options for creating new client (may contain CLI overrides).
+///   - options: Fault tolerance options (may contain CLI overrides).
 ///   - ui: Terminal UI for retry warnings.
 /// - Returns: A configured `Client` instance.
 ///
@@ -310,7 +326,7 @@ func resolveClient(
     timeout: TimeInterval?,
     rateLimit configRateLimit: Int? = nil,
     maxRetries configMaxRetries: Int? = nil,
-    options: FaultToleranceOptions,
+    options: some RateLimitClientFactory,
     ui: TerminalUI
 ) -> Client {
     if let injectedClient = InjectedClientStorage.client {
@@ -326,65 +342,12 @@ func resolveClient(
     let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout
     let baseClient = FigmaClient(accessToken: accessToken, timeout: effectiveTimeout)
     let rateLimiter = options.createRateLimiter(configValue: configRateLimit)
-    let effectiveMaxRetries = options.effectiveMaxRetries(configValue: configMaxRetries)
+    let effectiveMaxRetries = options.effectiveMaxRetries(configValue: configMaxRetries, ui: ui)
     return options.createRateLimitedClient(
         wrapping: baseClient,
         rateLimiter: rateLimiter,
         configMaxRetries: configMaxRetries,
-        onRetry: { attempt, error in
-            let warning = ExFigWarning.retrying(
-                attempt: attempt,
-                maxAttempts: effectiveMaxRetries,
-                error: error.localizedDescription,
-                delay: "..."
-            )
-            ui.warning(warning)
-        }
-    )
-}
-
-/// Resolves a Figma API client for heavy commands, using injected client if available
-/// (batch mode) or creating a new rate-limited client (standalone command mode).
-///
-/// When `accessToken` is nil (no `FIGMA_PERSONAL_TOKEN`), returns ``NoTokenFigmaClient`` —
-/// a fail-fast client that throws on any request. Non-Figma sources (Penpot, tokens-file)
-/// never call it, so pure-Penpot workflows work without Figma credentials.
-///
-/// - Parameters:
-///   - accessToken: Figma personal access token (nil when using non-Figma sources only).
-///   - timeout: Request timeout interval from config (optional, uses FigmaClient default if nil).
-///   - rateLimit: Config-supplied `figma.rateLimit` (optional). CLI `--rate-limit` overrides.
-///   - maxRetries: Config-supplied `figma.maxRetries` (optional). CLI `--max-retries` overrides.
-///   - options: Heavy fault tolerance options for creating new client (may contain CLI overrides).
-///   - ui: Terminal UI for retry warnings.
-/// - Returns: A configured `Client` instance.
-///
-/// Precedence (per knob): CLI flag > config value > built-in default.
-func resolveClient(
-    accessToken: String?,
-    timeout: TimeInterval?,
-    rateLimit configRateLimit: Int? = nil,
-    maxRetries configMaxRetries: Int? = nil,
-    options: HeavyFaultToleranceOptions,
-    ui: TerminalUI
-) -> Client {
-    if let injectedClient = InjectedClientStorage.client {
-        return injectedClient
-    }
-    guard let accessToken else {
-        // No Figma token — return a client that throws on any call.
-        // Non-Figma sources (Penpot, tokens-file) never call it.
-        return NoTokenFigmaClient()
-    }
-    // CLI timeout takes precedence over config timeout
-    let effectiveTimeout: TimeInterval? = options.timeout.map { TimeInterval($0) } ?? timeout
-    let baseClient = FigmaClient(accessToken: accessToken, timeout: effectiveTimeout)
-    let rateLimiter = options.createRateLimiter(configValue: configRateLimit)
-    let effectiveMaxRetries = options.effectiveMaxRetries(configValue: configMaxRetries)
-    return options.createRateLimitedClient(
-        wrapping: baseClient,
-        rateLimiter: rateLimiter,
-        configMaxRetries: configMaxRetries,
+        configID: ConfigID("default"),
         onRetry: { attempt, error in
             let warning = ExFigWarning.retrying(
                 attempt: attempt,

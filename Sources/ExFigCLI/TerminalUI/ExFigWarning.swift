@@ -105,4 +105,18 @@ enum ExFigWarning: Equatable {
 
     /// A `download tokens` section was skipped because config is missing.
     case downloadTokensSectionSkipped(section: String)
+
+    // MARK: - Fault Tolerance Warnings
+
+    /// PKL pre-load failed for the first batch config — CLI flags / built-in defaults will apply.
+    case batchSettingsPreloadFailed(file: String, error: String)
+
+    /// A `batch:` block in a non-first batch config was ignored.
+    case ignoredPerTargetBatchBlock(file: String)
+
+    /// Per-target `figma.*` rate-limiting fields in a non-first batch config were ignored.
+    case ignoredPerTargetFigmaRateLimiting(file: String)
+
+    /// A PKL config value for fault tolerance was out of range and replaced with the default.
+    case invalidConfigValue(key: String, value: Int, fallback: Int)
 }

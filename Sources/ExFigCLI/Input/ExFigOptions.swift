@@ -41,6 +41,13 @@ struct ExFigOptions: ParsableArguments {
         params = try readParams(at: configPath)
     }
 
+    /// Validates and primes `params` from a pre-evaluated PKL module — avoids redundant PKL eval
+    /// when the caller (e.g. `BatchSettingsResolver`) already loaded the same config.
+    mutating func validateUsing(preloadedModule module: ExFig.ModuleImpl) {
+        accessToken = ProcessInfo.processInfo.environment["FIGMA_PERSONAL_TOKEN"]
+        params = module
+    }
+
     /// Returns the Figma access token, or throws if not set.
     /// Call this only when the current operation requires Figma API access.
     func requireFigmaToken() throws -> String {
