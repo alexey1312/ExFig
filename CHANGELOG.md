@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2026-05-09
+
+### Documentation
+
+- **fetch**: Document --page flag for disambiguating frames by @alexey1312
+
+
+### Features
+
+- **cli**: Make rate-limit, max-retries, concurrent-downloads and batch settings configurable via PKL  by @alexey1312 in [#82](https://github.com/DesignPipe/exfig/pull/82)
+
+
 ## [3.3.0] - 2026-04-07
 
 ### Features
